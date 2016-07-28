@@ -1,0 +1,14 @@
+{
+	"name": "iota-starter-server-fleetmanagement-webclient",
+	"version": "0.0.1",
+	"private": true,
+	"engines": {
+		"npm": "2.x"
+	},
+	"scripts": {
+	},
+	"dependencies": {
+	},
+	"devDependencies": {
+	}
+}
