@@ -9,6 +9,28 @@ stages:
   jobs:
   - name: Build
     type: builder
+    build_type: npm
+    script: |-
+      #!/bin/bash
+      # The default Node.js version is 0.10.40
+      # To use Node.js 0.12.7, uncomment the following line:
+      #export PATH=/opt/IBM/node-v0.12/bin:$PATH
+      # To use Node.js 4.2.2, uncomment the following line:
+      #export PATH=/opt/IBM/node-v4.2/bin:$PATH
+      
+      # Build web client
+      cd ./webclient
+      npm install
+      npm run tsc
+      if [ $NPM_ENV == 'production' ]; then
+        npm run bundle:prod
+        # Cleaning up node_modules
+        rm -Rf ./node_modules
+      fi
+      cd ..
+      
+      # if necessary
+      #npm install
 - name: Deploy Stage
   inputs:
   - type: job
