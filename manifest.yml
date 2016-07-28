@@ -1,0 +1,18 @@
+declared-services:
+  FleetCloudantDB: 
+    label: cloudantNoSQLDB 
+    plan: Shared
+  FleetIoTForAuto:
+    label: iotforautomotive
+    plan: free_shared
+
+applications:
+  - services:
+      - FleetCloudantDB
+      - FleetIoTForAuto
+    name: iota-starter-server-fleet
+    memory: 512M
+#    host: iota-starter-server-fleet
+#    domain: stage1.mybluemix.net
+    path: .
+    instances: 1

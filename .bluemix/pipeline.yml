@@ -1,0 +1,48 @@
+ ---
+stages:
+- name: Build Stage
+  inputs:
+  - type: git
+    branch: master
+  triggers:
+  - type: commit
+  jobs:
+  - name: Build
+    type: builder
+- name: Deploy Stage
+  inputs:
+  - type: job
+    stage: Build Stage
+    job: Build
+  triggers:
+  - type: stage
+  jobs:
+  - name: Deploy
+    type: deployer
+    target:
+       organization: ${CF_ORGANIZATION}
+       space: ${CF_SPACE}
+       url: ${CF_TARGET_URL}
+       application: ${CF_APP}
+    script: |
+     #!/bin/bash
+
+     if [ ! -f _generate_deploy_files.sh ]; then
+       echo "The _generate_deploy_files.sh is missing. Exiting.."
+       exit 1
+     fi
+     echo "Generating deployment files for suffix '$SUFFIX'"
+     chmod +x _generate_deploy_files.sh
+     ./_generate_deploy_files.sh $SUFFIX || exit 1
+     echo "Generated _deploy_create_services.sh"
+     cat _deploy_create_services.sh
+     echo "--"
+     echo "Generated manifest.yml"
+     cat manifest.yml
+     echo "--"
+
+     # create services
+     [ -f "_deploy_create_services.sh" ] && source _deploy_create_services.sh || echo "no create services script"
+     cf push "${CF_APP}"
+     # View logs
+     #cf logs "${CF_APP}" --recent
