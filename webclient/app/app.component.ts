@@ -1,7 +1,18 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { ROUTER_DIRECTIVES } from '@angular/router';
 
 @Component({
   selector: 'fmdash-app',
-  template: '<h1>Angular2 Fleet Management Dashboard App</h1>'
+  moduleId: module.id,
+  templateUrl: 'app.component.html',
+  directives: [ROUTER_DIRECTIVES],
+  providers: []
 })
-export class AppComponent { }
+export class AppComponent  {
+  title = "My App";
+  sidebarItems = [
+           { title: "Map", route: "/map", icon: 'icon-location', active: false },
+           { title: 'Users', route: '/users', icon: 'icon-user', active: false},
+           { title: "Vehicle", route: "/vehicle", icon: 'icon-car', active: false }
+       ];
+}
