@@ -21,6 +21,7 @@ app.use(express.bodyParser());
 app.use(express.methodOverride());
 app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/webclient/node_modules', express.static(path.join(__dirname, 'webclient/node_modules')));
 app.use('/webclient', express.static(path.join(__dirname, 'webclient')));
 
 // development only
