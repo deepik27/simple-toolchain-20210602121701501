@@ -7,7 +7,7 @@
 	},
 	"scripts": {
 		"start": "tsc && concurrently \"npm run tsc:w\" \"npm run lite\"",
-		"lite": "lite-server -c mock-bs-config.js",
+		"lite": "lite-server -c ./bs-config.json",
 		"postinstall": "npm ls typings && typings install || echo .",
 		"tsc": "tsc",
 		"tsc:w": "tsc -w",
