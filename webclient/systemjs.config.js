@@ -8,7 +8,13 @@
     'app':                        'app', // 'dist',
     '@angular':                   'node_modules/@angular',
     'angular2-in-memory-web-api': 'node_modules/angular2-in-memory-web-api',
-    'rxjs':                       'node_modules/rxjs'
+    'rxjs':                       'node_modules/rxjs',
+    // additional libraries
+    'openlayers':                         'https://cdnjs.cloudflare.com/ajax/libs/ol3/3.5.0/ol.js',
+    'd3':                         'https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.7/d3.min.js',
+    'c3':                         'https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.9/c3.min.js',
+    'moment':                     'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.min.js',
+    'underscore':                 'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.2/underscore-min.js',
   };
   // packages tells the System loader how to load when no filename and/or no extension
   var packages = {
