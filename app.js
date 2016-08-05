@@ -27,7 +27,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 var webClientModulePath = 'node_modules/iota-starter-server-fleetmanagement-webclient';
 if ('development' === app.get('env')){
 	// add the base path
-	app.use('/webclient', express.public(path.join(__dirname, 'webclient')));
+	app.use('/webclient', express.static(path.join(__dirname, 'webclient')));
 	
 	// add node_moduples for webclient
 	var nmPath = path.join(__dirname, 'webclient/node_modules');
