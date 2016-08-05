@@ -23,9 +23,9 @@ app.use(express.methodOverride());
 app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));
 
-//TODO add webclient
 var webClientModulePath = 'node_modules/iota-starter-server-fleetmanagement-webclient';
 if ('development' === app.get('env')){
+	console.log('Settig up the webclient for DEVELOPMENT mode...');
 	// add the base path
 	app.use('/webclient', express.static(path.join(__dirname, 'webclient')));
 	
@@ -39,6 +39,7 @@ if ('development' === app.get('env')){
 	}
 	app.use('/webclient/node_modules', express.static(nmPath));
 }else{
+	console.log('Settig up the webclient for NON-DEVELOPMENT mode...');
 	app.use('/webclient', express.static(path.join(__dirname, webClientModulePath)));
 }
 
