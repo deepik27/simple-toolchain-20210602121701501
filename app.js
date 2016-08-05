@@ -2,6 +2,7 @@
 /**
  * Module dependencies.
  */
+var fs = require('fs');
 
 var express = require('express')
   , routes = require('./routes')
@@ -21,16 +22,28 @@ app.use(express.bodyParser());
 app.use(express.methodOverride());
 app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));
+
 //TODO add webclient
+var webClientModulePath = 'node_modules/iota-starter-server-fleetmanagement-webclient';
 if ('development' === app.get('env')){
-	app.use('/webclient/node_modules', express.static(path.join(__dirname, 'webclient/node_modules')));
-	app.use('/webclient', express.static(path.join(__dirname, 'webclient')));
+	// add the base path
+	app.use('/webclient', express.public(path.join(__dirname, 'webclient')));
+	
+	// add node_moduples for webclient
+	var nmPath = path.join(__dirname, 'webclient/node_modules');
+	try{
+		fs.accessSync(nmPath, fs.F_OK);
+	}catch(e){
+		console.log('The node_modules under ./webclient is not accessble. So, use one under the Web client module path.');
+		nmPath = path.join(__dirname, webClientModulePath + '/node_modules');
+	}
+	app.use('/webclient/node_modules', express.static(nmPath));
 }else{
-	app.use('/webclient', express.static(path.join(__dirname, 'node_modules/iota-starter-server-fleetmanagement-webclient')));
+	app.use('/webclient', express.static(path.join(__dirname, webClientModulePath)));
 }
 
 // development only
-if ('development' == app.get('env')) {
+if ('development' === app.get('env')) {
   app.use(express.errorHandler());
 }
 
