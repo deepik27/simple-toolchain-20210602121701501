@@ -1,5 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { RealtimeMapComponent } from './realtime-map/realtime-map.component';
+import { NumberOfCarsComponent } from './number-of-cars.component';
 
 import * as _ from 'underscore';
 
@@ -15,7 +16,7 @@ interface MapArea {
   moduleId: module.id,
   selector: 'fmdash-map-page',
   templateUrl: 'map-page.component.html',
-  directives: [RealtimeMapComponent],
+  directives: [RealtimeMapComponent, NumberOfCarsComponent],
 })
 export class MapPageComponent implements OnInit {
 
