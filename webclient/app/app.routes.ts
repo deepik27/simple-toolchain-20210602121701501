@@ -1,6 +1,7 @@
 import { provideRouter, RouterConfig } from '@angular/router';
 
 import { MapPageComponent } from './map/map-page.component';
+import { AlertPageComponent } from './alert/alert-page.component';
 import { UsersPageComponent } from './users/users-page.component';
 import { VehiclePageComponent } from './vehicle/vehicle-page.component';
 
@@ -16,6 +17,10 @@ const routes: RouterConfig = [
   {
     path: 'map',
     component: MapPageComponent
+  },
+  {
+    path: 'alert',
+    component: AlertPageComponent
   },
   {
     path: 'users',

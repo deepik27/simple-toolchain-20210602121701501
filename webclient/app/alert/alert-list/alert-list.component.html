@@ -1,0 +1,29 @@
+
+<div *ngIf="!prop || !value || showInput">
+	<select #propSelect [value]="prop" (change)="onPropChanged($event)">
+		<option *ngFor="let alertProp of alertProps"
+			value="{{alertProp.getId()}}">{{alertProp.getLabel()}}</option>
+	</select> <select #propValueSelect [value]="value"
+		(change)="onValueChanged($event)">
+		<option *ngFor="let alertValue of alertValues"
+			value="{{alertValue.getId()}}">{{alertValue.getLabel()}}</option>
+	</select>
+</div>
+<table class="table">
+	<thead>
+		<tr>
+			<th>Date</th>
+			<th>Severity</th>
+			<th>Vehicle ID</th>
+			<th>Notes</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr *ngFor="let alert of fleetalerts">
+			<td>{{alert.timestamp}}</td>
+			<td>{{alert.severity}}</td>
+			<td>{{alert.mo_id}}</td>
+			<td>{{alert.description}}</td>
+		</tr>
+	</tbody>
+</table>
