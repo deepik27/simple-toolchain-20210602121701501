@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { RealtimeMapComponent } from './realtime-map/realtime-map.component';
-import { NumberOfCarsComponent } from './number-of-cars.component';
+import { NumberOfCarsComponent } from './number-of-cars/number-of-cars.component';
 
 import * as _ from 'underscore';
 
