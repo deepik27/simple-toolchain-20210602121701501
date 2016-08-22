@@ -1,0 +1,18 @@
+<div class="html-client-drive">
+  <div id="locationMap" class="locationMap">
+	 <button class="button mapDriving" ng-disabled="!isConnected||requestSending" ng-click="onDriving()"><img src="images/drive.png" class="driveIcon">{{driveEvent.trip_id?"Stop Driving": "Start Driving"}}</button>
+	 <button class="button mapConnect" ng-disabled="!isConnected||requestSending" ng-show="!connectOnStartup" ng-click="onCurrentLocation()">{{isConnected?"Disconnect":"Connect"}}</button>
+	 <button class="button mapCurrentLocation" ng-show="!traceCurrentLocation" ng-click="onCurrentLocation()">Current Location</button>
+	 <button class="button mapControlPanelButton" ng-show="true" ng-click="showControlPanel()">Control Panel</button>
+	 <div class="mapProbe" ng-show="driveEvent.trip_id">
+	 					Location=({{deviceLocation.lat}},{{deviceLocation.lng}})<br> 
+	 					Speed={{driveEvent.speed}} km/h<br>
+	 					Fuel={{driveEvent.fuel}} l<br>
+	 					Engine Temperature={{driveEvent.engineTemp}} C</div>
+	 <div id="controlPanel" class="controlPanel" ng-show="isControlPanelDisplayed">
+	 	Fuel: <input type="number" ng-model="fuel" ng-change="updateVehicleData()"><br>
+	 	Engine Temperature: <input type="number" ng-model="engineTemp" ng-change="updateVehicleData()">
+	 </div>
+  </div>
+  <table id="legend"></table>
+</div>

@@ -1,0 +1,26 @@
+<div class="container html-client-profile">
+	<div ng-if="httpError" class="alert alert-danger" role="alert">{{httpError}}</div>
+	<span class="loading" ng-show=loading><img src="/images/loading.gif"></span>
+	<span ng-hide="loading">
+		<div class="col-xs-12" ng-if="!stat">
+			<h3>You have no trips.</h3>
+		</div>
+		<div ng-if="stat">
+			<div class="col-xs-12">
+				<h3>Your score is {{stat.scoringView.score | number: 0}} for {{(stat.totalDistance/1000) | number: 2 }} km.</h3>
+			</div>
+			<div class="col-xs-12 col-sm-6 col-md-4">
+				<client-profile-item title="Behaviors" items="stat.scoringView"></client-profile-item>
+			</div>
+			<div class="col-xs-12 col-sm-6 col-md-4">
+				<client-profile-item title="Time of day" items="stat.timeRangeView" suffix="'%'"></client-profile-item>
+			</div>
+			<div class="col-xs-12 col-sm-6 col-md-4">
+				<client-profile-item title="Traffic condition" items="stat.speedPatternView" suffix="'%'"></client-profile-item>
+			</div>
+			<div class="col-xs-12 col-sm-6 col-md-4">
+				<client-profile-item title="Road condition" items="stat.roadTypeView" suffix="'%'"></client-profile-item>
+			</div>
+		</div>
+	</span>
+</div>

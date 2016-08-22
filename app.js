@@ -2,13 +2,22 @@
 /**
  * Module dependencies.
  */
-var fs = require('fs');
+
+VCAP_SERVICES = JSON.parse(process.env.VCAP_SERVICES || '{}')
 
 var express = require('express')
-  , routes = require('./routes')
+  , tripRoutes = require('./driverInsights/tripRoutes.js')
   , user = require('./routes/user')
   , http = require('http')
-  , path = require('path');
+  , cors = require('cors')
+  , path = require('path')
+  , fs = require('fs-extra')
+  , helmet = require('helmet')
+  , logger = require('morgan')
+  , cookieParser = require('cookie-parser')
+  , bodyParser = require('body-parser')
+  , methodOverride = require('method-override');
+
 
 var app = express();
 
@@ -16,12 +25,26 @@ var app = express();
 app.set('port', process.env.PORT || 3000);
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
-app.use(express.favicon());
-app.use(express.logger('dev'));
-app.use(express.bodyParser());
-app.use(express.methodOverride());
-app.use(app.router);
+app.enable('trust proxy');
+app.use(logger('dev'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(methodOverride());
+app.use(helmet());
+app.use(cors());
+
+//force https for all requests
+app.use(function (req, res, next) {
+	if(req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] === 'http'){
+		res.redirect('https://' + req.headers.host + req.url);
+	} else{
+		next();
+	}
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/user', user);
 
 var webClientModulePath = 'node_modules/iota-starter-server-fleetmanagement-webclient';
 if ('development' === app.get('env')){
@@ -45,11 +68,12 @@ if ('development' === app.get('env')){
 
 // development only
 if ('development' === app.get('env')) {
-  app.use(express.errorHandler());
+	app.use(function(req, res, next) {
+		var err = new Error('Not Found');
+		err.status = 404;
+		next(err);
+	});
 }
-
-app.get('/', routes.index);
-app.get('/users', user.list);
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
