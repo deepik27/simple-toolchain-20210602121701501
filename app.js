@@ -65,6 +65,10 @@ if ('development' === app.get('env')){
 	console.log('Settig up the webclient for NON-DEVELOPMENT mode...');
 	app.use('/webclient', express.static(path.join(__dirname, webClientModulePath)));
 }
+app.get('/webclient/map', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
+app.get('/webclient/alert', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
+app.get('/webclient/users', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
+app.get('/webclient/vehicle', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
 
 // development only
 if ('development' === app.get('env')) {
