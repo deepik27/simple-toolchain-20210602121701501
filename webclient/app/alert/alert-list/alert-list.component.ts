@@ -1,11 +1,13 @@
 import { Component } from '@angular/core';
 import { Http, Request, Response } from '@angular/http';
+import { OrderByPipe } from '../../utils/order-by.pipe';
 
 @Component({
   moduleId: module.id,
   selector: 'alert-list',
   templateUrl: 'alert-list.component.html',
-  inputs: ['prop', 'value']
+  inputs: ['prop', 'value'],
+  pipes: [OrderByPipe]
 })
 
 export class AlertListComponent{
@@ -46,10 +48,17 @@ export class AlertListComponent{
     this.value = value.getId();
     this._getAlert(this.prop, this.value);
   }
+
+  orderByKey: string;
+  orderByOrder: boolean;
+  onOrderBy(key){
+    this.orderByOrder = (key === this.orderByKey) ? !this.orderByOrder : true;
+    this.orderByKey = key;
+  }
   _getAlert = function(prop:string, value:string){
     this.http.request(new Request({
       method: "Get",
-      url: "/user/alert?" + prop + "=" + value
+      url: "/user/alert?" + prop + "=" + value + "&limit=100"
     })).subscribe((response: Response) => {
       if(response.status == 200){
         var fleetalerts = response.json();

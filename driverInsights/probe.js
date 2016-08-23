@@ -76,6 +76,7 @@ var driverInsightsProbe = {
 		var ts = carProbeData.ts || Date.now();
 		var payload = {
 				// assign ts if missing
+				ts: ts,
 				timestamp: moment(ts).format(), // ISO8601
 				trip_id: carProbeData.trip_id,
 				speed: carProbeData.speed,

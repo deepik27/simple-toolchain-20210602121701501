@@ -57,6 +57,7 @@ _.extend(driverInsightsAlert, {
 						description: "Fuel at 1/10 tank",
 						severity: "High",
 						mo_id: probe.mo_id,
+						ts: probe.ts,
 						timestamp: probe.timestamp
 					});
 				}
@@ -79,6 +80,7 @@ _.extend(driverInsightsAlert, {
 						description: "Fuel at half full",
 						severity: "Medium",
 						mo_id: probe.mo_id,
+						ts: probe.ts,
 						timestamp: probe.timestamp
 					});
 				}
@@ -96,6 +98,7 @@ _.extend(driverInsightsAlert, {
 					description: "Engine temperature is too high.",
 					severity: "High",
 					mo_id: probe.mo_id,
+					ts: probe.ts,
 					timestamp: probe.timestamp
 				});
 			}
@@ -116,6 +119,7 @@ _.extend(driverInsightsAlert, {
 	_getDesignDoc: function(){
 		var fleetAlertIndexer = function(doc){
 			if(doc.timestamp && doc.mo_id && doc.type && doc.severity){
+				index("ts", doc.ts, {store:true});
 				index("timestamp", doc.timestamp, {store: true});
 				index("mo_id", doc.mo_id, {store: true});
 				index("type", doc.type, {store: true});
@@ -168,19 +172,19 @@ _.extend(driverInsightsAlert, {
 	},
 
 	getAlertByType: function(type, limit){
-		return this._searchAlertIndex({q: "type:"+type, sort: "timestamp", limit: (limit||10)})
+		return this._searchAlertIndex({q: "type:"+type, sort: "-ts", limit: (limit||10)})
 			.then(function(result){
 				return {alerts: result.rows.map(function(row){return row.fields;})};
 			});
 	},
 	getAlertBySeverity: function(severity, limit){
-		return this._searchAlertIndex({q: "severity:"+severity, sort: "timestamp", limit: (limit||10)})
+		return this._searchAlertIndex({q: "severity:"+severity, sort: "-ts", limit: (limit||10)})
 		.then(function(result){
 			return {alerts: result.rows.map(function(row){return row.fields;})};
 		});
 	},
 	getAlertByVehicle: function(mo_id, limit){
-		return this._searchAlertIndex({q: "mo_id:"+mo_id, sort: "timestamp", limit: (limit||10)})
+		return this._searchAlertIndex({q: "mo_id:"+mo_id, sort: "-ts", limit: (limit||10)})
 		.then(function(result){
 			return {alerts: result.rows.map(function(row){return row.fields;})};
 		});
