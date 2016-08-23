@@ -17,12 +17,12 @@ var express = require('express')
   , cookieParser = require('cookie-parser')
   , bodyParser = require('body-parser')
   , methodOverride = require('method-override');
-
+var appEnv = require("cfenv").getAppEnv();
 
 var app = express();
 
 // all environments
-app.set('port', process.env.PORT || 3000);
+app.set('port', appEnv.port || 3000);
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 app.enable('trust proxy');
@@ -79,6 +79,7 @@ if ('development' === app.get('env')) {
 	});
 }
 
-http.createServer(app).listen(app.get('port'), function(){
+app.server = http.createServer(app);
+app.server.listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
 });

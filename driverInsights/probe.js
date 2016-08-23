@@ -218,7 +218,49 @@ var driverInsightsProbe = {
 		}
 		return deferred.promise;
 	},
-	
+
+	/**
+	  * @param qs as dict: see https://developer.ibm.com/api/view/id-265:title-IBM_IoT_for_Automotive___Vehicle_Data_Hub#GetCarProbe
+		*   - REQURES: min_longitude, max_longitude, min_latitude, max_latitude
+		*/
+	getCarProbe: function(qs) {
+		var deferred = Q.defer();
+		var node = this.vdhConfig;
+		var api = "/carProbe";
+		var options = {
+				method: "GET",
+				url: node.baseURL + api + "?tenant_id=" + node.tenant_id,
+				qs: qs,
+				rejectUnauthorized: false,
+				auth: {
+					user: node.username,
+					pass: node.password,
+					sendImmediately: true
+				}
+		};
+		debug("getCarProbe(url): " + options.url);
+		request(options, function(error, response, body){
+			if(!error && response.statusCode === 200){
+				debug("getCarProbe response: " + body);
+				try {
+					var result = JSON.parse(body);
+					if(!result.contents){
+						console.error("getCarProbe: <contents> is missing in the result.")
+					}
+					return deferred.resolve(result.contents);
+				}catch(e){
+					console.error("getCarProbe: Failed to parse JSON: " + body);
+					return deferred.reject(e);
+				}
+			}else{
+				console.error("getCarProbe: " + options.body);
+				console.error("getCarProbe error(" + (response ? response.statusCode : "no response") + "): " + error + ": " + body);
+				deferred.reject({error: "(getCarProbe)" + body});
+			}
+		});
+		return deferred.promise;
+	},
+
 	getCarProbeDataListAsDate: function(callback) {
 		var deferred = Q.defer();
 		
