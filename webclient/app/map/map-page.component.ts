@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, Inject } from '@angular/core';
 import { RealtimeMapComponent } from './realtime-map/realtime-map.component';
 import { NumberOfCarsComponent } from './number-of-cars/number-of-cars.component';
 
@@ -45,13 +45,28 @@ export class MapPageComponent implements OnInit {
     {id: "toronto",name: 'Toronto, Canada', extent: [-80.69297429492181,43.57305259767264,-78.43528386523431,44.06846938917488]},
   ];
 
+  //
+  // Web API host
+  //
+  webApiBaseUrl: string;
 
-  constructor() {  }
+  constructor(@Inject('webApiHost') webApiHost: string) {
+    this.webApiBaseUrl = window.location.protocol + '//' + webApiHost;
+  }
 
   onMapExtentChanged(event){
     let extent = event.extent;
     this.mapLastSelectedArea = {id:'_last_selected', name: 'Last Selected', extent: extent};
     //this.selectedArea = {id: 'user_' + Date.now(), name: 'User Defined', extent: extent};
+  }
+
+  get htmlClientInitialLocation(){
+    let e = this.mapLastSelectedArea && this.mapLastSelectedArea.extent;
+    if(e){
+      var lng = (e[0] + e[2]) / 2, lat = (e[1] + e[3]) / 2;
+      return '' + lat + ',' + lng;
+    }
+    return "";
   }
 
   ngOnInit() {

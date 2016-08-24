@@ -17,8 +17,16 @@ angular.module('htmlClient', ['ui.router'])
 	.config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
 		$stateProvider
 			.state('home', {
-				url: '/home',
+				url: '/home?loc',
 				template: '<client-drive></client-drive>',
+				controller: function($stateParams, virtualGeoLocation){
+					if($stateParams.loc){
+						var coord = $stateParams.loc.split(','); // --> [lat,lng]
+						if(coord.length == 2){
+							virtualGeoLocation.setCurrentPosition({lat: coord[0], lon: coord[1]});
+						}
+					}
+				}
 			})
 			.state('profile', {
 				url: '/profile',
