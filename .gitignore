@@ -1,2 +1,6 @@
+# Ignore mac chache file
+.DS_Store
+
 /.bin/
 /node_modules
+/npm-debug.log*

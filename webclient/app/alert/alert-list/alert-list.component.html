@@ -1,0 +1,35 @@
+
+<div *ngIf="!prop || !value || showInput">
+	<select #propSelect [value]="prop" (change)="onPropChanged($event)">
+		<option *ngFor="let alertProp of alertProps"
+			value="{{alertProp.getId()}}">{{alertProp.getLabel()}}</option>
+	</select> <select #propValueSelect [value]="value"
+		(change)="onValueChanged($event)">
+		<option *ngFor="let alertValue of alertValues"
+			value="{{alertValue.getId()}}">{{alertValue.getLabel()}}</option>
+	</select>
+	<label>
+		<input type="checkbox" [value]="includeClosed" (change)="onIncludeClosedChanged($event)"/>
+		Include Closed Alerts
+	</label>
+</div>
+<table class="table">
+	<thead>
+		<tr>
+			<th (click)="onOrderBy('ts')">From</th>
+			<th (click)="onOrderBy('closed_ts')">To</th>
+			<th (click)="onOrderBy('severity')">Severity</th>
+			<th (click)="onOrderBy('mo_id')">Vehicle ID</th>
+			<th (click)="onOrderBy('description')">Notes</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr *ngFor="let alert of (fleetalerts|orderBy:orderByKey:orderByOrder)">
+			<td>{{alert.ts|date:"yyyy/MM/dd hh:mm:ss"}}</td>
+			<td>{{alert.closed_ts>0?(alert.closed_ts|date:"yyyy/MM/dd hh:mm:ss"):"-"}}</td>
+			<td>{{alert.severity}}</td>
+			<td>{{alert.mo_id}}</td>
+			<td>{{alert.description}}</td>
+		</tr>
+	</tbody>
+</table>

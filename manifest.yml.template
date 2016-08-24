@@ -10,9 +10,9 @@ applications:
   - services:
       - FleetCloudantDB-SUFFIX-
       - FleetIoTForAuto-SUFFIX-
-    name: iota-starter-server-fleet-SUFFIX-
+    name: iota-starter-server-fleetmanagement-SUFFIX-
     memory: 512M
-#    host: iota-starter-server-fleet-SUFFIX-
+#    host: iota-starter-server-fleetmanagement-SUFFIX-
 #    domain: stage1.mybluemix.net
     path: .
     instances: 1

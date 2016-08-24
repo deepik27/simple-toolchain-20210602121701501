@@ -10,9 +10,9 @@ applications:
   - services:
       - FleetCloudantDB
       - FleetIoTForAuto
-    name: iota-starter-server-fleet
+    name: iota-starter-server-fleetmanagement
     memory: 512M
-#    host: iota-starter-server-fleet
+#    host: iota-starter-server-fleetmanagement
 #    domain: stage1.mybluemix.net
     path: .
     instances: 1
