@@ -77,7 +77,7 @@ var driverInsightsProbe = {
 		var payload = {
 				// assign ts if missing
 				ts: ts,
-				timestamp: moment(ts).format(), // ISO8601
+				timestamp: moment(ts).format('YYYY-MM-DDTHH:mm:ss.SSSZ'), // ISO8601
 				trip_id: carProbeData.trip_id,
 				speed: carProbeData.speed,
 				mo_id: carProbeData.mo_id,

@@ -287,8 +287,7 @@ var initWebSocketServer = function(server, path){
 		server: server,
 		path: path,
 		verifyClient : function (info, callback) { //only allow internal clients from the server origin
-			var localhost = 'localhost';
-			var isLocal = appEnv.url.toLowerCase().indexOf(localhost, appEnv.url.length - localhost.length) !== -1;
+			var isLocal = appEnv.url.toLowerCase().indexOf('://localhost') !== -1;
 			var allow = isLocal || (info.origin.toLowerCase() === appEnv.url.toLowerCase());
 			if(!allow){
 				console.error("rejected web socket connection form external origin " + info.origin + " only connection form internal origin " + appEnv.url + " are accepted");
@@ -327,6 +326,7 @@ function getCarProbe(qs){
 		[].concat(probes).forEach(function(p){
 			if(p.timestamp){
 				p.ts = Date.parse(p.timestamp);
+				p.deviceID = p.mo_id;
 			}
 		});
 		return probes;

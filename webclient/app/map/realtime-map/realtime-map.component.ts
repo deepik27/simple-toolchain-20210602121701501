@@ -1,10 +1,15 @@
 import { Component, EventEmitter, Input, Output,
 					OnInit, OnChanges, SimpleChange } from '@angular/core';
-//import '../../shared/rxjs-operators';
+import { Http, Request, Response, URLSearchParams } from '@angular/http';
+import { Observable, Subject } from 'rxjs/Rx.DOM';
+
 import * as ol from 'openlayers';
 
 import { MapHelper } from './map-helper';
-// import { AnimatedDevice, AnimatedDeviceManager } from './animated-device';
+import { AnimatedDevice, AnimatedDeviceManager } from './animated-device';
+
+declare var $; // jQuery from <script> tag in the index.html
+// as bootstrap type definitoin doesn't extend jQuery $'s type definition
 
 /*
  * Additional styles, javascripts
@@ -16,6 +21,11 @@ import { MapHelper } from './map-helper';
  *   <script src="https://cdnjs.cloudflare.com/ajax/libs/rxjs/3.1.2/rx.lite.js"></script>
  *   <script src="https://cdnjs.cloudflare.com/ajax/libs/rxjs-dom/7.0.3/rx.dom.js"></script>
  */
+
+var CAR_PROBE_URL = 'http://localhost:3000/user/carProbe';
+var CAR_PROBE_WSS_HOST = 'localhost:3000';
+//var CAR_PROBE_URL = '/user/carProbe';
+//var CAR_PROBE_WSS_HOST = window.location.host;
 
 
 	/**
@@ -44,7 +54,7 @@ export class RealtimeMapComponent implements OnInit {
 	DEBUG = false;
 	debugData = '[none]';
 
-	//
+	// Mapping
 	map: ol.Map;
 	eventsLayer: ol.layer.Vector;
 	carsLayer: ol.layer.Vector;
@@ -53,7 +63,22 @@ export class RealtimeMapComponent implements OnInit {
 	mapElementId = 'carmonitor';
 	popoverElemetId = 'carmonitorpop';
 
-  constructor() {
+	// RxJS
+	mapExtentSubject = new Subject<any>();
+
+	//
+	// Devices management
+	//
+	animatedDeviceManager = new AnimatedDeviceManager();
+
+	//
+	// Connection to server and reflecting the response to the Map
+	//
+	activeWsClient = null;
+	activeWsSubscribe = null; // WebSocket client
+	carStatusIntervalTimer: any;
+
+  constructor(private $http: Http) {
 	}
 
 	switchDebug(){
@@ -106,8 +131,8 @@ export class RealtimeMapComponent implements OnInit {
 
 		// setup view change event handler
 		this.mapHelper.postChangeViewHandlers.push(extent => {
-//			stopCarTracking(true); // true to move to next extent smoothly
-//			startCarTracking(extent);
+			this.stopTracking(true); // true to move to next extent smoothly
+			this.startTracking(extent);
 			// fire event
 			this.extentChanged.emit({extent: extent});
 		});
@@ -115,278 +140,279 @@ export class RealtimeMapComponent implements OnInit {
 		//
 		// Setup popover
 		//
-		// this.mapHelper.addPopOver({
-		// 		elm: document.getElementById(this.popoverElementId),
-		// 		pin: true,
-		// 		updateInterval: 1000,
-		// 	},
-		// 	function showPopOver(elem, feature, pinned, closeCallback){
-		// 		if(!feature) return;
-		// 		var content = getPopOverContent(feature);
-		// 		if(content){
-		// 			var title = '<div>' + (content.title ? _.escape(content.title) : '') + '</div>' +
-		// 					(pinned ? '<div><span class="btn btn-default close">&times;</span></div>' : '');
-		// 			var pop = $(elem).popover({
-		// 				//placement: 'top',
-		// 				html: true,
-		// 				title: title,
-		// 				content: content.content
-		// 			});
-		// 			if(pinned){
-		// 				pop.on('shown.bs.popover', function(){
-		// 					var c = $(elem).parent().find('.popover .close');
-		// 					c.on('click', function(){
-		// 						closeCallback && closeCallback();
-		// 					});
-		// 				});
-		// 			}
-		// 			$(elem).popover('show');
-		// 		}
-		// 	},
-		// 	function destroyPopOver(elem, feature, pinned){
-		// 		if(!feature) return;
-		// 		$(elem).popover('destroy');
-		// 	},
-		// 	function updatePopOver(elem, feature, pinned){
-		// 		if(!feature) return;
-		// 		var content = getPopOverContent(feature);
-		// 		if(content){
-		// 			var popover = $(elem).data('bs.popover');
-		// 			if(popover.options.content != content.content){
-		// 				popover.options.content = content.content;
-		// 				$(elem).popover('show');
-		// 			}
-		// 		}
-		// 	});
-		//
-		// // popover - generate popover content from ol.Feature
-		// var getPopOverContent = function getPopOverContent(feature){
-		// 	var content = feature.get('popoverContent');
-		// 	if(content)
-		// 		return {content: '<span style="white-space: nowrap;">' + _.escape(content) + '</span>' };
-		//
-		// 	var device = feature.get('device');
-		// 	if(device){
-		// 		var result = { content: '', title: undefined };
-		// 		result.content = '<span style="white-space: nowrap;">ID: ' + _.escape(device.deviceID) + "</style>";
-		// 		var info = device.latestInfo;
-		// 		var sample = device.latestSample;
-		// 		if(sample && $scope.DEBUG){
-		// 			var content = '<div class="">Connected: ' + sample.device_connection + '</div>' +
-		// 							'<div class="">Device status: ' + sample.device_status + '</div>';
-		// 			result.content += content;
-		// 		}
-		// 		if(info){
-		// 			if(info.name && info.makeModel){
-		// 				result.title = info.name;
-		// 			}else if(info.name){
-		// 				result.title = info.name;
-		// 			}
-		// 			if(info.reservation){
-		// 				var content = "";
-		// 				if(sample && sample.status == 'in_use'){
-		// 					content = 'Reserved until ' + moment(parseInt(info.reservation.dropOffTime) * 1000).calendar();
-		// 				}else{
-		// 					content = 'Reserved from ' + moment(parseInt(info.reservation.pickupTime) * 1000).calendar();
-		// 				}
-		// 				result.content += '<div class="marginTop-10" style="white-space: nowrap;">' + content + '</div>';
-		// 			}
-		// 		}
-		// 		if(sample && sample.status == 'in_use'){
-		// 			if(sample.speed){
-		// 				result.content += '<div class="">Speed: ' + sample.speed.toFixed(1) + 'km/h</div>';
-		// 			}
-		// 			if(sample.matched_heading){
-		// 				var heading = +sample.matched_heading;
-		// 				heading = (heading < 0) ? heading + 360 : heading;
-		// 				var index = Math.floor(((heading/360 + 1/32) % 1) * 16);
-		// 				var dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-		// 				var dir = dirs[index];
-		// 				result.content += '<div class="">Heading: ' + dir + '</div>';
-		// 			}
-		// 		}
-		// 		return result;
-		// 	}
-		// 	return null;
-		// };
+		this.mapHelper.addPopOver({
+				elm: document.getElementById(this.popoverElemetId),
+				pin: true,
+				updateInterval: 1000,
+			},
+			function showPopOver(elem, feature, pinned, closeCallback){
+				if(!feature) return;
+				var content = <any>getPopOverContent(feature);
+				if(content){
+					var title = '<div>' + (content.title ? _.escape(content.title) : '') + '</div>' +
+							(pinned ? '<div><span class="btn btn-default close">&times;</span></div>' : '');
+					var pop = $(elem).popover({
+						//placement: 'top',
+						html: true,
+						title: title,
+						content: content.content
+					});
+					if(pinned){
+						pop.on('shown.bs.popover', function(){
+							var c = $(elem).parent().find('.popover .close');
+							c.on('click', function(){
+								closeCallback && closeCallback();
+							});
+						});
+					}
+					$(elem).popover('show');
+				}
+			},
+			function destroyPopOver(elem, feature, pinned){
+				if(!feature) return;
+				$(elem).popover('destroy');
+			},
+			function updatePopOver(elem, feature, pinned){
+				if(!feature) return;
+				var content = getPopOverContent(feature);
+				if(content){
+					var popover = $(elem).data('bs.popover');
+					if(popover.options.content != content.content){
+						popover.options.content = content.content;
+						$(elem).popover('show');
+					}
+				}
+			});
 
-		// // setup animation
-		// // - workaround styles
-		// preloadStyles(map, CAR_STYLES);
-		// // - define feature synchronizer
-		// var syncCarFeatures = function(devices, frameTime, surpussEvent){
-		// 	devices.forEach(function(device){
-		// 		var cur = device.getAt(frameTime); // get state of the device at frameTime
-		// 		var curPoint = (cur.lng && cur.lat) ? new ol.geom.Point(ol.proj.fromLonLat([cur.lng, cur.lat])) : null;
-		// 		var curStatus = cur.status || null;
-		//
-		// 		var feature = device.feature;
-		// 		if(curPoint && !feature){
-		// 			// create a feature for me
-		// 			feature = new ol.Feature({
-		// 				geometry: curPoint,
-		// 				carStatus: curStatus,
-		// 				//style: getCarStyle(curStatus),  //WORKAROUND: not sure why layer style not work
-		// 				device: device,
-		// 			});
-		// 			if(curStatus)
-		// 				feature.setStyle(getCarStyle(curStatus));
-		// 			carsLayer.getSource().addFeature(feature);
-		// 			device.feature = feature;
-		// 		}else if(curPoint && feature){
-		// 			// update
-		// 			if(curStatus && curStatus !== feature.get('carStatus')){
-		// 				feature.set('carStatus', curStatus, surpussEvent);
-		// 				feature.setStyle(getCarStyle(curStatus)); //WORKAROUND: not sure why layer style not work
-		// 			}
-		// 			if(curPoint.getCoordinates() != feature.getGeometry().getCoordinates()){
-		// 				feature.setGeometry(curPoint);
-		// 			}
-		// 		}else if(!curPoint && feature){
-		// 			// remove feature
-		// 			carsLayer.getSource().removeFeature(feature);
-		// 			device.feature = null;
-		// 		}
-		// 	});
-		// }
+		// popover - generate popover content from ol.Feature
+		var getPopOverContent = (feature)=> {
+			var content = <string>feature.get('popoverContent');
+			if(content)
+				return {content: '<span style="white-space: nowrap;">' + _.escape(content) + '</span>' };
+
+			var device = feature.get('device');
+			if(device){
+				let result = { content: '', title: null };
+				result.content = '<span style="white-space: nowrap;">ID: ' + _.escape(device.deviceID) + "</style>";
+				var info = device.latestInfo;
+				var sample = device.latestSample;
+				if(sample && this.DEBUG){
+					var content = '<div class="">Connected: ' + sample.device_connection + '</div>' +
+									'<div class="">Device status: ' + sample.device_status + '</div>';
+					result.content += content;
+				}
+				if(sample){
+					result.content += '<div style="white-space: nowrap;">Longitude: ' + _.escape(sample.lng) + "</div>";
+					result.content += '<div style="white-space: nowrap;">Latitude: ' + _.escape(sample.lat) + "</div>";
+					result.content += '<div style="white-space: nowrap;">Speed: ' + _.escape(sample.speed) + "</div>";
+					result.content += '<div style="white-space: nowrap;">Fuel: ' + _.escape(sample.props && sample.props.fuel) + "</div>";
+					result.content += '<div style="white-space: nowrap;">Engine Temp: ' + _.escape(sample.props && sample.props.engineTemp) + "</div>";
+					result.content += '<div style="white-space: nowrap;">Timestamp: ' + _.escape(sample.timestamp) + "</div>";
+				}
+				if(info){
+					if(info.name && info.makeModel){
+						result.title = info.name;
+					}else if(info.name){
+						result.title = info.name;
+					}
+					if(info.reservation){
+						var content = "";
+						if(sample && sample.status == 'in_use'){
+							content = 'Reserved until ' + moment(parseInt(info.reservation.dropOffTime) * 1000).calendar();
+						}else{
+							content = 'Reserved from ' + moment(parseInt(info.reservation.pickupTime) * 1000).calendar();
+						}
+						result.content += '<div class="marginTop-10" style="white-space: nowrap;">' + content + '</div>';
+					}
+				}
+				if(sample && sample.status == 'in_use'){
+					if(sample.speed){
+						result.content += '<div class="">Speed: ' + sample.speed.toFixed(1) + 'km/h</div>';
+					}
+					if(sample.matched_heading){
+						var heading = +sample.matched_heading;
+						heading = (heading < 0) ? heading + 360 : heading;
+						var index = Math.floor(((heading/360 + 1/32) % 1) * 16);
+						var dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+						var dir = dirs[index];
+						result.content += '<div class="">Heading: ' + dir + '</div>';
+					}
+				}
+				return result;
+			}
+			return null;
+		}
+
+		// setup animation
+		// - workaround styles
+		this.mapHelper.preloadStyles(this.map, CAR_STYLES);
+		// - define feature synchronizer
+		var syncCarFeatures = (devices, frameTime, surpussEvent = true) => {
+			devices.forEach((device) => {
+				var cur = device.getAt(frameTime); // get state of the device at frameTime
+				var curPoint = (cur.lng && cur.lat) ? new ol.geom.Point(ol.proj.fromLonLat([cur.lng, cur.lat], undefined)) : null;
+				var curStatus = cur.status || 'in_use' || null;
+				//console.log('syncCarFeatures - Putting icon at ', [cur.lng, cur.lat])
+
+				var feature = device.feature;
+				if(curPoint && !feature){
+					// create a feature for me
+					feature = new ol.Feature({
+						geometry: curPoint,
+						carStatus: curStatus,
+						//style: getCarStyle(curStatus),  //WORKAROUND: not sure why layer style not work
+						device: device,
+					});
+					if(curStatus)
+						feature.setStyle(getCarStyle(curStatus));
+						this.carsLayer.getSource().addFeature(feature);
+					device.feature = feature;
+				}else if(curPoint && feature){
+					// update
+					if(curStatus && curStatus !== feature.get('carStatus')){
+						feature.set('carStatus', curStatus, surpussEvent);
+						feature.setStyle(getCarStyle(curStatus)); //WORKAROUND: not sure why layer style not work
+					}
+					if(curPoint.getCoordinates() != feature.getGeometry().getCoordinates()){
+						feature.setGeometry(curPoint);
+					}
+				}else if(!curPoint && feature){
+					// remove feature
+					(<any>this.carsLayer.getSource()).removeFeature(feature);
+					device.feature = null;
+				}
+			});
+		}
 		// // - register rendering handlers
-		// this.mapHelper.preComposeHandlers.push((event, frameTime) => {
-		// 	this.syncCarFeatures(this.animatedDeviceManager.getDevices(), frameTime);
-		// });
-		// this.mapHelper.postComposeHandlers.push((event, frameTime) => {
-		// 	return INV_MAX_FPS; // give delay for next frame if not other events captured
-		// });
+		this.mapHelper.preComposeHandlers.push((event, frameTime) => {
+			syncCarFeatures(this.animatedDeviceManager.getDevices(), frameTime);
+		});
+		this.mapHelper.postComposeHandlers.push((event, frameTime) => {
+			return INV_MAX_FPS; // give delay for next frame if not other events captured
+		});
+	}
+
+	/**
+	 * Start trackgin a region
+	 */
+	startTracking(extent){
+		var xt = this.mapHelper.expandExtent(extent, 0.5); // get extended extent to track for map
+		var qs = ['min_lat='+xt[1], 'min_lng='+xt[0],
+							'max_lat='+xt[3], 'max_lng='+xt[2]].join('&');
+		// handle cars
+		this.refreshCarStatus(qs).then((data) => {
+			// adjust animation time
+			if(data.serverTime){
+				this.mapHelper.setTimeFromServerRightNow(data.serverTime);
+			}
+
+			// start websock server for real-time tracking
+			this.stopWsClient();
+			if (data.wssPath){
+				var startWssClient = () => {
+					var wsProtocol = (location.protocol == "https:") ? "wss" : "ws";
+					var wssUrl = wsProtocol + '://' + CAR_PROBE_WSS_HOST + data.wssPath;
+					// websock client to keep the device locations latest
+					var ws = this.activeWsClient = Observable.webSocket(wssUrl);
+					this.activeWsSubscribe = ws.subscribe((data: any) => {
+						this.animatedDeviceManager.addDeviceSamples(data.devices);
+					}, (e) => {
+						if (e.type === 'close'){
+							this.activeWsSubscribe = null;
+							ws.socket.close(); //closeObserver(); observer.dispose();
+							// handle close event
+							if(ws === this.activeWsClient){ // reconnect only when this ws is active ws
+								console.log('got wss socket close event. reopening...')
+								this.activeWsClient = null;
+								startWssClient(); // restart!
+								return;
+							}
+						}
+						// error
+						console.error('Error event from WebSock: ', e);
+					});
+				};
+				startWssClient(); // start wss
+			}
+
+			// start animation
+			this.mapHelper.startAnimation();
+
+			// schedule status timer
+			var carStatusTimerFunc = () => {
+				this.refreshCarStatus(qs);
+				this.carStatusIntervalTimer = setTimeout(carStatusTimerFunc, CAR_STATUS_REFRESH_PERIOD);
+			}
+			if(CAR_STATUS_REFRESH_PERIOD > 0)
+					this.carStatusIntervalTimer = setTimeout(carStatusTimerFunc, CAR_STATUS_REFRESH_PERIOD);
+		}, (err) => {
+			console.warn('it\'s fail to access the server.');
+		})
+
+		// handle driver events
+		this.refreshDriverEvents(qs);
+	};
+	// Add/update cars with DB info
+	refreshCarStatus(qs) {
+		return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise().then((resp) => {
+			let data = resp.json();
+			if(data.devices){
+				this.animatedDeviceManager.addDeviceSamples(data.devices);
+			}
+			return data; // return resp so that subsequent can use the resp
+		});
+	};
+	// Add driver events on the map
+	refreshDriverEvents(qs){
+		return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise().then((resp) => {
+			let data = resp.json();
+			var events = data.devices;
+			if (events){
+				// create markers
+				var markers = events.map((event) => {
+					var result = new ol.Feature({
+						geometry: new ol.geom.Point(ol.proj.fromLonLat(<ol.Coordinate>[event.s_longitude, event.s_latitude], undefined)),
+						popoverContent: event.event_name,
+					});
+					result.setStyle(getDrivingEventStyle(event)); //WORKAROUND not sure why layer style not work
+					return result;
+				});
+				// update layer contents
+				this.eventsLayer.getSource().clear();
+				this.eventsLayer.getSource().addFeatures(markers);
+			}
+		});
 	};
 
-	// //
-	// // Devices management
-	// //
-	// animatedDeviceManager = new AnimatedDeviceManager();
-	//
-	// //
-	// // Connection to server and reflecting the response to the Map
-	// //
-	// activeWsClient = null;
-	// activeWsSubscribe = null; // WebSocket client
-	// carStatusIntervalTimer: any;
-	//
-	// /**
-	//  * Start trackgin a region
-	//  */
-	// startTracking(extent){
-	// 	var xt = this.expandExtent(extent, 0.5); // get extended extent to track for map
-	// 	var qs = ['min_lat='+xt[1], 'min_lng='+xt[0],
-	// 						'max_lat='+xt[3], 'max_lng='+xt[2]].join('&');
-	// 	// handle cars
-	// 	this.refreshCarStatus(qs).then((resp) => {
-	// 		// adjust animation time
-	// 		if(resp.data.serverTime){
-	// 			this.mapHelper.setTimeFromServerRightNow(resp.data.serverTime);
-	// 		}
-	//
-	// 		// start websock server for real-time tracking
-	// 		this.stopWsClient();
-	// 		if (resp.data.wssPath){
-	// 			var startWssClient = function(){
-	// 				var wsProtocol = (location.protocol == "https:") ? "wss" : "ws";
-	// 				var wssUrl = wsProtocol + '://' + window.location.host + resp.data.wssPath;
-	// 				// websock client to keep the device locations latest
-	// 				var ws = this.activeWsClient = Rx.DOM.fromWebSocket(wssUrl);
-	// 				this.activeWsSubscribe = ws.subscribe((e) => {
-	// 					var msg = JSON.parse(e.data);
-	// 					this.animatedDeviceManager.addDeviceSamples(msg.devices);
-	// 				}, (e) => {
-	// 					if (e.type === 'close'){
-	// 						this.activeWsSubscribe = null;
-	// 						ws.observer.dispose();
-	// 						// handle close event
-	// 						if(ws === this.activeWsClient){ // reconnect only when this ws is active ws
-	// 							console.log('got wss socket close event. reopening...')
-	// 							this.activeWsClient = null;
-	// 							startWssClient(); // restart!
-	// 							return;
-	// 						}
-	// 					}
-	// 					// error
-	// 					console.error('Error event from WebSock: ', e);
-	// 				});
-	// 			};
-	// 			startWssClient(); // start wss
-	// 		}
-	//
-	// 		// start animation
-	// 		this.mapHelper.startAnimation();
-	//
-	// 		// schedule status timer
-	// 		var carStatusTimerFunc = () => {
-	// 			this.refreshCarStatus(qs);
-	// 			this.carStatusIntervalTimer = setTimeout(carStatusTimerFunc, CAR_STATUS_REFRESH_PERIOD);
-	// 		}
-	// 		if(CAR_STATUS_REFRESH_PERIOD > 0)
-	// 				this.carStatusIntervalTimer = setTimeout(carStatusTimerFunc, CAR_STATUS_REFRESH_PERIOD);
-	// 	}, (err) => {
-	// 		console.warn('it\'s fail to access the server.');
-	// 	})
-	//
-	// 	// handle driver events
-	// 	this.refreshDriverEvents(qs);
-	// };
-	// // Add/update cars with DB info
-	// refreshCarStatus(qs) {
-	// 	return $http.get('cars/query?' + qs).then((resp) => {
-	// 		if(resp.data.devices){
-	// 			this.animatedDeviceManager.addDeviceSamples(resp.data.devices);
-	// 		}
-	// 		return resp; // return resp so that subsequent can use the resp
-	// 	});
-	// };
-	// // Add driver events on the map
-	// refreshDriverEvents(qs){
-	// 	return $http.get('drivingEvents/query?' + qs).then((resp) => {
-	// 		var events = resp.data.events;
-	// 		if (events){
-	// 			// create markers
-	// 			var markers = events.map(function(event){
-	// 				var result = new ol.Feature({
-	// 					geometry: new ol.geom.Point(ol.proj.fromLonLat(<ol.Coordinate>[event.s_longitude, event.s_latitude], undefined)),
-	// 					popoverContent: event.event_name,
-	// 				});
-	// 				result.setStyle(this.getDrivingEventStyle(event)); //WORKAROUND not sure why layer style not work
-	// 				return result;
-	// 			});
-	// 			// update layer contents
-	// 			this.eventsLayer.getSource().clear();
-	// 			this.eventsLayer.getSource().addFeatures(markers);
-	// 		}
-	// 	});
-	// };
-	//
-	// /**
-	//  * Stop server connection
-	//  */
-	// stopTracking(intermediate){
-	// 	// stop timer
-	// 	if(this.carStatusIntervalTimer){
-	// 		clearTimeout(this.carStatusIntervalTimer);
-	// 		this.carStatusIntervalTimer = 0;
-	// 	}
-	// 	if(!intermediate){
-	// 		// stop animation
-	// 		this.mapHelper.stopAnimation();
-	// 		// stop WebSock client
-	// 		this.stopWsClient();
-	// 	}
-	// };
-	// stopWsClient(){
-	// 	if (this.activeWsSubscribe){
-	// 		this.activeWsSubscribe.dispose();
-	// 		this.activeWsSubscribe = null;
-	// 	}
-	// 	if (this.activeWsClient){
-	// 		this.activeWsClient.observer.dispose();
-	// 		this.activeWsClient = null;
-	// 	}
-	// }
+	/**
+	 * Stop server connection
+	 */
+	stopTracking(intermediate){
+		// stop timer
+		if(this.carStatusIntervalTimer){
+			clearTimeout(this.carStatusIntervalTimer);
+			this.carStatusIntervalTimer = 0;
+		}
+		if(!intermediate){
+			// stop animation
+			this.mapHelper.stopAnimation();
+			// stop WebSock client
+			this.stopWsClient();
+		}
+	};
+	stopWsClient(){
+		if (this.activeWsSubscribe){
+			this.activeWsSubscribe.unsubscribe();
+			this.activeWsSubscribe = null;
+		}
+		if (this.activeWsClient){
+			if (this.activeWsClient.socket && this.activeWsClient.socket){
+				this.activeWsClient.socket.close();
+			}
+			this.activeWsClient = null;
+		}
+	}
+
 
 
 
