@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+var driverInsightsProbe = module.exports = {};
 
 var _ = require("underscore");
 var Q = new require('q');
@@ -30,7 +31,7 @@ var tripRouteCache = {};
 var insertTripRouteTimer = null;
 
 
-var driverInsightsProbe = {
+_.extend(driverInsightsProbe, {
 	last_prob_ts: moment().valueOf(),
 
 	driverInsightsConfig: function(){
@@ -291,7 +292,7 @@ var driverInsightsProbe = {
 		});
 		return deferred.promise;
 	}
-};
+});
 
 // Update last_prob_ts
 driverInsightsProbe.getCarProbeDataListAsDate(function(body){
@@ -306,6 +307,3 @@ driverInsightsProbe.getCarProbeDataListAsDate(function(body){
 		// Don't update last_prob_ts
 	}
 });
-
-// Export module	
-module.exports = driverInsightsProbe;
