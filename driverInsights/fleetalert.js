@@ -243,43 +243,18 @@ _.extend(driverInsightsAlert, {
 		//TODO
 	},
 
-	getAllAlert: function(includeClosed, limit){
-		var opt = {q: "*:*", sort: "-ts"};
-		if(!includeClosed){
-			opt.q = "closed_ts:\\-1";
-		}
-		if(limit){
-			_.mixin(opt, {limit: limit});
-		}
-		return this._searchAlertIndex(opt)
-			.then(function(result){
-				return {alerts: result.rows.map(function(row){return row.fields;})};
-			});
-	},
-	getAlertByType: function(type, includeClosed, limit){
-		var opt = {q: "type:"+type, sort: "-ts", limit: (limit||10)};
-		if(!includeClosed){
-			opt.q += " AND closed_ts:\\-1";
-		}
-		return this._searchAlertIndex(opt)
-			.then(function(result){
-				return {alerts: result.rows.map(function(row){return row.fields;})};
-			});
-	},
-	getAlertBySeverity: function(severity, includeClosed, limit){
-		var opt = {q: "severity:"+severity, sort: "-ts", limit: (limit||10)};
-		if(!includeClosed){
-			opt.q += " AND closed_ts:\\-1";
-		}
-		return this._searchAlertIndex(opt)
-			.then(function(result){
-				return {alerts: result.rows.map(function(row){return row.fields;})};
-			});
-	},
-	getAlertByVehicle: function(mo_id, includeClosed, limit){
-		var opt = {q: "mo_id:"+mo_id, sort: "-ts", limit: (limit||10)};
-		if(!includeClosed){
-			opt.q += " AND closed_ts:\\-1";
+	getAlerts: function(conditions, includeClosed, limit){
+		var opt = {sort: "-ts"};
+		if(conditions.length > 0){
+			_.extend(opt, {q: conditions.join(" AND "), limit: (limit || 10)});
+			if(!includeClosed){
+				opt.q += " AND closed_ts:\\-1";
+			}
+		}else{
+			_.extend(opt, {q: includeClosed ? "*:*" : "closed_ts:\\-1"});
+			if(limit){
+				_.extend(opt, {limit: limit})
+			}
 		}
 		return this._searchAlertIndex(opt)
 			.then(function(result){
@@ -330,6 +305,5 @@ _.extend(driverInsightsAlert, {
 		this.alertRules[name] = rule;
 	}
 });
-
 
 driverInsightsAlert._init();

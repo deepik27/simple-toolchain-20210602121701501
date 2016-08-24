@@ -184,30 +184,22 @@ router.get("/routesearch", function(req, res){
 
 router.get("/alert", function(req, res){
 	var q = req.query;
-	var type = q.type;
-	var severity = q.severity;
-	var mo_id = q.mo_id;
+	var conditions = [];
+	if(q.type){
+		conditions.push("type:" + q.type);
+	}
+	if(q.severity){
+		conditions.push("severity:" + q.severity);
+	}
+	if(q.mo_id){
+		conditions.push("mo_id:" + q.mo_id);
+	}
 	var includeClosed = q.includeClosed === "true";
 	var limit = q.limit;
-	if(type && mo_id){
-		res.send("Specify only type or mo_id");
-	}else if(type){
-		Q.when(driverInsightsAlert.getAlertByType(type, includeClosed, limit), function(docs){
-			res.send(docs);
-		});
-	}else if(severity){
-		Q.when(driverInsightsAlert.getAlertBySeverity(severity, includeClosed, limit), function(docs){
-			res.send(docs);
-		});
-	}else if(mo_id){
-		Q.when(driverInsightsAlert.getAlertByVehicle(mo_id, includeClosed, limit), function(docs){
-			res.send(docs);
-		});
-	}else{
-		Q.when(driverInsightsAlert.getAllAlert(includeClosed, limit), function(docs){
-			res.send(docs);
-		});
-	}
+
+	Q.when(driverInsightsAlert.getAlerts(conditions, includeClosed, limit), function(docs){
+		res.send(docs);
+	});
 });
 
 function getUserTrips(req){
