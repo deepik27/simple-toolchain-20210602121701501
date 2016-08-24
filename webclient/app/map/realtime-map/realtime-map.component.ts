@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output,
-					OnInit, OnChanges, SimpleChange } from '@angular/core';
+					OnInit, OnChanges, SimpleChange, Inject } from '@angular/core';
 import { Http, Request, Response, URLSearchParams } from '@angular/http';
 import { Observable, Subject } from 'rxjs/Rx.DOM';
 
@@ -22,11 +22,7 @@ declare var $; // jQuery from <script> tag in the index.html
  *   <script src="https://cdnjs.cloudflare.com/ajax/libs/rxjs-dom/7.0.3/rx.dom.js"></script>
  */
 
-var CAR_PROBE_URL = 'http://localhost:3000/user/carProbe';
-var CAR_PROBE_WSS_HOST = 'localhost:3000';
-//var CAR_PROBE_URL = '/user/carProbe';
-//var CAR_PROBE_WSS_HOST = window.location.host;
-
+var CAR_PROBE_URL = '/user/carProbe';
 
 	/**
 	 * The default zoom value when the map `region` is set by `center`
@@ -78,7 +74,10 @@ export class RealtimeMapComponent implements OnInit {
 	activeWsSubscribe = null; // WebSocket client
 	carStatusIntervalTimer: any;
 
-  constructor(private $http: Http) {
+  constructor(
+		private $http: Http,
+		@Inject('webApiHost') private webApiHost: string
+	) {
 	}
 
 	switchDebug(){
@@ -311,7 +310,7 @@ export class RealtimeMapComponent implements OnInit {
 			if (data.wssPath){
 				var startWssClient = () => {
 					var wsProtocol = (location.protocol == "https:") ? "wss" : "ws";
-					var wssUrl = wsProtocol + '://' + CAR_PROBE_WSS_HOST + data.wssPath;
+					var wssUrl = wsProtocol + '://' + this.webApiHost + data.wssPath;
 					// websock client to keep the device locations latest
 					var ws = this.activeWsClient = Observable.webSocket(wssUrl);
 					this.activeWsSubscribe = ws.subscribe((data: any) => {
