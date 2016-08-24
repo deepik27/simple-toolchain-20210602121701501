@@ -48,9 +48,10 @@ export class MapPageComponent implements OnInit {
 
   constructor() {  }
 
-  onMapExtentChanged(extent){
+  onMapExtentChanged(event){
+    let extent = event.extent;
     this.mapLastSelectedArea = {id:'_last_selected', name: 'Last Selected', extent: extent};
-    this.selectedArea = {id: 'user_' + Date.now(), name: 'User Defined', extent: extent};
+    //this.selectedArea = {id: 'user_' + Date.now(), name: 'User Defined', extent: extent};
   }
 
   ngOnInit() {
@@ -63,7 +64,9 @@ export class MapPageComponent implements OnInit {
                 id: '_current',
                 name: 'Current Location',
                 center: current_center});
-            if(fSelectNearestLocation){
+            if(fSelectNearestLocation){ // select current location by default
+              this.selectedArea = this.areas[this.areas.length-1];
+            }else if(fSelectNearestLocation){
                 // when the location is not "last selected", re-select the map location depending on the current location
                 var nearest = _.min(this.areas, area => {
                     if((area.id && area.id.indexOf('_') === 0) || !area.center) return undefined;
