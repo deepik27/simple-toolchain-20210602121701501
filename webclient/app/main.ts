@@ -3,7 +3,6 @@ import { provide } from '@angular/core';
 import { HTTP_PROVIDERS, BaseRequestOptions, RequestOptions, RequestOptionsArgs } from '@angular/http';
 
 import { AppComponent } from './app.component';
-import { appRouterProviders } from './app.routes';
 
 /**
  * When client is hosted at port 3123, it seems that lite-server is used for debugging.
@@ -34,5 +33,4 @@ bootstrap(AppComponent, [
   HTTP_PROVIDERS,
   provide(RequestOptions, {useClass: AppRequestOptions}),
   provide('webApiHost', {useValue: webApiHost}),
-  appRouterProviders,
 ]);
