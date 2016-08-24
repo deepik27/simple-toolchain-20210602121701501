@@ -187,23 +187,26 @@ router.get("/alert", function(req, res){
 	var type = q.type;
 	var severity = q.severity;
 	var mo_id = q.mo_id;
+	var includeClosed = q.includeClosed === "true";
 	var limit = q.limit;
 	if(type && mo_id){
 		res.send("Specify only type or mo_id");
 	}else if(type){
-		Q.when(driverInsightsAlert.getAlertByType(type, limit), function(docs){
+		Q.when(driverInsightsAlert.getAlertByType(type, includeClosed, limit), function(docs){
 			res.send(docs);
 		});
 	}else if(severity){
-		Q.when(driverInsightsAlert.getAlertBySeverity(severity, limit), function(docs){
+		Q.when(driverInsightsAlert.getAlertBySeverity(severity, includeClosed, limit), function(docs){
 			res.send(docs);
 		});
 	}else if(mo_id){
-		Q.when(driverInsightsAlert.getAlertByVehicle(mo_id, limit), function(docs){
+		Q.when(driverInsightsAlert.getAlertByVehicle(mo_id, includeClosed, limit), function(docs){
 			res.send(docs);
 		});
 	}else{
-		res.send("Specify type or mod_id");
+		Q.when(driverInsightsAlert.getAllAlert(includeClosed, limit), function(docs){
+			res.send(docs);
+		});
 	}
 });
 

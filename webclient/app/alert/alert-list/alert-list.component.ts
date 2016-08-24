@@ -19,6 +19,7 @@ export class AlertListComponent{
 
   prop: string;
   value: string;
+  includeClosed: boolean;
   showInput = true;
   fleetalerts: Alert[];
 
@@ -38,6 +39,7 @@ export class AlertListComponent{
       }
     }
   }
+
   onPropChanged(event){
     var prop = this.alertProps[event.target.selectedIndex];
     this.prop = prop.getId();
@@ -46,7 +48,11 @@ export class AlertListComponent{
   onValueChanged(event){
     var value = this.alertValues[event.target.selectedIndex];
     this.value = value.getId();
-    this._getAlert(this.prop, this.value);
+    this._getAlert(this.prop, this.value, this.includeClosed);
+  }
+  onIncludeClosedChanged(event){
+    this.includeClosed = event.target.checked;
+    this._getAlert(this.prop, this.value, this.includeClosed);
   }
 
   orderByKey: string;
@@ -55,10 +61,10 @@ export class AlertListComponent{
     this.orderByOrder = (key === this.orderByKey) ? !this.orderByOrder : true;
     this.orderByKey = key;
   }
-  _getAlert = function(prop:string, value:string){
+  _getAlert = function(prop:string, value:string, includeClosed:boolean){
     this.http.request(new Request({
       method: "Get",
-      url: "/user/alert?" + prop + "=" + value + "&limit=100"
+      url: "/user/alert?" + prop + "=" + value + "&includeClosed=" + includeClosed + "&limit=100"
     })).subscribe((response: Response) => {
       if(response.status == 200){
         var fleetalerts = response.json();
