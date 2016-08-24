@@ -18,3 +18,4 @@ import 'rxjs/add/operator/startWith';
 import 'rxjs/add/operator/switchMap';
 //import 'rxjs/add/operator/timer';
 //import 'rxjs/add/operator/zip';
+import 'rxjs/add/operator/toPromise';

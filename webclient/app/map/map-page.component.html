@@ -1,14 +1,17 @@
 <div class="container-50 noTopPadding container-30-right">
-  <form class="floatRight">
-    <select [(ngModel)]="selectedArea">
-      <option *ngFor="let area of areas" [ngValue]="area">{{area.name}}</option>
-    </select>
-  </form>
+    <form class="floatRight">
+      <select [(ngModel)]="selectedArea">
+        <option *ngFor="let area of areas" [ngValue]="area">{{area.name}}</option>
+      </select>
+    </form>
+    <span class="floatRight">
+      <a href="/htmlclient" target="_blank">Simulate Vehicle Data&nbsp;</a>
+    </span>
 
   <h4>MAP OF ALL CARS</h4>
 </div>
 <div class="marginTop">
-  <fmdash-realtime-map [region]="selectedArea" on-change-extent="onChangeMapExtent(extent)"></fmdash-realtime-map>
+  <fmdash-realtime-map [region]="selectedArea" (extentChanged)="onMapExtentChanged($event)"></fmdash-realtime-map>
   <div class="row">
     <div class="column-5-med container-50 dash-gray paddingTop-50">
       <fmdash-number-of-cars [region]="selectedArea"></fmdash-number-of-cars>

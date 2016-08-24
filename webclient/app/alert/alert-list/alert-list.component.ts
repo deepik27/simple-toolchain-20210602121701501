@@ -62,10 +62,8 @@ export class AlertListComponent{
     this.orderByKey = key;
   }
   _getAlert = function(prop:string, value:string, includeClosed:boolean){
-    this.http.request(new Request({
-      method: "Get",
-      url: "/user/alert?" + prop + "=" + value + "&includeClosed=" + includeClosed + "&limit=100"
-    })).subscribe((response: Response) => {
+    this.http.get("/user/alert?" + prop + "=" + value + "&includeClosed=" + includeClosed + "&limit=100")
+    .subscribe((response: Response) => {
       if(response.status == 200){
         var fleetalerts = response.json();
         this.fleetalerts = fleetalerts && fleetalerts.alerts;

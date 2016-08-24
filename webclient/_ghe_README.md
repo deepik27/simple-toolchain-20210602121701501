@@ -8,6 +8,10 @@
 
 ## Developers Note
 
+### RxJS (ReactiveX)
+
+Note that we are using RxJS 5.x (ReactiveX), which by default provides typescript definitions. It's due to Angular2 requirement. You'll see many results about old versions when you googles about RxJS and typescript, but they're obsoleted and not work!
+
 ### Typescript workaorunds
 
 This section describes required workarounds around typescripts
