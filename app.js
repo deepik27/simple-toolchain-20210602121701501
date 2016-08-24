@@ -17,12 +17,12 @@ var express = require('express')
   , cookieParser = require('cookie-parser')
   , bodyParser = require('body-parser')
   , methodOverride = require('method-override');
-
+var appEnv = require("cfenv").getAppEnv();
 
 var app = express();
 
 // all environments
-app.set('port', process.env.PORT || 3000);
+app.set('port', appEnv.port || 3000);
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 app.enable('trust proxy');
@@ -65,6 +65,10 @@ if ('development' === app.get('env')){
 	console.log('Settig up the webclient for NON-DEVELOPMENT mode...');
 	app.use('/webclient', express.static(path.join(__dirname, webClientModulePath)));
 }
+app.get('/webclient/map', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
+app.get('/webclient/alert', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
+app.get('/webclient/users', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
+app.get('/webclient/vehicle', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
 
 // development only
 if ('development' === app.get('env')) {
@@ -75,6 +79,7 @@ if ('development' === app.get('env')) {
 	});
 }
 
-http.createServer(app).listen(app.get('port'), function(){
+app.server = http.createServer(app);
+app.server.listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
 });

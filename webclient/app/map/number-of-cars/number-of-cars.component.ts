@@ -1,11 +1,12 @@
-import { Component, OnInit, OnDestroy, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
+//import { Component, OnInit, OnDestroy, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Output, OnChanges, SimpleChange } from '@angular/core';
 
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 
+import { Counts } from './counts';
 import { NumberOfCarsService } from './number-of-cars.service';
 
-import '../../shared/rxjs-extensions';
 
 @Component({
   moduleId: module.id,
@@ -20,14 +21,14 @@ export class NumberOfCarsComponent implements OnInit, OnDestroy, OnChanges {
 
   // For "region"
   public regionSubject = new Subject<any>();
-  public regionCounts$: Observable<CountData>;
+  public regionCounts$: Observable<Counts[]>;
 
   // For "regions"
   public regionsSubject = new Subject<any[]>();
-  public regionsCounts$: Observable<CountData[]>;
+  public regionsCounts$: Observable<Counts[]>;
 
 
-  constructor(private numberOfCarsService: NumberOfCarsService) {  }
+  constructor(private numberOfCarsService: NumberOfCarsService) { }
 
   ngOnInit() {
     // initialize Observable for single
@@ -39,7 +40,7 @@ export class NumberOfCarsComponent implements OnInit, OnDestroy, OnChanges {
         .switchMap(region => this.numberOfCarsService.getNumberOfCars(region, 10))
         .catch(error => {
           console.log(error);
-          return <any>{};
+          return Observable.of(<Counts>{});
         })
         .map(v => [v]); // CAUTION: convert to an array so that we can use ngFor in template
     }
@@ -55,18 +56,18 @@ export class NumberOfCarsComponent implements OnInit, OnDestroy, OnChanges {
       //       return this.numberOfCarsService.getNumberOfCars(region, 15);
       //     });
       //     return Observable.combineLatest(obss, function(...values){
-      //       return <CountData[]>values;
+      //       return <Counts[]>values;
       //     });
       //   })
       //   .catch(error => {
       //     console.log(error);
-      //     return Observable.of(<CountData[]>{});
+      //     return Observable.of(<Counts[]>{});
       //   });
       var obss = this.regions.map(region => {
         return this.numberOfCarsService.getNumberOfCars(region, 15);
       });
       this.regionsCounts$ = Observable.combineLatest(obss, function(...values){
-        return <CountData[]>values;
+        return <Counts[]>values;
       });
     }
   }
@@ -75,7 +76,7 @@ export class NumberOfCarsComponent implements OnInit, OnDestroy, OnChanges {
 
   }
 
-  ngOnChanges(changes: SimpleChanges) {
+  ngOnChanges(changes: { [key: string]: SimpleChange} ) {
     // translates @Input(s) to observable subjects
     let newRegionChange = changes['region'];
     if(newRegionChange){
@@ -89,14 +90,4 @@ export class NumberOfCarsComponent implements OnInit, OnDestroy, OnChanges {
       console.log('The regions @Input attribute is changed!');
     }
   }
-}
-
-interface CountData {
-  all?: number;
-  in_use?: number;
-  available?: number;
-  unavailable?: number;
-
-  troubled?: number;
-  critical?: number;
 }
