@@ -22,6 +22,7 @@ var cfenv = require("cfenv");
 var moment = require("moment");
 var dbClient = require('./../cloudantHelper.js');
 var driverInsightsAsset = require('./asset.js');
+var driverInsightsProbe = require('./probe.js');
 
 var debug = require('debug')('alert');
 debug.log = console.log.bind(console);
@@ -243,6 +244,27 @@ _.extend(driverInsightsAlert, {
 		//TODO
 	},
 
+	getAlertsForVehicleInArea: function(conditions, area, includeClosed, limit){
+		if(!area){
+			return Q.reject();
+		}
+		var deferred = Q.defer();
+		var self = this;
+		Q.when(driverInsightsProbe.getCarProbe(area), function(probes){
+			if(probes.length > 0){
+				var mo_id_condition = "(" + probes.map(function(probe){
+					return "mo_id:"+probe.mo_id;
+				}).join(" OR ") + ")";
+				conditions.push(mo_id_condition);
+				Q.when(self.getAlerts(conditions, includeClosed, limit), function(result){
+					deferred.resolve(result);
+				});
+			}else{
+				deferred.resolve({alerts: []});
+			}
+		});
+		return deferred.promise;
+	},
 	getAlerts: function(conditions, includeClosed, limit){
 		var opt = {sort: "-ts"};
 		if(conditions.length > 0){
@@ -253,7 +275,7 @@ _.extend(driverInsightsAlert, {
 		}else{
 			_.extend(opt, {q: includeClosed ? "*:*" : "closed_ts:\\-1"});
 			if(limit){
-				_.extend(opt, {limit: limit})
+				_.extend(opt, {limit: limit});
 			}
 		}
 		return this._searchAlertIndex(opt)

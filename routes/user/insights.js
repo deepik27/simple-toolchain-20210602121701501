@@ -197,9 +197,25 @@ router.get("/alert", function(req, res){
 	var includeClosed = q.includeClosed === "true";
 	var limit = q.limit;
 
-	Q.when(driverInsightsAlert.getAlerts(conditions, includeClosed, limit), function(docs){
-		res.send(docs);
-	});
+	var extent = normalizeExtent(q);
+	var extentAsArray = [extent.max_lat, extent.max_lng, extent.min_lat, extent.min_lng];
+	if (extentAsArray.every(function(v){ return isNaN(v); })){
+		Q.when(driverInsightsAlert.getAlerts(conditions, includeClosed, limit), function(docs){
+			res.send(docs);
+		});
+	}else if(extentAsArray.every(function(v){ return !isNaN(v); })){
+		var qs = {
+				min_longitude: extent.min_lng,
+				min_latitude: extent.min_lat,
+				max_longitude: extent.max_lng,
+				max_latitude: extent.max_lat,
+			};
+		Q.when(driverInsightsAlert.getAlertsForVehicleInArea(conditions, qs, includeClosed, limit), function(docs){
+			res.send(docs);
+		});
+	}else if(extentAsArray.some(function(v){ return isNaN(v); })){
+		res.status(400).send('One or more of the parameters are undefined or not a number')
+	}
 });
 
 function getUserTrips(req){
