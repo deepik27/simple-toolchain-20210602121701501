@@ -8,7 +8,7 @@ export class OrderByPipe implements PipeTransform{
 			return array;
 		}
 		return array.sort(function(a, b){
-			return (order ? -1 : 1)*((a[key] > b[key]) - (b[key] > a[key]));
+			return (order ? -1 : 1)*(<any>(a[key] > b[key]) - <any>(b[key] > a[key]));
 		});
 	}
 }
