@@ -15,7 +15,7 @@
 			value="{{alertValue.getId()}}">{{alertValue.getLabel()}}</option>
 	</select>
 	<label>
-		<input type="checkbox" [value]="includeClosed" (change)="onIncludeClosedChanged($event)"/>
+		<input type="checkbox" [(ngModel)]="includeClosed" (change)="onIncludeClosedChanged($event)"/>
 		Include Closed Alerts
 	</label>
 </div>

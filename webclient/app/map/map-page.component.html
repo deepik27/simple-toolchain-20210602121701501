@@ -14,7 +14,7 @@
   <fmdash-realtime-map [region]="selectedArea" (extentChanged)="onMapExtentChanged($event)"></fmdash-realtime-map>
   <div class="row">
     <div class="column-5-med container-50 dash-gray paddingTop-50">
-      <fmdash-number-of-cars [region]="selectedArea"></fmdash-number-of-cars>
+      <fmdash-number-of-cars [region]="mapLastSelectedArea || selectedArea"></fmdash-number-of-cars>
     </div>
 
     <div class="column-7-med container-50 paddingTop">

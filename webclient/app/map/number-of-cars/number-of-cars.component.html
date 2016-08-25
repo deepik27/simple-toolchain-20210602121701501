@@ -35,13 +35,13 @@
 
     <div class="column-6-med column-6-xs alignCenter carStatsColumn">
       <i class="icon-car iconBlock orange"></i>
-      <strong>{{counts.troubled}}</strong>
+      <a [routerLink]="['/alert', {extent: region && region.extent || '', status: 'troubled'}]"><strong>{{counts.troubled}}</strong></a>
       <p>Troubled</p>
     </div>
 
     <div class="column-6-med column-6-xs alignCenter carStatsColumn">
       <i class="icon-car iconBlock red"></i>
-      <strong>{{counts.critical}}</strong>
+      <a [routerLink]="['/alert', {extent: region && region.extent || '', status: 'critical'}]"><strong>{{counts.critical}}</strong></a>
       <p>Critical</p>
     </div>
 

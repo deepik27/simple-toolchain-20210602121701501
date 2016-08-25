@@ -1,5 +1,6 @@
 //import { Component, OnInit, OnDestroy, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { Component, OnInit, OnDestroy, Input, Output, OnChanges, SimpleChange } from '@angular/core';
+import { ROUTER_DIRECTIVES } from '@angular/router';
 
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
@@ -12,6 +13,7 @@ import { NumberOfCarsService } from './number-of-cars.service';
   moduleId: module.id,
   selector: 'fmdash-number-of-cars',
   templateUrl: 'number-of-cars.component.html',
+  directives: [ROUTER_DIRECTIVES],
   providers: [NumberOfCarsService],
 })
 export class NumberOfCarsComponent implements OnInit, OnDestroy, OnChanges {
@@ -37,7 +39,7 @@ export class NumberOfCarsComponent implements OnInit, OnDestroy, OnChanges {
        this.regionCounts$ = this.regionSubject
         .debounceTime(500)
         .distinctUntilChanged()
-        .switchMap(region => this.numberOfCarsService.getNumberOfCars(region, 10))
+        .switchMap(region => this.numberOfCarsService.getNumberOfCars(region, 2))
         .catch(error => {
           console.log(error);
           return Observable.of(<Counts>{});
@@ -64,7 +66,7 @@ export class NumberOfCarsComponent implements OnInit, OnDestroy, OnChanges {
       //     return Observable.of(<Counts[]>{});
       //   });
       var obss = this.regions.map(region => {
-        return this.numberOfCarsService.getNumberOfCars(region, 15);
+        return this.numberOfCarsService.getNumberOfCars(region, 2);
       });
       this.regionsCounts$ = Observable.combineLatest(obss, function(...values){
         return <Counts[]>values;

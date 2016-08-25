@@ -36,8 +36,12 @@ export class AppComponent {
 
   isRouteActive(commands: any[]): boolean {
     //return this.router.createUrlTree(commands).contains(this.router.urlTree)
+    let route = this.router.createUrlTree(commands);
     let lhs = this.router.serializeUrl(this.router.urlTree);
-    let rhs = this.router.serializeUrl(this.router.createUrlTree(commands));
-    return lhs == rhs;
+    let rhs = this.router.serializeUrl(route);
+    if(rhs === '' || lhs === ''){
+      return lhs === rhs;
+    }
+    return lhs.startsWith(rhs);
   }
 }
