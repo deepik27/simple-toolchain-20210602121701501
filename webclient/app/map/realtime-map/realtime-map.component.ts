@@ -253,7 +253,7 @@ export class RealtimeMapComponent implements OnInit {
 			devices.forEach((device) => {
 				var cur = device.getAt(frameTime); // get state of the device at frameTime
 				var curPoint = (cur.lng && cur.lat) ? new ol.geom.Point(ol.proj.fromLonLat([cur.lng, cur.lat], undefined)) : null;
-				var curStatus = cur.status || 'in_use' || null;
+				var curStatus = cur.status || 'normal';
 				//console.log('syncCarFeatures - Putting icon at ', [cur.lng, cur.lat])
 
 				var feature = device.feature;
@@ -446,9 +446,10 @@ var getCarStyle = function(status){
 var CAR_STYLES = [];
 var CAR_STYLE_MAP = {};
 (function(){
-	var data = [['in_use', 'img/car-blue.png'],
+	var data = [['normal', 'img/car-blue.png'],
 							['available', 'img/car-green.png'],
-							['unavailable', 'img/car-red.png'],
+							['troubled', 'img/car-orange.png'],
+							['critical', 'img/car-red.png'],
 							['unknown', 'img/car-gray.png']];
 	data.forEach(function(item){
 		var status = item[0], icon = item[1];

@@ -23,6 +23,19 @@ export class AnimatedDeviceManager {
           if(!sample.lat) sample.lat = sample.latitude || sample.matched_latitude;
           if(!sample.lng) sample.lng = sample.longitude || sample.matched_longitude;
 
+          // fixup alerts
+          if(sample.info && sample.info.alerts && !sample.status){
+            // translate alerts to troubled, critical, normal
+            let a = sample.info.alerts;
+            if(a.Critical || a.High){
+              sample.status = 'critical';
+            } else if (a.Medium || a.Low) {
+              sample.status = 'troubled';
+            } else {
+              sample.status = 'normal';
+            }
+          }
+
           // update the device latest location
           var device = this.devices[sample.deviceID];
           if (device) {
