@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Http, Request, Response } from '@angular/http';
 import { OrderByPipe } from '../../utils/order-by.pipe';
 
@@ -6,7 +6,6 @@ import { OrderByPipe } from '../../utils/order-by.pipe';
   moduleId: module.id,
   selector: 'alert-list',
   templateUrl: 'alert-list.component.html',
-  inputs: ['prop', 'value'],
   pipes: [OrderByPipe]
 })
 
@@ -17,9 +16,9 @@ export class AlertListComponent{
   propSelect: HTMLSelectElement;
   propValueSelect: HTMLSelectElement;
 
-  prop: string;
-  value: string;
-  includeClosed: boolean;
+  @Input() prop: string;
+  @Input() value: string;
+  @Input() includeClosed: boolean;
   showInput = true;
   fleetalerts: Alert[];
 
@@ -29,7 +28,7 @@ export class AlertListComponent{
     if(this.prop){
       if(this.value){
         // this.propDiv.style.display = "none";
-        this._getAlert(this.prop, this.value);
+        this._getAlert(this.prop, this.value, this.includeClosed);
         this.showInput = false;
       }else{
         var prop = AlertProp.values[this.prop];
