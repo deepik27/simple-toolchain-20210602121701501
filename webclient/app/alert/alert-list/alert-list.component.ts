@@ -60,7 +60,7 @@ export class AlertListComponent{
     this.orderByOrder = (key === this.orderByKey) ? !this.orderByOrder : true;
     this.orderByKey = key;
   }
-  _getAlert = function(prop:string, value:string, includeClosed:boolean){
+  _getAlert = function(prop:string, value:string, includeClosed?:boolean){
     this.http.get("/user/alert?" + prop + "=" + value + "&includeClosed=" + includeClosed + "&limit=100")
     .subscribe((response: Response) => {
       if(response.status == 200){
