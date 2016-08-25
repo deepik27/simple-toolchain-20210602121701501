@@ -317,7 +317,7 @@ export class RealtimeMapComponent implements OnInit {
 					// websock client to keep the device locations latest
 					var ws = this.activeWsClient = Observable.webSocket(wssUrl);
 					this.activeWsSubscribe = ws.subscribe((data: any) => {
-						this.animatedDeviceManager.addDeviceSamples(data.devices);
+						this.animatedDeviceManager.addDeviceSamples(data.devices, true);
 					}, (e) => {
 						if (e.type === 'close'){
 							this.activeWsSubscribe = null;
@@ -359,7 +359,7 @@ export class RealtimeMapComponent implements OnInit {
 		return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise().then((resp) => {
 			let data = resp.json();
 			if(data.devices){
-				this.animatedDeviceManager.addDeviceSamples(data.devices);
+				this.animatedDeviceManager.addDeviceSamples(data.devices, true);
 			}
 			return data; // return resp so that subsequent can use the resp
 		});

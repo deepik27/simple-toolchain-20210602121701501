@@ -1,3 +1,5 @@
+import * as _ from 'underscore';
+
 /* --------------------------------------------------------------
  * AnimatedDeviceManager
  *
@@ -13,7 +15,7 @@ export class AnimatedDeviceManager {
   getDevices(){
     return Object.keys(this.devices).map(id => this.devices[id]);
   }
-  addDeviceSamples(newDeviceSamples){
+  addDeviceSamples(newDeviceSamples, syncAllDevices = false){
       newDeviceSamples.forEach(sample => {
           if (!sample)
               return;
@@ -45,6 +47,15 @@ export class AnimatedDeviceManager {
               device = this.devices[sample.deviceID] = new AnimatedDevice(sample);
           }
       });
+      if(syncAllDevices){
+        // delete devices not in the newDeviceSamples
+        let devicesMap = _.groupBy(newDeviceSamples, (sample: any) => sample.deviceID);
+        Object.keys(this.devices).forEach(deviceID => {
+          if(!devicesMap[deviceID]){
+            delete this.devices[deviceID];
+          }
+        });
+      }
   };
 
 }

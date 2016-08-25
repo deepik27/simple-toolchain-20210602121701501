@@ -355,7 +355,7 @@ function getCarProbe(qs, addAlerts){
 				// result: { alerts: [ { closed_ts: n, description: s, mo_id: s, severity: s, timestamp: s, ts: n, type: s }, ...] }
 				var alertsByMoId = _.groupBy(result.alerts || [], function(alert){ return alert.mo_id; });
 				probes.forEach(function(probe){
-					var alertsForMo = alertsByMoId[probe.mo_id]; // lookup
+					var alertsForMo = alertsByMoId[probe.mo_id] || {}; // lookup
 					if(alertsForMo){ // list of alerts
 						var alertCounts = _.countBy(alertsForMo, function(alert){ 
 							return alert.severity; 
