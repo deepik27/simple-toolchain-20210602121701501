@@ -20,22 +20,24 @@ export class AlertListComponent{
   @Input() prop: string;
   @Input() value: string;
   @Input() includeClosed: boolean;
-  showInput = true;
+  @Input() showInput;
   fleetalerts: Alert[];
 
   constructor(private http: Http) {  }
 
   ngOnInit(){
+    this.showInput = this.showInput !== "false";
     if(this.prop){
       if(this.value){
         this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
-        this.showInput = false;
       }else{
         var prop = AlertProp.values[this.prop];
         if(prop){
           this.alertValues = prop.getValues();
         }
       }
+    }else{
+      this._getAlert("dummy", "dummy", this.includeClosed, this._getArea());
     }
   }
 

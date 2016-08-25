@@ -1,5 +1,5 @@
 
-<div *ngIf="!prop || !value || showInput">
+<div *ngIf="showInput">
 	<label>Min Latitude<input [(value)]="min_lat"/></label>
 	<label>Min Longitude<input [(value)]="min_lng"/></label><br>
 	<label>Max Latitude<input [(value)]="max_lat"/></label>
@@ -23,7 +23,7 @@
 	<thead>
 		<tr>
 			<th (click)="onOrderBy('ts')">From</th>
-			<th (click)="onOrderBy('closed_ts')">To</th>
+			<th *ngIf="includeClosed" (click)="onOrderBy('closed_ts')">To</th>
 			<th (click)="onOrderBy('severity')">Severity</th>
 			<th (click)="onOrderBy('mo_id')">Vehicle ID</th>
 			<th (click)="onOrderBy('description')">Notes</th>
@@ -32,7 +32,7 @@
 	<tbody>
 		<tr *ngFor="let alert of (fleetalerts|orderBy:orderByKey:orderByOrder)">
 			<td>{{alert.ts|date:"yyyy/MM/dd hh:mm:ss"}}</td>
-			<td>{{alert.closed_ts>0?(alert.closed_ts|date:"yyyy/MM/dd hh:mm:ss"):"-"}}</td>
+			<td *ngIf="includeClosed">{{alert.closed_ts>0?(alert.closed_ts|date:"yyyy/MM/dd hh:mm:ss"):"-"}}</td>
 			<td>{{alert.severity}}</td>
 			<td>{{alert.mo_id}}</td>
 			<td>{{alert.description}}</td>
