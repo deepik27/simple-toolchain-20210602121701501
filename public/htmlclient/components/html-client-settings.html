@@ -1,34 +1,38 @@
 <div class="container html-client-settings">
 	<div class="row userIdRow">
 		<div class="col-xs-4 datalabel"><label for="inputUserId">User ID:</label></div>
-		<div class="col-xs-8"><span>{{updatedSettings.mobileUtilityService.iotaStarterUuid}}</span></div>
+		<div class="col-xs-8"><span>{{updatedSettings.mobileClientService.mobileClientUuid}}</span></div>
+	</div>
+	<div class="row datarow dataheader">
+		<div class="col-xs-6 datalabel"><label>Asset: </label></div>
+		<div  class="col-xs-6 datavalue" ng-show="!isAnonymous"><button class="button" ng-click="editAssets()">{{isEditing?"Save": "Edit"}}</button><button class="button" ng-show="isEditing" ng-click="cancelAssets()">Cancel</button></div>
+		<div  class="col-xs-6 datavalue" ng-show="isAnonymous"><button class="button" ng-click="generateIds()">Generate ID</button></div>
 	</div>
 	<div class="row vehicleIdRow">
 		<div class="col-xs-4 datalabel"><label for="inputVehicleId">Vehicle ID:</label></div>
-		<div class="col-xs-8"><span>{{updatedSettings.mobileUtilityService.iotaStarterVehicleId}}</span></div>
+		<div class="col-xs-8 datavalue"><input class="idvalue" id="inputVehicleId" name="vehicleId" ng-readonly="!isEditing" ng-model="updatedSettings.assetService.iotaStarterVehicleId"></div>
+	</div>
+	<div class="row driverIdRow">
+		<div class="col-xs-4 datalabel"><label for="inputDriverId">Driver ID:</label></div>
+		<div class="col-xs-8 datavalue"><input class="idvalue" id="inputDriverId" name="driverId" ng-readonly="!isEditing" ng-model="updatedSettings.assetService.iotaStarterDriverId"></div>
 	</div>
 	<div class="row datarow dataheader">
 		<div class="col-xs-6 datalabel"><label>Settings:</label></div>
-		<div  class="col-xs-6 datavalue"><button class="button" ng-click="applySettings()">Apply</button></div>
+		<div  class="col-xs-6 datavalue"><button class="button" ng-click="applySettings()">Save</button></div>
 	</div>
 	<div class="row datarow">
-		<div class="col-xs-6 datalabel"><label for="idleMsgInterval">Idle data interval:&nbsp;</label></div>
-		<div class="col-xs-2"><label>({{settings.carProbeService.idleMsgInterval}})</label></div>
-		<div  class="col-xs-4 datavalue"><input id="idleMsgInterval" type="number" min="100" max="10000" step="100" ng-model="updatedSettings.carProbeService.idleMsgInterval"></div>
+		<div class="col-xs-5 datalabel"><label for="idleMsgInterval">Idle data interval:&nbsp;</label></div>
+		<div class="col-xs-1"><label>({{settings.carProbeService.idleMsgInterval}})</label></div>
+		<div  class="col-xs-6 datavalue"><input id="idleMsgInterval" type="number" min="100" max="10000" step="100" ng-model="updatedSettings.carProbeService.idleMsgInterval"></div>
 	</div>
 	<div class="row datarow">
-		<div class="col-xs-6 datalabel"><label for="drivingMsgInterval">Trip data interval:&nbsp;</label></div>
-		<div class="col-xs-2"><label>({{settings.carProbeService.drivingMsgInterval}})</label></div>
-		<div  class="col-xs-4 datavalue"><input id="drivingMsgInterval" type="number" min="100" max="10000" step="100" ng-model="updatedSettings.carProbeService.drivingMsgInterval"></div>
+		<div class="col-xs-5 datalabel"><label for="drivingMsgInterval">Trip data interval:&nbsp;</label></div>
+		<div class="col-xs-1"><label>({{settings.carProbeService.drivingMsgInterval}})</label></div>
+		<div  class="col-xs-6 datavalue"><input id="drivingMsgInterval" type="number" min="100" max="10000" step="100" ng-model="updatedSettings.carProbeService.drivingMsgInterval"></div>
 	</div>
 	<div class="row datarow">
-		<div class="col-xs-6 datalabel"><label for="connectOnStartup">Connect on startup:&nbsp;</label></div>
-		<div class="col-xs-2"><label>({{settings.carProbeService.connectOnStartup}})</label></div>
-		<div  class="col-xs-4 datavalue"><input id="connectOnStartup" type="checkbox" checked="checked" ng-model="updatedSettings.carProbeService.connectOnStartup"></div>
-	</div>
-	<div class="row datarow">
-		<div class="col-xs-6 datalabel"><label for="simulation">Simulation:&nbsp;</label></div>
-		<div class="col-xs-2"><label>({{settings.carProbeService.simulation}})</label></div>
-		<div  class="col-xs-4 datavalue"><input id="simulation" type="checkbox" checked="checked" ng-model="updatedSettings.carProbeService.simulation"></div>
+		<div class="col-xs-5 datalabel"><label for="simulation">Simulation:&nbsp;</label></div>
+		<div class="col-xs-1"><label>({{settings.carProbeService.simulation}})</label></div>
+		<div  class="col-xs-6 datavalue"><input id="simulation" type="checkbox" checked="checked" ng-model="updatedSettings.carProbeService.simulation"></div>
 	</div>
 </div>

@@ -21,19 +21,14 @@
 		controller: function ClientTop($scope, $http ,$q, carProbeService, virtualGeoLocation) {
 			var updateUIHandle = null;
 			// start driving
-			function startDriving(deferred) {
-		    	if (!deferred)
-		    		deferred = $q.defer();
-
-				$q.when(carProbeService.activateVehicle(true), function(vehicle){
-					$q.when(carProbeService.activateDriver(true), function(driver){
-						// send car probe data now
+			function startDriving() {
+		    	var deferred = $q.defer();
+				$q.when(carProbeService.connect(), function() {
+					$q.when(carProbeService.activateAssets(true), function() {
 						deferred.resolve();
-					}, function(error){
+					}, function(error) {
 						deferred.reject(error);
 					});
-				}, function(error){
-					deferred.reject(error);
 				});
 				return deferred.promise;
 			}
@@ -41,18 +36,14 @@
 			// stop driving
 			function stopDriving() {
 				var deferred = $q.defer();
-				$q.when(carProbeService.activateVehicle(false), function(vehicle){
-					$q.when(carProbeService.activateDriver(false), function(driver){
-						if ($scope.driveEvent.trip_id) {
-							$scope.driveEvent.trip_id = null;
-							deferred.resolve($scope.driveEvent.trip_id);
-						} else {
-							deferred.resolve(null);
-						}
-					}, function(error){
-						deferred.reject(error);
-					});
-				}, function(error){
+				$q.when(carProbeService.activateAssets(false), function() {
+					if ($scope.driveEvent.trip_id) {
+						$scope.driveEvent.trip_id = null;
+						deferred.resolve($scope.driveEvent.trip_id);
+					} else {
+						deferred.resolve(null);
+					}
+				}, function(error) {
 					deferred.reject(error);
 				});
 				return deferred.promise;
@@ -321,7 +312,7 @@
 	        	connectionStateListner(carProbeService.getConnectionState());
 	        	carProbeService.setConnectionStateChangedListener(connectionStateListner);
 
-        		carProbeService.getProbeData().then(function(data) {
+        		carProbeService.getProbeData(true).then(function(data) {
         			// Show current location
 					initMap(data.deviceLocation);
         		}, function(err) {

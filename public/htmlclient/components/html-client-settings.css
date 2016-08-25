@@ -56,11 +56,20 @@
 	text-align: right;
 }
 
+.html-client-settings .idvalue {
+	width: 100%;
+}
+
+.html-client-settings input[readonly].idvalue {
+	border-width: 0;
+}
+
 .html-client-settings .deviceIdRow,
 .html-client-settings .userIdRow,
-.html-client-settings .vehicleIdRow{
+.html-client-settings .vehicleIdRow,
+.html-client-settings .driverIdRow {
 	margin-top: 15px;
-	margin-bottom: 25px;
+	margin-bottom: 10px;
 }
 
 .html-client-settings .inputDeviceId {
@@ -72,4 +81,18 @@
 
 .html-client-settings .deviceIdRow .buttonContainer {
 	text-align: left; 
+}
+
+.html-client-settings .idbuttons .button {
+	margin-left: 5px;
+}
+
+.html-client-settings .idmessage {
+	text-align: center;
+}
+
+@media (max-width: 768px) {
+	.html-client-settings .idbuttons {
+		text-align: right; 
+	}
 }

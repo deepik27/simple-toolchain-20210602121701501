@@ -16,7 +16,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>IoT for Automotive HTML Client</title>
+	<title>Fleet Management Simulator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.1.1/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/styles.css" />
@@ -46,12 +46,12 @@
 	<style>
 		#pageTitle:after {
 			font-weight: 700;
-			content: "IoT for Automotive Starter Experience - HTML Test Client";
+			content: "IoT for Automotive Starter Experience - Fleet Management Simulator";
 		}
 		@media (max-width: 768px) {
 			#pageTitle:after {
 				font-weight: 400;
-				content: "IoT for Automotive - HTML Test Client";
+				content: "IoT for Automotive - Fleet Management Simulator";
 			}
 		}
 	</style>
@@ -67,14 +67,23 @@
 	</div>
 	<footer>
 		<div class="tabbutton-group btn-group col-xs-12">
-			<button class="col-xs-3 tabbutton btn btn-default" ui-sref="home" ui-sref-active="active">Home</button>
+			<button class="col-xs-6 tabbutton btn btn-default" ui-sref="home" ui-sref-active="active">Home</button>
+<!-- 		
 			<button class="col-xs-3 tabbutton btn btn-default" ui-sref="profile" ui-sref-active="active">Profile</button>
 			<button class="col-xs-3 tabbutton btn btn-default" ui-sref="trips" ui-sref-active="active">Trips</button>
-			<button class="col-xs-3 tabbutton btn btn-default" ui-sref="settings" ui-sref-active="active">Settings</button>
+-->
+ 			<button class="col-xs-6 tabbutton btn btn-default" ui-sref="settings" ui-sref-active="active">Settings</button>
 		</div>
 	</footer>
 
-    <script src="js/ngScripts.js"></script>
+    <script src="js/uiRouter.js"></script>
+    <script src="js/services/settingsStore.js"></script>
+    <script src="js/services/virtualGeoLocation.js"></script>
+    <script src="js/services/mobileClient.js"></script>
+    <script src="js/services/messageClient.js"></script>
+    <script src="js/services/asset.js"></script>
+    <script src="js/services/carProbe.js"></script>
+    <script src="js/services/moHttp.js"></script>
 	<script src="components/html-client-drive.component.js"></script>
 	<script src="components/html-client-profile.component.js"></script>
 	<script src="components/html-client-trip.component.js"></script>

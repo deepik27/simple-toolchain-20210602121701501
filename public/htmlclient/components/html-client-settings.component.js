@@ -18,13 +18,14 @@
 	angular.module('htmlClient').
 	component('clientSettings', {
 		templateUrl: scriptBaseUrl + 'html-client-settings.html',
-		controller: function ClientTop($scope, $http, mobileUtilityService, carProbeService) {
+		controller: function ClientTop($scope, $http, mobileClientService, assetService, carProbeService) {
 			var updateUIHandle = null;
 			
-			var settingProviders = [
-				 	{title: "Device", name: "mobileUtilityService", provider: mobileUtilityService},
-				 	{title: "Car Probe", name: "carProbeService", provider: carProbeService}
-			];
+			var settingProviders = {
+   				 	"mobileClientService": {title: "Mobile", provider: mobileClientService},
+				 	"assetService": {title: "Device", name: "assetService", provider: assetService},
+				 	"carProbeService": {title: "Car Probe", provider: carProbeService}
+			};
 		
 			//////////////////////////////////////////////////////////////////
 			// Settings
@@ -40,41 +41,77 @@
 		        return newSettings;
 		    }
 
-		    function loadSettings() {
-		    	var settings = {};
-		    	var updatedSettings = {};
-		    	for (var key in settingProviders) {
-		    		var name = settingProviders[key].name;
-		    		var provider = settingProviders[key].provider;
+		    function loadSettings(names) {
+		    	if (!names) {
+	    			if (!$scope.settings) $scope.settings = {};
+	    			if (!$scope.updatedSettings) $scope.updatedSettings = {};
+
+	    			names = [];
+			    	for (var key in settingProviders) {
+			    		names.push(key);
+			    	}
+		    	}
+
+		    	for (var i = 0; i < names.length; i++) {
+		    		var name = names[i];
+		    		var provider = settingProviders[name].provider;
 	    			if (provider && provider.getSettings) {
-	    				settings[name] = provider.getSettings();
-	    				updatedSettings[name] = copySettings(settings[name]);
+	    				var settings = provider.getSettings();
+	    				var updatedSettings = copySettings(settings);
+	    				$scope.settings[name] = settings;
+				        $scope.updatedSettings[name] = updatedSettings;
 		    		}
 		    	}
-		        $scope.settings = settings;
-		        $scope.updatedSettings = updatedSettings;
 		    }
 		    
-		    function saveSettings() {
-		    	for (var key in $scope.updatedSettings) {
-		    		$scope.settings[key] = copySettings($scope.updatedSettings[key]);
+		    function saveSettings(names) {
+		    	if (!names) {
+		    		names = [];
+			    	for (var key in settingProviders) {
+			    		names.push(key);
+			    	}
 		    	}
-		    	for (var key in settingProviders) {
-		    		var name = settingProviders[key].name;
+		    	for (var i = 0; i < names.length; i++) {
+		    		var name = names[i];
+		    		if ($scope.updatedSettings[name]) {
+		    			$scope.settings[name] = copySettings($scope.updatedSettings[name]);
+		    		}
+
 		    		var settings = $scope.settings[name];
 		    		if (settings) {
-			    		var provider = settingProviders[key].provider;
+			    		var provider = settingProviders[name].provider;
 			    		if (provider && provider.updateSettings) {
 			    			provider.updateSettings(copySettings(settings));
 			    		}
 		    		}
 		    	}
 		    }
-			
-		    $scope.applySettings = function() {
-		    	saveSettings();
-		    }
 
+		    // edit asset ids
+		    $scope.isEditing = false;
+		    $scope.editAssets = function() {
+		    	if ($scope.isEditing) {
+			    	saveSettings(["assetService"]);
+		    	}
+		    	$scope.isEditing = !$scope.isEditing;
+		    }
+		    $scope.cancelAssets = function() {
+		    	$scope.isEditing = false;
+		    	loadSettings(["assetService"]);
+ 		    }
+
+		    // for test purpose when using anonymous asset ids
+		    $scope.isAnonymous = assetService.isAnonymousAsset();
+		    $scope.generateIds = function() {
+		    	assetService.generateIds();
+		    	loadSettings(["assetService"]);
+		    }
+			
+		    // apply setting changes
+		    $scope.applySettings = function() {
+		    	saveSettings(["carProbeService"]);
+		    }
+		    
 	        // Settings
 	    	loadSettings();
 		}
