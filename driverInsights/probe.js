@@ -199,10 +199,10 @@ _.extend(driverInsightsProbe, {
 		};
 		for(var i = 0; i < carProbeData.length; i++){
 			var probe = carProbeData[i];
-			options.url += ("&min_longitude=" + (probe.longitude-0.1) +
-							"&max_longitude=" + (probe.longitude+0.1) +
-							"&min_latitude=" + (probe.latitude-0.1) +
-							"&max_latitude=" + (probe.latitude+0.1)) +
+			options.url += ("&min_longitude=" + (probe.longitude-0.001) +
+							"&max_longitude=" + (probe.longitude+0.001) +
+							"&min_latitude=" + (probe.latitude-0.001) +
+							"&max_latitude=" + (probe.latitude+0.001)) +
 							"&mo_id=" + probe.mo_id,
 							"&driver_id=" + probe.driver_id;
 			debug("getProbeData(url): " + options.url);

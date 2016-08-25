@@ -12,10 +12,11 @@ import { OrderByPipe } from '../../utils/order-by.pipe';
 export class AlertListComponent{
   alertProps = Object.values(AlertProp.values);
   alertValues:PropValue[];
-  propDiv: HTMLDivElement;
-  propSelect: HTMLSelectElement;
-  propValueSelect: HTMLSelectElement;
 
+  @Input() min_lat: string;
+  @Input() min_lng: string;
+  @Input() max_lat: string;
+  @Input() max_lng: string;
   @Input() prop: string;
   @Input() value: string;
   @Input() includeClosed: boolean;
@@ -27,8 +28,7 @@ export class AlertListComponent{
   ngOnInit(){
     if(this.prop){
       if(this.value){
-        // this.propDiv.style.display = "none";
-        this._getAlert(this.prop, this.value, this.includeClosed);
+        this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
         this.showInput = false;
       }else{
         var prop = AlertProp.values[this.prop];
@@ -39,19 +39,26 @@ export class AlertListComponent{
     }
   }
 
+  onClearArea(event){
+    this.min_lat = "";
+    this.min_lng = "";
+    this.max_lat = "";
+    this.max_lng = "";
+  }
   onPropChanged(event){
     var prop = this.alertProps[event.target.selectedIndex];
     this.prop = prop.getId();
     this.alertValues = prop.getValues();
+    this.value = "";
   }
   onValueChanged(event){
     var value = this.alertValues[event.target.selectedIndex];
     this.value = value.getId();
-    this._getAlert(this.prop, this.value, this.includeClosed);
+    this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
   }
   onIncludeClosedChanged(event){
     this.includeClosed = event.target.checked;
-    this._getAlert(this.prop, this.value, this.includeClosed);
+    this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
   }
 
   orderByKey: string;
@@ -60,14 +67,29 @@ export class AlertListComponent{
     this.orderByOrder = (key === this.orderByKey) ? !this.orderByOrder : true;
     this.orderByKey = key;
   }
-  _getAlert = function(prop:string, value:string, includeClosed?:boolean){
-    this.http.get("/user/alert?" + prop + "=" + value + "&includeClosed=" + includeClosed + "&limit=100")
+  _getAlert = function(prop:string, value:string, includeClosed?:boolean, area?:Object){
+    var url = "/user/alert?" + prop + "=" + value + "&includeClosed=" + includeClosed + "&limit=100";
+    if(area){
+      url += Object.keys(area).map(function(key){return "&" + key + "=" + area[key];}).join();
+    }
+    this.http.get(url)
     .subscribe((response: Response) => {
       if(response.status == 200){
         var fleetalerts = response.json();
         this.fleetalerts = fleetalerts && fleetalerts.alerts;
       }
     });
+  }
+  _getArea = function(){
+    if(isNaN(this.min_lat) || isNaN(this.min_lng) || isNaN(this.max_lat) || isNaN(this.max_lng)){
+      return null;
+    }
+    return {
+      min_lat: this.min_lat,
+      min_lng: this.min_lng,
+      max_lat: this.max_lat,
+      max_lng: this.max_lng
+    }
   }
 }
 class Alert {
