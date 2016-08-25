@@ -79,7 +79,7 @@ router.get('/carProbe', authenticate, function(req, res) {
 		max_longitude: extent.max_lng,
 		max_latitude: extent.max_lat,
 	};
-	getCarProbe(qs).then(function(probes){
+	getCarProbe(qs, true).then(function(probes){
 		// send normal response
 		var ts = _.max(_.map(probes, function(d){ return d.lastEventTime || d.t || d.ts; }));
 		res.send({
@@ -270,7 +270,7 @@ var initWebSocketServer = function(server, path){
 				return { min_latitude: -90, min_longitude: -180,
 						 max_latitude:  90, max_longitude:  180 };
 			}
-			return getCarProbe(getQs()).then(function(probes){
+			return getCarProbe(getQs(), true).then(function(probes){
 				// construct message
 				var msgs = JSON.stringify({
 					count: (probes.length),
@@ -331,8 +331,8 @@ var initWebSocketServer = function(server, path){
 	});
 }
 
-function getCarProbe(qs){
-	return Q(driverInsightsProbe.getCarProbe(qs).then(function(probes){
+function getCarProbe(qs, addAlerts){
+	var probes = Q(driverInsightsProbe.getCarProbe(qs).then(function(probes){
 		// send normal response
 		[].concat(probes).forEach(function(p){
 			if(p.timestamp){
@@ -342,6 +342,33 @@ function getCarProbe(qs){
 		});
 		return probes;
 	}));
+	if(addAlerts) {
+		probes = Q(probes.then(function(probes){
+			if(!probes || probes.length == 0)
+				return probes;
+			var conditions = [];
+			var mo_id_condition = "(" + probes.map(function(probe){
+				return "mo_id:"+probe.mo_id;
+			}).join(" OR ") + ")";
+			conditions.push(mo_id_condition);
+			return driverInsightsAlert.getAlerts(conditions, /*includeClosed*/false, probes.length).then(function(result){
+				// result: { alerts: [ { closed_ts: n, description: s, mo_id: s, severity: s, timestamp: s, ts: n, type: s }, ...] }
+				var alertsByMoId = _.groupBy(result.alerts || [], function(alert){ return alert.mo_id; });
+				probes.forEach(function(probe){
+					var alertsForMo = alertsByMoId[probe.mo_id]; // lookup
+					if(alertsForMo){ // list of alerts
+						var alertCounts = _.countBy(alertsForMo, function(alert){ 
+							return alert.severity; 
+						});
+						// alertCounts.items = alertsForMo; // details if needed
+						probe.info = _.extend(probe.info || {}, { alerts: alertCounts }); // inject alert counts
+					}
+				})
+				return probes;
+			});
+		}));
+	}
+	return probes;
 }
 
 

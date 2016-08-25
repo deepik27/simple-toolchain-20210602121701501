@@ -1,6 +1,9 @@
 import { Component, OnInit, Input, Inject } from '@angular/core';
+
 import { RealtimeMapComponent } from './realtime-map/realtime-map.component';
 import { NumberOfCarsComponent } from './number-of-cars/number-of-cars.component';
+import { AnimatedDeviceManagerService } from './shared/animated-device-manager.service';
+
 
 import * as _ from 'underscore';
 
@@ -11,12 +14,12 @@ interface MapArea {
   extent?: number[]
 };
 
-
 @Component({
   moduleId: module.id,
   selector: 'fmdash-map-page',
   templateUrl: 'map-page.component.html',
   directives: [RealtimeMapComponent, NumberOfCarsComponent],
+  providers: [AnimatedDeviceManagerService],
 })
 export class MapPageComponent implements OnInit {
 
