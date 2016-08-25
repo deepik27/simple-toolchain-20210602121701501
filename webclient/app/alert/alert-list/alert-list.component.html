@@ -1,9 +1,15 @@
 
 <div *ngIf="!prop || !value || showInput">
-	<select #propSelect [value]="prop" (change)="onPropChanged($event)">
+	<label>Min Latitude<input [(value)]="min_lat"/></label>
+	<label>Min Longitude<input [(value)]="min_lng"/></label><br>
+	<label>Max Latitude<input [(value)]="max_lat"/></label>
+	<label>Max Longitude<input [(value)]="max_lng"/></label>
+	<button (click)="onClearArea($event)">Clear Area</button><br>
+	<select [value]="prop" (change)="onPropChanged($event)">
 		<option *ngFor="let alertProp of alertProps"
 			value="{{alertProp.getId()}}">{{alertProp.getLabel()}}</option>
-	</select> <select #propValueSelect [value]="value"
+	</select>
+	<select [value]="value"
 		(change)="onValueChanged($event)">
 		<option *ngFor="let alertValue of alertValues"
 			value="{{alertValue.getId()}}">{{alertValue.getLabel()}}</option>
