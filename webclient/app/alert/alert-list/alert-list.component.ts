@@ -1,12 +1,13 @@
 import { Component, Input } from '@angular/core';
 import { Http, Request, Response } from '@angular/http';
 import { OrderByPipe } from '../../utils/order-by.pipe';
+import { MomentPipe } from '../../utils/moment.pipe';
 
 @Component({
   moduleId: module.id,
   selector: 'alert-list',
   templateUrl: 'alert-list.component.html',
-  pipes: [OrderByPipe]
+  pipes: [OrderByPipe, MomentPipe]
 })
 
 export class AlertListComponent{

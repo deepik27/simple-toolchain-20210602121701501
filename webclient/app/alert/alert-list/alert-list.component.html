@@ -31,8 +31,8 @@
 	</thead>
 	<tbody>
 		<tr *ngFor="let alert of (fleetalerts|orderBy:orderByKey:orderByOrder)">
-			<td>{{alert.ts|date:"yyyy/MM/dd hh:mm:ss"}}</td>
-			<td *ngIf="includeClosed">{{alert.closed_ts>0?(alert.closed_ts|date:"yyyy/MM/dd hh:mm:ss"):"-"}}</td>
+			<td>{{alert.ts|moment:"YYYY/MM/DD HH:mm:ss"}}</td>
+			<td *ngIf="includeClosed">{{alert.closed_ts>0?(alert.closed_ts|moment:"YYYY/MM/DD HH:mm:ss"):"-"}}</td>
 			<td>{{alert.severity}}</td>
 			<td>{{alert.mo_id}}</td>
 			<td>{{alert.description}}</td>
