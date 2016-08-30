@@ -107,7 +107,7 @@ _.extend(driverInsightsAlert, {
 								ts: probe.ts,
 								timestamp: probe.timestamp
 							};
-						alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM = vehicle.vendor;
+						alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM = vehicle.vehicleInfo.vendor;
 						alerts.push(alert);
 					}
 				}
@@ -141,7 +141,7 @@ _.extend(driverInsightsAlert, {
 							ts: probe.ts,
 							timestamp: probe.timestamp
 						};
-					alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM = vehicle.vendor;
+					alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM = vehicle.vehicleInfo.vendor;
 					alerts.push(alert);
 				}
 				return alerts;
