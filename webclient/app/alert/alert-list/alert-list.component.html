@@ -27,6 +27,7 @@
 			<th (click)="onOrderBy('severity')">Severity</th>
 			<th (click)="onOrderBy('mo_id')">Vehicle ID</th>
 			<th (click)="onOrderBy('description')">Notes</th>
+			<th (click)="onOrderBy('simulated')">Simulated Car</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -36,6 +37,7 @@
 			<td>{{alert.severity}}</td>
 			<td>{{alert.mo_id}}</td>
 			<td>{{alert.description}}</td>
+			<td>{{alert.simulated ? "Simulated" : ""}}</td>
 		</tr>
 	</tbody>
 </table>

@@ -83,7 +83,8 @@ export class AlertListComponent{
     });
   }
   _getArea = function(){
-    if(isNaN(this.min_lat) || isNaN(this.min_lng) || isNaN(this.max_lat) || isNaN(this.max_lng)){
+    if(this.min_lat === "" || this.min_lng === "" || this.max_lat === "" || this.max_lng === ""
+    || isNaN(this.min_lat) || isNaN(this.min_lng) || isNaN(this.max_lat) || isNaN(this.max_lng)){
       return null;
     }
     return {

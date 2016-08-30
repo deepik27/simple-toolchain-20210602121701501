@@ -61,14 +61,16 @@ _.extend(driverInsightsAlert, {
 					var prevFuel = vehicle.prevProbe.props.fuel;
 					var fuel = probe.props.fuel;
 					if(prevFuel/fuelTank >= 0.1 && fuel/fuelTank < 0.1){
-						alerts.push({
-							type: "low_fuel",
-							description: "Fuel at 1/10 tank",
-							severity: "High",
-							mo_id: probe.mo_id,
-							ts: probe.ts,
-							timestamp: probe.timestamp
-						});
+						var alert = {
+								type: "low_fuel",
+								description: "Fuel at 1/10 tank",
+								severity: "High",
+								mo_id: probe.mo_id,
+								ts: probe.ts,
+								timestamp: probe.timestamp
+							};
+						alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM = vehicle.vehicleInfo.vendor;
+						alerts.push(alert);
 					}
 				}
 				return alerts;
@@ -97,14 +99,16 @@ _.extend(driverInsightsAlert, {
 					var prevFuel = vehicle.prevProbe.props.fuel;
 					var fuel = probe.props.fuel;
 					if(prevFuel/fuelTank >= 0.5 && fuel/fuelTank < 0.5){
-						alerts.push({
-							type: "half_fuel",
-							description: "Fuel at half full",
-							severity: "Medium",
-							mo_id: probe.mo_id,
-							ts: probe.ts,
-							timestamp: probe.timestamp
-						});
+						var alert = {
+								type: "half_fuel",
+								description: "Fuel at half full",
+								severity: "Medium",
+								mo_id: probe.mo_id,
+								ts: probe.ts,
+								timestamp: probe.timestamp
+							};
+						alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM = vehicle.vendor;
+						alerts.push(alert);
 					}
 				}
 				return alerts;
@@ -129,14 +133,16 @@ _.extend(driverInsightsAlert, {
 				var alerts = [];
 				if(vehicle && vehicle.prevProbe && vehicle.prevProbe.props && vehicle.prevProbe.props.engineTemp <= 300
 				&& probe && probe.props && probe.props.engineTemp > 300){
-					alerts.push({
-						type: "high_engine_temp",
-						description: "Engine temperature is too high.",
-						severity: "High",
-						mo_id: probe.mo_id,
-						ts: probe.ts,
-						timestamp: probe.timestamp
-					});
+					var alert = {
+							type: "high_engine_temp",
+							description: "Engine temperature is too high.",
+							severity: "High",
+							mo_id: probe.mo_id,
+							ts: probe.ts,
+							timestamp: probe.timestamp
+						};
+					alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM = vehicle.vendor;
+					alerts.push(alert);
 				}
 				return alerts;
 			},
@@ -169,6 +175,7 @@ _.extend(driverInsightsAlert, {
 				index("severity", doc.severity, {store: true});
 				index("description", doc.description, {store: true});
 				index("closed_ts", doc.closed_ts||-1, {store: true});
+				index("simulated", doc.simulated, {store: true});
 			}
 		};
 		var designDoc = {
