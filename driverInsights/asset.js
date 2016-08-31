@@ -41,8 +41,8 @@ var driverInsightsAsset = {
 	 * Vehicle list api returns the first 10 vehicles as default
 	 */
 	VEHICLE_VENDOR_IBM: "IBM",
-	getVehicleList: function(){
-		return this._run("GET", "/vehicle");
+	getVehicleList: function(params){
+		return this._run("GET", "/vehicle", params || {num_rec_in_page: 50, num_page: 1});
 	},
 	getVehicle: function(mo_id){
 		if(!mo_id){

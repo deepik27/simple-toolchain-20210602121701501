@@ -18,7 +18,7 @@
  * Service to manage asset ids
  */
 angular.module('htmlClient')
-.factory('assetService', function($q, $timeout, settingsService, mobileClientService) {
+.factory('assetService', function($q, $timeout, $http, settingsService, mobileClientService) {
 	var isAnomymous = false;
 	var match = location.search.match(/anonymous=(.*?)(&|$)/);
 	if(match) {
@@ -27,10 +27,15 @@ angular.module('htmlClient')
 	
     return {
 		settings: null,
+		
+		/*
+		 * Methods to get/set settings
+		 */
 		getVehicleId: function() {
 			var settings = this.getSettings();
 			return settings.iotaStarterVehicleId;
 		},
+		
 		setVehicleId: function(vehicleId){
 			var settings = this.getSettings();
 			if (vehicleId)
@@ -39,10 +44,12 @@ angular.module('htmlClient')
 				delete settings.iotaStarterVehicleId;
 			this.updateSettings(settings);
 		},
+		
 		getDriverId: function(){
 			var settings = this.getSettings();
 			return settings.iotaStarterDriverId;
 		},
+		
 		setDriverId: function(driverId){
 			var settings = this.getSettings();
 			if (driverId)
@@ -51,12 +58,14 @@ angular.module('htmlClient')
 				delete settings.iotaStarterDriverId;
 			this.updateSettings(settings);
 		},
+		
 		isAutoManagedAsset: function(){
 			if (this.isAnonymousAsset())
 				return false;
 			var settings = this.getSettings();
 			return settings.isAutoManagedAsset;
 		},
+		
 		setAutoManagedAsset: function(isAutoManagedAsset) {
 			var settings = this.getSettings();
 			if (isAutoManagedAsset)
@@ -65,6 +74,7 @@ angular.module('htmlClient')
 				delete settings.isAutoManagedAsset;
 			this.updateSettings(settings);
 		},
+		
 		isAnonymousAsset: function(){
 			return isAnomymous;
 		},
@@ -107,6 +117,197 @@ angular.module('htmlClient')
 			}
 			this.settings = settings;
 			settingsService.saveSettings("assetService", settings);
+		},
+
+    	/*
+    	 * Methods to access asset services
+    	 */
+	    prepareAssets: function() {
+			var vehicleId = this.getVehicleId();
+			var driverId = this.getDriverId();
+
+			var self = this;
+	    	var promise = [];
+			if(!vehicleId){
+				promise.push($q.when(this.addVehicle(), function(vehicle){
+					self.setVehicleId(vehicle.id);
+					self.setAutoManagedAsset(true);
+				}));
+			}else if (this.isAutoManagedAsset()) {
+				promise.push($q.when(this.getVehicle(vehicleId), function(vehicle){
+					if(vehicleId !== vehicle.mo_id){
+						self.setVehicleId(vehicle.mo_id);
+					}
+				}, function(err){
+					// try to add vehicle
+					return $q.when(self.addVehicle(), function(vehicle){
+						self.setVehicleId(vehicle.id);
+					});
+				}));
+			}
+
+			//FIXME Get car probe requires driver_id as of 20160731
+			if(!driverId){
+				promise.push($q.when(this.addDriver(), function(driver){
+					self.setDriverId(driver.id);
+				}));
+			}else if (this.isAutoManagedAsset()) {
+				promise.push($q.when(this.getDriver(driverId), function(driver){
+					if(driverId !== driver.driver_id){
+						self.setDriverId(driver.driver_id);
+					}
+				}, function(err){
+					// try to add vehicle
+					return $q.when(self.addDriver(), function(driver){
+						self.setDriverId(driver.id);
+					});
+				}));
+			}
+			
+			return $q.all(promise).then(function(){
+				return {vehicleId: self.getVehicleId(), driverId: self.getDriverId()};
+			});
+	    },
+	    
+	    activateAssets: function(toActivate) {
+	    	var deferred = $q.defer();
+			if (this.isAutoManagedAsset()) {
+				var self = this;
+				$q.when(self.activateVehicle(toActivate), function(vehicle){
+					$q.when(self.activateDriver(toActivate), function(driver){
+						// send car probe data now
+						deferred.resolve();
+					}, function(error){
+						deferred.reject(error);
+					});
+				}, function(error){
+					deferred.reject(error);
+				});
+			} else {
+				// send car probe data now
+				deferred.resolve();
+			}
+			return deferred.promise;
+	    },
+
+		getVehicle: function(mo_id){
+			var deferred = $q.defer();
+			$http(mobileClientService.makeRequestOption({
+				method : 'GET',
+				url : '/user/vehicle/' + mo_id
+			})).success(function(data, status) {
+				deferred.resolve(data);
+			}).error(function(error, status) {
+				deferred.reject({error: error, status: status});
+			});
+			return deferred.promise;
+		},
+		
+		addVehicle: function(){
+			var deferred = $q.defer();
+			$http(mobileClientService.makeRequestOption({
+				method: "POST",
+				url: "/user/vehicle",
+				headers: {
+					'Content-Type': 'application/JSON;charset=utf-8'
+				}
+			})).success(function(data, status){
+				deferred.resolve(data);
+			}).error(function(error, status){
+				deferred.reject({error: error, status: status});
+			});
+			return deferred.promise;
+		},
+		
+		activateVehicle: function(toActive){
+			var deferred = $q.defer();
+			var mo_id = this.getVehicleId();
+			$http(mobileClientService.makeRequestOption({
+				method: "PUT",
+				url: "/user/vehicle/" + mo_id,
+				headers: {
+					"Content-Type": "application/JSON;charset=utf-8"
+				},
+				data: {mo_id: mo_id, status: toActive ? "Active" : "Inactive"}
+			})).success(function(data, status){
+				deferred.resolve(data);
+			}).error(function(error, status){
+				deferred.reject({error: error, status: status});
+			});
+			return deferred.promise;
+		},
+		
+		deleteVehicle: function(mo_id){
+			var deferred = $q.defer();
+			$http(mobileClientService.makeRequestOption({
+				method: "DELETE",
+				url: "/user/vehicle/" + mo_id
+			})).success(function(data, status){
+				deferred.resolve(data);
+			}).error(function(error, status){
+				deferred.reject({error: error, status: status});
+			});
+			return deferred.promise;
+		},
+
+		getDriver: function(driver_id){
+			var deferred = $q.defer();
+			$http(mobileClientService.makeRequestOption({
+				method : 'GET',
+				url : '/user/driver/' + driver_id
+			})).success(function(data, status) {
+				deferred.resolve(data);
+			}).error(function(error, status) {
+				deferred.reject({error: error, status: status});
+			});
+			return deferred.promise;
+		},
+		
+		addDriver: function(){
+			var deferred = $q.defer();
+			$http(mobileClientService.makeRequestOption({
+				method: "POST",
+				url: "/user/driver",
+				headers: {
+					'Content-Type': 'application/JSON;charset=utf-8'
+				}
+			})).success(function(data, status){
+				deferred.resolve(data);
+			}).error(function(error, status){
+				deferred.reject({error: error, status: status});
+			});
+			return deferred.promise;
+		},
+		
+		activateDriver: function(toActive){
+			var deferred = $q.defer();
+			var driver_id = this.getDriverId();
+			$http(mobileClientService.makeRequestOption({
+				method: "PUT",
+				url: "/user/driver/" + driver_id,
+				headers: {
+					"Content-Type": "application/JSON;charset=utf-8"
+				},
+				data: {driver_id: driver_id, status: toActive ? "Active" : "Inactive"}
+			})).success(function(data, status){
+				deferred.resolve(data);
+			}).error(function(error, status){
+				deferred.reject({error: error, status: status});
+			});
+			return deferred.promise;
+		},
+		
+		deleteDriver: function(driver_id){
+			var deferred = $q.defer();
+			$http(mobileClientService.makeRequestOption({
+				method: "DELETE",
+				url: "/user/driver/" + driver_id
+			})).success(function(data, status){
+				deferred.resolve(data);
+			}).error(function(error, status){
+				deferred.reject({error: error, status: status});
+			});
+			return deferred.promise;
 		}
 	};
 })

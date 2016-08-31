@@ -27,7 +27,7 @@ angular.module('htmlClient')
 		},
 		destroy: function() {
 		},
-		connect: function() {
+		connect: function(deviceId) {
 	    	var deferred = $q.defer();
 			deferred.resolve();
 			return deferred.promise;

@@ -32,7 +32,7 @@ export class AppComponent {
            { title: "Car Status", route: "/carStatus", icon: "icon-car", active: false},
            { title: "Alert", route: "/alert", icon: "icon-idea", active: false},
 //           { title: 'Users', route: '/users', icon: 'icon-user', active: false},
-//           { title: "Vehicle", route: "/vehicle", icon: 'icon-car', active: false }
+           { title: "Vehicle", route: "/vehicle", icon: 'icon-car', active: false }
        ];
 
   constructor(public router: Router){

@@ -41,6 +41,22 @@ router.post("/vehicle", authenticate, function(req, res){
 		return res.status(status).send(message);
 	}).done();
 });
+router.get("/vehicle", authenticate, function(req, res){
+	var params = null;
+	if (req.query.num_rec_in_page || req.query.num_page) {
+		params = {num_rec_in_page: req.query.num_rec_in_page||50, num_page: req.query.num_page||1};
+	}
+	Q.when(driverInsightsAsset.getVehicleList(params), function(response){
+		res.send(response);
+	})["catch"](function(err){
+		//{message: msg, error: error, response: response}
+		console.error('error: ' + JSON.stringify(err));
+		var response = err.response;
+		var status = (response && (response.status||response.statusCode)) || 500;
+		var message = err.message || (err.data && err.data.message) || err;
+		return res.status(status).send(message);
+	}).done();
+});
 router.get("/vehicle/:vehicleId", authenticate, function(req, res){
 	var vehicleId = req.params.vehicleId;
 	Q.when(driverInsightsAsset.getVehicle(vehicleId), function(response){

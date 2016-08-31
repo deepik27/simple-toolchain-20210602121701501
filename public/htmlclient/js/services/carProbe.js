@@ -18,13 +18,12 @@
  * Service to create and publish car probe data
  */
 angular.module('htmlClient')
-.factory('carProbeService', function($q, $timeout, $http, $location, mobileClientService, messageClientService, settingsService, assetService, virtualGeoLocation) {
+.factory('carProbeService', function($q, $timeout, $http, $location, mobileClientService, messageClientService, settingsService, virtualGeoLocation) {
 	var service = {
     	watchGeoHandle: null,
     	dirty: false,
     	deviceLocation: null,
     	driveEvent: null,
-    	failureCount: 0,
     	deviceId: null,	// set by setting UI (IoTP)
     	vehicleId: null,// get from service (IoT4A)
     	driverId: null,	// get from service (IoT4A) 
@@ -48,7 +47,7 @@ angular.module('htmlClient')
 		}),
     	dataPublishHandle: null,
     	publishInterval: 0,
-    	msgCount: 0,
+    	messageEventCallback: null,
     	
     	geolocation: null,
     	
@@ -56,8 +55,6 @@ angular.module('htmlClient')
 	    startup: function() {
 	        this.deviceLocation = {};
 	        this.driveEvent = {};
-	        this.msgCount = 0;
-	        this.failureCount = 0;
 	        this.dirty = false;
 	        this.geolocation = this.settings.simulation ? virtualGeoLocation : navigator.geolocation;
 
@@ -121,11 +118,10 @@ angular.module('htmlClient')
 			        		self.driveEvent.engineTemp = self.vehicleData.engineTemp;
 			        	}else{
 			        		if(isNaN(self.driveEvent.engineTemp) || self.driveEvent.engineTemp > 320) self.driveEvent.engineTemp = 250;
-				        	self.driveEvent.engineTemp += Math.round((Math.random()*5-1.5)*100)/100;
+			        		self.driveEvent.engineTemp += Math.round((Math.random()*5-1.5)*100)/100;
 				        }
 			        }
 	        	}, function() {
-	        		self.failureCount++;
 	        	}, {
 	    			enableHighAccuracy: true,
 	    			timeout: 5000,
@@ -189,22 +185,21 @@ angular.module('htmlClient')
         },
         
         // connect to service
-    	connect: function() {
-    		var self = this;
-    		if (this.getConnectionState() == this.connectionStateDef.CONNECTION_STATE_DISCONNECTED) {
-		    	this.changeConnectionState(this.connectionStateDef.CONNECTION_STATE_CONNECTING);
-		    	return $q.when(this.prepareAssets(), function() {
-					self.connectDevice();
-		    	});
-    		} else {
-		    	return $q.when(this.prepareAssets(), function() {
-					return;
-		    	});
+    	connect: function(assets) {
+    		if (this.getConnectionState() !== this.connectionStateDef.CONNECTION_STATE_DISCONNECTED) {
+    			return;
     		}
+
+			if (assets) {
+	    		this.vehicleId = assets.vehicleId;
+	    		this.driverId = assets.driverId;
+			}
+   			this.connectDevice();
     	},
 	    
     	// disconnect from service
 	    disconnect: function() {
+	    	this.messageEventCallback = null;
 	    	var deferred = $q.defer();
     		if (this.driveEvent.trip_id) {
             	deferred.reject("Stop driving before disconnecting.");
@@ -226,83 +221,6 @@ angular.module('htmlClient')
 	        });
 			return deferred.promise;
 	    },
-
-	    prepareAssets: function() {
-			var vehicleId = assetService.getVehicleId();
-			var driverId = assetService.getDriverId();
-
-            if (this.vehicleId !== vehicleId || this.driverId !== driverId) {
-                this.msgCount = 0;
-                this.failureCount = 0;
-    		}
-    		this.vehicleId = vehicleId;
-    		this.driverId = driverId;
-
-	    	var promise = [];
-			if(!this.vehicleId){
-				promise.push($q.when(this.addVehicle(), function(vehicle){
-					assetService.setVehicleId(vehicle.id);
-					assetService.setAutoManagedAsset(true);
-				}));
-			}else{
-				promise.push($q.when(this.getVehicle(this.vehicleId), function(vehicle){
-					if(this.vehicleId !== vehicle.mo_id){
-						assetService.setVehicleId(vehicle.mo_id);
-					}
-					assetService.setAutoManagedAsset(true);
-				}, function(err){
-					// try to add vehicle
-					return $q.when(self.addVehicle(), function(vehicle){
-						assetService.setVehicleId(vehicle.id);
-						assetService.setAutoManagedAsset(true);
-					});
-				}));
-			}
-			//FIXME Get car probe requires driver_id as of 20160731
-			if(!this.driverId){
-				promise.push($q.when(this.addDriver(), function(driver){
-					assetService.setDriverId(driver.id);
-				}));
-			}else{
-				promise.push($q.when(this.getDriver(this.driverId), function(driver){
-					if(this.driverId !== driver.driver_id){
-						assetService.setDriverId(driver.driver_id);
-					}
-				}, function(err){
-					// try to add vehicle
-					return $q.when(self.addDriver(), function(driver){
-						assetService.setDriverId(driver.id);
-					});
-				}));
-			}
-			
-    		var self = this;
-			return $q.all(promise).then(function(){
-				self.vehicleId = assetService.getVehicleId();
-				self.driverId = assetService.getDriverId();
-			});
-	    },
-	    
-	    activateAssets: function(activate) {
-	    	var deferred = $q.defer();
-			if (this.isAutoManagedAsset()) {
-				var self = this;
-				$q.when(self.activateVehicle(activate), function(vehicle){
-					$q.when(self.activateDriver(activate), function(driver){
-						// send car probe data now
-						deferred.resolve();
-					}, function(error){
-						deferred.reject(error);
-					});
-				}, function(error){
-					deferred.reject(error);
-				});
-			} else {
-				// send car probe data now
-				deferred.resolve();
-			}
-			return deferred.promise;
-	    },
 	    
 	    connectDevice: function(){
 	    	if (!messageClientService.isValid()) 
@@ -311,7 +229,7 @@ angular.module('htmlClient')
 	    	this.changeConnectionState(this.connectionStateDef.CONNECTION_STATE_CONNECTING);
 	    	console.log("Connecting device to IoT Foundation...");
 	    	var self = this;
-	    	messageClientService.connect().then(function() {
+	    	messageClientService.connect(this.vehicleId).then(function() {
 		    	// The device connected successfully
 		    	console.log("Connected Successfully!");
 		    	self.changeConnectionState(self.connectionStateDef.CONNECTION_STATE_CONNECTED);
@@ -353,8 +271,8 @@ angular.module('htmlClient')
 					lat: this.deviceLocation.lat,
 					lng: this.deviceLocation.lng,
 					altitude: this.deviceLocation.altitude,
-					mo_id: assetService.getVehicleId(),
-					driver_id: assetService.getDriverId(),
+					mo_id: this.vehicleId,
+					driver_id: this.driverId,
 					props: {}
 				};
 		
@@ -369,9 +287,10 @@ angular.module('htmlClient')
 					if (this.driveEvent.engineTemp != null)
 						data.props.engineTemp = this.driveEvent.engineTemp;
 				} 
+				var self = this;
 				messageClientService.publish(data).then(function(matchedData) {
 					this.matchedData = matchedData;
-	        		this.msgCount++;
+	        		this.messageEventCallback && this.messageEventCallback(this.matchedData);
 	            	this.dirty = true;
 				}.bind(this));
 			} catch (err) {
@@ -400,21 +319,24 @@ angular.module('htmlClient')
 	        }, this.publishInterval);
 	    },
 
-	    createTripId: function() {
+	    makeTrip: function(messageEventCallback) {
 	    	if(this.settings.simulation){
 	    		this._startWatchLocation();
 	    	}
+	    	this.messageEventCallback = messageEventCallback;
 	    	this.driveEvent.trip_id = mobileClientService.uuid();
 	    	this.setDataPublishInterval(this.settings.drivingMsgInterval);
 	    	return this.driveEvent.trip_id;
 	    },
 	    
-	    clearTripId: function() {
+	    clearTrip: function() {
 	    	if(this.settings.simulation){
 	    		this._stopWatchLocation();
 	    	}
+	    	this.messageEventCallback = null;
 	    	this.driveEvent.trip_id = null;
             this.setDataPublishInterval(this.settings.idleMsgInterval);
+            return null;
 	    },
 	    
 	    hasTripId: function() {
@@ -457,121 +379,6 @@ angular.module('htmlClient')
 		
 		setVehicleData: function(vehicleData){
 			this.vehicleData = vehicleData;
-		},
-
-		getVehicle: function(mo_id){
-			var deferred = $q.defer();
-			$http(mobileClientService.makeRequestOption({
-				method : 'GET',
-				url : '/user/vehicle/' + mo_id
-			})).success(function(data, status) {
-				deferred.resolve(data);
-			}).error(function(error, status) {
-				deferred.reject({error: error, status: status});
-			});
-			return deferred.promise;
-		},
-		addVehicle: function(){
-			var deferred = $q.defer();
-			$http(mobileClientService.makeRequestOption({
-				method: "POST",
-				url: "/user/vehicle",
-				headers: {
-					'Content-Type': 'application/JSON;charset=utf-8'
-				}
-			})).success(function(data, status){
-				deferred.resolve(data);
-			}).error(function(error, status){
-				deferred.reject({error: error, status: status});
-			});
-			return deferred.promise;
-		},
-		activateVehicle: function(toActive){
-			var deferred = $q.defer();
-			$http(mobileClientService.makeRequestOption({
-				method: "PUT",
-				url: "/user/vehicle/" + this.vehicleId,
-				headers: {
-					"Content-Type": "application/JSON;charset=utf-8"
-				},
-				data: {mo_id: this.vehicleId, status: toActive ? "Active" : "Inactive"}
-			})).success(function(data, status){
-				deferred.resolve(data);
-			}).error(function(error, status){
-				deferred.reject({error: error, status: status});
-			});
-			return deferred.promise;
-		},
-		deleteVehicle: function(mo_id){
-			var deferred = $q.defer();
-			$http(mobileClientService.makeRequestOption({
-				method: "DELETE",
-				url: "/user/vehicle/" + mo_id
-			})).success(function(data, status){
-				deferred.resolve(data);
-			}).error(function(error, status){
-				deferred.reject({error: error, status: status});
-			});
-			return deferred.promise;
-		},
-
-		getDriver: function(driver_id){
-			var deferred = $q.defer();
-			$http(mobileClientService.makeRequestOption({
-				method : 'GET',
-				url : '/user/driver/' + driver_id
-			})).success(function(data, status) {
-				deferred.resolve(data);
-			}).error(function(error, status) {
-				deferred.reject({error: error, status: status});
-			});
-			return deferred.promise;
-		},
-		addDriver: function(){
-			var deferred = $q.defer();
-			$http(mobileClientService.makeRequestOption({
-				method: "POST",
-				url: "/user/driver",
-				headers: {
-					'Content-Type': 'application/JSON;charset=utf-8'
-				}
-			})).success(function(data, status){
-				deferred.resolve(data);
-			}).error(function(error, status){
-				deferred.reject({error: error, status: status});
-			});
-			return deferred.promise;
-		},
-		activateDriver: function(toActive){
-			var deferred = $q.defer();
-			$http(mobileClientService.makeRequestOption({
-				method: "PUT",
-				url: "/user/driver/" + this.driverId,
-				headers: {
-					"Content-Type": "application/JSON;charset=utf-8"
-				},
-				data: {driver_id: this.driverId, status: toActive ? "Active" : "Inactive"}
-			})).success(function(data, status){
-				deferred.resolve(data);
-			}).error(function(error, status){
-				deferred.reject({error: error, status: status});
-			});
-			return deferred.promise;
-		},
-		deleteDriver: function(driver_id){
-			var deferred = $q.defer();
-			$http(mobileClientService.makeRequestOption({
-				method: "DELETE",
-				url: "/user/driver/" + driver_id
-			})).success(function(data, status){
-				deferred.resolve(data);
-			}).error(function(error, status){
-				deferred.reject({error: error, status: status});
-			});
-			return deferred.promise;
-		},
-		isAutoManagedAsset: function() {
-			return assetService.isAutoManagedAsset();
 		}
 
     };

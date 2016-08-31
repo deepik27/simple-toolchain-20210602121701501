@@ -18,35 +18,32 @@
 	angular.module('htmlClient').
 	component('clientDrive', {
 		templateUrl: scriptBaseUrl + 'html-client-drive.html',
-		controller: function ClientTop($scope, $http ,$q, carProbeService, virtualGeoLocation) {
+		controller: function ClientTop($scope, $http ,$q, assetService, carProbeService, virtualGeoLocation) {
 			var updateUIHandle = null;
 			// start driving
 			function startDriving() {
-		    	var deferred = $q.defer();
-				$q.when(carProbeService.connect(), function() {
-					$q.when(carProbeService.activateAssets(true), function() {
-						deferred.resolve();
-					}, function(error) {
-						deferred.reject(error);
+				var self = this;
+				return $q.when(assetService.prepareAssets(), function(assets) {
+			    	var promise = [];
+			    	promise.push($q.when(assetService.activateAssets(true), function() {
+			    		return;
+					}));
+			    	promise.push($q.when(carProbeService.connect(assets), function() {
+			    		return;
+					}));
+					return $q.all(promise).then(function(){
+						var tripId = carProbeService.makeTrip();
+						return tripId;
 					});
 				});
-				return deferred.promise;
 			}
 			
 			// stop driving
 			function stopDriving() {
-				var deferred = $q.defer();
-				$q.when(carProbeService.activateAssets(false), function() {
-					if ($scope.driveEvent.trip_id) {
-						$scope.driveEvent.trip_id = null;
-						deferred.resolve($scope.driveEvent.trip_id);
-					} else {
-						deferred.resolve(null);
-					}
-				}, function(error) {
-					deferred.reject(error);
+				carProbeService.clearTrip();
+				return $q.when(assetService.activateAssets(false), function() {
+					return null;
 				});
-				return deferred.promise;
 			}
 			
 			function connectionStateListner(state) {
@@ -79,13 +76,13 @@
 		    $scope.onDriving = function() {
 		    	if (carProbeService.hasTripId()) {
 					stopDriving().then(function() {
-						carProbeService.clearTripId();
+						$scope.driveEvent.trip_id = null;
 					}, function(err) {
 						alert((err.data && err.data.message) || err.responseText || err.message || err);
 					});
 				} else {
-					startDriving().then(function() {
-						carProbeService.createTripId();
+					startDriving().then(function(tripId) {
+						$scope.driveEvent.trip_id = tripId;
 					}, function(err) {
 						alert((err.data && err.data.message) || err.responseText || err.message || err);
 					});

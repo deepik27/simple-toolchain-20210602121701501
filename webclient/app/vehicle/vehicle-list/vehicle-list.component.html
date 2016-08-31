@@ -1,0 +1,36 @@
+
+<span class="col-xs-12" style="position:fixed; left:50%;" [hidden]="!requestSending"><img src="/images/loading.gif"></span>
+<div class="floatRight" style="margin-bottom:5px;margin-right:10px;"><button (click)="onReload()" [disabled]="requestSending">Reload</button></div>
+<table class="table table-hover table-striped table-condensed table-responsive">
+	<thead>
+		<tr>
+			<th>#</th>
+			<th (click)="onOrderBy('mo_id')">ID</th>
+			<th (click)="onOrderBy('vendor')">Vendor</th>
+			<th (click)="onOrderBy('model')">Model</th>
+			<th (click)="onOrderBy('serial_number')">Serial#</th>
+			<th (click)="onOrderBy('status')">Status</th>
+			<th>Action</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr *ngFor="let vehicle of (vehicles|orderBy:orderByKey:orderByOrder); let i = index">
+			<td class="alignCenter">{{i + 1}}</td>
+			<td class="alignCenter">{{vehicle.mo_id}}</td>
+			<td class="alignCenter">{{vehicle.vendor}}</td>
+			<td class="alignCenter">{{vehicle.model}}</td>
+			<td class="alignCenter">{{vehicle.serial_number}}</td>
+			<td class="alignCenter">{{vehicle.status}}</td>
+			<!--
+			<td class="alignCenter">
+				<span [hidden]="vehicle.status==='active'"><span href="#" (mousedown)="deactivate_mo_id=null">{{vehicle.status}}</span></span>
+				<span [hidden]="vehicle.status!=='active'"><span href="#" (mousedown)="deactivate_mo_id=(deactivate_mo_id===vehicle.mo_id)?null:vehicle.mo_id">{{vehicle.status}}</span></span>
+				<div class="dropdown" [hidden]="deactivate_mo_id!==vehicle.mo_id">
+						<span (click)="deactivate_mo_id=null;onDeactivate(vehicle.mo_id)">Deactivate</span>
+				</div>
+			</td>
+		-->
+			<td class="alignCenter"><button [hidden]="vehicle.status!=='active'" [disabled]="requestSending" (click)="onDeactivate(vehicle.mo_id)">Deactivate</button></td>
+		</tr>
+	</tbody>
+</table>

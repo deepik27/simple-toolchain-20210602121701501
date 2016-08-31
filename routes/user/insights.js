@@ -37,7 +37,11 @@ debug.log = console.log.bind(console);
 router.post('/probeData',  authenticate, function(req, res) {
 	try{
 		driverInsightsProbe.sendRawData(req.body, function(msg){
-			res.send(msg);
+			if (msg.statusCode) {
+				res.status(msg.statusCode).send(msg);
+			} else {
+				res.send(msg);
+			}
 		});
 	}catch(error){
 		res.send(error);
@@ -48,7 +52,11 @@ router.get('/probeData',  authenticate, function(req, res) {
 	driverInsightsProbe.getCarProbeDataListAsDate().then(function(msg){
 		res.send(msg);
 	})["catch"](function(error){
-		res.send(error);
+		if (error.statusCode) {
+			res.status(error.statusCode).send(error);
+		} else {
+			res.send(error);
+		}
 	});
 });
 

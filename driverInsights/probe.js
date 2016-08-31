@@ -130,9 +130,11 @@ _.extend(driverInsightsProbe, {
 				callback(payload);
 			})["catch"](function(err){
 				console.error("error: " + JSON.stringify(err));
+				callback(err);
 			}).done();
 		})["catch"](function(err){
 			console.error("error: " + JSON.stringify(err));
+			callback(err);
 		}).done();
 	},
 	/*
@@ -174,9 +176,10 @@ _.extend(driverInsightsProbe, {
 					self.last_prob_ts = moment().valueOf(); //TODO Need to care in the case that payload.ts is older than last_prob_ts
 					deferred.resolve(body);
 				} else {
+					var statusCode = response ? response.statusCode : 500;
 					console.error("sendProbeData:" + options.body);
 					console.error('sendProbeData error(' + (response ? response.statusCode : 'no response') + '): '+ error + ': ' + body);
-					deferred.reject({error: "(sendProbeData)" + body});
+					deferred.reject({error: "(sendProbeData)" + body, statusCode: statusCode});
 				}
 			});
 		}
@@ -211,9 +214,10 @@ _.extend(driverInsightsProbe, {
 					debug("getProbeData response: " + body);
 					deferred.resolve(body);
 				}else{
+					var statusCode = response ? response.statusCode : 500;
 					console.error("getProbeData: " + options.body);
 					console.error("getProbeData error(" + (response ? response.statusCode : "no response") + "): " + error + ": " + body);
-					deferred.reject({error: "(getProbeData)" + body});
+					deferred.reject({error: "(getProbeData)" + body, statusCode: statusCode});
 				}
 			});
 		}
@@ -254,9 +258,10 @@ _.extend(driverInsightsProbe, {
 					return deferred.reject(e);
 				}
 			}else{
+				var statusCode = response ? response.statusCode : 500;
 				console.error("getCarProbe: " + options.body);
 				console.error("getCarProbe error(" + (response ? response.statusCode : "no response") + "): " + error + ": " + body);
-				deferred.reject({error: "(getCarProbe)" + body});
+				deferred.reject({error: "(getCarProbe)" + body, statusCode: statusCode});
 			}
 		});
 		return deferred.promise;
