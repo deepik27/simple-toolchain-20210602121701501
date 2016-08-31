@@ -9,11 +9,12 @@
 		<option *ngFor="let alertProp of alertProps"
 			value="{{alertProp.getId()}}">{{alertProp.getLabel()}}</option>
 	</select>
-	<select [value]="value"
+	<select *ngIf="alertValues && alertValues.length > 0" [value]="value"
 		(change)="onValueChanged($event)">
 		<option *ngFor="let alertValue of alertValues"
 			value="{{alertValue.getId()}}">{{alertValue.getLabel()}}</option>
 	</select>
+	<input *ngIf="!alertValues || alertValues.length <= 0" [value]="value" (change)="onValueChanged($event)"/>
 	<label>
 		<input type="checkbox" [(ngModel)]="includeClosed" (change)="onIncludeClosedChanged($event)"/>
 		Include Closed Alerts
@@ -35,7 +36,7 @@
 			<td>{{alert.ts|moment:"YYYY/MM/DD HH:mm:ss"}}</td>
 			<td *ngIf="includeClosed">{{alert.closed_ts>0?(alert.closed_ts|moment:"YYYY/MM/DD HH:mm:ss"):"-"}}</td>
 			<td>{{alert.severity}}</td>
-			<td>{{alert.mo_id}}</td>
+			<td><a href="javascript:void(0)" (click)="onMoIdClicked($event, alert.mo_id)">{{alert.mo_id}}</a></td>
 			<td>{{alert.description}}</td>
 			<td>{{alert.simulated ? "Simulated" : ""}}</td>
 		</tr>

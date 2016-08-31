@@ -54,8 +54,14 @@ export class AlertListComponent{
     this.value = "";
   }
   onValueChanged(event){
-    var value = this.alertValues[event.target.selectedIndex];
-    this.value = value.getId();
+    if(event.target.tagName.toUpperCase() === "SELECT"){
+      var value = this.alertValues[event.target.selectedIndex];
+      this.value = value.getId();
+    }else if(event.target.tagName.toUpperCae() === "INPUT"){
+      this.value = event.target.value;
+    }else{
+      return;
+    }
     this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
   }
   onIncludeClosedChanged(event){
@@ -68,6 +74,15 @@ export class AlertListComponent{
   onOrderBy(key){
     this.orderByOrder = (key === this.orderByKey) ? !this.orderByOrder : true;
     this.orderByKey = key;
+    this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
+  }
+  onMoIdClicked(event, mo_id){
+    event.stopPropagation();
+    this.prop = AlertProp.MoId.getId();
+    this.alertValues = AlertProp.MoId.getValues();
+    this.value = mo_id;
+    this.includeClosed = true;
+    this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
   }
   _getAlert = function(prop:string, value:string, includeClosed?:boolean, area?:Object){
     var url = "/user/alert?" + prop + "=" + value + "&includeClosed=" + includeClosed + "&limit=100";
