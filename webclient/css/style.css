@@ -28,15 +28,15 @@ Author URI: http://www.ibm.com/internet-of-things/
 6. Main Content - Modules
 7. Main Content - Map
 8. Main Content - Vehicle
-9. Angular Styles
-10. Grid System
-11. VIBE Modal Module
-12. General Media Queries
-13. Twitter Bootstrap Styles
-14. Real-Time Map Styles
-15. C3 Styles
-16. OpenLayers Styles
-
+9. Main Content - Car Status
+10. Angular Styles
+11. Grid System
+12. VIBE Modal Module
+13. General Media Queries
+14. Twitter Bootstrap Styles
+15. Real-Time Map Styles
+16. C3 Styles
+17. OpenLayers Styles
 */
 
 @import url('reset.css');
@@ -227,6 +227,28 @@ i.iconBlock {
         -ms-filter: blur(4px);
         filter: blur(4px);
     }
+}
+
+.card {
+    display: table;
+    width: 100%;
+    background: #fff;
+    padding: 20px;
+    -moz-box-shadow: 0 3px 6px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.10);
+    -webkit-box-shadow: 0 3px 6px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.10);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.10);
+    -moz-transition:    all .1s ease-in;
+    -webkit-transition: all .1s ease-in;
+    transition:         all .1s ease-in;
+}
+
+.card:hover {
+    -moz-box-shadow: 0 4px 8px rgba(0,0,0,0.15), 0 4px 6px rgba(0,0,0,0.15);
+    -webkit-box-shadow: 0 4px 8px rgba(0,0,0,0.15), 0 4px 6px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15), 0 4px 6px rgba(0,0,0,0.15);
+    -moz-transition:    all .1s ease-in;
+    -webkit-transition: all .1s ease-in;
+    transition:         all .1s ease-in;
 }
 
 /* === 2. Header Styles === */
@@ -567,9 +589,7 @@ strong.totalCarsNumber {
     font-weight: 700;
 }
 
-
-
-/* === 8. Main Content - Vehicle === */
+/* === 9. Main Content - Car Status === */
 
 strong.vehicleStats {
     display: block;
@@ -582,8 +602,156 @@ strong.vehicleStats i {
 }
 
 
+strong.carStatus-strong {
+    display: block;
+    font-size: 30px;
+    font-weight: 500;
+    margin-bottom: 0;
+}
 
-/* === 9. Angular Styles === */
+.speedometer-container {
+    position: relative;
+    width: 300px;
+    height: 150px;
+}
+
+.speedometer-container .speedometer {
+    background: #e1e1e1;
+    width: 300px;
+    height: 150px;
+    border-top-left-radius: 500px;
+    border-top-right-radius: 500px;
+}
+
+.speedometer-container .bottom-bar {
+    background: #9d9d9d;
+    bottom: -5px;
+    width: 30px;
+    height: 15px;
+    border-top-left-radius: 500px;
+    border-top-right-radius: 500px;
+}
+
+.speedometer-container .pointer {
+    background: #f05153;
+    bottom: 0px;
+    width: 10px;
+    height: 65%;
+    transform: rotate(-90deg);
+    transform-origin: center 100%;
+    -webkit-transition: all 2s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+    transition:         all 2s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+    -moz-transition:    all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+    -webkit-transition: all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+    transition:         all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+}
+
+.speedometer-container .pointer,
+.speedometer-container .bottom-bar {
+    position: absolute;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+}
+
+@media (max-width: 440px) {
+    .speedometer-container {
+        width: 200px;
+        height: 100px;
+    }
+    
+    .speedometer-container .speedometer {
+        width: 200px;
+        height: 100px;
+    }
+    
+    .speedometer-container .bottom-bar {
+        width: 25px;
+        height: 12.5px;
+    }
+    
+    .speedometer-container .pointer {
+        width: 8px;
+    }
+}
+
+@media (max-width: 340px) {
+    .speedometer-container {
+        width: 150px;
+        height: 75px;
+    }
+    
+    .speedometer-container .speedometer {
+        width: 150px;
+        height: 75px;
+    }
+    
+    .speedometer-container .bottom-bar {
+        width: 20px;
+        height: 10px;
+    }
+    
+    .speedometer-container .pointer {
+        width: 6px;
+    }
+}
+
+.thermometer-container {
+    display: table;
+    width: 100%;
+    height: auto;
+    padding-bottom: 30px;
+}
+
+ul.thermometer {
+    margin-top: 50px;
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+    height: 10px;
+}
+
+ul.thermometer li {
+    margin-top: -10px;
+    position: relative;
+    text-align: center;
+}
+
+
+ul.thermometer li p.frnh {
+    margin-top: -30px;
+}
+
+ul.thermometer li p.cent {
+    margin-top: 60px;
+}
+
+ul.thermometer li::before {
+    content: "";
+    position: absolute;
+    background: #000;
+    width: 3px;
+    height: 30px;
+    right: 0;
+    left: 0;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.thermometer-container .thermometer-range {
+    background: #f05153;
+    width: 2px;
+    height: 10px;
+    margin-top: -10px;
+    -moz-transition:    all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+    -webkit-transition: all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+    transition:         all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+}
+
+/* === 10. Angular Styles === */
 
 [ui-view].ng-enter, [ui-view].ng-leave {
   -webkit-transition:all .15s ease-in-out;
@@ -620,9 +788,7 @@ strong.vehicleStats i {
   transform:scale3d(0.75, 0.75, 0.75);
 }
 
-
-
-/* === 10. Grid System === */
+/* === 11. Grid System === */
 
 .row {
     box-sizing: border-box;
@@ -644,7 +810,7 @@ strong.vehicleStats i {
     flex-direction: row;
 }
 
-.column-2-med, .column-3-med, .column-4-med, .column-5-med, .column-6-med, .column-7-med, .column-9-med, .column-10-med {
+.column-2-med, .column-3-med, .column-4-med, .column-5-med, .column-6-med, .column-7-med, .column-8-med, .column-9-med, .column-10-med {
     box-sizing: border-box;
     -webkit-box-flex: 0;
     -webkit-flex: 0 0 auto;
@@ -668,6 +834,11 @@ strong.vehicleStats i {
 .noBottomPadding .column-2-med, .noBottomPadding .column-3-med, .noBottomPadding .column-4-med, .noBottomPadding .column-5-med,
 .noBottomPadding .column-6-med, .noBottomPadding .column-7-med, .noBottomPadding .column-9-med, .noBottomPadding .column-10-med {
     padding-bottom: 0;
+}
+
+.noPadding .column-2-med, .noPadding .column-3-med, .noPadding .column-4-med, .noPadding .column-5-med,
+.noPadding .column-6-med, .noPadding .column-7-med, .noPadding .column-9-med, .noPadding .column-10-med {
+    padding: 0;
 }
 
 .noOffsetRow-6 .column-6-med:nth-child(odd) {
@@ -734,8 +905,80 @@ strong.vehicleStats i {
     flex-basis: 83.3333333%;
 }
 
+.column-12-med {
+    max-width: 100%;
+    -ms-flex-preferred-size: 100%;
+    -webkit-flex-basis: 100%;
+    flex-basis: 100%;
+}
+
 .row img {
     max-width: 100%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+    .column-2-sm {
+        max-width: 16.6666666667%;
+        -ms-flex-preferred-size: 16.6666666667%;
+        -webkit-flex-basis: 16.6666666667%;
+        flex-basis: 16.6666666667%;
+    }
+
+    .column-3-sm {
+        max-width: 25%;
+        -ms-flex-preferred-size: 25%;
+        -webkit-flex-basis: 25%;
+        flex-basis: 25%;
+    }
+
+    .column-4-sm {
+        max-width: 33.3333333%;
+        -ms-flex-preferred-size: 33.3333333%;
+        -webkit-flex-basis: 33.3333333%;
+        flex-basis: 33.3333333%;
+    }
+
+    .column-5-sm {
+        max-width: 41.6666667%;
+        -ms-flex-preferred-size: 41.6666667%;
+        -webkit-flex-basis: 41.6666667%;
+        flex-basis: 41.6666667%;
+    }
+
+    .column-6-sm {
+        max-width: 50%;
+        -ms-flex-preferred-size: 50%;
+        -webkit-flex-basis: 50%;
+        flex-basis: 50%;
+    }
+
+    .column-7-sm {
+        max-width: 58.333333333%;
+        -ms-flex-preferred-size: 58.333333333%;
+        -webkit-flex-basis: 58.333333333%;
+        flex-basis: 58.333333333%;
+    }
+    
+    .column-8-sm {
+        max-width: 66.666666666%;
+        -ms-flex-preferred-size: 66.666666666%;
+        -webkit-flex-basis: 66.666666666%;
+        flex-basis: 66.666666666%;
+    }
+
+    .column-9-sm {
+        max-width: 75%;
+        -ms-flex-preferred-size: 75%;
+        -webkit-flex-basis: 75%;
+        flex-basis: 75%;
+    }
+
+    .column-10-sm {
+        max-width: 83.3333333%;
+        -ms-flex-preferred-size: 83.3333333%;
+        -webkit-flex-basis: 83.3333333%;
+        flex-basis: 83.3333333%;
+    }
 }
 
 @media (max-width:767px) {
@@ -880,7 +1123,7 @@ strong.vehicleStats i {
 
 
 
-/* === 11. VIBE Modal Styles === */
+/* === 12. VIBE Modal Styles === */
 
 a.em-Modal-Call {
     display: table;
@@ -1101,7 +1344,7 @@ div.em-Modal ul.modalMenu li.active i {
 
 
 
-/* === 12. General Media Queries === */
+/* === 13. General Media Queries === */
 
 @media (max-width: 767px) {
     .medium-show {
@@ -1121,7 +1364,7 @@ div.em-Modal ul.modalMenu li.active i {
 
 
 
-/* === 13. Twitter Bootstrap Styles === */
+/* === 14. Twitter Bootstrap Styles === */
 
 /*!
  * Bootstrap v3.3.5 (http://getbootstrap.com)
@@ -1620,7 +1863,7 @@ table th[class*="col-"] {
 
 
 
-/* === 14. Real-Time Map Styles === */
+/* === 15. Real-Time Map Styles === */
 
 .carMonitorMap {
     position: relative;
@@ -1702,13 +1945,13 @@ table th[class*="col-"] {
 
 
 
-/* === 15. C3 Styles === */
+/* === 16. C3 Styles === */
 
 .c3 svg{font:10px sans-serif}.c3 line,.c3 path{fill:none;stroke:#000}.c3 text{-webkit-user-select:none;-moz-user-select:none;user-select:none}.c3-bars path,.c3-event-rect,.c3-legend-item-tile,.c3-xgrid-focus,.c3-ygrid{shape-rendering:crispEdges}.c3-chart-arc path{stroke:#fff}.c3-chart-arc text{fill:#fff;font-size:13px}.c3-grid line{stroke:#aaa}.c3-grid text{fill:#aaa}.c3-xgrid,.c3-ygrid{stroke-dasharray:3 3}.c3-text.c3-empty{fill:gray;font-size:2em}.c3-line{stroke-width:1px}.c3-circle._expanded_{stroke-width:1px;stroke:#fff}.c3-selected-circle{fill:#fff;stroke-width:2px}.c3-bar{stroke-width:0}.c3-bar._expanded_{fill-opacity:.75}.c3-chart-arcs-title{dominant-baseline:middle;font-size:1.3em}.c3-target.c3-focused{opacity:1}.c3-target.c3-focused path.c3-line,.c3-target.c3-focused path.c3-step{stroke-width:2px}.c3-target.c3-defocused{opacity:.3!important}.c3-region{fill:#4682b4;fill-opacity:.1}.c3-brush .extent{fill-opacity:.1}.c3-legend-item{font-size:12px}.c3-legend-item-hidden{opacity:.15}.c3-legend-background{opacity:.75;fill:#fff;stroke:#d3d3d3;stroke-width:1}.c3-tooltip-container{z-index:10}.c3-tooltip{border-collapse:collapse;border-spacing:0;background-color:#fff;empty-cells:show;width:auto;-webkit-box-shadow:7px 7px 12px -9px #777;-moz-box-shadow:7px 7px 12px -9px #777;box-shadow:7px 7px 12px -9px #777;opacity:.9}.c3-tooltip tr{border:1px solid #CCC}.c3-tooltip th{background-color:#aaa;font-size:14px;padding:2px 5px;text-align:left;color:#FFF}.c3-tooltip td{font-size:13px;padding:3px 6px;background-color:#fff;border-left:1px dotted #999;color:#000}.c3-tooltip td>span{display:inline-block;width:10px;height:10px;margin-right:6px}.c3-tooltip td.value{text-align:right}.c3-area{stroke-width:0;opacity:.2}.c3-chart-arcs .c3-chart-arcs-background{fill:#e0e0e0;stroke:none}.c3-chart-arcs .c3-chart-arcs-gauge-unit{fill:#000;font-size:16px}.c3-chart-arcs .c3-chart-arcs-gauge-max,.c3-chart-arcs .c3-chart-arcs-gauge-min{fill:#777}.c3-chart-arc .c3-gauge-value{fill:#000}
 
 
 
-/* === 16. OpenLayers Styles === */
+/* === 17. OpenLayers Styles === */
 
 .ol-mouse-position {
   top: 8px;
