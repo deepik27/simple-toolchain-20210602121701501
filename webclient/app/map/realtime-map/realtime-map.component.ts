@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, Output,
-					OnInit, OnChanges, SimpleChange, Inject } from '@angular/core';
-import { Http, Request, Response, URLSearchParams } from '@angular/http';
+					OnInit, OnChanges, SimpleChange } from '@angular/core';
 import { Observable, Subject } from 'rxjs/Rx.DOM';
 
 import * as ol from 'openlayers';
@@ -23,8 +22,6 @@ declare var $; // jQuery from <script> tag in the index.html
  *   <script src="https://cdnjs.cloudflare.com/ajax/libs/rxjs-dom/7.0.3/rx.dom.js"></script>
  */
 
-var CAR_PROBE_URL = '/user/carProbe';
-
 	/**
 	 * The default zoom value when the map `region` is set by `center`
 	 */
@@ -34,7 +31,6 @@ var CAR_PROBE_URL = '/user/carProbe';
 	var INV_MAX_FPS = 1000 / 10;
 	var ANIMATION_DELAY = 2000;
 	var DEFAULT_MOVE_REFRESH_DELAY = 500;
-	var CAR_STATUS_REFRESH_PERIOD = 0 // was 15000; now, setting 0 not to update via polling (but by WebSock)
 	var NEXT_MAP_ELEMENT_ID = 1;
 
 
@@ -67,19 +63,12 @@ export class RealtimeMapComponent implements OnInit {
 	// Devices management
 	//
 	animatedDeviceManager: RealtimeDeviceDataProvider;
-
-	//
-	// Connection to server and reflecting the response to the Map
-	//
-	activeWsClient = null;
-	activeWsSubscribe = null; // WebSocket client
-	carStatusIntervalTimer: any;
+	animatedDeviceManagerService: RealtimeDeviceDataProviderService;
 
   constructor(
-		private $http: Http,
-		@Inject('webApiHost') private webApiHost: string,
 		animatedDeviceManagerService: RealtimeDeviceDataProviderService
 	) {
+		this.animatedDeviceManagerService = animatedDeviceManagerService;
 		this.animatedDeviceManager = animatedDeviceManagerService.getProvider();
 	}
 
@@ -133,8 +122,22 @@ export class RealtimeMapComponent implements OnInit {
 
 		// setup view change event handler
 		this.mapHelper.postChangeViewHandlers.push(extent => {
-			this.stopTracking(true); // true to move to next extent smoothly
-			this.startTracking(extent);
+			//this.animatedDeviceManagerService.stopTracking(true, this.mapHelper); // true to move to next extent smoothly
+			this.animatedDeviceManagerService.startTracking(extent, this.mapHelper, events => {
+				// create markers
+				var markers = events.map((event) => {
+					var result = new ol.Feature({
+						geometry: new ol.geom.Point(ol.proj.fromLonLat(<ol.Coordinate>[event.s_longitude, event.s_latitude], undefined)),
+						popoverContent: event.event_name,
+					});
+					result.setStyle(getDrivingEventStyle(event)); //WORKAROUND not sure why layer style not work
+					return result;
+				});
+				// update layer contents
+				this.eventsLayer.getSource().clear();
+				this.eventsLayer.getSource().addFeatures(markers);
+
+			});
 			// fire event
 			this.extentChanged.emit({extent: extent});
 		});
@@ -294,132 +297,10 @@ export class RealtimeMapComponent implements OnInit {
 		});
 	}
 
-	/**
-	 * Start trackgin a region
-	 */
-	startTracking(extent){
-		var xt = this.mapHelper.expandExtent(extent, 0.5); // get extended extent to track for map
-		var qs = ['min_lat='+xt[1], 'min_lng='+xt[0],
-							'max_lat='+xt[3], 'max_lng='+xt[2]].join('&');
-		// handle cars
-		this.refreshCarStatus(qs).then((data) => {
-			// adjust animation time
-			if(data.serverTime){
-				this.mapHelper.setTimeFromServerRightNow(data.serverTime);
-			}
-
-			// start websock server for real-time tracking
-			this.stopWsClient();
-			if (data.wssPath){
-				var startWssClient = () => {
-					var wsProtocol = (location.protocol == "https:") ? "wss" : "ws";
-					var wssUrl = wsProtocol + '://' + this.webApiHost + data.wssPath;
-					// websock client to keep the device locations latest
-					var ws = this.activeWsClient = Observable.webSocket(wssUrl);
-					this.activeWsSubscribe = ws.subscribe((data: any) => {
-						this.animatedDeviceManager.addDeviceSamples(data.devices, true);
-					}, (e) => {
-						if (e.type === 'close'){
-							this.activeWsSubscribe = null;
-							ws.socket.close(); //closeObserver(); observer.dispose();
-							// handle close event
-							if(ws === this.activeWsClient){ // reconnect only when this ws is active ws
-								console.log('got wss socket close event. reopening...')
-								this.activeWsClient = null;
-								startWssClient(); // restart!
-								return;
-							}
-						}
-						// error
-						console.error('Error event from WebSock: ', e);
-					});
-				};
-				startWssClient(); // start wss
-			}
-
-			// start animation
-			this.mapHelper.startAnimation();
-
-			// schedule status timer
-			var carStatusTimerFunc = () => {
-				this.refreshCarStatus(qs);
-				this.carStatusIntervalTimer = setTimeout(carStatusTimerFunc, CAR_STATUS_REFRESH_PERIOD);
-			}
-			if(CAR_STATUS_REFRESH_PERIOD > 0)
-					this.carStatusIntervalTimer = setTimeout(carStatusTimerFunc, CAR_STATUS_REFRESH_PERIOD);
-		}, (err) => {
-			console.warn('it\'s fail to access the server.');
-		})
-
-		// handle driver events
-		this.refreshDriverEvents(qs);
-	};
-	// Add/update cars with DB info
-	refreshCarStatus(qs) {
-		return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise().then((resp) => {
-			let data = resp.json();
-			if(data.devices){
-				this.animatedDeviceManager.addDeviceSamples(data.devices, true);
-			}
-			return data; // return resp so that subsequent can use the resp
-		});
-	};
-	// Add driver events on the map
-	refreshDriverEvents(qs){
-		return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise().then((resp) => {
-			let data = resp.json();
-			var events = data.devices;
-			if (events){
-				// create markers
-				var markers = events.map((event) => {
-					var result = new ol.Feature({
-						geometry: new ol.geom.Point(ol.proj.fromLonLat(<ol.Coordinate>[event.s_longitude, event.s_latitude], undefined)),
-						popoverContent: event.event_name,
-					});
-					result.setStyle(getDrivingEventStyle(event)); //WORKAROUND not sure why layer style not work
-					return result;
-				});
-				// update layer contents
-				this.eventsLayer.getSource().clear();
-				this.eventsLayer.getSource().addFeatures(markers);
-			}
-		});
-	};
-
-	/**
-	 * Stop server connection
-	 */
-	stopTracking(intermediate){
-		// stop timer
-		if(this.carStatusIntervalTimer){
-			clearTimeout(this.carStatusIntervalTimer);
-			this.carStatusIntervalTimer = 0;
-		}
-		if(!intermediate){
-			// stop animation
-			this.mapHelper.stopAnimation();
-			// stop WebSock client
-			this.stopWsClient();
-		}
-	};
-	stopWsClient(){
-		if (this.activeWsSubscribe){
-			this.activeWsSubscribe.unsubscribe();
-			this.activeWsSubscribe = null;
-		}
-		if (this.activeWsClient){
-			if (this.activeWsClient.socket && this.activeWsClient.socket){
-				this.activeWsClient.socket.close();
-			}
-			this.activeWsClient = null;
-		}
-	}
 
 
 
-
-
-    ngOnInit() {
+  ngOnInit() {
         this.initMap();
 	}
 

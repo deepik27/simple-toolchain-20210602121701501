@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ROUTER_PROVIDERS, Routes, ROUTER_DIRECTIVES, Router } from '@angular/router';
 
-import { CarStatusSummaryComponent } from './car-status-summary.component';
+import { CarStatusSummaryComponent } from './summary/car-status-summary.component';
 import { CarStatusComponent } from './car-status.component';
 
 @Component({

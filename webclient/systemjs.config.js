@@ -11,8 +11,8 @@
     'rxjs':                       'node_modules/rxjs',
     // additional libraries
     'openlayers':                 'https://cdnjs.cloudflare.com/ajax/libs/ol3/3.5.0/ol.js',
-    'd3':                         'https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.7/d3.min.js',
-    'c3':                         'https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.9/c3.min.js',
+    'd3':                         'https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.7/d3.js',
+    'c3':                         'https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.9/c3.js',
     'moment':                     'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.min.js',
     'underscore':                 'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.2/underscore-min.js',
     // 'jquery':                     'https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js',
