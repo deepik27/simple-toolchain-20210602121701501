@@ -12,7 +12,7 @@ To support various scenario describes in the section below, the Web UI is provid
 ### development scenarios
 
 NOTE: **Windows** developers are recommended to install the following packages to avoid `PATH` issues.
-- `npm install typscripts -g`
+- `npm install typescript -g`
 - `npm install typings -g`
 
 #### Client development
