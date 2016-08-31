@@ -2,18 +2,18 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
 import { Counts } from './counts';
-import { AnimatedDevice, AnimatedDeviceManager } from '../shared/animated-device';
-import { AnimatedDeviceManagerService } from '../shared/animated-device-manager.service';
+import { RealtimeDeviceData, RealtimeDeviceDataProvider } from '../../shared/realtime-device';
+import { RealtimeDeviceDataProviderService } from '../../shared/realtime-device-manager.service';
 
 import * as _ from 'underscore';
 
 @Injectable()
 export class NumberOfCarsService {
   // user animatedDeviceManager as the data source
-  private animatedDeviceManager: AnimatedDeviceManager;
+  private animatedDeviceManager: RealtimeDeviceDataProvider;
 
-  constructor(animatedDeviceManagerService: AnimatedDeviceManagerService) {
-    this.animatedDeviceManager = animatedDeviceManagerService.getManager();
+  constructor(animatedDeviceManagerService: RealtimeDeviceDataProviderService) {
+    this.animatedDeviceManager = animatedDeviceManagerService.getProvider();
   }
 
   getNumberOfCars(region: any, interval = 3): Observable<Counts>{

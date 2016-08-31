@@ -6,8 +6,8 @@ import { Observable, Subject } from 'rxjs/Rx.DOM';
 import * as ol from 'openlayers';
 
 import { MapHelper } from './map-helper';
-import { AnimatedDevice, AnimatedDeviceManager } from '../shared/animated-device';
-import { AnimatedDeviceManagerService } from '../shared/animated-device-manager.service';
+import { RealtimeDeviceData, RealtimeDeviceDataProvider } from '../../shared/realtime-device';
+import { RealtimeDeviceDataProviderService } from '../../shared/realtime-device-manager.service';
 
 declare var $; // jQuery from <script> tag in the index.html
 // as bootstrap type definitoin doesn't extend jQuery $'s type definition
@@ -66,7 +66,7 @@ export class RealtimeMapComponent implements OnInit {
 	//
 	// Devices management
 	//
-	animatedDeviceManager: AnimatedDeviceManager;
+	animatedDeviceManager: RealtimeDeviceDataProvider;
 
 	//
 	// Connection to server and reflecting the response to the Map
@@ -78,9 +78,9 @@ export class RealtimeMapComponent implements OnInit {
   constructor(
 		private $http: Http,
 		@Inject('webApiHost') private webApiHost: string,
-		animatedDeviceManagerService: AnimatedDeviceManagerService
+		animatedDeviceManagerService: RealtimeDeviceDataProviderService
 	) {
-		this.animatedDeviceManager = animatedDeviceManagerService.getManager();
+		this.animatedDeviceManager = animatedDeviceManagerService.getProvider();
 	}
 
 	switchDebug(){

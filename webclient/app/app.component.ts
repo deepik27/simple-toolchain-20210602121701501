@@ -9,12 +9,14 @@ import { AlertPageComponent } from './alert/alert-page.component';
 import { UsersPageComponent } from './users/users-page.component';
 import { VehiclePageComponent } from './vehicle/vehicle-page.component';
 
+import { RealtimeDeviceDataProviderService } from './shared/realtime-device-manager.service';
+
 @Component({
   selector: 'fmdash-app',
   moduleId: module.id,
   templateUrl: 'app.component.html',
   directives: [ROUTER_DIRECTIVES],
-  providers: [ROUTER_PROVIDERS]
+  providers: [ROUTER_PROVIDERS, RealtimeDeviceDataProviderService]
 })
 @Routes([
   {path:'/',          component: MapPageComponent},

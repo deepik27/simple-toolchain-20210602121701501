@@ -6,8 +6,8 @@ import * as _ from 'underscore';
  * This class manages devices and update the device data with device
  * samples sent from the server.
  */
-export class AnimatedDeviceManager {
-  devices = <{ [key: string]: AnimatedDevice}>{};
+export class RealtimeDeviceDataProvider {
+  devices = <{ [key: string]: RealtimeDeviceData }>{};
 
   getDevice(id){
     return this.devices[id];
@@ -44,7 +44,7 @@ export class AnimatedDeviceManager {
               device.addSample(sample);
           }
           else {
-              device = this.devices[sample.deviceID] = new AnimatedDevice(sample);
+              device = this.devices[sample.deviceID] = new RealtimeDeviceData(sample);
           }
       });
       if(syncAllDevices){
@@ -61,7 +61,7 @@ export class AnimatedDeviceManager {
 }
 
 /* --------------------------------------------------------------
- * AnimatedDevice
+ * RealtimeDeviceData
  *
  * This class manages data for a single device and provides read/update
  * access to the data. The incoming data would be a series of samples which
@@ -69,7 +69,7 @@ export class AnimatedDeviceManager {
  * For such series of data, this class provides linear approximation for
  * the metrics for any timestamp.
  */
-export class AnimatedDevice {
+export class RealtimeDeviceData {
   latestInfo = null;
   latestSample = null;
   samples: any[];
