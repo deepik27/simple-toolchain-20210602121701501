@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { LocationService, MapArea } from '../../shared/location.service';
+import { LocationService, MapArea } from './location.service';
 
 @Component({
 	moduleId: module.id,
