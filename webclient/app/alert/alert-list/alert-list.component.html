@@ -1,10 +1,5 @@
-
 <div *ngIf="showInput">
-	<label>Min Latitude<input [(value)]="min_lat"/></label>
-	<label>Min Longitude<input [(value)]="min_lng"/></label><br>
-	<label>Max Latitude<input [(value)]="max_lat"/></label>
-	<label>Max Longitude<input [(value)]="max_lng"/></label>
-	<button (click)="onClearArea($event)">Clear Area</button><br>
+	<area-select [(extent)]="extent" (areaChanged)="onAreaChanged($event)"></area-select>
 	<select [value]="prop" (change)="onPropChanged($event)">
 		<option *ngFor="let alertProp of alertProps"
 			value="{{alertProp.getId()}}">{{alertProp.getLabel()}}</option>
@@ -20,7 +15,7 @@
 		Include Closed Alerts
 	</label>
 </div>
-<table class="table">
+<table class="table table-hover table-striped table-condensed table-responsive">
 	<thead>
 		<tr>
 			<th (click)="onOrderBy('ts')">From</th>

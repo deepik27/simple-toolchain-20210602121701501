@@ -2,31 +2,28 @@ import { Component, Input } from '@angular/core';
 import { Http, Request, Response } from '@angular/http';
 import { OrderByPipe } from '../../utils/order-by.pipe';
 import { MomentPipe } from '../../utils/moment.pipe';
+import { AreaSelectComponent } from './area-select.component';
 
 @Component({
   moduleId: module.id,
   selector: 'alert-list',
   templateUrl: 'alert-list.component.html',
-  pipes: [OrderByPipe, MomentPipe]
+  pipes: [OrderByPipe, MomentPipe],
+  directives: [AreaSelectComponent]
 })
 
 export class AlertListComponent{
   alertProps = Object.values(AlertProp.values);
   alertValues:PropValue[];
 
-  @Input() min_lat: string;
-  @Input() min_lng: string;
-  @Input() max_lat: string;
-  @Input() max_lng: string;
-  @Input() prop: string;
-  @Input() value: string;
-  @Input() includeClosed: boolean;
+  @Input() prop = "dummy";
+  @Input() value = "dummy";
+  @Input() includeClosed = true;
   @Input() showInput = true;
   fleetalerts: Alert[];
+  extent: number[];
 
-  constructor(private http: Http) {  }
-
-  ngOnInit(){
+  constructor(private http: Http) {
     if(this.prop){
       if(this.value){
         this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
@@ -41,11 +38,9 @@ export class AlertListComponent{
     }
   }
 
-  onClearArea(event){
-    this.min_lat = "";
-    this.min_lng = "";
-    this.max_lat = "";
-    this.max_lng = "";
+  onAreaChanged(extent){
+    this.extent = extent;
+    this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
   }
   onPropChanged(event){
     var prop = this.alertProps[event.target.selectedIndex];
@@ -98,15 +93,16 @@ export class AlertListComponent{
     });
   }
   _getArea = function(){
-    if(this.min_lat === "" || this.min_lng === "" || this.max_lat === "" || this.max_lng === ""
-    || isNaN(this.min_lat) || isNaN(this.min_lng) || isNaN(this.max_lat) || isNaN(this.max_lng)){
+    if(!this.extent || this.extent.length !== 4
+    || this.extent[0] === "" || this.extent[1] === "" || this.extent[2] === "" || this.extent[3] === ""
+    || isNaN(this.extent[0]) || isNaN(this.extent[1]) || isNaN(this.extent[2]) || isNaN(this.extent[3])){
       return null;
     }
     return {
-      min_lat: this.min_lat,
-      min_lng: this.min_lng,
-      max_lat: this.max_lat,
-      max_lng: this.max_lng
+      min_lng: this.extent[0],
+      min_lat: this.extent[1],
+      max_lng: this.extent[2],
+      max_lat: this.extent[3]
     }
   }
 }
