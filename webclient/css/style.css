@@ -2202,3 +2202,12 @@ table th[class*="col-"] {
 .ol-overviewmap-box {
   border: 2px dotted rgba(0,60,136,0.7);
 }
+
+.loading {
+  position:fixed;
+  left:50%;
+}
+
+.hidden {
+  display: none;
+}

@@ -1,12 +1,3 @@
-.loading {
-  position:fixed;
-  left:50%;
-}
-
-.hidden {
-  display: none;
-}
-
 .controlPanel {
   padding:10px 10px;
   width: 100%;

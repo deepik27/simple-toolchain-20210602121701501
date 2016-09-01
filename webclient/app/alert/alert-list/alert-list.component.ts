@@ -22,6 +22,7 @@ export class AlertListComponent{
   @Input() showInput = true;
   fleetalerts: Alert[];
   extent: number[];
+  requestSending = false;
 
   constructor(private http: Http) {
     if(this.prop){
@@ -84,12 +85,16 @@ export class AlertListComponent{
     if(area){
       url += Object.keys(area).map(function(key){return "&" + key + "=" + area[key];}).join();
     }
+    this.requestSending = true;
     this.http.get(url)
     .subscribe((response: Response) => {
+      this.requestSending = false;
       if(response.status == 200){
         var fleetalerts = response.json();
         this.fleetalerts = fleetalerts && fleetalerts.alerts;
       }
+    }, (error: any) => {
+      this.requestSending = false;
     });
   }
   _getArea = function(){
