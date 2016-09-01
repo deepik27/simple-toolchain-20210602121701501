@@ -16,7 +16,8 @@
   float: right;
 }
 
-.sortable {
+.sortable:hover {
+  text-decoration: underline;
   cursor: pointer;
 }
 
