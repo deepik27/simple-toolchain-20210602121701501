@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { Http, Request, Response } from '@angular/http';
 import { OrderByPipe } from '../../utils/order-by.pipe';
 import { MomentPipe } from '../../utils/moment.pipe';
-import { AreaSelectComponent } from './area-select.component';
+import { AreaSelectComponent } from '../../shared/area-select.component';
 
 @Component({
   moduleId: module.id,
