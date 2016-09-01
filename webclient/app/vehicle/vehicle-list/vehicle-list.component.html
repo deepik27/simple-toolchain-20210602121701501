@@ -20,20 +20,18 @@
 	<thead>
 		<tr>
 			<th>#</th>
-			<th class="sortable" (click)="onOrderBy('mo_id')">Vehicle ID</th>
+			<th class="sortable" (click)="onOrderBy('_id')">ID</th>
 			<th class="sortable" (click)="onOrderBy('vendor')">Vendor</th>
 			<th class="sortable" (click)="onOrderBy('model')">Model</th>
-			<th class="sortable" (click)="onOrderBy('serial_number')">Serial#</th>
 			<th class="sortable" (click)="onOrderBy('status')">Status</th>
 		</tr>
 	</thead>
 	<tbody>
 		<tr *ngFor="let vehicle of (vehicles|orderBy:orderByKey:orderByOrder); let i = index">
 			<td class="alignCenter">{{numRecInPage * (pageNumber - 1) + i + 1}}</td>
-			<td class="alignCenter">{{vehicle.mo_id}}</td>
+			<td class="alignCenter">{{vehicle._id}}</td>
 			<td class="alignCenter">{{vehicle.vendor}}</td>
 			<td class="alignCenter">{{vehicle.model}}</td>
-			<td class="alignCenter">{{vehicle.serial_number}}</td>
 			<td class="alignCenter">
 				<span [ngClass]="!requestSending&&vehicle.status==='active'?'dropdown_base':''"
 					(click)="selected_mo_id=(vehicle.status==='active')?(selected_mo_id!==vehicle.mo_id?vehicle.mo_id:null):null;">{{vehicle.status}}</span>
