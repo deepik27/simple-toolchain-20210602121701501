@@ -7,6 +7,7 @@ import { MomentPipe } from '../../utils/moment.pipe';
   moduleId: module.id,
   selector: 'vehicle-list',
   templateUrl: 'vehicle-list.component.html',
+  styleUrls: ['vehicle-list.component.css'],
   pipes: [OrderByPipe, MomentPipe]
 })
 
@@ -15,12 +16,18 @@ export class VehicleListComponent {
   requestSending: boolean;
   orderByKey: string;
   orderByOrder: boolean;
+  numRecInPage: number;
+  pageNumber: number;
+  hasNext: boolean;
 
   constructor(private http: Http) {
+    this.numRecInPage = 25;
+    this.pageNumber = 1;
+    this.hasNext = false;
   }
 
   ngOnInit() {
-    this._getVehicles();
+    this._getVehicles(1);
   }
 
   onOrderBy(key) {
@@ -30,7 +37,24 @@ export class VehicleListComponent {
 
   // refresh table
   onReload(event) {
-    this._getVehicles();
+    this._getVehicles(1);
+  }
+
+  onNumPageChanged(num:number) {
+    this.numRecInPage = num;
+    this._getVehicles(1);
+  }
+
+  onShowPrev(event) {
+      if (this.pageNumber > 1) {
+        this._getVehicles(this.pageNumber - 1);
+      }
+  }
+
+  onShowNext(event) {
+    if (this.hasNext) {
+      this._getVehicles(this.pageNumber + 1);
+    }
   }
 
   // deactivate given vehicle
@@ -45,24 +69,32 @@ export class VehicleListComponent {
     .subscribe((response: Response) => {
       if (response.status === 200) {
         // Update vehicle list when succeeded
-        this._getVehicles();
+        this._getVehicles(this.pageNumber);
       }
     });
   }
 
   // Get vehicle list from server and update table
-  _getVehicles = function() {
+  private _getVehicles(pageNumber: number) {
     this.requestSending = true;
-    let url = "/user/vehicle";
+    let url = "/user/vehicle?num_rec_in_page=" + this.numRecInPage + "&num_page=" + pageNumber;
     this.http.get(url)
     .subscribe((response: Response) => {
       if (response.status === 200) {
         let resJson = response.json();
         this.vehicles = resJson && resJson.data;
+        this.pageNumber = pageNumber;
+        this.hasNext = this.numRecInPage <= this.vehicles.length;
       }
       this.requestSending = false;
+    }, (error: any) => {
+      if (error.status === 400) {
+        alert("Thre are no more vehicles.");
+      }
+      this.hasNext = false;
+      this.requestSending = false;
     });
-  };
+  }
 }
 
 // Vehicle definition
