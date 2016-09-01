@@ -69,7 +69,7 @@ _.extend(driverInsightsAlert, {
 								ts: probe.ts,
 								timestamp: probe.timestamp
 							};
-						alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM = vehicle.vehicleInfo.vendor;
+						alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM === vehicle.vehicleInfo.vendor;
 						alerts.push(alert);
 					}
 				}
@@ -107,7 +107,7 @@ _.extend(driverInsightsAlert, {
 								ts: probe.ts,
 								timestamp: probe.timestamp
 							};
-						alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM = vehicle.vehicleInfo.vendor;
+						alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM === vehicle.vehicleInfo.vendor;
 						alerts.push(alert);
 					}
 				}
@@ -141,7 +141,7 @@ _.extend(driverInsightsAlert, {
 							ts: probe.ts,
 							timestamp: probe.timestamp
 						};
-					alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM = vehicle.vehicleInfo.vendor;
+					alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM === vehicle.vehicleInfo.vendor;
 					alerts.push(alert);
 				}
 				return alerts;
@@ -217,6 +217,7 @@ _.extend(driverInsightsAlert, {
 						if(result && result.ok){
 							alert._id = result.id;
 							alert._rev = result.rev;
+							debug("An alert is created: " + JSON.stringify(alert));
 						}
 					});
 				});
@@ -240,6 +241,7 @@ _.extend(driverInsightsAlert, {
 						Q.when(deferred, function(result){
 							if(result && result.ok){
 								self.alerts.splice(index, 1);
+								debug("An alert is closed: " + JSON.stringify(alert));
 							}
 						});
 					}
@@ -298,6 +300,7 @@ _.extend(driverInsightsAlert, {
 			db.insert(alert, null, function(error, result){
 				if(error){
 					deferred.reject(error);
+					console.error("Add an alert failed: " + JSON.stringify(error));
 				}else{
 					deferred.resolve(result);
 				}
@@ -314,6 +317,7 @@ _.extend(driverInsightsAlert, {
 			db.insert(alert, null, function(error, result){
 				if(error){
 					deferred.reject(error);
+					console.error("Update an alert failed: " + JSON.stringify(error));
 				}else{
 					deferred.resolve(result);
 				}

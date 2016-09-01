@@ -18,7 +18,7 @@ export class AlertListComponent{
 
   @Input() prop = "dummy";
   @Input() value = "dummy";
-  @Input() includeClosed = true;
+  @Input() includeClosed:boolean;
   @Input() showInput = true;
   fleetalerts: Alert[];
   extent: number[];
