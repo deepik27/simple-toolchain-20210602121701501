@@ -20,18 +20,26 @@
 	<thead>
 		<tr>
 			<th>#</th>
-			<th class="sortable" (click)="onOrderBy('_id')">ID</th>
-			<th class="sortable" (click)="onOrderBy('vendor')">Vendor</th>
-			<th class="sortable" (click)="onOrderBy('model')">Model</th>
-			<th class="sortable" (click)="onOrderBy('status')">Status</th>
+			<th class="sortable" (click)="onOrderBy('__id')">
+				<span>ID</span><span [ngClass]="orderByKey==='__id'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+			</th>
+			<th class="sortable" (click)="onOrderBy('vendor')">
+				<span>Vendor</span><span [ngClass]="orderByKey==='vendor'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+			</th>
+			<th class="sortable" (click)="onOrderBy('model')">
+				<span>Model</span><span [ngClass]="orderByKey==='model'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+			</th>
+			<th class="sortable" (click)="onOrderBy('status')">
+				<span>Status</span><span [ngClass]="orderByKey==='status'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+			</th>
 		</tr>
 	</thead>
 	<tbody>
-		<tr *ngFor="let vehicle of (vehicles|orderBy:orderByKey:orderByOrder); let i = index">
+		<tr *ngFor="let vehicle of (vehicles|orderBy:orderByKey:!ascendingOrder); let i = index">
 			<td class="alignCenter">{{numRecInPage * (pageNumber - 1) + i + 1}}</td>
-			<td class="alignCenter">{{vehicle._id}}</td>
-			<td class="alignCenter">{{vehicle.vendor}}</td>
-			<td class="alignCenter">{{vehicle.model}}</td>
+			<td class="alignCenter">{{vehicle.__id||'-'}}</td>
+			<td class="alignCenter">{{vehicle.vendor||'-'}}</td>
+			<td class="alignCenter">{{vehicle.model||'-'}}</td>
 			<td class="alignCenter">
 				<span [ngClass]="!requestSending&&vehicle.status==='active'?'dropdown_base':''"
 					(click)="selected_mo_id=(vehicle.status==='active')?(selected_mo_id!==vehicle.mo_id?vehicle.mo_id:null):null;">{{vehicle.status}}</span>

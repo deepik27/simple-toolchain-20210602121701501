@@ -51,15 +51,17 @@ var driverInsightsAsset = {
 		var api = "/vehicle/" + mo_id;
 		return this._run("GET", api);
 	},
-	addVehicle: function(){
+	addVehicle: function(vehicle){
 		var deferred = Q.defer();
 		var self = this;
-		var vehicle = {
-			status:"Inactive",
-			properties: {
-				fuelTank: 60
-			}
-		};
+		if (!vehicle) {
+			vehicle = {
+				status:"Inactive",
+				properties: {
+					fuelTank: 60
+				}
+			};
+		}
 		Q.when(this._run("POST", "/vehicle", null, vehicle), function(response){
 			Q.when(self._run("POST", "/vehicle/refresh"), function(refreshed){
 				deferred.resolve(response);

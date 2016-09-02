@@ -30,7 +30,8 @@ var authenticate = require('./auth.js').authenticate;
 var request = require("request");
 
 router.post("/vehicle", authenticate, function(req, res){
-	Q.when(driverInsightsAsset.addVehicle(), function(response){
+	var vehicle = req.body && req.body.vehicle;
+	Q.when(driverInsightsAsset.addVehicle(vehicle), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		//{message: msg, error: error, response: response}

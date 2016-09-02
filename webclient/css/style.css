@@ -660,17 +660,17 @@ strong.carStatus-strong {
         width: 200px;
         height: 100px;
     }
-    
+
     .speedometer-container .speedometer {
         width: 200px;
         height: 100px;
     }
-    
+
     .speedometer-container .bottom-bar {
         width: 25px;
         height: 12.5px;
     }
-    
+
     .speedometer-container .pointer {
         width: 8px;
     }
@@ -681,17 +681,17 @@ strong.carStatus-strong {
         width: 150px;
         height: 75px;
     }
-    
+
     .speedometer-container .speedometer {
         width: 150px;
         height: 75px;
     }
-    
+
     .speedometer-container .bottom-bar {
         width: 20px;
         height: 10px;
     }
-    
+
     .speedometer-container .pointer {
         width: 6px;
     }
@@ -958,7 +958,7 @@ ul.thermometer li::before {
         -webkit-flex-basis: 58.333333333%;
         flex-basis: 58.333333333%;
     }
-    
+
     .column-8-sm {
         max-width: 66.666666666%;
         -ms-flex-preferred-size: 66.666666666%;
@@ -2210,4 +2210,36 @@ table th[class*="col-"] {
 
 .hidden {
   display: none;
+}
+
+.sortable:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ascending_order {
+  margin-left: 10px;
+  vertical-align: middle;
+  font-size:0;
+  border-bottom: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 10px solid #b0b0b0;
+}
+
+.descending_order {
+  margin-left: 10px;
+  vertical-align: middle;
+  font-size:0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 10px solid #b0b0b0;
+}
+
+.none_order {
+  margin-left: 10px;
+  vertical-align: middle;
+  font-size:0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
 }

@@ -7,11 +7,6 @@
   float: right;
 }
 
-.sortable:hover {
-  text-decoration: underline;
-  cursor: pointer;
-}
-
 .dropdown_base {
   cursor: pointer;
   text-decoration: underline;
