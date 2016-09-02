@@ -1,12 +1,12 @@
 
-<span class="col-xs-12 loading" [hidden]="!requestSending"><img src="/images/loading.gif"></span>
+<span class="column-12-lg column-12-med column-12-sm loading" [hidden]="!requestSending"><img src="/images/loading.gif"></span>
 <div class="floatRight controlPanel">
 	<span id="numRecInPage">
 		<select [ngModel]="numRecInPage" (change)="onNumPageChanged($event.target.value)">
-			<option [value]=5>5</option>
-			<option [value]=10>10</option>
-			<option [value]=25>25</option>
-			<option [value]=50>50</option>
+			<option value=5>5</option>
+			<option value=10>10</option>
+			<option value=25>25</option>
+			<option value=50>50</option>
 		</select>
 		<span> vehicles per page</span>
 	</span>
@@ -20,33 +20,73 @@
 	<thead>
 		<tr>
 			<th>#</th>
-			<th class="sortable" (click)="onOrderBy('__id')">
-				<span>ID</span><span [ngClass]="orderByKey==='__id'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+			<th>
+				<span class="sortable" (click)="onOrderBy('__id')">ID</span>
+				<span [ngClass]="orderByKey==='__id'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 			</th>
-			<th class="sortable" (click)="onOrderBy('vendor')">
-				<span>Vendor</span><span [ngClass]="orderByKey==='vendor'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+			<th>
+				<span class="sortable" (click)="onOrderBy('vendor')">Vendor</span>
+				<span [ngClass]="orderByKey==='vendor'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 			</th>
-			<th class="sortable" (click)="onOrderBy('model')">
-				<span>Model</span><span [ngClass]="orderByKey==='model'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+			<th>
+				<span class="sortable" (click)="onOrderBy('model')">Model</span>
+				<span [ngClass]="orderByKey==='model'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 			</th>
-			<th class="sortable" (click)="onOrderBy('status')">
-				<span>Status</span><span [ngClass]="orderByKey==='status'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+			<th>
+				<span class="sortable" (click)="onOrderBy('status')">Status</span>
+				<span [ngClass]="orderByKey==='status'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 			</th>
+			<th>Action</th>
 		</tr>
 	</thead>
 	<tbody>
 		<tr *ngFor="let vehicle of (vehicles|orderBy:orderByKey:!ascendingOrder); let i = index">
-			<td class="alignCenter">{{numRecInPage * (pageNumber - 1) + i + 1}}</td>
+			<td class="alignCenter"><span title="mo_id:{{vehicle.mo_id}}">{{numRecInPage * (pageNumber - 1) + i + 1}}</span></td>
 			<td class="alignCenter">{{vehicle.__id||'-'}}</td>
 			<td class="alignCenter">{{vehicle.vendor||'-'}}</td>
 			<td class="alignCenter">{{vehicle.model||'-'}}</td>
+			<td class="alignCenter">{{vehicle.status||'-'}}</td>
 			<td class="alignCenter">
-				<span [ngClass]="!requestSending&&vehicle.status==='active'?'dropdown_base':''"
-					(click)="selected_mo_id=(vehicle.status==='active')?(selected_mo_id!==vehicle.mo_id?vehicle.mo_id:null):null;">{{vehicle.status}}</span>
-				<ul [ngClass]="selected_mo_id===vehicle.mo_id?'dropdown':'hidden'">
-						<li class="dropdown_menu" (click)="selected_mo_id=null;onDeactivate(vehicle.mo_id)">Deactivate
-				</ul>
+				<a class="dropdown_base" (click)="selected_mo_id=selected_mo_id!==vehicle.mo_id?vehicle.mo_id:null" href="javascript:void(0)" title="Open menu"></a>
+				<div [ngClass]="selected_mo_id===vehicle.mo_id?'dropdown':'hidden'" style="right:10px">
+						<a class="dropdown_menu" (click)="selected_mo_id=null;onUpdate(vehicle.mo_id)" href="javascript:void(0)">Update</a>
+						<a [ngClass]="vehicle.status!=='active'?'dropdown_menu':'hidden'" (click)="selected_mo_id=null;onDelete(vehicle.mo_id)" href="javascript:void(0)">Delete</a>
+						<a class="dropdown_menu_separator" (click)="selected_mo_id=null;onDelete(vehicle.mo_id)"></a>
+						<a class="dropdown_menu" (click)="selected_mo_id=null;onCreate()" href="javascript:void(0)">Create</a>
+				</div>
 			</td>
 		</tr>
 	</tbody>
 </table>
+
+<!-- Vehicle creation dialog -->
+<div class="modal-overlay" [hidden]="!isWorkingWithVehicle">
+	<div class="modal-overlay-contents">
+		<div class=modal-overlay-header>{{workingVehicle.mo_id?'Update Vehicle':'Create Vehicle'}}</div>
+		<div class=modal-overlay-body>
+			<div class="row">
+				<label for="new_vendor" class="alignRight column-3-lg column-3-med column-3-sm">Vendor:</label>
+				<select id="new_vendor" class="column-7-lg column-7-med column-7-sm" [(ngModel)]="workingVehicle.vendor"></select>
+			</div>
+			<div class="row">
+				<label for="new_model" class="alignRight column-3-lg column-3-med column-3-sm">Model:</label>
+				<input id="new_model" class="column-7-lg column-7-med column-7-sm" [(ngModel)]="workingVehicle.model">
+			</div>
+			<div class="row">
+				<label for="new_serial" class="alignRight column-3-lg column-3-med column-3-sm">Serial#:</label>
+				<input id="new_serial" class="column-7-lg column-7-med column-7-sm" [(ngModel)]="workingVehicle.serial_number">
+			</div>
+			<div class="row">
+				<label for="new_status" class="alignRight column-3-lg column-3-med column-3-sm">Status:</label>
+				<select id="new_status" class="column-7-lg column-7-med column-7-sm" [(ngModel)]="workingVehicle.status">
+						<option value="inactive">Inactive</option>
+						<option value="active">Active</option>
+				</select>
+			</div>
+		</div>
+		<div class="modal-overlay-buttons">
+			<button (click)="onSubmitVehicle()">Submit</button>
+			<button (click)="onCancelVehicle()">Cancel</button>
+		</div>
+	</div>
+</div>

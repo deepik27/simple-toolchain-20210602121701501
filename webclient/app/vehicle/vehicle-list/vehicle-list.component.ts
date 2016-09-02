@@ -7,7 +7,7 @@ import { MomentPipe } from '../../utils/moment.pipe';
   moduleId: module.id,
   selector: 'vehicle-list',
   templateUrl: 'vehicle-list.component.html',
-  styleUrls: ['vehicle-list.component.css'],
+  styleUrls: ['//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.1.1/css/bootstrap.min.css', 'vehicle-list.component.css'],
   pipes: [OrderByPipe, MomentPipe]
 })
 
@@ -19,11 +19,15 @@ export class VehicleListComponent {
   numRecInPage: number;
   pageNumber: number;
   hasNext: boolean;
+  isWorkingWithVehicle: boolean;
+  workingVehicle: Vehicle;
 
   constructor(private http: Http) {
     this.numRecInPage = 25;
     this.pageNumber = 1;
     this.hasNext = false;
+    this.isWorkingWithVehicle = false;
+    this.workingVehicle = new Vehicle({});
   }
 
   ngOnInit() {
@@ -40,7 +44,7 @@ export class VehicleListComponent {
     this._getVehicles(1);
   }
 
-  onNumPageChanged(num:number) {
+  onNumPageChanged(num: number) {
     this.numRecInPage = num;
     this._getVehicles(1);
   }
@@ -57,19 +61,56 @@ export class VehicleListComponent {
     }
   }
 
-  // deactivate given vehicle
-  onDeactivate(mo_id: string) {
-    let url = "/user/vehicle/" + mo_id;
-    let body = JSON.stringify({mo_id: mo_id, status: "Inactive"});
-    let headers = new Headers({"Content-Type": "application/json"});
-    let options = new RequestOptions({headers: headers});
+  // activate or deactivate given vehicle
+  onActivate(mo_id: string, toActivate: boolean) {
+    let vehicle = this._getVehicle(mo_id);
+    if (!vehicle) {
+      alert("There is no such a vehicle.");
+      return;
+    }
 
+    // Change vehicle state
+    let data = vehicle.getData();
+    data["status"] = toActivate ? "Active" : "Inactive";
+
+    this._updateVehicle(mo_id, new Vehicle(data));
+  }
+
+  // Open a vehicle dialog for creating
+  onCreate() {
+    this.workingVehicle = new Vehicle({});
+    this.isWorkingWithVehicle = true;
+  }
+
+  // Open a vehicle dialog for updating
+  onUpdate(mo_id: string) {
+    this.workingVehicle = this._getVehicle(mo_id);
+    this.isWorkingWithVehicle = true;
+  }
+
+    // Create a vehicle
+  onSubmitVehicle() {
+    this.isWorkingWithVehicle = false;
+    if (this.workingVehicle.mo_id) {
+      this._updateVehicle(this.workingVehicle.mo_id, this.workingVehicle);
+    } else {
+      this._createNewVehicle(this.workingVehicle);
+    }
+  }
+
+  // Cancel a vehicle creation
+  onCancelVehicle() {
+    this.isWorkingWithVehicle = false;
+  }
+
+  // Delete given vehicle
+  onDelete(mo_id: string) {
     this.requestSending = true;
-    this.http.put(url, body, options)
+    this.http.delete("/user/vehicle/" + mo_id)
     .subscribe((response: Response) => {
       if (response.status === 200) {
         // Update vehicle list when succeeded
-        this._getVehicles(this.pageNumber);
+        this._getVehicles(1);
       }
       this.requestSending = false;
     }, (error: any) => {
@@ -78,7 +119,7 @@ export class VehicleListComponent {
   }
 
   // Create a vehicle with given data
-  onCreate(vehicle: Vehicle) {
+  private _createNewVehicle(vehicle: Vehicle) {
     // remove internally used property
     let url = "/user/vehicle";
     let body = JSON.stringify({vehicle: vehicle.getData()});
@@ -98,14 +139,28 @@ export class VehicleListComponent {
     });
   }
 
-  // Delete given vehicle
-  onDelete(mo_id: string) {
+  private _getVehicle(mo_id: string): Vehicle {
+    for (let i = 0; i < this.vehicles.length; i++) {
+      if (this.vehicles[i].mo_id === mo_id) {
+        return this.vehicles[i];
+      }
+    }
+    return null;
+  }
+
+  private _updateVehicle(mo_id: string, vehicle: Vehicle) {
+    vehicle.mo_id = mo_id;
+    let url = "/user/vehicle/" + mo_id;
+    let body = JSON.stringify(vehicle.getData());
+    let headers = new Headers({"Content-Type": "application/json"});
+    let options = new RequestOptions({headers: headers});
+
     this.requestSending = true;
-    this.http.delete("/user/vehicle/" + mo_id)
+    this.http.put(url, body, options)
     .subscribe((response: Response) => {
       if (response.status === 200) {
         // Update vehicle list when succeeded
-        this._getVehicles(1);
+        this._getVehicles(this.pageNumber);
       }
       this.requestSending = false;
     }, (error: any) => {
