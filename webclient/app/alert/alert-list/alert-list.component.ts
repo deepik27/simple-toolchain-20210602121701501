@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Http, Request, Response } from '@angular/http';
 import { OrderByPipe } from '../../utils/order-by.pipe';
 import { MomentPipe } from '../../utils/moment.pipe';
@@ -19,12 +19,14 @@ export class AlertListComponent{
   @Input() prop = "dummy";
   @Input() value = "dummy";
   @Input() includeClosed:boolean;
+  @Input() extent: number[];
   @Input() showInput = true;
   fleetalerts: Alert[];
-  extent: number[];
   requestSending = false;
 
-  constructor(private http: Http) {
+  constructor(private http: Http) {  }
+
+  ngOnInit(){
     if(this.prop){
       if(this.value){
         this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());

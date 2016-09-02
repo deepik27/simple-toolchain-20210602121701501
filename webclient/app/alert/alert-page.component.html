@@ -4,8 +4,8 @@
 <div class="marginTop">
 <!--	<alert-list showInput=false prop="severity" value="High" min_lat="35.6" min_lng="139.7" max_lat="35.7" max_lng="139.8"></alert-list> -->
 <!--	<alert-list prop="severity"></alert-list> -->
-  <span *ngIf="extent">
-		<alert-list [showInput]="showInput" [prop]="filterProp" [value]="filterValue" [includeClosed]="includeClosed" [min_lng]="extent[0]" [min_lat]="extent[1]" [max_lng]="extent[2]" [max_lat]="extent[3]"></alert-list>
+	<span *ngIf="extent">
+		<alert-list [showInput]="showInput" [prop]="filterProp" [value]="filterValue" [includeClosed]="includeClosed" [extent]="extent"></alert-list>
 	</span>
 	<span *ngIf="!extent">
 		<alert-list [showInput]="showInput" [prop]="filterProp" [value]="filterValue" [includeClosed]="includeClosed"></alert-list>

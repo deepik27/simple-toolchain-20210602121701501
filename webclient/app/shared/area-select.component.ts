@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges } from '@angular/core';
 import { LocationService, MapArea } from './location.service';
 
 @Component({
@@ -9,8 +9,8 @@ import { LocationService, MapArea } from './location.service';
 })
 
 export class AreaSelectComponent{
-	@Input() extent: number[];
 	@Input() DEBUG = false;
+	@Input() extent: number[];
 	@Output() areaChanged = new EventEmitter<number[]>();
 	min_lng: string;
 	min_lat: string;
@@ -21,45 +21,76 @@ export class AreaSelectComponent{
 
 	constructor(private locationService: LocationService) {
 		this.areas = [{id: "nolocation", name: ""}].concat(locationService.getRegions());
-		this.min_lat = this.min_lng = this.max_lat = this.max_lng = "";
 	}
 
+	ngOnInit(){
+		if(this.extent){
+			var area = this._matchPredefinedArea();
+			if(!area){
+				area = {id: "maplocation", name:"Location selected in the Map Page", extent: this.extent};
+				this.areas.push(area);
+			}
+			this.selectedArea = area;
+		}
+	}
+	ngOnChanges(changes){
+		if(changes.extent && changes.extent.currentValue !== changes.extent.previousValue){
+			this._setAreaInput(changes.extent.currentValue);
+			var area = this._matchPredefinedArea();
+			this.selectedArea = area || this.areas[0];
+		}
+	}
 	onAreaChanged(event){
 		this.selectedArea = this.areas[event.target.selectedIndex];
-		if(this.selectedArea.extent){
-			this.min_lng = String(this.selectedArea.extent[0]);
-			this.min_lat = String(this.selectedArea.extent[1]);
-			this.max_lng = String(this.selectedArea.extent[2]);
-			this.max_lat = String(this.selectedArea.extent[3]);
-			this.extent = this.selectedArea.extent;
-		}else{
-			this._clearArea();
-		}
+		this.extent = this.selectedArea.extent;
 		this.areaChanged.emit(this.extent);
 	}
-	onExtentChanged(value){
-		// The first area is nolocation
-		for(var i=1; i<this.areas.length; i++){
+	onExtentInputChanged(event){
+		switch(event.target.name){
+			case "min_lng":
+				this.min_lng = event.target.value;
+				break;
+			case "min_lat":
+				this.min_lat = event.target.value;
+				break;
+			case "max_lng":
+				this.max_lng = event.target.value;
+				break;
+			case "max_lat":
+				this.max_lat = event.target.value;
+		}
+		var area = this._matchPredefinedArea();
+		this.selectedArea = area || this.areas[0]; // nolocation
+		if(this.min_lng !== "" && this.min_lat !== "" && this.max_lng !== "" && this.max_lat !== ""
+		&& !isNaN(Number(this.min_lng)) && !isNaN(Number(this.min_lat)) && !isNaN(Number(this.max_lng)) && !isNaN(Number(this.max_lat))){
+			this.extent = [Number(this.min_lng), Number(this.min_lat), Number(this.max_lng), Number(this.max_lat)];
+			this.areaChanged.emit(this.extent);
+		}
+	}
+	onClearArea(){
+		this.extent = null;
+		this.areaChanged.emit(this.extent);
+	}
+	private _setAreaInput(extent:number[]){
+		if(extent){
+			this.min_lng = String(extent[0]);
+			this.min_lat = String(extent[1]);
+			this.max_lng = String(extent[2]);
+			this.max_lat = String(extent[3]);
+		}else{
+			this.min_lng = this.min_lat = this.max_lng = this.max_lat = "";
+		}
+	}
+	private _matchPredefinedArea():MapArea{
+		for(var i=1; i<this.areas.length; i++){ // Start from 1 because the first area is nolocation
 			var area = this.areas[i];
 			if(this.min_lng === String(area.extent[0])
 			&& this.min_lat === String(area.extent[1])
 			&& this.max_lng === String(area.extent[2])
 			&& this.max_lat === String(area.extent[3])){
-				this.selectedArea = area;
-				this.extent = this.selectedArea.extent;
-				return;
+				return area;
 			}
 		}
-		this.selectedArea = this.areas[0]; // nolocation
-		this.areaChanged.emit(this.extent);
-	}
-	onClearArea(){
-		this._clearArea();
-		this.areaChanged.emit(this.extent);
-	}
-	_clearArea(){
-		this.min_lng = this.min_lat = this.max_lng = this.max_lat = "";
-		this.extent = null;
 	}
 }
 
