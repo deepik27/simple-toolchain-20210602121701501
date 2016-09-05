@@ -67,7 +67,9 @@
             </ul>
         </aside>
 
-        <div ui-view></div>
+		<div ng-repeat="vehicle in vehicles track by $index">
+			<iframe ng-src="{{vehicle.url}}" style="display:{{vehicle.display}}" width="600" height="500"></iframe>
+		</div>
     </div>
 
 <script src="js/simRouter.js"></script>

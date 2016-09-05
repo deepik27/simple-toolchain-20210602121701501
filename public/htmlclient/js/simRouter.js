@@ -14,28 +14,13 @@
  * limitations under the License.
  */
  
-var $stateProviderRef = null;
-var selectedItem = 0;
-
-angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
-
-    /* === APP CONFIG === */
-    .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {      
-      $stateProviderRef = $stateProvider;
-    }])
-
-    .run(function ($rootScope, $state, $stateParams) {
-        $rootScope.$on('$stateChangeStart', function(evt, to, params) {
-          if (to.redirectTo) {
-            evt.preventDefault();
-            $state.go(to.redirectTo, params, {location: 'replace'})
-          }
-        });
-    })
-    
-    /* === GENERAL CONTROLLERS === */
-    .controller('mainCtrl', ['$scope', '$state', '$rootScope', '$http', '$sce', function($scope, $state, $rootScope, $http, $sce) {
-    	// Get simulation vehicles
+angular.module('fleetManagementSimulator', ['ngAnimate'])
+	.config(["$locationProvider", function($locationProvider) {
+		$locationProvider.html5Mode(true); 
+	}])
+	/* === GENERAL CONTROLLERS === */
+	.controller('mainCtrl', ['$scope', '$http', '$sce', '$location', function($scope, $http, $sce, $location) {
+		// Get simulation vehicles
 		$http({
 			method: "GET",
 			url: "/user/simulatedVehicle"
@@ -44,29 +29,26 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 			if(vehicles.length > 5){
 				vehicles = vehicles.slice(0, 5);		
 			}
-       		vehicles.forEach(function(vehicle, i){
-       			vehicle.url = $sce.trustAsResourceUrl("../htmlclient/#/home?driverId=19f8b8bb-8dc7-4064-9295-4323c4092723&vehicleId=" + vehicle.mo_id);
+			var loc = $location.search()["loc"];
+			vehicles.forEach(function(vehicle, i){
+				var url = "../htmlclient/#/home" 
+					+ "?vehicleId=" + vehicle.mo_id + 
+					+ "&driverId=19f8b8bb-8dc7-4064-9295-4323c4092723" 
+				if(loc){
+					url += "&loc=" + loc;
+				}
+				vehicle.url = $sce.trustAsResourceUrl(url);
 				vehicle.display = i == 0 ? "" : "none";		
-       		});
-			$rootScope.vehicles = vehicles;
+			});
+			$scope.vehicles = vehicles;
 		}).error(function(error, status){
 			console.error("Cannot get route for simulation");
 		});
-        
-        // Make dynamic states for each vehicle
-        $stateProviderRef
-          .state('index', {
-            url: '',
-            templateUrl: 'vehicle.html'
-          })
 
-    }])
-    
-    .controller('vehiclesCtrl', ['$scope', '$state', '$rootScope', function($scope, $state, $rootScope) {
-       $rootScope.selectItem = function(index) {
-	    	var vehicles = $rootScope.vehicles;	    	 
-       		vehicles.forEach(function(vehicle, i){
+		$scope.selectItem = function(index) {
+			var vehicles = $scope.vehicles;	    	 
+			vehicles.forEach(function(vehicle, i){
 				vehicle.display = i == index ? "" : "none";		
-       		});
-       };       
+			});
+		};
     }])
