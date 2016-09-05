@@ -19,16 +19,34 @@
 <table class="table table-hover table-striped table-condensed table-responsive">
 	<thead>
 		<tr>
-			<th (click)="onOrderBy('ts')">From</th>
-			<th *ngIf="includeClosed" (click)="onOrderBy('closed_ts')">To</th>
-			<th (click)="onOrderBy('severity')">Severity</th>
-			<th (click)="onOrderBy('mo_id')">Vehicle ID</th>
-			<th (click)="onOrderBy('description')">Notes</th>
-			<th (click)="onOrderBy('simulated')">Simulated Car</th>
+			<th>
+				<span class="sortable" (click)="onOrderBy('ts')">From</span>
+				<span [ngClass]="orderByKey==='ts'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+			</th>
+			<th *ngIf="includeClosed">
+				<span class="sortable" (click)="onOrderBy('closed_ts')">To</span>
+				<span [ngClass]="orderByKey==='closed_ts'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+			</th>
+			<th>
+				<span class="sortable" (click)="onOrderBy('severity')">Severity</span>
+				<span [ngClass]="orderByKey==='severity'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+			</th>
+			<th>
+				<span class="sortable" (click)="onOrderBy('mo_id')">Vehicle ID</span>
+				<span [ngClass]="orderByKey==='mo_id'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+			</th>
+			<th>
+				<span class="sortable" (click)="onOrderBy('description')">Notes</span>
+				<span [ngClass]="orderByKey==='description'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+			</th>
+			<th>
+				<span class="sortable" (click)="onOrderBy('simulated')">Simulated Car</span>
+				<span [ngClass]="orderByKey==='simulated'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+			</th>
 		</tr>
 	</thead>
 	<tbody>
-		<tr *ngFor="let alert of (fleetalerts|orderBy:orderByKey:orderByOrder)">
+		<tr *ngFor="let alert of (fleetalerts|orderBy:orderByKey:ascendingOrder)">
 			<td>{{alert.ts|moment:"YYYY/MM/DD HH:mm:ss"}}</td>
 			<td *ngIf="includeClosed">{{alert.closed_ts>0?(alert.closed_ts|moment:"YYYY/MM/DD HH:mm:ss"):"-"}}</td>
 			<td>{{alert.severity}}</td>
