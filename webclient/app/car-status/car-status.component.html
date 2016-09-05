@@ -8,7 +8,7 @@
                 </div>
 
                 <div class="column-6-med">
-                    <strong class="carStatus-strong green"><span class="numCounter">6</span>/8</strong>
+                    <strong class="carStatus-strong green"><span class="numCounter">{{probeData?.props?.fuel}}</span>/8</strong>
                 </div>
             </div>
         </div>
@@ -31,7 +31,7 @@
                 </div>
 
                 <div class="column-6-med">
-                    <strong class="carStatus-strong red numCounter">220</strong>
+                    <strong class="carStatus-strong red numCounter">{{probeData?.props?.engineTemp}}</strong>
                     <br />Centigrade
                 </div>
             </div>

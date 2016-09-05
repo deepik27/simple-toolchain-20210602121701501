@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, RouteSegment, OnActivate, ROUTER_DIRECTIVES } from '@angular/router';
 
+import { RealtimeDeviceData, RealtimeDeviceDataProvider } from '../shared/realtime-device';
+import { RealtimeDeviceDataProviderService } from '../shared/realtime-device-manager.service';
+
 import * as _ from 'underscore';
 
 
@@ -12,11 +15,22 @@ import * as _ from 'underscore';
 })
 export class CarStatusComponent implements OnInit, OnActivate {
   private mo_id: string;
+  private realtimeDeviceDataProvider: RealtimeDeviceDataProvider;
 
-  constructor(private router: Router){
+  probeData: any; // probe data to show
+
+  constructor(
+    private router: Router,
+    realtimeDataProviderService: RealtimeDeviceDataProviderService
+  ){
+    this.realtimeDeviceDataProvider = realtimeDataProviderService.getProvider();
   }
 
   ngOnInit() {
+    var device = this.realtimeDeviceDataProvider.getDevice(this.mo_id);
+    this.probeData = device.latestSample;
+
+
     var style = document.createElement('style');
     style.type = 'text/css';
 

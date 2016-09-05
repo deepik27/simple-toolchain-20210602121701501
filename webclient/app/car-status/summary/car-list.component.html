@@ -1,0 +1,23 @@
+<div class="dashItem">
+  <div class="dashTitleBar">
+      <h3>Selected Cars</h3>
+  </div>
+
+  <div *ngIf="!selectGroup">No selection.</div>
+  <div *ngIf="selectGroup">
+    <table calss="table table-hober table-stripped table-condensed table-responsive">
+      <thead>
+    		<tr>
+    			<th>#</th>
+    			<th>ID</th>
+    		</tr>
+    	</thead>
+      <tbody>
+    		<tr *ngFor="let vehicle of (selectedDevies$ | async); let i = index">
+    			<td class="alignCenter">{{i + 1}}</td>
+    			<td class="alignCenter"><a [routerLink]="['/carStatus', '/'+vehicle.deviceID]">{{vehicle.deviceID}}</a></td>
+    		</tr>
+    	</tbody>
+    </table>
+  </div>
+</div>

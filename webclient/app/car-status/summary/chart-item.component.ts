@@ -1,4 +1,4 @@
-import { Component, AfterContentInit, Input, ViewChild, ContentChild } from '@angular/core';
+import { Component, EventEmitter, AfterContentInit, Input, Output, ViewChild, ContentChild } from '@angular/core';
 
 import { RealtimeDeviceData, RealtimeDeviceDataProvider } from '../../shared/realtime-device';
 import { CarStatusDataService } from './car-status-data.service';
@@ -9,13 +9,13 @@ import * as c3 from 'c3';
   moduleId: module.id,
   selector: 'fmdash-chart-item',
   templateUrl: 'chart-item.component.html',
-  providers: [CarStatusDataService]
 })
 export class ChartItemComponent implements AfterContentInit {
   @Input() title: string;
   @Input() chartType = 'donut';
   @Input() chartRotated: string;
   @Input() aggrKey: string;
+  @Output() selectionChange = new EventEmitter<any>();
   @ViewChild('chartDiv') chartDiv;
 
   private chartId = 'chart_' + (Math.floor(Math.random() * 1000000000));
@@ -39,6 +39,17 @@ export class ChartItemComponent implements AfterContentInit {
         columns: [],
         type: this.chartType,
         order: null,
+        selection: {enabled: true},
+        onselected: (d => {
+          // console.log(d)
+          // var allSelected = <any>this.chart.selected();          console.log(allSelected);
+          // var toDeselect = allSelected.filter(sel => sel !== d).map(sel => sel.id);
+          // this.chart.unselect(toDeselect);
+          this.selectionChange.emit({key: this.aggrKey, value: d.id});
+        }),
+        onunselected: (d => {
+          this.selectionChange.emit({key: this.aggrKey, value: null});
+        }),
       },
       color: {
         pattern: ['#f05153','#f67734','#58a946', '#3774ba', '#01b39e']
@@ -54,14 +65,14 @@ export class ChartItemComponent implements AfterContentInit {
     }
     setTimeout(() => {
       this.chart = c3.generate(opts);
+      // keep sending data
+      this.dataSubscription = this.carStatusData.getColumns(this.aggrKey)
+        .distinctUntilChanged((x, y) => _.isEqual(x, y))
+        .subscribe(data => {
+          this.chart.load({columns: data});
+        });
     }, 100);
 
-    // keep sending data
-    this.dataSubscription = this.carStatusData.getColumns(this.aggrKey)
-      .distinctUntilChanged((x, y) => _.isEqual(x, y))
-      .subscribe(data => {
-        this.chart.load({columns: data});
-      });
   }
 
   ngOnDestroy() {
@@ -72,11 +83,12 @@ export class ChartItemComponent implements AfterContentInit {
   }
 
   private refresh(data){
-
-    // update chart
-    this.chart.load({
-      columns: data.columns,
-    });
+    // update chart if the chart library is loaded
+    if(this.chart && this.chart.load){
+      this.chart.load({
+        columns: data.columns,
+      });
+    }
 
     // update title
     if (this.chartType === 'donut'){

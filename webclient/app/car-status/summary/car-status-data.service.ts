@@ -32,7 +32,7 @@ export class CarStatusDataService {
   }
 
   private getDevicesByConds(conds: StatusGroup[], interval = 1): Observable<any> {
-    return Observable.interval(interval * 1000)
+    return Observable.interval(interval * 1000).startWith(0)
       .map(x => {
         let devices = this.realtimeDeviceDataProvider.getDevices();
         let devicesByLabel  = _.groupBy(this.realtimeDeviceDataProvider.getDevices(), device => {
@@ -70,11 +70,11 @@ export class CarStatusDataService {
     });
   }
 
-  getDevices(type: string, label: string, interval = 1): Observable<RealtimeDeviceData[]> {
+  getDevices(type: string, selection: string, interval = 1): Observable<RealtimeDeviceData[]> {
     let conds = this.getCondsFromType(type);
     return this.getDevicesByConds(conds, interval)
       .map(devicesByLabel => {
-        let r = devicesByLabel[label];
+        let r = devicesByLabel[selection];
         return r ? r : [];
       });
   }
