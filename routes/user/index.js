@@ -26,5 +26,6 @@
  */
 module.exports = [
                   require('./insights.js'),
+                  require('./simulator.js'),
                   require('./device.js')
                   ];

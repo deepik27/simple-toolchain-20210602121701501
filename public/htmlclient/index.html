@@ -65,7 +65,7 @@
     <div class="mainContent">
 		<div ui-view></div>
 	</div>
-	<footer>
+	<footer ng-controller="footer" style="display: {{hideFooter}}">
 		<div class="tabbutton-group btn-group col-xs-12">
 			<button class="col-xs-6 tabbutton btn btn-default" ui-sref="home" ui-sref-active="active">Home</button>
 <!-- 		
@@ -85,9 +85,11 @@
     <script src="js/services/carProbe.js"></script>
     <script src="js/services/moHttp.js"></script>
 	<script src="components/html-client-drive.component.js"></script>
-	<script src="components/html-client-profile.component.js"></script>
+<!--
+ 	<script src="components/html-client-profile.component.js"></script>
 	<script src="components/html-client-trip.component.js"></script>
 	<script src="components/html-client-trip-map.component.js"></script>
-	<script src="components/html-client-settings.component.js"></script>
+ -->
+ 	<script src="components/html-client-settings.component.js"></script>
 </body>
 </html>

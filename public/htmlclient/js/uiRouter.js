@@ -18,14 +18,20 @@ var htmlClient = angular.module('htmlClient',['ui.router']);
 htmlClient.config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
 		$stateProvider
 			.state('home', {
-				url: '/home?loc',
+				url: '/home?loc&vehicleId&driverId',
 				template: '<client-drive></client-drive>',
-				controller: function($stateParams, virtualGeoLocation){
+				controller: function($stateParams, virtualGeoLocation, assetService){
 					if($stateParams.loc){
 						var coord = $stateParams.loc.split(','); // --> [lat,lng]
-						if(coord.length == 2){
+						if(coord.length === 2){
 							virtualGeoLocation.setCurrentPosition({lat: coord[0], lon: coord[1]});
 						}
+					}
+					if($stateParams.vehicleId){
+						assetService.setVehicleId($stateParams.vehicleId);
+					}
+					if($stateParams.driverId){
+						assetService.setDriverId($stateParams.driverId);
 					}
 				}
 			})
@@ -44,3 +50,6 @@ htmlClient.config(['$stateProvider', '$urlRouterProvider', function($stateProvid
 	      $urlRouterProvider.otherwise('/home');
 	}])
 ;
+htmlClient.controller('footer', ['$scope', function($scope){
+    $scope.hideFooter = "none";
+}]);
