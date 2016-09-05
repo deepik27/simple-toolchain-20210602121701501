@@ -68,11 +68,10 @@ export class AlertListComponent{
   }
 
   orderByKey: string;
-  orderByOrder: boolean;
+  ascendingOrder: boolean;
   onOrderBy(key){
-    this.orderByOrder = (key === this.orderByKey) ? !this.orderByOrder : true;
+    this.ascendingOrder = (key === this.orderByKey) ? !this.ascendingOrder : true;
     this.orderByKey = key;
-    this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
   }
   onMoIdClicked(event, mo_id){
     event.stopPropagation();
