@@ -21,6 +21,8 @@ export class VehicleListComponent {
   hasNext: boolean;
   isWorkingWithVehicle: boolean;
   workingVehicle: Vehicle;
+  errorMessage: string;
+  vendors: Vendor[];
 
   constructor(private http: Http) {
     this.numRecInPage = 25;
@@ -28,6 +30,7 @@ export class VehicleListComponent {
     this.hasNext = false;
     this.isWorkingWithVehicle = false;
     this.workingVehicle = new Vehicle({});
+    this.errorMessage = "";
   }
 
   ngOnInit() {
@@ -105,15 +108,43 @@ export class VehicleListComponent {
 
   // Delete given vehicle
   onDelete(mo_id: string) {
-    this.requestSending = true;
-    this.http.delete("/user/vehicle/" + mo_id)
-    .subscribe((response: Response) => {
-      if (response.status === 200) {
-        // Update vehicle list when succeeded
-        this._getVehicles(1);
+    this._deleteVehilce(mo_id);
+  }
+
+  // find a vehicle from list
+  private _getVehicle(mo_id: string): Vehicle {
+    for (let i = 0; i < this.vehicles.length; i++) {
+      if (this.vehicles[i].mo_id === mo_id) {
+        return this.vehicles[i];
       }
+    }
+    return null;
+  }
+
+  // Get vehicle list from server and update table
+  private _getVehicles(pageNumber: number) {
+    this.requestSending = true;
+    this.errorMessage = null;
+    let url = "/user/vehicle?num_rec_in_page=" + this.numRecInPage + "&num_page=" + pageNumber;
+    this.http.get(url)
+    .map((response: any) => {
+      let resJson = response.json();
+      return resJson && resJson.data.map(function(v) {
+          return new Vehicle(v);
+      });
+    })
+    .subscribe((vehicles: Array<Vehicle>) => {
+      this.vehicles = vehicles;
+      this.pageNumber = pageNumber;
+      this.hasNext = this.numRecInPage <= this.vehicles.length;
       this.requestSending = false;
     }, (error: any) => {
+      if (error.status === 400) {
+        alert("Thre are no more vehicles.");
+      } else {
+        this.errorMessage = error.message || error._body || error;
+      }
+      this.hasNext = false;
       this.requestSending = false;
     });
   }
@@ -127,27 +158,19 @@ export class VehicleListComponent {
     let options = new RequestOptions({headers: headers});
 
     this.requestSending = true;
+    this.errorMessage = null;
     this.http.post(url, body, options)
     .subscribe((response: Response) => {
-      if (response.status === 200) {
-        // Update vehicle list when succeeded
-        this._getVehicles(1);
-      }
+      // Update vehicle list when succeeded
+      this._getVehicles(1);
       this.requestSending = false;
     }, (error: any) => {
+      this.errorMessage = error.message || error._body || error;
       this.requestSending = false;
     });
   }
 
-  private _getVehicle(mo_id: string): Vehicle {
-    for (let i = 0; i < this.vehicles.length; i++) {
-      if (this.vehicles[i].mo_id === mo_id) {
-        return this.vehicles[i];
-      }
-    }
-    return null;
-  }
-
+  // update a vehicle with given data
   private _updateVehicle(mo_id: string, vehicle: Vehicle) {
     vehicle.mo_id = mo_id;
     let url = "/user/vehicle/" + mo_id;
@@ -156,38 +179,49 @@ export class VehicleListComponent {
     let options = new RequestOptions({headers: headers});
 
     this.requestSending = true;
+    this.errorMessage = null;
     this.http.put(url, body, options)
     .subscribe((response: Response) => {
-      if (response.status === 200) {
-        // Update vehicle list when succeeded
-        this._getVehicles(this.pageNumber);
-      }
+      // Update vehicle list when succeeded
+      this._getVehicles(this.pageNumber);
       this.requestSending = false;
     }, (error: any) => {
+      this.errorMessage = error.message || error._body || error;
       this.requestSending = false;
     });
   }
 
-  // Get vehicle list from server and update table
-  private _getVehicles(pageNumber: number) {
+  // delete a vehicle
+  private _deleteVehilce(mo_id: string) {
     this.requestSending = true;
-    let url = "/user/vehicle?num_rec_in_page=" + this.numRecInPage + "&num_page=" + pageNumber;
-    this.http.get(url)
+    this.errorMessage = null;
+    this.http.delete("/user/vehicle/" + mo_id)
     .subscribe((response: Response) => {
-      if (response.status === 200) {
-        let resJson = response.json();
-        this.vehicles = resJson && resJson.data.map(function(v) {
-            return new Vehicle(v);
-        });
-        this.pageNumber = pageNumber;
-        this.hasNext = this.numRecInPage <= this.vehicles.length;
-      }
+      // Update vehicle list when succeeded
+      this._getVehicles(1);
       this.requestSending = false;
     }, (error: any) => {
-      if (error.status === 400) {
-        alert("Thre are no more vehicles.");
-      }
-      this.hasNext = false;
+      this.errorMessage = error.message || error._body || error;
+      this.requestSending = false;
+    });
+  }
+
+  // Get vendor list
+  private _getVendors() {
+    this.requestSending = true;
+    this.errorMessage = null;
+    let url = "/user/vendor?num_rec_in_page=50&num_page=1";
+    this.http.get(url)
+    .map((response: Response) => {
+      let resJson = response.json();
+      return resJson && resJson.data.map(function(v) {
+          return new Vendor(v);
+      });
+    })
+    .subscribe((vendors: Array<Vendor>) => {
+      this.vendors = vendors;
+      this.requestSending = false;
+    }, (error: any) => {
       this.requestSending = false;
     });
   }
@@ -215,6 +249,31 @@ class Vehicle {
       this[key] = props[key];
     }
     this.__id = this.serial_number || this.mo_id;
+  }
+
+  getData() {
+    let data = {};
+    for (let key in this) {
+      if (key.lastIndexOf("__", 0) !== 0) {
+        data[key] = this[key];
+      }
+    }
+    return data;
+  }
+}
+
+// Vehicle definition
+class Vendor {
+  vendor: string; // The ID of the vendor.
+  description: string; // Description of the vendor.
+  type: string; // Type of vendor. = [Manufacturer,Vendor,Caurier]
+  website: string = ""; // Vendors website URL.
+  status: string = "Active";
+
+  constructor(props) {
+    for (let key in props) {
+      this[key] = props[key];
+    }
   }
 
   getData() {

@@ -1,5 +1,6 @@
 
-<span class="column-12-lg column-12-med column-12-sm loading" [hidden]="!requestSending"><img src="/images/loading.gif"></span>
+<span class="loading" [hidden]="!requestSending"><img src="/images/loading.gif"></span>
+<div class="error" [hidden]="!errorMessage">{{errorMessage}}</div>
 <div class="floatRight controlPanel">
 	<span id="numRecInPage">
 		<select [ngModel]="numRecInPage" (change)="onNumPageChanged($event.target.value)">

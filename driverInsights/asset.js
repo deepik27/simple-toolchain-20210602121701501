@@ -37,23 +37,17 @@ var driverInsightsAsset = {
 		throw new Exception("!!! no provided credentials for Asset Data Management. using shared one !!!");
 	}(),
 
-	/**
-	 * Vehicle list api returns the first 10 vehicles as default
+	/*
+	 * Vehicle apis
 	 */
 	VEHICLE_VENDOR_IBM: "IBM",
 	getVehicleList: function(params){
-		return this._run("GET", "/vehicle", params || {num_rec_in_page: 50, num_page: 1});
+		return this._getAssetList("vehicle", params);
 	},
 	getVehicle: function(mo_id){
-		if(!mo_id){
-			return Q.reject({message: "mo_id must be specified."});
-		}
-		var api = "/vehicle/" + mo_id;
-		return this._run("GET", api);
+		return this._getAsset("vehicle", mo_id);
 	},
 	addVehicle: function(vehicle){
-		var deferred = Q.defer();
-		var self = this;
 		if (!vehicle) {
 			vehicle = {
 				status:"Inactive",
@@ -62,93 +56,133 @@ var driverInsightsAsset = {
 				}
 			};
 		}
-		Q.when(this._run("POST", "/vehicle", null, vehicle), function(response){
-			Q.when(self._run("POST", "/vehicle/refresh"), function(refreshed){
-				deferred.resolve(response);
-			})["catch"](function(err){
-				deferred.reject(err);
-			}).done();
-		})["catch"](function(err){
-			deferred.reject(err);
-		}).done();
-		return deferred.promise;
+		return this._addAsset("vehicle", vehicle, true);
 	},
 	updateVehicle: function(vehicle){
-		if(!vehicle.mo_id){
-			return Q.reject({message: "mo_id must be specified."});
-		}
-		var deferred = Q.defer();
-		var self = this;
-		var api = "/vehicle/" + vehicle.mo_id;
-		Q.when(this._run("PUT", api, null, vehicle), function(response){
-			Q.when(self._run("POST", "/vehicle/refresh"), function(refreshed){
-				deferred.resolve(response);
-			})["catch"](function(err){
-				deferred.reject(err);
-			}).done();
-		})["catch"](function(err){
-			deferred.reject(err);
-		}).done();
-		return deferred.promise;
+		return this._updateAsset("vehicle", vehicle.mo_id, vehicle, true);
 	},
 	deleteVehicle: function(mo_id){
-		if(!mo_id){
-			return Q.reject({message: "mo_id must be specified."});
-		}
-		var api = "/vehicle/" + mo_id;
-		return this._run("DELETE", api);
+		return this._deleteAsset("vehicle", mo_id);
 	},
 
-	/**
-	 * Vehicle list api returns the first 10 vehicles as default
+	/*
+	 * Driver apis
 	 */
-	getDriverList: function(){
-		return this._run("GET", "/driver");
+	getDriverList: function(params){
+		return this._getAssetList("driver", params);
 	},
 	getDriver: function(driver_id){
-		if(!driver_id){
-			return Q.reject({message: "driver_id must be specified."});
-		}
-		var api = "/driver/" + driver_id;
-		return this._run("GET", api);
+		return this._getAsset("driver", driver_id);
 	},
-	addDriver: function(){
-		var deferred = Q.defer();
-		var self = this;
-		Q.when(this._run("POST", "/driver", null, {"status":"Active"}), function(response){
-			Q.when(self._run("POST", "/driver/refresh"), function(refreshed){
-				deferred.resolve(response);
-			})["catch"](function(err){
-				deferred.reject(err);
-			}).done();
-		})["catch"](function(err){
-			deferred.reject(err);
-		}).done();
-		return deferred.promise;
+	addDriver: function(driver){
+		if (!driver) {
+			driver = {"status":"Active"};
+		}
+		return this._addAsset("driver", driver, true);
 	},
 	updateDriver: function(driver){
-		if(!driver.driver_id){
-			return Q.reject({message: "driver_id must be specified."});
+		return this._updateAsset("driver", driver.driver_id, driver, true);
+	},
+	deleteDriver: function(driver_id){
+		return this._deleteAsset("driver", driver_id);
+	},
+
+	/*
+	 * Vendor api
+	 */
+	getVendorList: function(params){
+		return this._getAssetList("vendor", params);
+	},
+	getVendor: function(vendor){
+		return this._getAsset("vendor", vendor);
+	},
+	addVendor: function(vendor){
+		if (!vendor) {
+			vendor = {"status":"Active"};
 		}
+		return this._addAsset("vendor", vendor, false);
+	},
+	updateVendor: function(vendor){
+		return this._updateAsset("vendor", vendor.vendor, vendor, false);
+	},
+	deleteVendor: function(vendor){
+		return this._deleteAsset("vendor", vendor);
+	},
+
+	/*
+	 * Get list of assets
+	 */
+	_getAssetList: function(context, params){
+		return this._run("GET", "/" + context, params || {num_rec_in_page: 25, num_page: 1});
+	},
+
+	/*
+	 * Get an asset
+	 */
+	_getAsset: function(context, id){
+		if(!id){
+			return Q.reject({message: "id must be specified."});
+		}
+		var api = "/" + context + "/" + id;
+		return this._run("GET", api);
+	},
+
+	/*
+	 * Add an asset
+	 */
+	_addAsset: function(context, asset, refresh){
 		var deferred = Q.defer();
 		var self = this;
-		var api = "/driver/" + driver.driver_id;
-		Q.when(this._run("PUT", api, null, driver), function(response){
-			Q.when(self._run("POST", "/driver/refresh"), function(refreshed){
+		Q.when(this._run("POST", "/" + context, null, asset), function(response){
+			if (refresh) {
+				Q.when(self._run("POST", "/" + context + "/refresh"), function(refreshed){
+					deferred.resolve(response);
+				})["catch"](function(err){
+					deferred.reject(err);
+				}).done();
+			} else {
 				deferred.resolve(response);
-			})["catch"](function(err){
-				deferred.reject(err);
-			}).done();
+			}
 		})["catch"](function(err){
 			deferred.reject(err);
 		}).done();
 		return deferred.promise;
 	},
-	deleteDriver: function(driver_id){
-		if(!driver_id){
-			return Q.reject({message: "driver_id must be specified."});
+
+	/*
+	 * Update an asset
+	 */
+	_updateAsset: function(context, id, asset, refresh){
+		if(!id){
+			return Q.reject({message: "id must be specified."});
 		}
-		var api = "/driver/" + driver_id;
+		var deferred = Q.defer();
+		var self = this;
+		var api = "/" + context + "/" + id;
+		Q.when(this._run("PUT", api, null, asset), function(response){
+			if (refresh) {
+				Q.when(self._run("POST", "/" + context + "/refresh"), function(refreshed){
+					deferred.resolve(response);
+				})["catch"](function(err){
+					deferred.reject(err);
+				}).done();
+			} else {
+				deferred.resolve(response);
+			}
+		})["catch"](function(err){
+			deferred.reject(err);
+		}).done();
+		return deferred.promise;
+	},
+
+	/*
+	 * Delete an asset
+	 */
+	_deleteAsset: function(context, id){
+		if(!id){
+			return Q.reject({message: "id must be specified."});
+		}
+		var api = "/" + context + "/" + id;
 		return this._run("DELETE", api);
 	},
 
