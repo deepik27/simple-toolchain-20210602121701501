@@ -33,7 +33,7 @@ angular.module('fleetManagementSimulator', ['ngAnimate'])
 			vehicles.forEach(function(vehicle, i){
 				var url = "../htmlclient/#/home" 
 					+ "?vehicleId=" + vehicle.mo_id + 
-					+ "&driverId=19f8b8bb-8dc7-4064-9295-4323c4092723" 
+					+ "&driverId=sim1" 
 				if(loc){
 					url += "&loc=" + loc;
 				}

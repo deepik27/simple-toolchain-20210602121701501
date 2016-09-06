@@ -5,7 +5,7 @@ import { LocationService, MapArea } from './location.service';
 	moduleId: module.id,
 	selector: 'area-select',
 	templateUrl: 'area-select.component.html',
-	providers: [LocationService],
+	providers: [],
 })
 
 export class AreaSelectComponent{
@@ -93,4 +93,3 @@ export class AreaSelectComponent{
 		}
 	}
 }
-

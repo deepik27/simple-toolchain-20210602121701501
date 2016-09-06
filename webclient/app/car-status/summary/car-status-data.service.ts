@@ -31,6 +31,14 @@ export class CarStatusDataService {
     this.realtimeDeviceDataProvider = realtimeDataProviderService.getProvider();
   }
 
+  getProbe(mo_id: string, interval = 1): Observable<any> {
+    return Observable.interval(interval * 1000).startWith(0)
+      .map(x => {
+        var device = this.realtimeDeviceDataProvider.getDevice(mo_id);
+        return device.latestSample;
+      })
+  }
+
   private getDevicesByConds(conds: StatusGroup[], interval = 1): Observable<any> {
     return Observable.interval(interval * 1000).startWith(0)
       .map(x => {
@@ -75,6 +83,7 @@ export class CarStatusDataService {
     return this.getDevicesByConds(conds, interval)
       .map(devicesByLabel => {
         let r = devicesByLabel[selection];
+        console.log('CarStatusDataService is returning ', r);
         return r ? r : [];
       });
   }

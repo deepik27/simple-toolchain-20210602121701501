@@ -18,6 +18,11 @@ export class LocationService {
   ];
 
   //
+  // Track current position from GPS
+  //
+  private currentArea: MapArea;
+
+  //
   // Region is wider than area, e.g. to track the number of cars
   //
   regions: MapArea[] = [
@@ -27,12 +32,71 @@ export class LocationService {
     {id: "toronto",name: 'Toronto, Canada', extent: [-80.69297429492181,43.57305259767264,-78.43528386523431,44.06846938917488]},
   ];
 
+  //
+  // Track visible extent in Map
+  //
+  private mapRegion: MapArea;
+
   getAreas():MapArea[]{
     return this.areas;
+  }
+  getCurrentAreaRawSync():MapArea{
+    return this.currentArea;
+  }
+  getCurrentArea(chooseNearestFromList = false):Promise<MapArea>{
+    return new Promise((resolve, reject) => {
+      var chooseNearest = (from) => {
+        // when the location is not "last selected", re-select the map location depending on the current location
+        var current_center = from.center;
+        var nearest = _.min(this.areas, area => {
+            if((area.id && area.id.indexOf('_') === 0) || !area.center) return undefined;
+            // approximate distance by the projected map coordinate
+            var to_rad = function(deg){ return deg / 180 * Math.PI; };
+            var r = 6400;
+            var d_lat = Math.asin(Math.sin(to_rad(area.center[1] - current_center[1]))); // r(=1) * theta
+            var avg_lat = (area.center[1] + current_center[1]) / 2
+            var lng_diff = _.min([Math.abs(area.center[0] - current_center[0]), Math.abs(area.center[0] + 360 - current_center[0]), Math.abs(area.center[0] - 360 - current_center[0])]);
+            var d_lng = Math.cos(to_rad(avg_lat)) * to_rad(lng_diff); // r * theta
+            var d = Math.sqrt(d_lat * d_lat + d_lng * d_lng);
+            //console.log('Distance to %s is about %f km.', area.id, d * 6400);
+            return d;
+        });
+        if(nearest.id){
+          return nearest;
+        }
+        return from;
+      }
+
+      if(this.currentArea){
+        var r = chooseNearestFromList ? chooseNearest(this.currentArea) : this.currentArea;
+        return resolve(r);
+      }
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(pos => {
+            var current_center = [pos.coords.longitude, pos.coords.latitude];
+            this.currentArea = {id: '_current', name: 'Current Location', center: current_center};
+            var r = chooseNearestFromList ? chooseNearest(this.currentArea) : this.currentArea;
+            return resolve(r);
+        });
+      }else{
+        return reject();
+      }
+    });
   }
   getRegions():MapArea[]{
     return this.regions;
   }
+  getMapRegion():MapArea{
+    return this.mapRegion;
+  }
+  setMapRegionExtent(extent: number[]){
+    if(!this.mapRegion || this.mapRegion.id !== '_last_selected'){
+      this.mapRegion = {id: '_last_selected', name: 'Last Selected Area in Map', extent: extent};
+    }else{
+      this.mapRegion.extent = extent;
+    }
+  }
+
 }
 
 export interface MapArea {
