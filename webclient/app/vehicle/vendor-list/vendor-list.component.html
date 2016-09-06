@@ -26,8 +26,8 @@
 			<div class="row">
 				<span class="alignRight column-10-lg column-10-med column-10-sm">
 					<button (click)="onCreateVendor()" [disabled]="requestSending">Create</button>
-					<button (click)="onUpdateVendor(selectedVendor.vendor)" [disabled]="requestSending||!selectedVendor">Update</button>
-					<button (click)="onDeleteVendor(selectedVendor.vendor)" [disabled]="requestSending||!selectedVendor">Delete</button>
+					<button (click)="onUpdateVendor(selectedVendor.vendor)" [disabled]="requestSending||!selectedVendor||selectedVendor.vendor==='IBM'">Update</button>
+					<button (click)="onDeleteVendor(selectedVendor.vendor)" [disabled]="requestSending||!selectedVendor||selectedVendor.vendor==='IBM'">Delete</button>
 				</span>
 			</div>
 		</div>
