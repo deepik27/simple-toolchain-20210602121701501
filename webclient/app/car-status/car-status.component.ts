@@ -1,8 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouteSegment, OnActivate, ROUTER_DIRECTIVES } from '@angular/router';
 
-import { RealtimeDeviceData, RealtimeDeviceDataProvider } from '../shared/realtime-device';
-import { RealtimeDeviceDataProviderService } from '../shared/realtime-device-manager.service';
+import { Observable } from 'rxjs/Observable';
+import { Subject } from 'rxjs/Subject';
+
+import { RealtimeDeviceData } from '../shared/realtime-device';
+import { CarStatusDataService } from './summary/car-status-data.service';
 
 import * as _ from 'underscore';
 
@@ -15,21 +18,24 @@ import * as _ from 'underscore';
 })
 export class CarStatusComponent implements OnInit, OnActivate {
   private mo_id: string;
-  private realtimeDeviceDataProvider: RealtimeDeviceDataProvider;
+  private moIdSubject = new Subject<string>();
+  private proveDataSubscription;
 
   probeData: any; // probe data to show
 
   constructor(
     private router: Router,
-    realtimeDataProviderService: RealtimeDeviceDataProviderService
+    private carStatusDataService: CarStatusDataService,
   ){
-    this.realtimeDeviceDataProvider = realtimeDataProviderService.getProvider();
   }
 
   ngOnInit() {
-    var device = this.realtimeDeviceDataProvider.getDevice(this.mo_id);
-    this.probeData = device.latestSample;
-
+    this.proveDataSubscription = this.moIdSubject.switchMap(mo_id => {
+        return mo_id ? this.carStatusDataService.getProbe(mo_id) : Observable.of([]);
+      }).subscribe(probe => {
+        this.probeData = probe;
+      });
+    this.moIdSubject.next(this.mo_id);
 
     var style = document.createElement('style');
     style.type = 'text/css';
@@ -74,8 +80,16 @@ export class CarStatusComponent implements OnInit, OnActivate {
     }
   }
 
+  ngOnDestroy(){
+    if(this.proveDataSubscription){
+      this.proveDataSubscription.unsubscribe();
+      this.proveDataSubscription = null;
+    }
+  }
+
   routerOnActivate(current: RouteSegment){
     var mo_id: any = current.getParam('mo_id');
     this.mo_id = <string>mo_id;
+    this.moIdSubject.next(mo_id);
   }
 }

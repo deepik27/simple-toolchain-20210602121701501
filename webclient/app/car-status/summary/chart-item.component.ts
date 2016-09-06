@@ -39,16 +39,19 @@ export class ChartItemComponent implements AfterContentInit {
         columns: [],
         type: this.chartType,
         order: null,
-        selection: {enabled: true},
-        onselected: (d => {
-          // console.log(d)
-          // var allSelected = <any>this.chart.selected();          console.log(allSelected);
-          // var toDeselect = allSelected.filter(sel => sel !== d).map(sel => sel.id);
-          // this.chart.unselect(toDeselect);
+        selection: {enabled: false},
+        // onselected: (d => {
+        //   // console.log(d)
+        //   // var allSelected = <any>this.chart.selected();          console.log(allSelected);
+        //   // var toDeselect = allSelected.filter(sel => sel !== d).map(sel => sel.id);
+        //   // this.chart.unselect(toDeselect);
+        //   this.selectionChange.emit({key: this.aggrKey, value: d.id});
+        // }),
+        // onunselected: (d => {
+        //   this.selectionChange.emit({key: this.aggrKey, value: null});
+        // }),
+        onclick: (d => {
           this.selectionChange.emit({key: this.aggrKey, value: d.id});
-        }),
-        onunselected: (d => {
-          this.selectionChange.emit({key: this.aggrKey, value: null});
         }),
       },
       color: {

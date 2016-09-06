@@ -17,22 +17,29 @@ export class CarListComponent implements OnInit, OnChanges {
   @Input() selectGroup: string;
   private selectionSubject = new Subject<any>();
   public selectedDevies$: Observable<any[]>;
+  public devices = [];
 
   constructor(private carStatusDataService: CarStatusDataService) {  }
 
   ngOnInit() {
-    this.selectedDevies$ = this.selectionSubject
-      .debounceTime(500)
+     this.selectionSubject.map(x => { console.log(x); return x; })
+//      .debounceTime(500)
 //      .distinctUntilChanged()
       .switchMap(sel => {
-        if(sel.value)
-          return this.carStatusDataService.getDevices(sel.prop, sel.value, 2);
-        return Observable.of([]);
+          console.log('Switching to ' , sel);
+          if(sel.value){
+            return this.carStatusDataService.getDevices(sel.prop, sel.value);
+          }
+          return Observable.of([]);
         }
       )
       .catch(error => {
         console.log(error);
         return Observable.of([]);
+      })
+      .subscribe(devices => {
+        this.devices = devices;
+        console.log('Setting devices to; ', devices);
       });
   }
 
@@ -42,6 +49,7 @@ export class CarListComponent implements OnInit, OnChanges {
     let newSelectGroupChange = changes['selectGroup'];
     if(newGroupPropChange || newSelectGroupChange){
       this.selectionSubject.next({prop: this.groupProp, value: this.selectGroup});
+      console.log('Sent to subject: [' + this.groupProp + '] => [' + this.selectGroup + ']');
     }
   }
 }

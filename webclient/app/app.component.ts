@@ -9,6 +9,7 @@ import { AlertPageComponent } from './alert/alert-page.component';
 import { UsersPageComponent } from './users/users-page.component';
 import { VehiclePageComponent } from './vehicle/vehicle-page.component';
 
+import { LocationService } from './shared/location.service';
 import { RealtimeDeviceDataProviderService } from './shared/realtime-device-manager.service';
 
 @Component({
@@ -16,7 +17,7 @@ import { RealtimeDeviceDataProviderService } from './shared/realtime-device-mana
   moduleId: module.id,
   templateUrl: 'app.component.html',
   directives: [ROUTER_DIRECTIVES],
-  providers: [ROUTER_PROVIDERS, RealtimeDeviceDataProviderService]
+  providers: [ROUTER_PROVIDERS, RealtimeDeviceDataProviderService, LocationService]
 })
 @Routes([
   {path:'/',          component: MapPageComponent},

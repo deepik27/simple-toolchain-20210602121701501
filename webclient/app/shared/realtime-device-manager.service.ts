@@ -37,7 +37,7 @@ export class RealtimeDeviceDataProviderService {
 	/**
 	 * Start trackgin a region
 	 */
-	startTracking(extent, mapHelper, updateEvents){
+	startTracking(extent, mapHelper?, updateEvents?){
     this.stopTracking(true, mapHelper);
 
 		var xt = mapHelper ? mapHelper.expandExtent(extent, 0.1) : extent; // get extended extent to track for map
