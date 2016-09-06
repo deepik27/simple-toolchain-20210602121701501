@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Http, Request, Response } from '@angular/http';
+import { ROUTER_DIRECTIVES } from '@angular/router';
 import { OrderByPipe } from '../../utils/order-by.pipe';
 import { MomentPipe } from '../../utils/moment.pipe';
 import { AreaSelectComponent } from '../../shared/area-select.component';
@@ -8,8 +9,9 @@ import { AreaSelectComponent } from '../../shared/area-select.component';
   moduleId: module.id,
   selector: 'alert-list',
   templateUrl: 'alert-list.component.html',
+  styleUrls: ['../../../css/table.css'],
   pipes: [OrderByPipe, MomentPipe],
-  directives: [AreaSelectComponent]
+  directives: [AreaSelectComponent, ROUTER_DIRECTIVES]
 })
 
 export class AlertListComponent{
@@ -23,6 +25,7 @@ export class AlertListComponent{
   @Input() showInput = true;
   fleetalerts: Alert[];
   requestSending = false;
+  selected_row_index:string;
 
   constructor(private http: Http) {  }
 

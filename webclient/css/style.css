@@ -2212,40 +2212,6 @@ table th[class*="col-"] {
   display: none;
 }
 
-.sortable:hover {
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.ascending_order {
-  margin-left: 10px;
-  position: relative;
-  top: 0px;
-  font-size:0;
-  border-bottom: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 10px solid #b0b0b0;
-}
-
-.descending_order {
-  margin-left: 10px;
-  position: relative;
-  bottom: 10px;
-  font-size:0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-bottom: 10px solid #b0b0b0;
-}
-
-.none_order {
-  margin-left: 10px;
-  vertical-align: middle;
-  font-size:0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-}
-
 .modal-overlay {
 	z-index:1001;
 	position:fixed;

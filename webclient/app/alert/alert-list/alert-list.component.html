@@ -44,6 +44,7 @@
 				<span class="sortable" (click)="onOrderBy('simulated')">Simulated Car</span>
 				<span [ngClass]="orderByKey==='simulated'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 			</th>
+			<th>Action</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -55,6 +56,12 @@
 			<td><a href="javascript:void(0)" (click)="onMoIdClicked($event, alert.mo_id)">{{alert.serial_number || alert.mo_id}}</a></td>
 			<td>{{alert.description}}</td>
 			<td>{{alert.simulated ? "Simulated" : ""}}</td>
+			<td class="alignCenter">
+				<a class="dropdown_base" (click)="selected_row_index=selected_row_index!==i?i:null" href="javascript:void(0)" title="Open menu"></a>
+				<div [ngClass]="selected_row_index===i?'dropdown':'hidden'" [hidden]="selected_row_index!==i" style="right:10px">
+						<a class="dropdown_menu" [routerLink]="['/carStatus', '/'+alert.mo_id]">Show Car Status</a>
+				</div>
+			</td>
 		</tr>
 	</tbody>
 </table>
