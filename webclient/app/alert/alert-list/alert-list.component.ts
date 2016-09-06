@@ -29,7 +29,7 @@ export class AlertListComponent{
   ngOnInit(){
     if(this.prop){
       if(this.value){
-        this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
+        this.getAlert(this.prop, this.value, this.includeClosed, this.getArea());
       }else{
         var prop = AlertProp.values[this.prop];
         if(prop){
@@ -37,13 +37,13 @@ export class AlertListComponent{
         }
       }
     }else{
-      this._getAlert("dummy", "dummy", this.includeClosed, this._getArea());
+      this.getAlert("dummy", "dummy", this.includeClosed, this.getArea());
     }
   }
 
   onAreaChanged(extent){
     this.extent = extent;
-    this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
+    this.getAlert(this.prop, this.value, this.includeClosed, this.getArea());
   }
   onPropChanged(event){
     var prop = this.alertProps[event.target.selectedIndex];
@@ -60,11 +60,11 @@ export class AlertListComponent{
     }else{
       return;
     }
-    this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
+    this.getAlert(this.prop, this.value, this.includeClosed, this.getArea());
   }
   onIncludeClosedChanged(event){
     this.includeClosed = event.target.checked;
-    this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
+    this.getAlert(this.prop, this.value, this.includeClosed, this.getArea());
   }
 
   orderByKey: string;
@@ -79,9 +79,9 @@ export class AlertListComponent{
     this.alertValues = AlertProp.MoId.getValues();
     this.value = mo_id;
     this.includeClosed = true;
-    this._getAlert(this.prop, this.value, this.includeClosed, this._getArea());
+    this.getAlert(this.prop, this.value, this.includeClosed, this.getArea());
   }
-  _getAlert = function(prop:string, value:string, includeClosed?:boolean, area?:Object){
+  private getAlert = function(prop:string, value:string, includeClosed?:boolean, area?:Object){
     var url = "/user/alert?" + prop + "=" + value + "&includeClosed=" + includeClosed + "&limit=100";
     if(area){
       url += Object.keys(area).map(function(key){return "&" + key + "=" + area[key];}).join();
@@ -93,12 +93,37 @@ export class AlertListComponent{
       if(response.status == 200){
         var fleetalerts = response.json();
         this.fleetalerts = fleetalerts && fleetalerts.alerts;
+        this.updateVehicleInfo();
       }
     }, (error: any) => {
       this.requestSending = false;
     });
   }
-  _getArea = function(){
+  private updateVehicleInfo(){
+    var self = this;
+    var moid2alerts:{key?:Alert[]} = {};
+    this.fleetalerts.forEach((fleetalert, index) => {
+      var alerts = moid2alerts[fleetalert.mo_id];
+      if(alerts){
+        alerts.push(fleetalert);
+      }else{
+        moid2alerts[fleetalert.mo_id] = alerts = Array<Alert>();
+        alerts.push(fleetalert);
+        self.http.get("/user/vehicle/" + fleetalert.mo_id)
+        .subscribe((vehicleResponse:Response) => {
+          var vehicle = vehicleResponse.json();
+          alerts = moid2alerts[vehicle.mo_id];
+          if(vehicle.serial_number){
+            alerts.forEach((alert) => {
+              alert.serial_number = vehicle.serial_number;
+            })
+          }
+          delete moid2alerts[fleetalert.mo_id];
+        })
+      }
+    });
+  }
+  private getArea = function(){
     if(!this.extent || this.extent.length !== 4
     || this.extent[0] === "" || this.extent[1] === "" || this.extent[2] === "" || this.extent[3] === ""
     || isNaN(this.extent[0]) || isNaN(this.extent[1]) || isNaN(this.extent[2]) || isNaN(this.extent[3])){

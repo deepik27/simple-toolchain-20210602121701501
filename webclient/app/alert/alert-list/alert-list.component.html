@@ -19,6 +19,7 @@
 <table class="table table-hover table-striped table-condensed table-responsive">
 	<thead>
 		<tr>
+			<th>#</th>
 			<th>
 				<span class="sortable" (click)="onOrderBy('ts')">From</span>
 				<span [ngClass]="orderByKey==='ts'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
@@ -46,11 +47,12 @@
 		</tr>
 	</thead>
 	<tbody>
-		<tr *ngFor="let alert of (fleetalerts|orderBy:orderByKey:ascendingOrder)">
+		<tr *ngFor="let alert of (fleetalerts|orderBy:orderByKey:ascendingOrder);let i=index">
+			<td>{{i+1}}</td>
 			<td>{{alert.ts|moment:"YYYY/MM/DD HH:mm:ss"}}</td>
 			<td *ngIf="includeClosed">{{alert.closed_ts>0?(alert.closed_ts|moment:"YYYY/MM/DD HH:mm:ss"):"-"}}</td>
 			<td>{{alert.severity}}</td>
-			<td><a href="javascript:void(0)" (click)="onMoIdClicked($event, alert.mo_id)">{{alert.mo_id}}</a></td>
+			<td><a href="javascript:void(0)" (click)="onMoIdClicked($event, alert.mo_id)">{{alert.serial_number || alert.mo_id}}</a></td>
 			<td>{{alert.description}}</td>
 			<td>{{alert.simulated ? "Simulated" : ""}}</td>
 		</tr>
