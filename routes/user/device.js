@@ -67,7 +67,7 @@ router.get("/vehicle/:vehicleId", authenticate, function(req, res){
 });
 router.put("/vehicle/:vehicleId", authenticate, function(req, res){
 	var vehicleId = req.params.vehicleId;
-	Q.when(driverInsightsAsset.updateVehicle(req.body), function(response){
+	Q.when(driverInsightsAsset.updateVehicle(vehicleId, req.body), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -111,7 +111,7 @@ router.get("/driver/:driverId", authenticate, function(req, res){
 });
 router.put("/driver/:driverId", authenticate, function(req, res){
 	var driverId = req.params.driverId;
-	Q.when(driverInsightsAsset.updateDriver(req.body), function(response){
+	Q.when(driverInsightsAsset.updateDriver(driverId, req.body), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -154,7 +154,7 @@ router.get("/vendor/:vendor", authenticate, function(req, res){
 });
 router.put("/vendor/:vendor", authenticate, function(req, res){
 	var vendor = req.params.vendor;
-	Q.when(driverInsightsAsset.updateVendor(req.body), function(response){
+	Q.when(driverInsightsAsset.updateVendor(vendor, req.body), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);

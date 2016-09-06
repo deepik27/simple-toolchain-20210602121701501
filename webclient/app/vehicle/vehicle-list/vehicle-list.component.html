@@ -6,6 +6,8 @@
 		<select [ngModel]="numRecInPage" (change)="onNumPageChanged($event.target.value)">
 			<option value=5>5</option>
 			<option value=10>10</option>
+			<option value=15>15</option>
+			<option value=20>20</option>
 			<option value=25>25</option>
 			<option value=50>50</option>
 		</select>
@@ -43,17 +45,17 @@
 	<tbody>
 		<tr *ngFor="let vehicle of (vehicles|orderBy:orderByKey:!ascendingOrder); let i = index">
 			<td class="alignCenter"><span title="mo_id:{{vehicle.mo_id}}">{{numRecInPage * (pageNumber - 1) + i + 1}}</span></td>
-			<td class="alignCenter">{{vehicle.__id||'-'}}</td>
-			<td class="alignCenter">{{vehicle.vendor||'-'}}</td>
-			<td class="alignCenter">{{vehicle.model||'-'}}</td>
-			<td class="alignCenter">{{vehicle.status||'-'}}</td>
+			<td>{{vehicle.__id||'-'}}</td>
+			<td>{{vehicle.vendor||'-'}}</td>
+			<td>{{vehicle.model||'-'}}</td>
+			<td>{{vehicle.status||'-'}}</td>
 			<td class="alignCenter">
 				<a class="dropdown_base" (click)="selected_mo_id=selected_mo_id!==vehicle.mo_id?vehicle.mo_id:null" href="javascript:void(0)" title="Open menu"></a>
-				<div [ngClass]="selected_mo_id===vehicle.mo_id?'dropdown':'hidden'" style="right:10px">
+				<div [ngClass]="selected_mo_id===vehicle.mo_id?'dropdown':'hidden'" [hidden]="selected_mo_id!==vehicle.mo_id" style="right:10px">
 						<a class="dropdown_menu" (click)="selected_mo_id=null;onUpdate(vehicle.mo_id)" href="javascript:void(0)">Update</a>
 						<a [ngClass]="vehicle.status!=='active'?'dropdown_menu':'hidden'" (click)="selected_mo_id=null;onDelete(vehicle.mo_id)" href="javascript:void(0)">Delete</a>
 						<a class="dropdown_menu_separator" (click)="selected_mo_id=null;onDelete(vehicle.mo_id)"></a>
-						<a class="dropdown_menu" (click)="selected_mo_id=null;onCreate()" href="javascript:void(0)">Create</a>
+						<a class="dropdown_menu" [routerLink]="['/carStatus', '/'+vehicle.mo_id]">Show Car Status</a>
 				</div>
 			</td>
 		</tr>
@@ -66,19 +68,21 @@
 		<div class=modal-overlay-header>{{workingVehicle.mo_id?'Update Vehicle':'Create Vehicle'}}</div>
 		<div class=modal-overlay-body>
 			<div class="row">
-				<label for="new_vendor" class="alignRight column-3-lg column-3-med column-3-sm">Vendor:</label>
-				<select id="new_vendor" class="column-7-lg column-7-med column-7-sm" [(ngModel)]="workingVehicle.vendor"></select>
+				<label for="new_vendor" class="fieldLabel column-3-lg column-3-med column-3-sm">Vendor:</label>
+				<select id="new_vendor" class="column-7-lg column-7-med column-7-sm" [(ngModel)]="workingVehicle.vendor">
+						<option *ngFor="let vendor of vendors" value="{{vendor}}">{{vendor}}</option>
+				</select>
 			</div>
 			<div class="row">
-				<label for="new_model" class="alignRight column-3-lg column-3-med column-3-sm">Model:</label>
+				<label for="new_model" class="fieldLabel column-3-lg column-3-med column-3-sm">Model:</label>
 				<input id="new_model" class="column-7-lg column-7-med column-7-sm" [(ngModel)]="workingVehicle.model">
 			</div>
 			<div class="row">
-				<label for="new_serial" class="alignRight column-3-lg column-3-med column-3-sm">Serial#:</label>
+				<label for="new_serial" class="fieldLabel column-3-lg column-3-med column-3-sm">Serial#:</label>
 				<input id="new_serial" class="column-7-lg column-7-med column-7-sm" [(ngModel)]="workingVehicle.serial_number">
 			</div>
 			<div class="row">
-				<label for="new_status" class="alignRight column-3-lg column-3-med column-3-sm">Status:</label>
+				<label for="new_status" class="fieldLabel column-3-lg column-3-med column-3-sm">Status:</label>
 				<select id="new_status" class="column-7-lg column-7-med column-7-sm" [(ngModel)]="workingVehicle.status">
 						<option value="inactive">Inactive</option>
 						<option value="active">Active</option>

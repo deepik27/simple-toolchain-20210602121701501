@@ -58,8 +58,8 @@ var driverInsightsAsset = {
 		}
 		return this._addAsset("vehicle", vehicle, true);
 	},
-	updateVehicle: function(vehicle){
-		return this._updateAsset("vehicle", vehicle.mo_id, vehicle, true);
+	updateVehicle: function(id, vehicle){
+		return this._updateAsset("vehicle", id || vehicle.mo_id, vehicle, true);
 	},
 	deleteVehicle: function(mo_id){
 		return this._deleteAsset("vehicle", mo_id);
@@ -80,8 +80,8 @@ var driverInsightsAsset = {
 		}
 		return this._addAsset("driver", driver, true);
 	},
-	updateDriver: function(driver){
-		return this._updateAsset("driver", driver.driver_id, driver, true);
+	updateDriver: function(id, driver){
+		return this._updateAsset("driver", id || driver.driver_id, driver, true);
 	},
 	deleteDriver: function(driver_id){
 		return this._deleteAsset("driver", driver_id);
@@ -102,8 +102,8 @@ var driverInsightsAsset = {
 		}
 		return this._addAsset("vendor", vendor, false);
 	},
-	updateVendor: function(vendor){
-		return this._updateAsset("vendor", vendor.vendor, vendor, false);
+	updateVendor: function(id, vendor){
+		return this._updateAsset("vendor", id || vendor.vendor, vendor, false);
 	},
 	deleteVendor: function(vendor){
 		return this._deleteAsset("vendor", vendor);

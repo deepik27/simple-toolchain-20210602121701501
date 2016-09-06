@@ -55,44 +55,6 @@
   color: blue;
 }
 
-.modal-overlay {
-	z-index:1001;
-	position:fixed;
-	top:0;
-	left:0;
-	width:100%;
-	height:120%;
-	background-color:rgba(0,0,0,0.60);
-}
-
-.modal-overlay .modal-overlay-contents {
-  padding: 15px;
-	position: relative;
-	background-color: white;
-	width: 80%;
-	margin: auto;
-  margin-top: 50px;
-}
-
-.modal-overlay .modal-overlay-header {
-	font-size: large;
-	text-align: center;
-  padding-top: 0px;
-  padding-bottom: 15px;
-	border-bottom: 1px solid #cccccc;
-}
-
-.modal-overlay .modal-overlay-body {
-  padding-top: 30px;
-  padding-bottom: 30px;
-}
-
-.modal-overlay .modal-overlay-buttons {
-  padding-top: 5px;
-  padding-bottom: 5px;
-	text-align: center;
-}
-
 .row label, .row select, .row input {
   margin: 5px;
   padding: 0px;
@@ -103,4 +65,13 @@
   margin-bottom: 10px;
   margin-left: 10px;
   margin-right: 10px;
+}
+
+.fieldLabel {
+  text-align: right;
+}
+@media (max-width: 768px) {
+  .fieldLabel {
+	   text-align: left;
+  }
 }
