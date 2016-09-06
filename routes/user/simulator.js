@@ -42,9 +42,9 @@ var _sendError = function(res, err){
  * REST apis for fleet simulator
  */
 var NUM_OF_SIMULATOR = 5;
-var _sendSimulatedVehicle = function(res){
+var _createSimulatedVehicle = function(res, num){
 	var defList = [];
-	for(var i=0; i<NUM_OF_SIMULATOR; i++){
+	for(var i=0; i < num || NUM_OF_SIMULATOR; i++){
 		defList.push(driverInsightsAsset.addVehicle({"vendor": "IBM"}));
 	}
 	Q.when(defList, function(){
@@ -63,17 +63,21 @@ router.get("/simulatedVehicle", authenticate, function(req, res){
 	Q.when(driverInsightsAsset.getVendor("IBM"), function(response){
 		console.log("There is vendor IBM");
 		Q.when(driverInsightsAsset.getVehicleList({"vendor": "IBM"}), function(response){
-			res.send(response);
+			if(response && response.length < NUM_OF_SIMULATOR){
+				_createSimulatedVehicle(res, NUM_OF_SIMULATOR - response.length);
+			}else{
+				res.send(response);
+			}
 		})["catch"](function(err){
 			// assume vehicle is not available 
-			_sendSimulatedVehicle(res);
+			_createSimulatedVehicle(res);
 		}).done();
 	})["catch"](function(err){
 		var status = (err.response && (err.response.status||err.response.statusCode)) || 500;
 		if(status === 404){
 			Q.when(driverInsightsAsset.addVendor({"vendor": "IBM", "type": "Vendor", "status":"Active"}), function(response){
 				console.log("Vendor IBM is created");
-				_sendSimulatedVehicle(res);
+				_createSimulatedVehicle(res);
 			})["catch"](function(err){
 				_sendError(res, err);
 			}).done();
