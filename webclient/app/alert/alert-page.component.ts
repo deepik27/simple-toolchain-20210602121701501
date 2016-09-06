@@ -27,7 +27,12 @@ export class AlertPageComponent implements OnActivate {
       if(extent.length == 4){
         this.extent = extent;
       }else{
-        this.extent = undefined;
+        var splited = extent.split(",");
+        if(splited.length === 4 && splited.every((n) => {return !isNaN(n)})){
+          this.extent = splited;
+        }else{
+          this.extent = undefined;
+        }
       }
     } else {
       this.extent = undefined;
