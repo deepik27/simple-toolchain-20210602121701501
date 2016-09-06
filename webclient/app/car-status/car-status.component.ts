@@ -25,7 +25,7 @@ export class CarStatusComponent implements OnInit, OnActivate {
 
   constructor(
     private router: Router,
-    private carStatusDataService: CarStatusDataService,
+    private carStatusDataService: CarStatusDataService
   ){
   }
 
