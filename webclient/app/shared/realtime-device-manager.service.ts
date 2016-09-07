@@ -30,6 +30,20 @@ export class RealtimeDeviceDataProviderService {
 		@Inject('webApiHost') private webApiHost: string
   ) {  }
 
+  private getQs(extent: any[], vehicleId: string){
+    var xt = extent ? extent: [-180, -90, 180, 90];
+    var qlist = ['min_lat='+xt[1], 'min_lng='+xt[0],
+                  'max_lat='+xt[3], 'max_lng='+xt[2]];
+    if(vehicleId)
+        qlist.push('vehicleId=' + vehicleId);
+    return qlist.join('&');
+  }
+
+  getProbe(vehicleId: string) {
+    var qs = this.getQs(null, vehicleId);
+    return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise();
+  }
+
   getProvider(){
     return this.provider;
   }
@@ -42,15 +56,11 @@ export class RealtimeDeviceDataProviderService {
 
     var qs: string;
     if(typeof extentOrVehicleId === 'string'){
-      var vehicleId = extentOrVehicleId;
-      qs = ['vehicleId=' + vehicleId,
-            'min_lat=-90', 'min_lng=-180',
-            'max_lat=90', 'max_lng=180'].join('&');
+      qs = this.getQs(null, extentOrVehicleId);
     }else{
       var extent = extentOrVehicleId;
       var xt = mapHelper ? mapHelper.expandExtent(extent, 0.1) : extent; // get extended extent to track for map
-      qs = ['min_lat='+xt[1], 'min_lng='+xt[0],
-  				  'max_lat='+xt[3], 'max_lng='+xt[2]].join('&');
+      qs = this.getQs(xt, null);
     }
 
 		// handle cars

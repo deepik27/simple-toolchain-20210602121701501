@@ -1,4 +1,5 @@
-import { Component, OnInit, Input, Inject } from '@angular/core';
+import { Component, OnInit, AfterViewInit, Input, Inject, ViewChild } from '@angular/core';
+import { Router, RouteSegment, OnActivate } from '@angular/router';
 
 import { RealtimeMapComponent } from './realtime-map/realtime-map.component';
 import { NumberOfCarsComponent } from './number-of-cars/number-of-cars.component';
@@ -13,22 +14,25 @@ import * as _ from 'underscore';
   directives: [RealtimeMapComponent, NumberOfCarsComponent],
   providers: [],
 })
-export class MapPageComponent implements OnInit {
+export class MapPageComponent implements OnInit, AfterViewInit, OnActivate {
   areas: MapArea[];
-  selectedArea: MapArea;
   regions: MapArea[];
+  selectedArea: MapArea;
+  mapLastSelectedArea: MapArea;
+
+  private initialVehicleId: string;
+  @ViewChild(RealtimeMapComponent) realtimeMap: RealtimeMapComponent;
 
   //
   // Web API host
   //
   webApiBaseUrl: string;
 
-  //
-  // Location service
-  //
-  locationService: LocationService;
-
-  constructor(@Inject('webApiHost') webApiHost: string, locationService: LocationService) {
+  constructor(
+    private router: Router,
+    private locationService: LocationService,
+    @Inject('webApiHost') webApiHost: string
+  ) {
     this.webApiBaseUrl = window.location.protocol + '//' + webApiHost;
     this.locationService = locationService;
     this.areas = locationService.getAreas().map(x=>x);
@@ -38,6 +42,7 @@ export class MapPageComponent implements OnInit {
   onMapExtentChanged(event){
     let extent = event.extent;
     this.locationService.setMapRegionExtent(extent);
+    this.mapLastSelectedArea = _.extend({}, this.locationService.getMapRegion()); // fire extent change
   }
 
   get htmlClientInitialLocation(){
@@ -50,6 +55,10 @@ export class MapPageComponent implements OnInit {
     return "";
   }
 
+  routerOnActivate(current: RouteSegment){
+    this.initialVehicleId = current.getParam('vehicleId');
+
+  }
   ngOnInit() {
     // move location
     this.selectedArea = this.areas[this.areas.length - 1];
@@ -67,6 +76,11 @@ export class MapPageComponent implements OnInit {
       }).catch(ex => {
         this.selectedArea = this.areas[0];
       });
+    }
+  }
+  ngAfterViewInit() {
+    if(this.initialVehicleId){
+      this.realtimeMap.selectDevice(this.initialVehicleId);
     }
   }
 }

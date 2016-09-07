@@ -66,6 +66,8 @@ export class MapHelper {
   postChangeViewHandlers = [];
   _postChangeViewLastExtent: any;
   _postChangeViewTimer: any;
+  // show popover
+  showPinnedPopover: ((feature: any)=> any);
 
   constructor(public map:ol.Map) {
     // animation event handler
@@ -334,7 +336,10 @@ export class MapHelper {
           return feature;
         });
         if(!feature) return; // pin feature only works on clicking on a feature
+        clickOnFeatureFunc(feature);
+      }).bind(this));
 
+      var clickOnFeatureFunc = (function(feature, neverClose){
         if(!currentPinned && feature === currentPopoverFeature){
           // Pin currently shown popover
           closePinnedPopover();
@@ -355,13 +360,18 @@ export class MapHelper {
           overlay.setPosition(coord);
           // show
           showPinnedPopover();
-        }else if(currentPinned && feature === currentPopoverFeature){
+        }else if(currentPinned && feature === currentPopoverFeature && !neverClose){
           // Remove pin
           closePinnedPopover();
           //currentPopoverFeature = null;
           //showPopOver(elm, currentPopoverFeature, pinned); // to clear
         }
-      }).bind(this));
+      }).bind(this);
+
+      this.showPinnedPopover = (feature) => {
+        clickOnFeatureFunc(feature, true);
+      };
+
     }
 
     //

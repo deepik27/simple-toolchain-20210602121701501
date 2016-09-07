@@ -21,6 +21,7 @@ import { RealtimeDeviceDataProviderService } from './shared/realtime-device-mana
 })
 @Routes([
   {path:'/',          component: MapPageComponent},
+  {path:'/map',       component: MapPageComponent},
   {path:'/carStatus', component: CarStatusPageComponent},
   {path:'/alert',     component: AlertPageComponent},
   {path:'/users',     component: UsersPageComponent},
@@ -45,7 +46,7 @@ export class AppComponent {
     let lhs = this.router.serializeUrl(this.router.urlTree);
     let rhs = this.router.serializeUrl(route);
     if(rhs === '' || lhs === ''){
-      return lhs === rhs;
+      return lhs === rhs || (rhs === '' && lhs.indexOf('/map') === 0);
     }
     return lhs.startsWith(rhs);
   }

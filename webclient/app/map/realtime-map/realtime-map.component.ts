@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, Output,
-					OnInit, OnChanges, SimpleChange } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChange } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable, Subject } from 'rxjs/Rx.DOM';
 
 import * as ol from 'openlayers';
@@ -56,6 +56,9 @@ export class RealtimeMapComponent implements OnInit {
 	mapElementId = 'carmonitor';
 	popoverElemetId = 'carmonitorpop';
 
+	// device features map
+	private deviceFeatures: { [deviceID: string]: ol.Feature } = {};
+
 	// RxJS
 	mapExtentSubject = new Subject<any>();
 
@@ -66,6 +69,7 @@ export class RealtimeMapComponent implements OnInit {
 	animatedDeviceManagerService: RealtimeDeviceDataProviderService;
 
   constructor(
+		private _router: Router,
 		animatedDeviceManagerService: RealtimeDeviceDataProviderService
 	) {
 		this.animatedDeviceManagerService = animatedDeviceManagerService;
@@ -198,7 +202,7 @@ export class RealtimeMapComponent implements OnInit {
 			var device = feature.get('device');
 			if(device){
 				let result = { content: '', title: null };
-				result.content = '<span style="white-space: nowrap;">ID: ' + _.escape(device.deviceID) + "</style>";
+				result.content = '<span style="white-space: nowrap;">ID: <a onclick="document[\'' + ("_handleClick" + this.popoverElemetId) + '\'](this); return 0;" href="#">' + _.escape(device.deviceID) + "</a></span>";
 				var info = device.latestInfo;
 				var sample = device.latestSample;
 				if(sample && this.DEBUG){
@@ -259,7 +263,7 @@ export class RealtimeMapComponent implements OnInit {
 				var curStatus = cur.status || 'normal';
 				//console.log('syncCarFeatures - Putting icon at ', [cur.lng, cur.lat])
 
-				var feature = device.feature;
+				var feature: any = this.deviceFeatures[device.deviceID];
 				if(curPoint && !feature){
 					// create a feature for me
 					feature = new ol.Feature({
@@ -271,7 +275,7 @@ export class RealtimeMapComponent implements OnInit {
 					if(curStatus)
 						feature.setStyle(getCarStyle(curStatus));
 						this.carsLayer.getSource().addFeature(feature);
-					device.feature = feature;
+					this.deviceFeatures[device.deviceID] = feature;
 				}else if(curPoint && feature){
 					// update
 					if(curStatus && curStatus !== feature.get('carStatus')){
@@ -284,7 +288,7 @@ export class RealtimeMapComponent implements OnInit {
 				}else if(!curPoint && feature){
 					// remove feature
 					(<any>this.carsLayer.getSource()).removeFeature(feature);
-					device.feature = null;
+					delete this.deviceFeatures[device.deviceID];
 				}
 			});
 		}
@@ -297,11 +301,14 @@ export class RealtimeMapComponent implements OnInit {
 		});
 	}
 
-
-
-
   ngOnInit() {
-        this.initMap();
+    this.initMap();
+		// register popover link event handler to document
+		document['_handleClick' + this.popoverElemetId] = (elm) => {
+			console.log('Car ID link is clicked on the popover');
+			var vehicleId = elm.text;
+			this._router.navigate(['/carStatus/', vehicleId]);
+		};
 	}
 
 	ngOnChanges(changes: {[propertyName: string]: SimpleChange}){
@@ -311,6 +318,32 @@ export class RealtimeMapComponent implements OnInit {
 		 	this.mapHelper && this.mapHelper.moveMap(region);
 		}
 	}
+
+  selectDevice(deviceId: string){
+		// see if the device is loaded
+		var probe = new Promise((resolve, reject) => {
+			var dev = this.animatedDeviceManager.getDevice(deviceId);
+			if(dev)
+				return resolve(dev.latestSample);
+			return this.animatedDeviceManagerService.getProbe(deviceId);
+		});
+		probe.then((probeData: any) => {
+			var center = [probeData.lng, probeData.lat];
+			this.mapHelper.moveMap({ center: center });
+		});
+		// schecule popover
+		var nRetry = 10;
+		var interval = 500;
+		var showPopoverFunc = () => {
+			var device = this.animatedDeviceManager.getDevice(deviceId);
+			if(device && this.deviceFeatures[device.deviceID]){
+				this.mapHelper.showPinnedPopover(this.deviceFeatures[device.deviceID]);
+			}else if(nRetry-- > 0){
+				setTimeout(showPopoverFunc, interval);
+			}
+		}
+		setTimeout(showPopoverFunc, interval);
+  }
 }
 
 /***************************************************************
