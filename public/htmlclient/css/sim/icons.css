@@ -15,11 +15,13 @@
  */
 @font-face {
     font-family: 'icomoon';
+/*
     src:    url('../fonts/icomoon.eot?lww5pg');
     src:    url('../fonts/icomoon.eot?lww5pg#iefix') format('embedded-opentype'),
         url('../fonts/icomoon.ttf?lww5pg') format('truetype'),
         url('../fonts/icomoon.woff?lww5pg') format('woff'),
         url('../fonts/icomoon.svg?lww5pg#icomoon') format('svg');
+*/
     font-weight: normal;
     font-style: normal;
 }
