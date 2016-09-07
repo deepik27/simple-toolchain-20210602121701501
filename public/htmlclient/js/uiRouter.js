@@ -18,7 +18,7 @@ var htmlClient = angular.module('htmlClient',['ui.router']);
 htmlClient.config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
 		$stateProvider
 			.state('home', {
-				url: '/home?loc&vehicleId&driverId',
+				url: '/home?loc&vehicleId&serial_number&vendor&driverId',
 				template: '<client-drive></client-drive>',
 				controller: function($stateParams, virtualGeoLocation, assetService){
 					if($stateParams.loc){
@@ -33,6 +33,8 @@ htmlClient.config(['$stateProvider', '$urlRouterProvider', function($stateProvid
 					if($stateParams.driverId){
 						assetService.setDriverId($stateParams.driverId);
 					}
+					assetService.serial_number = $stateParams.serial_number; 
+					assetService.vendor = $stateParams.vendor; 
 				}
 			})
 			.state('profile', {

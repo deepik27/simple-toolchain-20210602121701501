@@ -32,8 +32,10 @@ angular.module('fleetManagementSimulator', ['ngAnimate'])
 			var loc = $location.search()["loc"];
 			vehicles.forEach(function(vehicle, i){
 				var url = "../htmlclient/#/home" 
-					+ "?vehicleId=" + vehicle.mo_id + 
-					+ "&driverId=sim1" 
+					+ "?vehicleId=" + vehicle.mo_id 
+					+ "&serial_number=" + vehicle.serial_number
+					+ "&vendor=" + vehicle.vendor
+					+ "&driverId=sim1"; 
 				if(loc){
 					url += "&loc=" + loc;
 				}

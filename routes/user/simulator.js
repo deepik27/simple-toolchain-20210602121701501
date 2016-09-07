@@ -44,8 +44,9 @@ var _sendError = function(res, err){
 var NUM_OF_SIMULATOR = 5;
 var _createSimulatedVehicle = function(res, num){
 	var defList = [];
-	for(var i=0; i < num || NUM_OF_SIMULATOR; i++){
-		defList.push(driverInsightsAsset.addVehicle({"vendor": "IBM"}));
+	for(var i=0; i < (num || NUM_OF_SIMULATOR); i++){
+		defList.push(driverInsightsAsset.addVehicle({"vendor": "IBM", "serial_number": "sim" + i}));
+		console.log("Simulated car will be created");
 	}
 	Q.when(defList, function(){
 		console.log("Simulated cars were created");

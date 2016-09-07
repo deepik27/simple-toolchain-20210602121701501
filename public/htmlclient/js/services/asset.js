@@ -29,6 +29,11 @@ angular.module('htmlClient')
 		settings: null,
 		
 		/*
+		* variables for simulator 
+		*/
+		vendor: undefined,
+		serial_number: undefined,
+		/*
 		 * Methods to get/set settings
 		 */
 		getVehicleId: function() {
@@ -228,7 +233,7 @@ angular.module('htmlClient')
 				headers: {
 					"Content-Type": "application/JSON;charset=utf-8"
 				},
-				data: {mo_id: mo_id, status: toActive ? "Active" : "Inactive"}
+				data: {mo_id: mo_id, serial_number: this.serial_number, vendor: this.vendor, status: toActive ? "Active" : "Inactive"}
 			})).success(function(data, status){
 				deferred.resolve(data);
 			}).error(function(error, status){
