@@ -11,18 +11,9 @@ import { RealtimeDeviceDataProviderService } from '../shared/realtime-device-man
 @Component({
   moduleId: module.id,
   selector: 'fmdash-car-status-page',
-  template: `
-    <div class="container-50 noTopPadding container-30-right">
-      <form class="floatRight">
-        <select [(ngModel)]="selectedRegion" #sel (change)="selectRegion(sel.value)">
-          <option *ngFor="let region of regions" [ngValue]="region">{{region.name}}</option>
-        </select>
-      </form>
-      <h4>Car Status</h4>
-      <router-outlet></router-outlet>
-    </div>`,
-    directives: [ROUTER_DIRECTIVES],
-    providers: [CarStatusDataService],
+  templateUrl: 'car-status-page.component.html',
+  directives: [ROUTER_DIRECTIVES],
+  providers: [CarStatusDataService],
 })
 @Routes([
   {path:'/',       component: CarStatusSummaryComponent},

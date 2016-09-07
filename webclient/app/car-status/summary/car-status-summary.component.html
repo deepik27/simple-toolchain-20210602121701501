@@ -1,5 +1,4 @@
 <div class="row marginTop-15">
-
   <div class="column-6-med">
       <fmdash-chart-item
           title="Fuel"
@@ -16,12 +15,9 @@
           aggrKey="engineTemp"
           (selectionChange)="chartSelectionChanged($event)"></fmdash-chart-item>
   </div>
-
+</div>
+<div class="row marginTop-15">
   <div class="column-10-med">
-    <fmdash-car-list
-      groupProp="{{selectedGroupingProp}}"
-      selectGroup="{{selectedGroupingLabel}}"
-    ></fmdash-car-list>
+    <fmdash-car-list groupProp="{{selectedGroupingProp}}" selectGroup="{{selectedGroupingLabel}}"></fmdash-car-list>
   </div>
-
 </div>

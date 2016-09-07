@@ -4,25 +4,24 @@
   </div>
 
   <div *ngIf="!selectGroup">No selection.</div>
-  <div *ngIf="selectGroup && devices && devices.length == 0">No device in selection.</div>
-  <div *ngIf="selectGroup && devices && devices.length > 0">
-    <table calss="table table-hober table-stripped table-condensed table-responsive">
-      <thead>
-    		<tr>
-    			<th>#</th>
-    			<th>ID</th>
-          <th>Fuel</th>
-          <th>Engine temperature</th>
-    		</tr>
-    	</thead>
-      <tbody>
-    		<tr *ngFor="let vehicle of (devices); let i = index">
-    			<td class="alignCenter">{{i + 1}}</td>
-    			<td class="alignCenter"><a [routerLink]="['/carStatus', '/'+vehicle.deviceID]">{{vehicle.deviceID}}</a></td>
-          <td class="alignCenter">{{vehicle.latestSample?.props?.fuel}}</td>
-          <td class="alignCenter">{{vehicle.latestSample?.props?.engineTemp}}</td>
-    		</tr>
-    	</tbody>
-    </table>
-  </div>
+  <div *ngIf="selectGroup && probes && probes.length == 0">No device in selection.</div>
+  <table *ngIf="selectGroup && probes && probes.length &gt; 0"
+    class="table table-hover table-striped table-condensed table-responsive">
+    <thead>
+  		<tr>
+  			<th>#</th>
+  			<th>ID</th>
+        <th>Fuel</th>
+        <th>Engine temperature</th>
+  		</tr>
+  	</thead>
+    <tbody>
+  		<tr *ngFor="let probe of probes; let i = index">
+  			<td class="alignCenter">{{i + 1}}</td>
+  			<td class="alignCenter"><a [routerLink]="['/carStatus', '/'+probe.mo_id]">{{probe.mo_id}}</a></td>
+        <td class="alignCenter">{{probe?.props?.fuel}}</td>
+        <td class="alignCenter">{{probe?.props?.engineTemp}}</td>
+  		</tr>
+  	</tbody>
+  </table>
 </div>

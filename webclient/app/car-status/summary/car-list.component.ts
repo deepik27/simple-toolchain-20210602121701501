@@ -1,34 +1,35 @@
-import { Component, OnInit, OnChanges, SimpleChange, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, OnChanges, SimpleChange, Input } from '@angular/core';
 import { ROUTER_DIRECTIVES } from '@angular/router';
 
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
-
 import { CarStatusDataService } from './car-status-data.service';
 
 @Component({
   moduleId: module.id,
   selector: 'fmdash-car-list',
   templateUrl: 'car-list.component.html',
+  styleUrls: ['../../../css/table.css'],
   directives: [ROUTER_DIRECTIVES]
 })
-export class CarListComponent implements OnInit, OnChanges {
+export class CarListComponent implements OnInit, OnDestroy, OnChanges {
   @Input() groupProp: string;
   @Input() selectGroup: string;
   private selectionSubject = new Subject<any>();
-  public selectedDevies$: Observable<any[]>;
-  public devices = [];
+  private selectedDeviesSubscription;
+  public probes = [];
 
   constructor(private carStatusDataService: CarStatusDataService) {  }
 
   ngOnInit() {
-     this.selectionSubject.map(x => { console.log(x); return x; })
+    this.selectedDeviesSubscription = this.selectionSubject
+      .map(x => { console.log(x); return x; })
 //      .debounceTime(500)
 //      .distinctUntilChanged()
       .switchMap(sel => {
           console.log('Switching to ' , sel);
           if(sel.value){
-            return this.carStatusDataService.getDevices(sel.prop, sel.value);
+            return this.carStatusDataService.getDevices(sel.prop, sel.value, 5);
           }
           return Observable.of([]);
         }
@@ -38,11 +39,17 @@ export class CarListComponent implements OnInit, OnChanges {
         return Observable.of([]);
       })
       .subscribe(devices => {
-        this.devices = devices;
-        console.log('Setting devices to; ', devices);
+        this.probes = devices.map(device => device.latestSample);
+        console.log('Setting probes to; ', this.probes);
       });
   }
-
+  ngOnDestroy() {
+    if(this.selectedDeviesSubscription){
+      this.selectedDeviesSubscription.unsubscribe();
+      this.selectedDeviesSubscription = null;
+    }
+  }
+    
   ngOnChanges(changes: { [key: string]: SimpleChange} ) {
     // translates @Input(s) to observable subjects
     let newGroupPropChange = changes['groupProp'];
