@@ -48,6 +48,11 @@ Issues and the workrounds for Openlayers.
 - Server resources
   - The `./webclient` is mapped to `/webclient`
   - All the changes to \*.ts files are tracked and transpiled and they automatically refreshes browser
+  - NOTE that when the client is hosted at port 3123, all the REST API invocations are redirected to port 3000.
+- Start express server
+  - set environment variables `APP_USER` and `APP_PASSWORD` to `none` so that the Angular2 pages hosted by the light-server can reach to the server REST APIs without authentication.
+  - the server starts at http://localhost:3000/ by default
+
 
 #### Local - Express (for server development)
 
