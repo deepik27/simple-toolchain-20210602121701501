@@ -37,12 +37,22 @@ export class RealtimeDeviceDataProviderService {
 	/**
 	 * Start trackgin a region
 	 */
-	startTracking(extent, mapHelper?, updateEvents?){
+	startTracking(extentOrVehicleId, mapHelper?, updateEvents?){
     this.stopTracking(true, mapHelper);
 
-		var xt = mapHelper ? mapHelper.expandExtent(extent, 0.1) : extent; // get extended extent to track for map
-		var qs = ['min_lat='+xt[1], 'min_lng='+xt[0],
-							'max_lat='+xt[3], 'max_lng='+xt[2]].join('&');
+    var qs: string;
+    if(typeof extentOrVehicleId === 'string'){
+      var vehicleId = extentOrVehicleId;
+      qs = ['vehicleId=' + vehicleId,
+            'min_lat=-90', 'min_lng=-180',
+            'max_lat=90', 'max_lng=180'].join('&');
+    }else{
+      var extent = extentOrVehicleId;
+      var xt = mapHelper ? mapHelper.expandExtent(extent, 0.1) : extent; // get extended extent to track for map
+      qs = ['min_lat='+xt[1], 'min_lng='+xt[0],
+  				  'max_lat='+xt[3], 'max_lng='+xt[2]].join('&');
+    }
+
 		// handle cars
 		this.refreshCarStatus(qs).then((data) => {
 			// adjust animation time

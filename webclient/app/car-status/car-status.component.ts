@@ -5,6 +5,7 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 
 import { RealtimeDeviceData } from '../shared/realtime-device';
+import { RealtimeDeviceDataProviderService } from '../shared/realtime-device-manager.service';
 import { CarStatusDataService } from './summary/car-status-data.service';
 
 import * as _ from 'underscore';
@@ -25,12 +26,17 @@ export class CarStatusComponent implements OnInit, OnActivate {
 
   constructor(
     private router: Router,
-    private carStatusDataService: CarStatusDataService
+    private carStatusDataService: CarStatusDataService,
+    private realtimeDataProviderService: RealtimeDeviceDataProviderService
   ){
   }
 
   ngOnInit() {
     this.proveDataSubscription = this.moIdSubject.switchMap(mo_id => {
+        // in case the mo_id is not tracked, configure the service to track it
+        if(!this.realtimeDataProviderService.getProvider().getDevice(mo_id)){
+          this.realtimeDataProviderService.startTracking(mo_id);
+        }
         return mo_id ? this.carStatusDataService.getProbe(mo_id) : Observable.of([]);
       }).subscribe(probe => {
         this.probeData = probe;

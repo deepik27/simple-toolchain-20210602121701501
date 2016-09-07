@@ -66,12 +66,23 @@ router.get('/probeData',  authenticate, function(req, res) {
  *   http://localhost:6003/monitoring/cars/query?min_lat=-90&max_lat=90&min_lng=-180&max_lng=180
  */
 router.get('/carProbe', authenticate, function(req, res) {
+	// get extent
 	var extent = normalizeExtent(req.query);
-	// test the query values
 	if ([extent.max_lat, extent.max_lng, extent.min_lat, extent.min_lng].some(function(v){ return isNaN(v); })){
 		return res.status(400).send('One or more of the parameters are undefined or not a number'); // FIXME response code
 	}
-	
+	// query by extent
+	var qs = {
+		min_longitude: extent.min_lng,
+		min_latitude: extent.min_lat,
+		max_longitude: extent.max_lng,
+		max_latitude: extent.max_lat,
+	};
+	// add vehicleId query
+	if(req.query.vehicleId){
+		qs.mo_id = req.query.vehicleId;
+	}
+
 	// initialize WSS server
 	var wssUrl = req.baseUrl + req.route.path;
 	if (!req.app.server) {
@@ -80,13 +91,7 @@ router.get('/carProbe', authenticate, function(req, res) {
 	} else {
 		initWebSocketServer(req.app.server, wssUrl);
 	}
-	
-	var qs = {
-		min_longitude: extent.min_lng,
-		min_latitude: extent.min_lat,
-		max_longitude: extent.max_lng,
-		max_latitude: extent.max_lat,
-	};
+
 	getCarProbe(qs, true).then(function(probes){
 		// send normal response
 		var ts = _.max(_.map(probes, function(d){ return d.lastEventTime || d.t || d.ts; }));
@@ -110,7 +115,7 @@ router.get('/driverInsights', authenticate, function(req, res) {
 	getUserTrips(req).then(function(tripIdList){
 		driverInsightsAnalyze.getList(tripIdList).then(function(msg){
 			res.send(msg);
-		});	
+		});
 	})["catch"](function(error){
 		res.send(error);
 	});
@@ -120,7 +125,7 @@ router.get('/driverInsights/statistics', authenticate, function(req, res) {
 	getUserTrips(req).then(function(tripIdList){
 		driverInsightsAnalyze.getStatistics(tripIdList).then(function(msg){
 			res.send(msg);
-		});	
+		});
 	})["catch"](function(error){
 		res.send(error);
 	});
@@ -260,7 +265,7 @@ var initWebSocketServer = function(server, path){
 	if (router.wsServer !== null){
 		return; // already created
 	}
-	
+
 	var TIMEOUT = 1000;
 	var timerWebSockEmitFunc = function() {
 		//
@@ -270,9 +275,9 @@ var initWebSocketServer = function(server, path){
 			function getQs(){
 				var e = client.extent;
 				if(e){
-					return { 
-						min_latitude: e.min_lat, min_longitude: e.min_lng, 
-						max_latitude: e.max_lat, max_longitude: e.max_lng 
+					return {
+						min_latitude: e.min_lat, min_longitude: e.min_lng,
+						max_latitude: e.max_lat, max_longitude: e.max_lng
 					};
 				}
 				return { min_latitude: -90, min_longitude: -180,
@@ -365,8 +370,8 @@ function getCarProbe(qs, addAlerts){
 				probes.forEach(function(probe){
 					var alertsForMo = alertsByMoId[probe.mo_id] || {}; // lookup
 					if(alertsForMo){ // list of alerts
-						var alertCounts = _.countBy(alertsForMo, function(alert){ 
-							return alert.severity; 
+						var alertCounts = _.countBy(alertsForMo, function(alert){
+							return alert.severity;
 						});
 						// alertCounts.items = alertsForMo; // details if needed
 						probe.info = _.extend(probe.info || {}, { alerts: alertCounts }); // inject alert counts

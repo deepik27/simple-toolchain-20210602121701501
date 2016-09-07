@@ -32,10 +32,14 @@ export class CarStatusDataService {
   }
 
   getProbe(mo_id: string, interval = 1): Observable<any> {
+    if(!this.realtimeDeviceDataProvider.getDevice(mo_id)) {
+      
+    }
+
     return Observable.interval(interval * 1000).startWith(0)
       .map(x => {
         var device = this.realtimeDeviceDataProvider.getDevice(mo_id);
-        return device.latestSample;
+        return device && device.latestSample;
       })
   }
 
