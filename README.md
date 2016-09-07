@@ -81,6 +81,12 @@ You now have your very own instance of the IoT for Automotive Starter app on Blu
 
 Congratulations! You are ready to use your own instance of IoT for Automotive Starter app now. Open `http://<host>.mybluemix.net` in your browser and follow the instructions in the top page to connect your mobile app to the IoT for Automotive Starter app.
 
+### Default user name and the password
+
+To protect your app instance, access to the app needs user authentication. The default user name is `starter`, and the password is `Starter4Iot`.
+
+You may change the user name and the password by setting `APP_USER` and `APP_PASSWORD` environment variables. You may also remove the authentication by specifying `none` to the both environment variables.
+
 ## Usage
 
 ## Implementation
