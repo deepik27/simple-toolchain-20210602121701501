@@ -52,14 +52,12 @@ export class MapPageComponent implements OnInit {
 
   ngOnInit() {
     // move location
+    this.selectedArea = this.areas[this.areas.length - 1];
     if(this.locationService.getMapRegion()){
       if(this.locationService.getCurrentAreaRawSync()){
         this.areas.push(this.locationService.getCurrentAreaRawSync());
       }
       this.areas.push(this.locationService.getMapRegion());
-      setTimeout(() => {
-        this.selectedArea = this.areas[this.areas.length - 1];
-      }, 5);
     } else {
       this.locationService.getCurrentArea().then(area => {
         if(this.locationService.getCurrentAreaRawSync()){
