@@ -49,7 +49,7 @@ var _createSimulatedVehicle = function(res, num){
 	for(var i=0; i < num; i++){
 		defList.push(driverInsightsAsset.addVehicle({"vendor": "IBM", "serial_number": "sim" + i}));
 	}
-	Q.when(defList, function(){
+	Q.all(defList, function(){
 		console.log("Simulated cars were created");
 		Q.when(driverInsightsAsset.getVehicleList({"vendor": "IBM"}), function(response){
 			res.send(response);
