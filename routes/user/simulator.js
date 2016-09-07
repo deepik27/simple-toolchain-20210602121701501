@@ -43,10 +43,11 @@ var _sendError = function(res, err){
  */
 var NUM_OF_SIMULATOR = 5;
 var _createSimulatedVehicle = function(res, num){
+	num = (num || NUM_OF_SIMULATOR);
+	console.log("Simulated car will be created [" + num + "]");
 	var defList = [];
-	for(var i=0; i < (num || NUM_OF_SIMULATOR); i++){
+	for(var i=0; i < num; i++){
 		defList.push(driverInsightsAsset.addVehicle({"vendor": "IBM", "serial_number": "sim" + i}));
-		console.log("Simulated car will be created");
 	}
 	Q.when(defList, function(){
 		console.log("Simulated cars were created");
@@ -64,8 +65,8 @@ router.get("/simulatedVehicle", authenticate, function(req, res){
 	Q.when(driverInsightsAsset.getVendor("IBM"), function(response){
 		console.log("There is vendor IBM");
 		Q.when(driverInsightsAsset.getVehicleList({"vendor": "IBM"}), function(response){
-			if(response && response.length < NUM_OF_SIMULATOR){
-				_createSimulatedVehicle(res, NUM_OF_SIMULATOR - response.length);
+			if(response && response.data && response.data.length < NUM_OF_SIMULATOR){
+				_createSimulatedVehicle(res, NUM_OF_SIMULATOR - response.data.length);
 			}else{
 				res.send(response);
 			}
