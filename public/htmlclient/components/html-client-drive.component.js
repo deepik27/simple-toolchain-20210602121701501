@@ -89,6 +89,16 @@
 				}
 		    };
 		    
+		    var vehicleData = {};
+		    $scope.updateVehicleDataName = function(){
+		    	$scope.vehicleDataValue = vehicleData[$scope.vehicleDataName];
+		    };
+		    $scope.updateVehicleDataValue = function(){
+		    	if($scope.vehicleDataName){
+		    		vehicleData[$scope.vehicleDataName] = $scope.vehicleDataValue;
+			    	carProbeService.setVehicleData(vehicleData);
+			    }
+		    };
 		    $scope.updateVehicleData = function(){
 		    	carProbeService.setVehicleData({
 		    		fuel: $scope.fuel,
