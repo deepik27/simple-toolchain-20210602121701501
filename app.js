@@ -7,6 +7,7 @@ VCAP_SERVICES = JSON.parse(process.env.VCAP_SERVICES || '{}')
 
 var express = require('express')
   , tripRoutes = require('./driverInsights/tripRoutes.js')
+  , auth = require('./routes/user/auth.js')
   , user = require('./routes/user')
   , http = require('http')
   , cors = require('cors')
@@ -43,6 +44,10 @@ app.use(function (req, res, next) {
 	}
 });
 
+//basic authentication to all routes
+app.use(auth.authenticate);
+
+//access to server contents
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/user', user);
 
