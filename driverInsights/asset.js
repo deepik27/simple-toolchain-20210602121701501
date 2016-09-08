@@ -92,8 +92,8 @@ var driverInsightsAsset = {
 		return this._getAsset("vendor", vendor);
 	},
 	addVendor: function(vendor){
-		var props = {status: toActivate?'active':'inactive'};
-		return this._mergeAssetProps("vendor", id, props, false);
+		vendor = _.extend({"status":"active"}, vendor||{});
+		return this._addAsset("vendor", vendor, false);
 	},
 	updateVendor: function(id, vendor, overwrite){
 		return this._updateAsset("vendor", id || vendor.vendor, vendor, overwrite, false);
