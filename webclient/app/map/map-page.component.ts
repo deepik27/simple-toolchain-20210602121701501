@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewInit, Input, Inject, ViewChild } from '@angular/core';
-import { Router, RouteSegment, OnActivate } from '@angular/router';
+import { Router, RouteSegment, OnActivate, ROUTER_DIRECTIVES } from '@angular/router';
 
 import { RealtimeMapComponent } from './realtime-map/realtime-map.component';
 import { NumberOfCarsComponent } from './number-of-cars/number-of-cars.component';
@@ -11,7 +11,7 @@ import * as _ from 'underscore';
   moduleId: module.id,
   selector: 'fmdash-map-page',
   templateUrl: 'map-page.component.html',
-  directives: [RealtimeMapComponent, NumberOfCarsComponent],
+  directives: [RealtimeMapComponent, NumberOfCarsComponent, ROUTER_DIRECTIVES],
   providers: [],
 })
 export class MapPageComponent implements OnInit, AfterViewInit, OnActivate {
