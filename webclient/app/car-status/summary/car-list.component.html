@@ -1,6 +1,6 @@
 <div class="dashItem">
   <div class="dashTitleBar">
-      <h3>Selected Cars</h3>
+      <h3>Cars by Status <span *ngIf="selectGroup">({{groupPropName}}: {{selectGroupName}})</span> </h3>
   </div>
 
   <div *ngIf="!selectGroup">No selection.</div>

@@ -15,6 +15,8 @@ import { CarStatusDataService } from './car-status-data.service';
 export class CarListComponent implements OnInit, OnDestroy, OnChanges {
   @Input() groupProp: string;
   @Input() selectGroup: string;
+  get groupPropName() { return this.groupProp === 'fuel' ? 'Fuel' : (this.groupProp === 'engineTemp' ? 'Engine Temperature': this.groupProp); }
+  get selectGroupName() { return this.selectGroup; }
   private selectionSubject = new Subject<any>();
   private selectedDeviesSubscription;
   public probes = [];
@@ -49,7 +51,7 @@ export class CarListComponent implements OnInit, OnDestroy, OnChanges {
       this.selectedDeviesSubscription = null;
     }
   }
-    
+
   ngOnChanges(changes: { [key: string]: SimpleChange} ) {
     // translates @Input(s) to observable subjects
     let newGroupPropChange = changes['groupProp'];
