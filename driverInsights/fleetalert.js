@@ -134,8 +134,8 @@ _.extend(driverInsightsAlert, {
 		this.registerAlertRule("high_engine_temp", {
 			fireRule: function(probe, vehicle){
 				var alerts = [];
-				if(vehicle && vehicle.prevProbe && vehicle.prevProbe.props && vehicle.prevProbe.props.engineTemp <= 300
-				&& probe && probe.props && probe.props.engineTemp > 300){
+				if(vehicle && vehicle.prevProbe && vehicle.prevProbe.props && vehicle.prevProbe.props.engineTemp <= 120
+				&& probe && probe.props && probe.props.engineTemp > 120){
 					var alert = {
 							type: "high_engine_temp",
 							description: "Engine temperature is too high.",
@@ -150,7 +150,7 @@ _.extend(driverInsightsAlert, {
 				return alerts;
 			},
 			closeRule: function(alert, probe, vehicle){
-				if(vehicle && probe && probe.props && probe.props.engineTemp <= 300){
+				if(vehicle && probe && probe.props && probe.props.engineTemp <= 120){
 					alert.closed_ts = probe.ts;
 					return alert;
 				}
