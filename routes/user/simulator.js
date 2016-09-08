@@ -20,7 +20,7 @@
 var router = module.exports = require('express').Router();
 var Q = require('q');
 var _ = require('underscore');
-var debug = require('debug')('device');
+var debug = require('debug')('simulator');
 debug.log = console.log.bind(console);
 
 var driverInsightsAsset = require('../../driverInsights/asset.js');
@@ -41,17 +41,19 @@ var _sendError = function(res, err){
 /*
  * REST apis for fleet simulator
  */
+var VENDOR_NAME = "IBM";
 var NUM_OF_SIMULATOR = 5;
-var _createSimulatedVehicle = function(res, num){
+
+var _createSimulatedVehicles = function(res, num){
 	num = (num || NUM_OF_SIMULATOR);
-	console.log("Simulated car will be created [" + num + "]");
+	debug("Simulated car will be created [" + num + "]");
 	var defList = [];
 	for(var i=0; i < num; i++){
-		defList.push(driverInsightsAsset.addVehicle({"vendor": "IBM", "serial_number": "sim" + i}));
+		defList.push(driverInsightsAsset.addVehicle({"vendor": VENDOR_NAME, "serial_number": "simulated_vehicle_" + i}));
 	}
-	Q.all(defList, function(){
-		console.log("Simulated cars were created");
-		Q.when(driverInsightsAsset.getVehicleList({"vendor": "IBM"}), function(response){
+	Q.all(defList).then(function(){
+		debug("Simulated cars were created");
+		Q.when(driverInsightsAsset.getVehicleList({"vendor": VENDOR_NAME}), function(response){
 			res.send(response);
 		})["catch"](function(err){
 			_sendError(res, err);
@@ -61,30 +63,52 @@ var _createSimulatedVehicle = function(res, num){
 	}).done();
 };
 
-router.get("/simulatedVehicle", authenticate, function(req, res){
-	Q.when(driverInsightsAsset.getVendor("IBM"), function(response){
-		console.log("There is vendor IBM");
-		Q.when(driverInsightsAsset.getVehicleList({"vendor": "IBM"}), function(response){
+router.get("/simulatedVehicles", authenticate, function(req, res){
+	Q.when(driverInsightsAsset.getVendor(VENDOR_NAME), function(response){
+		debug("There is vendor: " + VENDOR_NAME);
+		Q.when(driverInsightsAsset.getVehicleList({"vendor": VENDOR_NAME}), function(response){
 			if(response && response.data && response.data.length < NUM_OF_SIMULATOR){
-				_createSimulatedVehicle(res, NUM_OF_SIMULATOR - response.data.length);
+				_createSimulatedVehicles(res, NUM_OF_SIMULATOR - response.data.length);
 			}else{
 				res.send(response);
 			}
 		})["catch"](function(err){
 			// assume vehicle is not available 
-			_createSimulatedVehicle(res);
+			_createSimulatedVehicles(res);
 		}).done();
 	})["catch"](function(err){
 		var status = (err.response && (err.response.status||err.response.statusCode)) || 500;
 		if(status === 404){
-			Q.when(driverInsightsAsset.addVendor({"vendor": "IBM", "type": "Vendor", "status":"Active"}), function(response){
-				console.log("Vendor IBM is created");
-				_createSimulatedVehicle(res);
+			debug("Create a vendor for simulator");
+			Q.when(driverInsightsAsset.addVendor({"vendor": VENDOR_NAME, "type": "Vendor", "status":"Active"}), function(response){
+				debug("A vendor for simulator is created");
+				_createSimulatedVehicles(res);
 			})["catch"](function(err){
 				_sendError(res, err);
 			}).done();
 		}else{
 			_sendError(res, err);
 		}
+	}).done();
+});
+
+var DRIVER_NAME = "simulated_driver";
+var _createSimulatedDriver = function(res){
+	var promise = driverInsightsAsset.addDriver({"name": DRIVER_NAME, "status":"Active"});
+	Q.when(promise, function(response){
+		var data = {data: [ {driver_id: response.id, name: DRIVER_NAME} ]};
+		debug("Simulated driver was created");
+		res.send(data);
+	})["catch"](function(err){
+		_sendError(res, err);
+	}).done();
+}
+;
+router.get("/simulatedDriver", authenticate, function(req, res){
+	Q.when(driverInsightsAsset.getDriverList({"name": DRIVER_NAME}), function(response){
+			res.send(response);
+	})["catch"](function(err){
+		// assume driver is not available 
+		_createSimulatedDriver(res);
 	}).done();
 });

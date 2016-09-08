@@ -23,28 +23,35 @@ angular.module('fleetManagementSimulator', ['ngAnimate'])
 		// Get simulation vehicles
 		$http({
 			method: "GET",
-			url: "/user/simulatedVehicle"
+			url: "/user/simulatedVehicles"
 		}).success(function(data, status){
 			var vehicles = data.data; 
 			if(vehicles.length > 5){
-				vehicles = vehicles.slice(0, 5);		
+				vehicles = vehicles.slice(0, 5);
 			}
-			var loc = $location.search()["loc"];
-			vehicles.forEach(function(vehicle, i){
-				var url = "../htmlclient/#/home" 
-					+ "?vehicleId=" + vehicle.mo_id 
-					+ "&serial_number=" + vehicle.serial_number
-					+ "&vendor=" + vehicle.vendor
-					+ "&driverId=sim1"; 
-				if(loc){
-					url += "&loc=" + loc;
-				}
-				vehicle.url = $sce.trustAsResourceUrl(url);
-				vehicle.display = i == 0 ? "" : "none";		
+			$http({
+				method: "GET",
+				url: "/user/simulatedDriver"
+			}).success(function(drivers, status){
+				var loc = $location.search()["loc"];
+				vehicles.forEach(function(vehicle, i){
+					var url = "../htmlclient/#/home" 
+						+ "?vehicleId=" + vehicle.mo_id 
+						+ "&serial_number=" + vehicle.serial_number
+						+ "&vendor=" + vehicle.vendor
+						+ "&driverId=" + drivers.data[0].driver_id; 
+					if(loc){
+						url += "&loc=" + loc;
+					}
+					vehicle.url = $sce.trustAsResourceUrl(url);
+					vehicle.display = i == 0 ? "" : "none";		
+				});
+				$scope.vehicles = vehicles;
+			}).error(function(error, status){
+				console.error("Cannot get simulated driver");
 			});
-			$scope.vehicles = vehicles;
 		}).error(function(error, status){
-			console.error("Cannot get route for simulation");
+			console.error("Cannot get simulated vehicles");
 		});
 
 		$scope.selectItem = function(index) {
