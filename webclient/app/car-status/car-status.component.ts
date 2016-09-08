@@ -10,7 +10,6 @@ import { CarStatusDataService } from './summary/car-status-data.service';
 
 import * as _ from 'underscore';
 
-
 @Component({
   moduleId: module.id,
   selector: 'fmdash-car-status',
@@ -40,26 +39,40 @@ export class CarStatusComponent implements OnInit, OnActivate {
         return mo_id ? this.carStatusDataService.getProbe(mo_id) : Observable.of([]);
       }).subscribe(probe => {
         this.probeData = probe;
+        updateMeterStyle(probe);
       });
     this.moIdSubject.next(this.mo_id);
 
-    var style = document.createElement('style');
-    style.type = 'text/css';
+    var style;
+    function updateMeterStyle(probe) {
+      var createStyle = !style;
+      if(createStyle){
+        style = document.createElement('style');
+        style.type = 'text/css';
+      }
 
-    // TODO - Here you will add dynamic fuel level where it says (6 / 8) * 90
-    // All you need to change is the number "6" to your dynamic number which is out of 8
-    style.innerHTML = '.pointerTriggered { transform: rotate(' + ((6 / 8) * 90) + 'deg) !important; }'
+      //
+      // Update style content
+      //
+      var fuel = (probe && probe.props.fuel) || 0;
+      var engineTemp = (probe && probe.props.engineTemp) || 0;
 
-    // TODO - Here you will add dyanimc temperature where it says (((220 - 20) / 300) * 100)
-    // All you need to change is the number "220" to your dynamic number which is out of 300
-                    + '.thermometerTriggered { width: ' + (((220 - 20) / 300) * 100) + '% !important; }';
+      // set dynamic fuel level
+      style.innerHTML = '.pointerTriggered { transform: rotate(' + ((fuel / 60) * 180 - 90) + 'deg) !important; }'
 
-    document.getElementsByTagName('head')[0].appendChild(style);
+      // set dynamic engine oil temperature
+      // - note that the "28" is 30 (the minimal gauge) - 2 (adjustment), and
+      //   "152" is 150 (the maximum) + 2 (adjustment);
+                      + '.thermometerTriggered { width: ' + (((engineTemp - 28) / (152 - 28)) * 100) + '% !important; }';
 
-    setTimeout(function () {
-        document.getElementById('speedometer-pointer').classList.add('pointerTriggered');
-        document.getElementById('thermometer-range').classList.add('thermometerTriggered');
-    }, 5);
+      if(createStyle){
+        document.getElementsByTagName('head')[0].appendChild(style);
+        setTimeout(function () {
+            document.getElementById('speedometer-pointer').classList.add('pointerTriggered');
+            document.getElementById('thermometer-range').classList.add('thermometerTriggered');
+        }, 5);
+      }
+    }
 
     var modalCallsArray = Array.prototype.slice.call(document.querySelectorAll('.numCounter'), 0);
 

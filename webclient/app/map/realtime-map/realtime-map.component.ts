@@ -215,7 +215,7 @@ export class RealtimeMapComponent implements OnInit {
 					result.content += '<div style="white-space: nowrap;">Latitude: ' + _.escape(sample.lat) + "</div>";
 					result.content += '<div style="white-space: nowrap;">Speed: ' + _.escape(sample.speed) + "</div>";
 					result.content += '<div style="white-space: nowrap;">Fuel: ' + _.escape(sample.props && sample.props.fuel) + "</div>";
-					result.content += '<div style="white-space: nowrap;">Engine Temp: ' + _.escape(sample.props && sample.props.engineTemp) + "</div>";
+					result.content += '<div style="white-space: nowrap;">Engine Oil Temperature: ' + _.escape(sample.props && sample.props.engineTemp) + "</div>";
 					result.content += '<div style="white-space: nowrap;">Timestamp: ' + _.escape(sample.timestamp) + "</div>";
 				}
 				if(info){

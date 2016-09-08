@@ -18,8 +18,8 @@ var fuelStatusGroups = [
 ];
 
 var engineTempStatusGroups = [
-  {label: 'Over heated', predicate: (device => (device.latestSample.props.engineTemp >= 310))},
-  {label: 'High', predicate: (device => (device.latestSample.props.engineTemp >= 300))},
+  {label: 'Over heated', predicate: (device => (device.latestSample.props.engineTemp >= 120))},
+  {label: 'High', predicate: (device => (device.latestSample.props.engineTemp >= 120))},
   {label: 'No issue', predicate: (device => true)}
 ];
 
