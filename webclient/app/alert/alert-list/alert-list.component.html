@@ -1,19 +1,22 @@
 <div *ngIf="showInput">
 	<area-select [(extent)]="extent" (areaChanged)="onAreaChanged($event)"></area-select>
-	<select [value]="prop" (change)="onPropChanged($event)">
-		<option *ngFor="let alertProp of alertProps"
-			value="{{alertProp.getId()}}">{{alertProp.getLabel()}}</option>
-	</select>
-	<select *ngIf="alertValues && alertValues.length > 0" [value]="value"
-		(change)="onValueChanged($event)">
-		<option *ngFor="let alertValue of alertValues"
-			value="{{alertValue.getId()}}">{{alertValue.getLabel()}}</option>
-	</select>
-	<input *ngIf="!alertValues || alertValues.length <= 0" [value]="value" (change)="onValueChanged($event)"/>
-	<label>
-		<input type="checkbox" [(ngModel)]="includeClosed" (change)="onIncludeClosedChanged($event)"/>
-		Include Closed Alerts
-	</label>
+	<div>
+		Filter: 
+		<select [value]="prop" (change)="onPropChanged($event)">
+			<option *ngFor="let alertProp of alertProps"
+				value="{{alertProp.getId()}}">{{alertProp.getLabel()}}</option>
+		</select>
+		<select *ngIf="alertValues && alertValues.length > 0" [value]="value"
+			(change)="onValueChanged($event)">
+			<option *ngFor="let alertValue of alertValues"
+				value="{{alertValue.getId()}}">{{alertValue.getLabel()}}</option>
+		</select>
+		<input *ngIf="!alertValues || alertValues.length <= 0" [value]="value" (change)="onValueChanged($event)"/>
+		<label>
+			<input type="checkbox" [(ngModel)]="includeClosed" (change)="onIncludeClosedChanged($event)"/>
+			Include Closed Alerts
+		</label>
+	</div>
 </div>
 <span class="col-xs-12 loading" [hidden]="!requestSending"><img src="/images/loading.gif"></span>
 <table class="table table-hover table-striped table-condensed table-responsive">

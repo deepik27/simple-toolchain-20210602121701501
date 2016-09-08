@@ -122,7 +122,7 @@ export class AlertListComponent{
             })
           }
           delete moid2alerts[fleetalert.mo_id];
-        })
+        });
       }
     });
   }
@@ -158,6 +158,7 @@ class PropValue {
 }
 export class AlertProp {
   static values = {};
+  static All = new AlertProp("dummy", "All", [new PropValue("dummy", "")]);
   static Type = new AlertProp("type", "Type", [
     new PropValue("low_fuel", "Low Fuel"),
     new PropValue("half_fuel", "Half Fuel"),
