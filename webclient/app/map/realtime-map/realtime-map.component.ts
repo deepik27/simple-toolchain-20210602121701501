@@ -202,7 +202,7 @@ export class RealtimeMapComponent implements OnInit {
 			var device = feature.get('device');
 			if(device){
 				let result = { content: '', title: null };
-				result.content = '<span style="white-space: nowrap;">ID: <a onclick="document[\'' + ("_handleClick" + this.popoverElemetId) + '\'](this); return 0;" href="#">' + _.escape(device.deviceID) + "</a></span>";
+				result.content = '<span style="white-space: nowrap;">ID: <a onclick="document[\'' + ("_handleClick" + this.popoverElemetId) + '\'](this); return 0;" href="javascript:void(0)">' + _.escape(device.deviceID) + "</a></span>";
 				var info = device.latestInfo;
 				var sample = device.latestSample;
 				if(sample && this.DEBUG){
