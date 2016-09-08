@@ -102,9 +102,21 @@ _.extend(driverInsightsProbe, {
 
 			Q.when(driverInsightsProbe.getProbeData([payload]), function(response){
 				var parsed = JSON.parse(response);
-				var probe;
+				var probe = null;
 				if(parsed.contents && parsed.contents.length > 0){
-					probe = parsed.contents[0];
+					// Workaround:
+					//   IoT for Automotive service returns probes of multiple vehicle in the area for now
+					//   even if the request specifies only one mo_id
+					for(var i=0; i<parsed.contents.length; i++){
+						if(parsed.contents[i].mo_id === payload.mo_id){
+							probe = parsed.contents[i];
+							break;
+						}
+					}
+					if(!probe){
+						callback(err);
+						return;
+					}
 					_.extend(payload, probe, {ts: ts});
 				}
 
