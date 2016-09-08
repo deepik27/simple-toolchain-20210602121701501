@@ -13,6 +13,13 @@ import { NumberOfCarsService } from './number-of-cars.service';
   moduleId: module.id,
   selector: 'fmdash-number-of-cars',
   templateUrl: 'number-of-cars.component.html',
+  styles: [`
+  .carStatsColumn a {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  `],
   directives: [ROUTER_DIRECTIVES],
   providers: [NumberOfCarsService],
 })
