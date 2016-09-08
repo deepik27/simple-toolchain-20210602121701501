@@ -14,15 +14,19 @@
 
   <div class="row noOffsetRow">
     <div class="column-6-med column-6-xs alignCenter carStatsColumn">
-      <i class="icon-car iconBlock orange"></i>
-      <a [routerLink]="['/alert', {extent: region && region.extent || '', status: 'troubled'}]"><strong>{{(counts.troubled >= 0) ? counts.troubled : '-'}}</strong></a>
-      <p>Troubled</p>
+      <a [routerLink]="['/alert', {extent: region && region.extent || '', status: 'troubled'}]">
+        <i class="icon-car iconBlock orange"></i>
+        <strong>{{(counts.troubled >= 0) ? counts.troubled : '-'}}</strong>
+        <p>Troubled</p>
+      </a>
     </div>
 
     <div class="column-6-med column-6-xs alignCenter carStatsColumn">
-      <i class="icon-car iconBlock red"></i>
-      <a [routerLink]="['/alert', {extent: region && region.extent || '', status: 'critical'}]"><strong>{{(counts.critical >= 0) ? counts.critical : '-'}}</strong></a>
-      <p>Critical</p>
+      <a [routerLink]="['/alert', {extent: region && region.extent || '', status: 'critical'}]">
+        <i class="icon-car iconBlock red"></i>
+        <strong>{{(counts.critical >= 0) ? counts.critical : '-'}}</strong>
+        <p>Critical</p>
+      </a>
     </div>
 
   </div>
