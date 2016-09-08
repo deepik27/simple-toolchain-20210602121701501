@@ -52,6 +52,10 @@ htmlClient.config(['$stateProvider', '$urlRouterProvider', function($stateProvid
 	      $urlRouterProvider.otherwise('/home');
 	}])
 ;
+htmlClient.controller('header', ['$scope', function($scope){
+    $scope.hideHeader = "none";
+}]);
+
 htmlClient.controller('footer', ['$scope', function($scope){
     $scope.hideFooter = "none";
 }]);

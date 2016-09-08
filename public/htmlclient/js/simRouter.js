@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+var $stateProviderRef = null;
  
-angular.module('fleetManagementSimulator', ['ngAnimate'])
-	.config(["$locationProvider", function($locationProvider) {
+angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
+	.config(['$locationProvider', '$stateProvider', function($locationProvider, $stateProvider) {
 		$locationProvider.html5Mode(true); 
+		$stateProviderRef = $stateProvider;
 	}])
 	/* === GENERAL CONTROLLERS === */
-	.controller('mainCtrl', ['$scope', '$http', '$sce', '$location', function($scope, $http, $sce, $location) {
+	.controller('mainCtrl', ['$scope', '$state', '$http', '$sce', '$location', function($scope, $state, $http, $sce, $location) {
 		// Get simulation vehicles
 		$http({
 			method: "GET",
@@ -51,17 +53,32 @@ angular.module('fleetManagementSimulator', ['ngAnimate'])
 					vehicle.display = i == 0 ? "" : "none";		
 				});
 				$scope.vehicles = vehicles;
+
+				// dynamic state
+				if(vehicles.length > 0){
+					for (i=0; i < vehicles.length; i++) {
+						var newState = {
+							'url': "/fleet.html#" + vehicles[i].mo_id,
+							'templateUrl': '/htmlclient/vehicle.html'
+						};
+						$stateProviderRef.state(vehicles[i].mo_id, newState);
+					}
+					$scope.selectedIndex = 0;
+					$state.go(vehicles[0].mo_id);
+				}
+			
 			}).error(function(error, status){
 				console.error("Cannot get simulated driver");
 			});
 		}).error(function(error, status){
 			console.error("Cannot get simulated vehicles");
 		});
-
+		
 		$scope.selectItem = function(index) {
 			var vehicles = $scope.vehicles;	    	 
 			vehicles.forEach(function(vehicle, i){
 				vehicle.display = i == index ? "" : "none";		
 			});
+			$scope.selectedIndex = index;
 		};
     }])

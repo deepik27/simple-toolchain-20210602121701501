@@ -58,12 +58,12 @@
 	</style>
 </head>
 <body ng-app="htmlClient">
-    <header>
+    <header ng-controller="header" style="display: {{hideHeader}}">
         <div class="productTitle">
 			<a ui-sref="overview"><span id="pageTitle"></span></a>
         </div>
     </header>
-    <div class="mainContent">
+    <div>
 		<div ui-view></div>
 	</div>
 	<footer ng-controller="footer" style="display: {{hideFooter}}">

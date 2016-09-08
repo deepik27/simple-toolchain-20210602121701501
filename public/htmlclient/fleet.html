@@ -61,12 +61,12 @@
     <div class="content" ng-controller="mainCtrl">
         <aside class="sidebar">
             <ul class="sidebarItems">
-                <li ng-repeat="vehicle in vehicles track by $index">
-                    <a ng-click="selectItem($index)">Simulated Car {{$index+1}}</a>
+                <li ng-repeat="vehicle in vehicles track by $index" ui-sref-active="active">
+                    <a ui-sref="{{vehicle.mo_id}}" ng-click="selectItem($index)">Simulated Car {{$index+1}}</a>
                 </li>
             </ul>
         </aside>
-
+		<div ui-view></div>
 		<div ng-repeat="vehicle in vehicles track by $index">
 			<iframe ng-src="{{vehicle.url}}" style="display:{{vehicle.display}}" width="600" height="650" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" ></iframe>
 		</div>
