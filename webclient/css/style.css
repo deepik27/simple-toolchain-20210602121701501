@@ -71,6 +71,10 @@ strong {
     font-weight: 500;
 }
 
+table th {
+    text-align: left;
+}
+
 .container,
 .container-50 {
     padding: 20px 30px;
