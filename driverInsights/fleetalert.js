@@ -49,6 +49,9 @@ _.extend(driverInsightsAlert, {
 	_init: function(){
 		var self = this;
 		this.db = dbClient.getDB(FLEETALERT_DB_NAME, this._getDesignDoc());
+		Q.when(this.getAlerts([], false, 200), function(docs){
+			self.alerts = self.alerts.concat(docs.alerts);
+		});
 
 		// Low Fuel
 		this.registerAlertRule("low_fuel", {
@@ -243,6 +246,8 @@ _.extend(driverInsightsAlert, {
 								self.alerts.splice(index, 1);
 								debug("An alert is closed: " + JSON.stringify(alert));
 							}
+						}, function(error){
+							console.error(error);
 						});
 					}
 				});
@@ -275,7 +280,7 @@ _.extend(driverInsightsAlert, {
 		return deferred.promise;
 	},
 	getAlerts: function(conditions, includeClosed, limit){
-		var opt = {sort: "-ts"};
+		var opt = {sort: "-ts", include_docs:true};
 		if(conditions.length > 0){
 			_.extend(opt, {q: conditions.join(" AND "), limit: (limit || 10)});
 			if(!includeClosed){
@@ -289,7 +294,7 @@ _.extend(driverInsightsAlert, {
 		}
 		return this._searchAlertIndex(opt)
 			.then(function(result){
-				return {alerts: result.rows.map(function(row){return row.fields;})};
+				return {alerts: result.rows.map(function(row){return _.extend(row.doc, row.fields);})};
 			});
 	},
 
