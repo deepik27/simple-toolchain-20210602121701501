@@ -6,6 +6,7 @@ import { RealtimeDeviceDataProvider } from './realtime-device';
 
 
 var CAR_PROBE_URL = '/user/carProbe';
+var VEHICLE_URL = '/user/vehicle';
 
 // internal settings
 var CAR_STATUS_REFRESH_PERIOD = 0 // was 15000; now, setting 0 not to update via polling (but by WebSock)
@@ -42,6 +43,28 @@ export class RealtimeDeviceDataProviderService {
   getProbe(vehicleId: string) {
     var qs = this.getQs(null, vehicleId);
     return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise();
+  }
+
+  getVehicle(vehicleId: string){
+    return new Promise((resolve, reject) => {
+      this.$http.get(VEHICLE_URL + '/' + vehicleId)
+      .subscribe((resp: Response) => {
+        var vehicle = resp.json();
+        resolve(vehicle);
+      }, (error: any) => {
+        reject(error);
+      });
+    });
+  }
+
+  scheduleVehicleDataLoading(vehicleId: string){
+    var device = this.provider.getDevice(vehicleId);
+    if(device && !device.vehicle){
+      device.vehicle = {};
+      this.getVehicle(vehicleId)
+      .then(vehicle => { device.vehicle = vehicle; })
+      .catch(err => { console.error(err); device.vehicle = undefined; });
+    }
   }
 
   getProvider(){

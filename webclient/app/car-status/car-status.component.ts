@@ -21,7 +21,8 @@ export class CarStatusComponent implements OnInit, OnActivate {
   private moIdSubject = new Subject<string>();
   private proveDataSubscription;
 
-  probeData: any; // probe data to show
+  private device: RealtimeDeviceData;
+  private probeData: any; // probe data to show
 
   constructor(
     private router: Router,
@@ -38,7 +39,10 @@ export class CarStatusComponent implements OnInit, OnActivate {
         }
         return mo_id ? this.carStatusDataService.getProbe(mo_id) : Observable.of([]);
       }).subscribe(probe => {
+        this.device = probe && this.realtimeDataProviderService.getProvider().getDevice(probe.mo_id);
         this.probeData = probe;
+
+        // updat meter
         updateMeterStyle(probe);
       });
     this.moIdSubject.next(this.mo_id);

@@ -5,6 +5,8 @@ import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { CarStatusDataService } from './car-status-data.service';
 
+import * as _ from 'underscore';
+
 @Component({
   moduleId: module.id,
   selector: 'fmdash-car-list',
@@ -19,7 +21,7 @@ export class CarListComponent implements OnInit, OnDestroy, OnChanges {
   get selectGroupName() { return this.selectGroup; }
   private selectionSubject = new Subject<any>();
   private selectedDeviesSubscription;
-  public probes = [];
+  public devices = [];
 
   constructor(private carStatusDataService: CarStatusDataService) {  }
 
@@ -41,8 +43,8 @@ export class CarListComponent implements OnInit, OnDestroy, OnChanges {
         return Observable.of([]);
       })
       .subscribe(devices => {
-        this.probes = devices.map(device => device.latestSample);
-        console.log('Setting probes to; ', this.probes);
+        this.devices = devices.map(device => device);
+        console.log('Setting probes to; ', this.devices);
       });
   }
   ngOnDestroy() {

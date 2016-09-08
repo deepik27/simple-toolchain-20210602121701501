@@ -27,13 +27,14 @@ var engineTempStatusGroups = [
 export class CarStatusDataService {
   realtimeDeviceDataProvider: RealtimeDeviceDataProvider;
 
-  constructor(realtimeDataProviderService: RealtimeDeviceDataProviderService ) {
-    this.realtimeDeviceDataProvider = realtimeDataProviderService.getProvider();
+  constructor(private realtimeDataProviderService: RealtimeDeviceDataProviderService ) {
+    this.realtimeDeviceDataProvider = this.realtimeDataProviderService.getProvider();
   }
 
   getProbe(mo_id: string, interval = 1): Observable<any> {
     return Observable.interval(interval * 1000).startWith(0)
       .map(x => {
+        this.realtimeDataProviderService.scheduleVehicleDataLoading(mo_id);
         var device = this.realtimeDeviceDataProvider.getDevice(mo_id);
         return device && device.latestSample;
       })
@@ -44,6 +45,7 @@ export class CarStatusDataService {
       .map(x => {
         let devices = this.realtimeDeviceDataProvider.getDevices();
         let devicesByLabel  = _.groupBy(this.realtimeDeviceDataProvider.getDevices(), device => {
+              this.realtimeDataProviderService.scheduleVehicleDataLoading(device.deviceID);
               for(var i=0; i<conds.length; i++){
                 if (!conds[i].predicate || conds[i].predicate(device)){
                     return conds[i].label;

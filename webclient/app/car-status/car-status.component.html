@@ -2,7 +2,7 @@
   <div class="floatRight">
     <a [routerLink]="['/map', {vehicleId: probeData?.mo_id}]">Show in Map</a>
   </div>
-  <h3>Car ID: {{mo_id}}</h3>
+  <h3>Vehicle ID: {{device?.vehicle?.serial_number || mo_id}}</h3>
     <div class="row">
         <div class="column-6-med">
             <div class="row noOffsetRow">

@@ -74,6 +74,7 @@ export class RealtimeDeviceData {
   latestSample = null;
   samples: any[];
   deviceID: string;
+  vehicle: any;
 
   constructor(initialSample){
     var s0 = Object.assign({}, initialSample);

@@ -202,7 +202,12 @@ export class RealtimeMapComponent implements OnInit {
 			var device = feature.get('device');
 			if(device){
 				let result = { content: '', title: null };
-				result.content = '<span style="white-space: nowrap;">ID: <a onclick="document[\'' + ("_handleClick" + this.popoverElemetId) + '\'](this); return 0;" href="javascript:void(0)">' + _.escape(device.deviceID) + "</a></span>";
+				result.content = ('<span style="white-space: nowrap;">ID: '
+												+ '<a onclick="document[\'' + ("_handleClick" + this.popoverElemetId) + '\'](\'' + _.escape(device.deviceID) + '\'); return 0;"'
+												+ ' href="javascript:void(0)">'
+												+ _.escape((device.vehicle && device.vehicle.serial_number) || device.deviceID)
+												+ '</a></span>');
+				this.animatedDeviceManagerService.scheduleVehicleDataLoading(device.deviceID);
 				var info = device.latestInfo;
 				var sample = device.latestSample;
 				if(sample && this.DEBUG){
@@ -304,9 +309,8 @@ export class RealtimeMapComponent implements OnInit {
   ngOnInit() {
     this.initMap();
 		// register popover link event handler to document
-		document['_handleClick' + this.popoverElemetId] = (elm) => {
+		document['_handleClick' + this.popoverElemetId] = (vehicleId) => {
 			console.log('Car ID link is clicked on the popover');
-			var vehicleId = elm.text;
 			this._router.navigate(['/carStatus/', vehicleId]);
 		};
 	}
