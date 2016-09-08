@@ -70,21 +70,6 @@ export class VehicleListComponent {
     }
   }
 
-  // activate or deactivate given vehicle
-  onActivate(mo_id: string, toActivate: boolean) {
-    let vehicle = this._getVehicle(mo_id);
-    if (!vehicle) {
-      alert("There is no such a vehicle.");
-      return;
-    }
-
-    // Change vehicle state
-    let data = vehicle.getData();
-    data["status"] = toActivate ? "Active" : "Inactive";
-
-    this._updateVehicle(mo_id, new Vehicle(data));
-  }
-
   // Open a vehicle dialog for creating
   onCreate() {
     this.requestSending = true;
@@ -152,6 +137,8 @@ export class VehicleListComponent {
     }, (error: any) => {
         if (error.status === 400) {
           alert("Thre are no more vehicles.");
+        } else if (pageNumber === 1 && error.status === 404) {
+          this.vehicles = [];
         } else {
           this.errorMessage = error.message || error._body || error;
         }
@@ -286,7 +273,7 @@ class Vehicle {
   width: number; // The width of the vehicle.
   height: number; // The height of the vehicle.
   driver_id: string; // The driver ID that is created by the driver interface from within the vehicle.
-  status: string = "Inactive";
+  status: string = "inactive";
   properties: any;
 
   constructor(props) {

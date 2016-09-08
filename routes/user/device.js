@@ -67,7 +67,8 @@ router.get("/vehicle/:vehicleId", authenticate, function(req, res){
 });
 router.put("/vehicle/:vehicleId", authenticate, function(req, res){
 	var vehicleId = req.params.vehicleId;
-	Q.when(driverInsightsAsset.updateVehicle(vehicleId, req.body), function(response){
+	var overwrite = !req.query.addition || req.query.addition.toLowerCase() !== 'true';
+	Q.when(driverInsightsAsset.updateVehicle(vehicleId, req.body, overwrite), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -111,7 +112,8 @@ router.get("/driver/:driverId", authenticate, function(req, res){
 });
 router.put("/driver/:driverId", authenticate, function(req, res){
 	var driverId = req.params.driverId;
-	Q.when(driverInsightsAsset.updateDriver(driverId, req.body), function(response){
+	var overwrite = !req.query.addition || req.query.addition.toLowerCase() !== 'true';
+	Q.when(driverInsightsAsset.updateDriver(driverId, req.body, overwrite), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -154,7 +156,8 @@ router.get("/vendor/:vendor", authenticate, function(req, res){
 });
 router.put("/vendor/:vendor", authenticate, function(req, res){
 	var vendor = req.params.vendor;
-	Q.when(driverInsightsAsset.updateVendor(vendor, req.body), function(response){
+	var overwrite = !req.query.addition || req.query.addition.toLowerCase() !== 'true';
+	Q.when(driverInsightsAsset.updateVendor(vendor, req.body, overwrite), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -163,6 +166,41 @@ router.put("/vendor/:vendor", authenticate, function(req, res){
 router["delete"]("/vendor/:vendor", authenticate, function(req, res){
 	var vendor = req.params.vendor;
 	Q.when(driverInsightsAsset.deleteVendor(vendor), function(response){
+		res.send(response);
+	})["catch"](function(err){
+		return handleAssetError(res, err);
+	});
+});
+router.post("/rule", authenticate, function(req, res){
+	var rule = req.body && req.body.rule;
+	Q.when(driverInsightsAsset.addRule(rule), function(response){
+		res.send(response);
+	})["catch"](function(err){
+		return handleAssetError(res, err);
+	}).done();
+});
+router.get("/rule", authenticate, function(req, res){
+	var params = null;
+	if (req.query.num_rec_in_page || req.query.num_page) {
+		params = {num_rec_in_page: req.query.num_rec_in_page||50, num_page: req.query.num_page||1};
+	}
+	Q.when(driverInsightsAsset.getRuleList(params), function(response){
+		res.send(response);
+	})["catch"](function(err){
+		return handleAssetError(res, err);
+	}).done();
+});
+router.get("/rule/:rule_id", authenticate, function(req, res){
+	var rule_id = req.params.rule_id;
+	Q.when(driverInsightsAsset.getRule(rule_id), function(response){
+		res.send(response);
+	})["catch"](function(err){
+		return handleAssetError(res, err);
+	}).done();
+});
+router["delete"]("/rule/:rule_id", authenticate, function(req, res){
+	var rule_id = req.params.rule_id;
+	Q.when(driverInsightsAsset.deleteRule(rule_id), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);

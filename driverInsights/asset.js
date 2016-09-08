@@ -40,7 +40,6 @@ var driverInsightsAsset = {
 	/*
 	 * Vehicle apis
 	 */
-	VEHICLE_VENDOR_IBM: "IBM",
 	getVehicleList: function(params){
 		return this._getAssetList("vehicle", params);
 	},
@@ -48,18 +47,16 @@ var driverInsightsAsset = {
 		return this._getAsset("vehicle", mo_id);
 	},
 	addVehicle: function(vehicle){
-		if (!vehicle) {
-			vehicle = {
-				status:"Inactive",
-				properties: {
-					fuelTank: 60
-				}
-			};
-		}
+		vehicle = _.extend({
+					status:"inactive",
+					properties: {
+						fuelTank: 60
+					}
+				}, vehicle||{});
 		return this._addAsset("vehicle", vehicle, true);
 	},
-	updateVehicle: function(id, vehicle){
-		return this._updateAsset("vehicle", id || vehicle.mo_id, vehicle, true);
+	updateVehicle: function(id, vehicle, overwrite){
+		return this._updateAsset("vehicle", id || vehicle.mo_id, vehicle, overwrite, true);
 	},
 	deleteVehicle: function(mo_id){
 		return this._deleteAsset("vehicle", mo_id);
@@ -75,13 +72,11 @@ var driverInsightsAsset = {
 		return this._getAsset("driver", driver_id);
 	},
 	addDriver: function(driver){
-		if (!driver) {
-			driver = {"status":"Active"};
-		}
+		driver = _.extend({"status":"active"}, driver||{});
 		return this._addAsset("driver", driver, true);
 	},
-	updateDriver: function(id, driver){
-		return this._updateAsset("driver", id || driver.driver_id, driver, true);
+	updateDriver: function(id, driver, overwrite){
+		return this._updateAsset("driver", id || driver.driver_id, driver, overwrite, true);
 	},
 	deleteDriver: function(driver_id){
 		return this._deleteAsset("driver", driver_id);
@@ -97,16 +92,52 @@ var driverInsightsAsset = {
 		return this._getAsset("vendor", vendor);
 	},
 	addVendor: function(vendor){
-		if (!vendor) {
-			vendor = {"status":"Active"};
-		}
-		return this._addAsset("vendor", vendor, false);
+		var props = {status: toActivate?'active':'inactive'};
+		return this._mergeAssetProps("vendor", id, props, false);
 	},
-	updateVendor: function(id, vendor){
-		return this._updateAsset("vendor", id || vendor.vendor, vendor, false);
+	updateVendor: function(id, vendor, overwrite){
+		return this._updateAsset("vendor", id || vendor.vendor, vendor, overwrite, false);
 	},
 	deleteVendor: function(vendor){
 		return this._deleteAsset("vendor", vendor);
+	},
+
+	/*
+	 * EventType api
+	 */
+	getEventTypeList: function(params){
+		return this._getAssetList("eventtype", params);
+	},
+	getEventType: function(id){
+		return this._getAsset("eventtype", id);
+	},
+	addEventType: function(event_type){
+		return this._addAsset("eventtype", event_type, true);
+	},
+	updateEventType: function(id, event_type, overwrite) {
+		return this._updateAsset("eventtype", id || event_type.event_type, event_type, overwrite, true);
+	},
+	deleteEventType: function(id){
+		return this._deleteAsset("eventtype", id);
+	},
+
+	/*
+	 * Rule api
+	 */
+	getRuleList: function(params){
+		return this._getAssetList("rule", params);
+	},
+	getRule: function(rule){
+		return this._getAsset("rule", rule);
+	},
+	addRule: function(rule){
+		var deferred = Q.defer();
+		deferred.reject("Not implemented yet");
+		return deferred.promose;
+	},
+	
+	deleteRule: function(rule){
+		return this._getAsset("rule", rule);
 	},
 
 	/*
@@ -152,26 +183,39 @@ var driverInsightsAsset = {
 	/*
 	 * Update an asset
 	 */
-	_updateAsset: function(context, id, asset, refresh){
+	_updateAsset: function(context, id, asset, overwrite, refresh){
 		if(!id){
 			return Q.reject({message: "id must be specified."});
 		}
 		var deferred = Q.defer();
 		var self = this;
-		var api = "/" + context + "/" + id;
-		Q.when(this._run("PUT", api, null, asset), function(response){
-			if (refresh) {
-				Q.when(self._run("POST", "/" + context + "/refresh"), function(refreshed){
+		if (overwrite) {
+			var api = "/" + context + "/" + id;
+			Q.when(this._run("PUT", api, null, asset), function(response){
+				if (refresh) {
+					Q.when(self._run("POST", "/" + context + "/refresh"), function(refreshed){
+						deferred.resolve(response);
+					})["catch"](function(err){
+						deferred.reject(err);
+					}).done();
+				} else {
+					deferred.resolve(response);
+				}
+			})["catch"](function(err){
+				deferred.reject(err);
+			}).done();
+		} else {
+			Q.when(this._getAsset(context, id), function(existingAsset) {
+				asset = _.extend(existingAsset, asset);
+				Q.when(self._updateAsset(context, id, asset, true, refresh), function(response) {
 					deferred.resolve(response);
 				})["catch"](function(err){
 					deferred.reject(err);
 				}).done();
-			} else {
-				deferred.resolve(response);
-			}
-		})["catch"](function(err){
-			deferred.reject(err);
-		}).done();
+			})["catch"](function(err){
+				deferred.reject(err);
+			}).done();
+		}
 		return deferred.promise;
 	},
 
@@ -189,7 +233,7 @@ var driverInsightsAsset = {
 	/*
 	 * Internal methods
 	 */
-	_run: function(method, api, uriParam, body){
+	_run: function(method, api, uriParam, body, headers){
 		if(!api){
 			errorback();
 			return;
@@ -206,7 +250,7 @@ var driverInsightsAsset = {
 		var options = {
 				method: method,
 				url: uri,
-				headers: {
+				headers: headers || {
 					"Content-Type": "application/json; charset=UTF-8"
 				},
 				rejectUnauthorized: false,

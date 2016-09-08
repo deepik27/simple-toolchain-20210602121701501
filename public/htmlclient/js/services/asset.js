@@ -229,11 +229,11 @@ angular.module('htmlClient')
 			var mo_id = this.getVehicleId();
 			$http(mobileClientService.makeRequestOption({
 				method: "PUT",
-				url: "/user/vehicle/" + mo_id,
+				url: "/user/vehicle/" + mo_id + "?addition=true",
 				headers: {
 					"Content-Type": "application/JSON;charset=utf-8"
 				},
-				data: {mo_id: mo_id, serial_number: this.serial_number, vendor: this.vendor, status: toActive ? "Active" : "Inactive"}
+				data: {mo_id: mo_id, serial_number: this.serial_number, vendor: this.vendor, status: toActive ? "active" : "inactive"}
 			})).success(function(data, status){
 				deferred.resolve(data);
 			}).error(function(error, status){
@@ -289,11 +289,11 @@ angular.module('htmlClient')
 			var driver_id = this.getDriverId();
 			$http(mobileClientService.makeRequestOption({
 				method: "PUT",
-				url: "/user/driver/" + driver_id,
+				url: "/user/driver/" + driver_id + "?addition=true",
 				headers: {
 					"Content-Type": "application/JSON;charset=utf-8"
 				},
-				data: {driver_id: driver_id, status: toActive ? "Active" : "Inactive"}
+				data: {driver_id: driver_id, status: toActive ? "active" : "inactive"}
 			})).success(function(data, status){
 				deferred.resolve(data);
 			}).error(function(error, status){
