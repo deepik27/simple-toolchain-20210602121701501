@@ -6,7 +6,7 @@
 			<option *ngFor="let alertProp of alertProps"
 				value="{{alertProp.getId()}}">{{alertProp.getLabel()}}</option>
 		</select>
-		<select *ngIf="alertValues && alertValues.length > 0" [value]="value"
+		<select #valueSelect *ngIf="alertValues && alertValues.length > 0" [value]="value"
 			(change)="onValueChanged($event)">
 			<option *ngFor="let alertValue of alertValues"
 				value="{{alertValue.getId()}}">{{alertValue.getLabel()}}</option>

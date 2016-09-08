@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { Http, Request, Response } from '@angular/http';
 import { ROUTER_DIRECTIVES } from '@angular/router';
 import { OrderByPipe } from '../../utils/order-by.pipe';
@@ -26,6 +26,7 @@ export class AlertListComponent{
   fleetalerts: Alert[];
   requestSending = false;
   selected_row_index:string;
+  @ViewChild("valueSelect") valueSelect:ElementRef;
 
   constructor(private http: Http) {  }
 
@@ -52,9 +53,16 @@ export class AlertListComponent{
     var prop = this.alertProps[event.target.selectedIndex];
     this.prop = prop.getId();
     this.alertValues = prop.getValues();
-    this.value = this.alertValues.length > 0 ? this.alertValues[0].getId() : "";
     if(prop === AlertProp.All){
+      this.value = prop.getValues()[0].getId();
       this.getAlert(this.prop, this.value, this.includeClosed, this.getArea());
+    }else{
+      this.value = "";
+      setImmediate(()=>{
+        if(this.valueSelect){
+          this.valueSelect.nativeElement.selectedIndex = -1;
+        }
+      });
     }
   }
   onValueChanged(event){
@@ -172,13 +180,13 @@ export class AlertProp {
   static values:{key?: AlertProp} = {};
   static All = new AlertProp("dummy", "All", [new PropValue("dummy", "-")]);
   static Type = new AlertProp("type", "Type", [
-    new PropValue("", "-"),
+    // new PropValue("", "-"),
     new PropValue("low_fuel", "Low Fuel"),
     new PropValue("half_fuel", "Half Fuel"),
     new PropValue("high_engine_temp", "High Engine Temperature")
   ]);
   static Severity = new AlertProp("severity", "Severity", [
-    new PropValue("", "-"),
+    // new PropValue("", "-"),
     new PropValue("Critical", "Critical"),
     new PropValue("High", "High"),
     new PropValue("Medium", "Medium"),
