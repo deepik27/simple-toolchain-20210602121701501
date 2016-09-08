@@ -30,18 +30,18 @@ export class AlertListComponent{
   constructor(private http: Http) {  }
 
   ngOnInit(){
-    if(this.prop){
-      if(this.value){
-        this.getAlert(this.prop, this.value, this.includeClosed, this.getArea());
-      }else{
-        var prop = AlertProp.values[this.prop];
-        if(prop){
-          this.alertValues = prop.getValues();
-        }
+    if(!this.prop){
+      this.prop = AlertProp.All.getId();
+      this.alertValues = AlertProp.All.getValues();
+      this.value = AlertProp.All.getValues()[0].getId();
+    }else if(!this.value){
+      this.value = AlertProp.All.getValues()[0].getId();
+      var prop = AlertProp.values[this.prop];
+      if(prop){
+        this.alertValues = prop.getValues();
       }
-    }else{
-      this.getAlert("dummy", "dummy", this.includeClosed, this.getArea());
     }
+    this.getAlert(this.prop, this.value, this.includeClosed, this.getArea());
   }
 
   onAreaChanged(extent){
@@ -52,7 +52,10 @@ export class AlertListComponent{
     var prop = this.alertProps[event.target.selectedIndex];
     this.prop = prop.getId();
     this.alertValues = prop.getValues();
-    this.value = "";
+    this.value = this.alertValues.length > 0 ? this.alertValues[0].getId() : "";
+    if(prop === AlertProp.All){
+      this.getAlert(this.prop, this.value, this.includeClosed, this.getArea());
+    }
   }
   onValueChanged(event){
     if(event.target.tagName.toUpperCase() === "SELECT"){
@@ -85,6 +88,9 @@ export class AlertListComponent{
     this.getAlert(this.prop, this.value, this.includeClosed, this.getArea());
   }
   private getAlert = function(prop:string, value:string, includeClosed?:boolean, area?:Object){
+    if(!prop || !value){
+      return;
+    }
     var url = "/user/alert?" + prop + "=" + value + "&includeClosed=" + includeClosed + "&limit=100";
     if(area){
       url += Object.keys(area).map(function(key){return "&" + key + "=" + area[key];}).join();
@@ -122,6 +128,12 @@ export class AlertListComponent{
             })
           }
           delete moid2alerts[fleetalert.mo_id];
+        }, (error: any) => {
+          if(error.status === 404){
+            console.log(fleetalert.mo_id + " may be deleted.");
+          }else{
+            console.error(error); // The vehicle may be deleted
+          }
         });
       }
     });
@@ -157,14 +169,16 @@ class PropValue {
   }
 }
 export class AlertProp {
-  static values = {};
-  static All = new AlertProp("dummy", "All", [new PropValue("dummy", "")]);
+  static values:{key?: AlertProp} = {};
+  static All = new AlertProp("dummy", "All", [new PropValue("dummy", "-")]);
   static Type = new AlertProp("type", "Type", [
+    new PropValue("", "-"),
     new PropValue("low_fuel", "Low Fuel"),
     new PropValue("half_fuel", "Half Fuel"),
     new PropValue("high_engine_temp", "High Engine Temperature")
   ]);
   static Severity = new AlertProp("severity", "Severity", [
+    new PropValue("", "-"),
     new PropValue("Critical", "Critical"),
     new PropValue("High", "High"),
     new PropValue("Medium", "Medium"),
