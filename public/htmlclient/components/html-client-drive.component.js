@@ -19,6 +19,7 @@
 	component('clientDrive', {
 		templateUrl: scriptBaseUrl + 'html-client-drive.html',
 		controller: function ClientTop($scope, $http ,$q, assetService, carProbeService, virtualGeoLocation) {
+			$scope.drivingButtonLabel = "Start Driving";
 			var updateUIHandle = null;
 			// start driving
 			function startDriving() {
@@ -75,16 +76,28 @@
 		    // Start/Stop driving button
 		    $scope.onDriving = function() {
 		    	if (carProbeService.hasTripId()) {
+					$scope.drivingButtonLabel = "Stopping Driving";
+					$scope.requestSending = true;
 					stopDriving().then(function() {
 						$scope.driveEvent.trip_id = null;
+						$scope.drivingButtonLabel = "Start Driving";
+						$scope.requestSending = false;
 					}, function(err) {
 						alert((err.data && err.data.message) || err.responseText || err.message || err);
+						$scope.drivingButtonLabel = "Stop Driving";
+						$scope.requestSending = false;
 					});
 				} else {
+					$scope.drivingButtonLabel = "Preparing Driving";
+					$scope.requestSending = true;
 					startDriving().then(function(tripId) {
+						$scope.drivingButtonLabel = "Stop Driving";
+						$scope.requestSending = false;
 						$scope.driveEvent.trip_id = tripId;
 					}, function(err) {
 						alert((err.data && err.data.message) || err.responseText || err.message || err);
+						$scope.drivingButtonLabel = "Start Driving";
+						$scope.requestSending = false;
 					});
 				}
 		    };
