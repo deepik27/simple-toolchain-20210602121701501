@@ -44,12 +44,15 @@ var _sendError = function(res, err){
 var VENDOR_NAME = "IBM";
 var NUM_OF_SIMULATOR = 5;
 
-var _createSimulatedVehicles = function(res, num){
-	num = (num || NUM_OF_SIMULATOR);
+var _createSimulatedVehicles = function(res, exsiting_vehicles){
+	var num = exsiting_vehicles ? (NUM_OF_SIMULATOR - exsiting_vehicles.length) : NUM_OF_SIMULATOR;
 	debug("Simulated car will be created [" + num + "]");
 	var defList = [];
 	for(var i=0; i < num; i++){
-		defList.push(driverInsightsAsset.addVehicle({"vendor": VENDOR_NAME, "serial_number": "simulated_vehicle_" + i}));
+		defList.push(driverInsightsAsset.addVehicle({
+			"vendor": VENDOR_NAME, 
+			"serial_number": "simulated_vehicle_" + (NUM_OF_SIMULATOR-i)
+		}));
 	}
 	Q.all(defList).then(function(){
 		debug("Simulated cars were created");
@@ -68,7 +71,8 @@ router.get("/simulatedVehicles", authenticate, function(req, res){
 		debug("There is vendor: " + VENDOR_NAME);
 		Q.when(driverInsightsAsset.getVehicleList({"vendor": VENDOR_NAME}), function(response){
 			if(response && response.data && response.data.length < NUM_OF_SIMULATOR){
-				_createSimulatedVehicles(res, NUM_OF_SIMULATOR - response.data.length);
+				// create additional vehicles
+				_createSimulatedVehicles(res, response.data);
 			}else{
 				res.send(response);
 			}
