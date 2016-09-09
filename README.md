@@ -29,7 +29,7 @@ To do this, you can either use the _Deploy to Bluemix_ button for an automated d
 3. Clone the app to your local environment from your terminal using the following command:
 
   ```
-  git clone  https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm.git
+  git clone https://github.com/ibm-watson-iot/iota-starter-server-fm.git
   ```
 
 4. `cd` into this newly created directory.
@@ -58,13 +58,13 @@ To do this, you can either use the _Deploy to Bluemix_ button for an automated d
 7. Create Internet of Things Platform service in Bluemix.
 
   ```
-  $ cf create-service iotf-service iotf-service-free IoTPlatform
+  $ cf create-service iotforautomotive free_shared FleetIoTForAuto
   ```
 
 8. This app uses Cloudant NoSQL DB service as well. Create the service in Bluemix.
 
   ```
-  $ cf create-service cloudantNoSQLDB Shared MobilityDB
+  $ cf create-service cloudantNoSQLDB Shared FleetCloudantDB
   ```
 
 9. Push the app to Bluemix.
