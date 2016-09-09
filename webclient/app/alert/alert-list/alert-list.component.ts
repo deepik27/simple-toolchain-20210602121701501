@@ -56,6 +56,9 @@ export class AlertListComponent{
     if(prop === AlertProp.All){
       this.value = prop.getValues()[0].getId();
       this.getAlert(this.prop, this.value, this.includeClosed, this.getArea());
+    }else if(prop === AlertProp.MoId){
+      this.value = "";
+      this.getVehiclesForPropValue();
     }else{
       this.value = "";
       setImmediate(()=>{
@@ -69,7 +72,7 @@ export class AlertListComponent{
     if(event.target.tagName.toUpperCase() === "SELECT"){
       var value = this.alertValues[event.target.selectedIndex];
       this.value = value.getId();
-    }else if(event.target.tagName.toUpperCae() === "INPUT"){
+    }else if(event.target.tagName.toUpperCase() === "INPUT"){
       this.value = event.target.value;
     }else{
       return;
@@ -90,7 +93,7 @@ export class AlertListComponent{
   onMoIdClicked(event, mo_id){
     event.stopPropagation();
     this.prop = AlertProp.MoId.getId();
-    this.alertValues = AlertProp.MoId.getValues();
+    this.getVehiclesForPropValue()
     this.value = mo_id;
     this.includeClosed = true;
     this.getAlert(this.prop, this.value, this.includeClosed, this.getArea());
@@ -140,11 +143,33 @@ export class AlertListComponent{
           if(error.status === 404){
             console.log(fleetalert.mo_id + " may be deleted.");
           }else{
-            console.error(error); // The vehicle may be deleted
+            console.error(error);
           }
         });
       }
     });
+  }
+  private getVehiclesForPropValue(){
+    this.http.get("/user/vehicle")
+    .subscribe((response:Response) => {
+      var json = response.json();
+      var vehicles = (json && json.data) || [];
+      var vehicleExist = false;
+      this.alertValues = vehicles.map((vehicle)=>{
+        vehicleExist = vehicleExist || vehicle.mo_id === this.value;
+        return new PropValue(vehicle.mo_id, vehicle.serial_number || vehicle.mo_id);
+      }).sort((a, b) => {return <any>(a.label > b.label) - <any>(b.label > a.label)});
+      if(!vehicleExist && this.value !== ""){
+        this.alertValues.unshift(new PropValue(this.value, this.value));
+      }
+      setImmediate(()=>{
+        if(this.valueSelect){
+          this.valueSelect.nativeElement.value = this.value;
+        }
+      })
+    }, (error:any) => {
+      console.error(error);
+    })
   }
   private getArea = function(){
     if(!this.extent || this.extent.length !== 4

@@ -7,12 +7,10 @@
 				<option *ngFor="let alertProp of alertProps"
 					value="{{alertProp.getId()}}">{{alertProp.getLabel()}}</option>
 			</select>
-			<select #valueSelect *ngIf="alertValues && alertValues.length > 0" [value]="value"
-				(change)="onValueChanged($event)">
+			<select #valueSelect [value]="value" (change)="onValueChanged($event)">
 				<option *ngFor="let alertValue of alertValues"
 					value="{{alertValue.getId()}}">{{alertValue.getLabel()}}</option>
 			</select>
-			<input *ngIf="!alertValues || alertValues.length <= 0" [value]="value" (change)="onValueChanged($event)"/>
 			<label>
 				<input type="checkbox" [(ngModel)]="includeClosed" (change)="onIncludeClosedChanged($event)"/>
 				Include Closed Alerts
