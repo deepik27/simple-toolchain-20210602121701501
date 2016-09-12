@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChange } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, Subject } from 'rxjs/Rx.DOM';
 
 import * as ol from 'openlayers';
 
@@ -58,9 +57,6 @@ export class RealtimeMapComponent implements OnInit {
 
 	// device features map
 	private deviceFeatures: { [deviceID: string]: ol.Feature } = {};
-
-	// RxJS
-	mapExtentSubject = new Subject<any>();
 
 	//
 	// Devices management

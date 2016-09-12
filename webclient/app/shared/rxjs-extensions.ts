@@ -5,6 +5,8 @@ import 'rxjs/add/observable/interval';
 import 'rxjs/add/observable/timer';
 //import 'rxjs/add/observable/zip';
 import 'rxjs/add/observable/combineLatest';
+// Observable Rx.DOM
+import 'rxjs/add/observable/dom/webSocket';
 // Observable operators
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/debounceTime';
