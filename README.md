@@ -48,26 +48,40 @@ To do this, you can either use the _Deploy to Bluemix_ button for an automated d
   ```
   The host you use will determinate your application URL initially, for example, `<host>.mybluemix.net`.
 
-6. Connect to Bluemix in the command line tool and follow the prompts to log in:
+6. Install packages in dependencies of package.json.
+
+  ```
+  $ cd ./webclient
+  $ npm install
+  ```
+
+7. Convert TypeScript to JavaScript.
+
+  ```
+  $ npm run tsc
+  $ cd ..
+  ```
+
+8. Connect to Bluemix in the command line tool and follow the prompts to log in:
 
   ```
   $ cf api https://api.ng.bluemix.net
   $ cf login
   ```
 
-7. Create Internet of Things Platform service in Bluemix.
+9. Create Internet of Things Platform service in Bluemix.
 
   ```
   $ cf create-service iotforautomotive free_shared FleetIoTForAuto
   ```
 
-8. This app uses Cloudant NoSQL DB service as well. Create the service in Bluemix.
+10. This app uses Cloudant NoSQL DB service as well. Create the service in Bluemix.
 
   ```
   $ cf create-service cloudantNoSQLDB Shared FleetCloudantDB
   ```
 
-9. Push the app to Bluemix.
+11 Push the app to Bluemix.
   ```
   $ cf push
   ```
