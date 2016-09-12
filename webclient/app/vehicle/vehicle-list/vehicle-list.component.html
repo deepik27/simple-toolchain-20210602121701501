@@ -48,7 +48,9 @@
 				<td>{{vehicle.__id||'-'}}</td>
 				<td>{{vehicle.vendor||'-'}}</td>
 				<td>{{vehicle.model||'-'}}</td>
-				<td>{{vehicle.status||'-'}}</td>
+				<td>
+					<span [attr.aria-label]="vehicle.status === 'active' ? 'active' : 'inactive'" class="statusCircle" [ngClass]="vehicle.status === 'active' ? 'greenStatus' : 'redStatus'"></span>
+				</td>
 				<td class="alignCenter">
 					<a class="dropdown_base" (click)="selected_mo_id=selected_mo_id!==vehicle.mo_id?vehicle.mo_id:null" href="javascript:void(0)" title="Open menu"></a>
 					<div [ngClass]="selected_mo_id===vehicle.mo_id?'dropdown':'hidden'" [hidden]="selected_mo_id!==vehicle.mo_id" style="right:10px">

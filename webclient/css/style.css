@@ -255,6 +255,22 @@ i.iconBlock {
     transition:         all .1s ease-in;
 }
 
+.statusCircle {
+    display: block;
+    width: 10px;
+    height: 10px;
+    border-radius: 500px;
+}
+
+.greenStatus{
+    background: #00d500;
+}
+
+.redStatus{
+    background: #ff0000;
+}
+
+
 /* === 2. Header Styles === */
 
 header {
