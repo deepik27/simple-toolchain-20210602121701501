@@ -10,6 +10,11 @@ import { AreaSelectComponent } from '../../shared/area-select.component';
   selector: 'alert-list',
   templateUrl: 'alert-list.component.html',
   styleUrls: ['../../../css/table.css'],
+  styles: [`
+    .actionTD {
+      padding: 0 20px;
+    }
+  `],
   pipes: [OrderByPipe, MomentPipe],
   directives: [AreaSelectComponent, ROUTER_DIRECTIVES]
 })
