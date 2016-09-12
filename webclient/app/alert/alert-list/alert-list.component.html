@@ -54,12 +54,12 @@
 		<tbody>
 			<tr *ngFor="let alert of (fleetalerts|orderBy:orderByKey:ascendingOrder);let i=index">
 				<td>{{i+1}}</td>
-				<td>{{alert.ts|moment:"YYYY/MM/DD HH:mm:ss"}}</td>
-				<td *ngIf="includeClosed">{{alert.closed_ts>0?(alert.closed_ts|moment:"YYYY/MM/DD HH:mm:ss"):"-"}}</td>
-				<td>{{alert.severity}}</td>
+				<td>{{alert.ts|moment:"MMM DD/YY, HH:mm:ss"}}</td>
+				<td *ngIf="includeClosed">{{alert.closed_ts>0?(alert.closed_ts|moment:"MMM DD/YY, HH:mm:ss"):"-"}}</td>
+				<td [ngClass]="alert.severity === 'Medium' ? 'green' : 'red'" >{{alert.severity}}</td>
 				<td><a href="javascript:void(0)" (click)="onMoIdClicked($event, alert.mo_id)">{{alert.serial_number || alert.mo_id}}</a></td>
 				<td>{{alert.description}}</td>
-				<td>{{alert.simulated ? "Simulated" : ""}}</td>
+				<td>{{alert.simulated ? "Yes" : "No"}}</td>
 				<td class="alignCenter">
 					<a class="dropdown_base" (click)="selected_row_index=selected_row_index!==i?i:null" href="javascript:void(0)" title="Open menu"></a>
 					<div [ngClass]="selected_row_index===i?'dropdown':'hidden'" [hidden]="selected_row_index!==i" style="right:10px">
