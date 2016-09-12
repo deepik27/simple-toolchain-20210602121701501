@@ -42,7 +42,7 @@
     <table class="table">
       <thead>
         <tr>
-          <th><strong>Zone</strong></th>
+          <th>Zone</th>
           <th>Total</th>
           <th>Troubled</th>
           <th>Critical</th>
@@ -50,7 +50,7 @@
       </thead>
       <tbody>
         <tr *ngFor="let counts of regionsCounts$ | async">
-          <td><strong>{{counts?._region?.name}}</strong></td>
+          <td>{{counts?._region?.name}}</td>
           <td class="align-right">{{(counts && counts?.all >= 0) ? counts?.all : '-'}}</td>
           <td class="align-right">{{(counts && counts?.troubled >= 0) ? counts?.troubled : '-'}}</td>
           <td class="align-right">{{(counts && counts?.critical >= 0) ? counts?.critical : '-'}}</td>

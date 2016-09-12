@@ -1586,6 +1586,10 @@ table th[class*="col-"] {
   overflow-x: auto;
   min-height: 0.01%;
 }
+.table-responsive thead th,
+.table thead tr th {
+  font-weight: 500;
+}
 .table-responsive tbody tr td {
   padding-top: 20px;
   padding-bottom: 20px;
