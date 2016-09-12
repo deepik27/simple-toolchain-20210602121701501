@@ -44,7 +44,7 @@
 		</thead>
 		<tbody>
 			<tr *ngFor="let vehicle of (vehicles|orderBy:orderByKey:!ascendingOrder); let i = index">
-				<td class="alignCenter"><span title="mo_id:{{vehicle.mo_id}}">{{numRecInPage * (pageNumber - 1) + i + 1}}</span></td>
+				<td><span title="mo_id:{{vehicle.mo_id}}">{{numRecInPage * (pageNumber - 1) + i + 1}}</span></td>
 				<td>{{vehicle.__id||'-'}}</td>
 				<td>{{vehicle.vendor||'-'}}</td>
 				<td>{{vehicle.model||'-'}}</td>
