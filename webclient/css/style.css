@@ -264,6 +264,9 @@ i.iconBlock {
     height: 100%;
     background: rgba(256, 256, 256, 0.85);
     z-index: 5;
+    -moz-transition:    all .1s ease-in;
+    -webkit-transition: all .1s ease-in;
+    transition:         all .1s ease-in;
 }
 
 .cardOverlay p {

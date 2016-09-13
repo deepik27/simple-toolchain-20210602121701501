@@ -44,8 +44,13 @@ export class CarStatusComponent implements OnInit, OnActivate {
 
         // updat meter
         updateMeterStyle(probe);
-        if (probe == null)
-        console.log(probe);
+
+        var cardOverlay = document.getElementById('cardOverlay');
+        if (probe == null && cardOverlay.style.opacity == '0') {
+            cardOverlay.style.opacity = '1';
+        } else if (probe == null && cardOverlay.style.opacity == '1') {
+            cardOverlay.style.opacity = '0';
+        }
       });
     this.moIdSubject.next(this.mo_id);
 
