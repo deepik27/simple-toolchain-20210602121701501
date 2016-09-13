@@ -36,9 +36,11 @@
   border-right: 5px solid transparent;
 }
 
-.dropdown_base {
+.dropdown_base,
+.actionTD a {
   cursor: pointer;
   vertical-align: middle;
+  margin-left: 10px;
 }
 
 .dropdown_base:hover {
