@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'icomoon';
-  src:  url('../fonts/icomoon.eot?6bmex9');
-  src:  url('../fonts/icomoon.eot?6bmex9#iefix') format('embedded-opentype'),
-    url('../fonts/icomoon.ttf?6bmex9') format('truetype'),
-    url('../fonts/icomoon.woff?6bmex9') format('woff'),
-    url('../fonts/icomoon.svg?6bmex9#icomoon') format('svg');
+  src:  url('../fonts/icomoon.eot?kbjt9z');
+  src:  url('../fonts/icomoon.eot?kbjt9z#iefix') format('embedded-opentype'),
+    url('../fonts/icomoon.ttf?kbjt9z') format('truetype'),
+    url('../fonts/icomoon.woff?kbjt9z') format('woff'),
+    url('../fonts/icomoon.svg?kbjt9z#icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
 }
@@ -45,6 +45,9 @@
 .icon-location:before {
   content: "\e906";
 }
+.icon-menu:before {
+  content: "\e90a";
+}
 .icon-user:before {
   content: "\e907";
 }
@@ -54,3 +57,4 @@
 .icon-car:before {
   content: "\e909";
 }
+
