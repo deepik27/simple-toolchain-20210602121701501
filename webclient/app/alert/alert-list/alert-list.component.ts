@@ -11,6 +11,10 @@ import { AreaSelectComponent } from '../../shared/area-select.component';
   templateUrl: 'alert-list.component.html',
   styleUrls: ['../../../css/table.css'],
   styles: [`
+    .firstRow {
+      padding-left: 20px;
+    }
+    
     .actionTD {
       padding: 0 20px;
     }

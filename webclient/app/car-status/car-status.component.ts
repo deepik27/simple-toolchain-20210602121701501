@@ -44,6 +44,8 @@ export class CarStatusComponent implements OnInit, OnActivate {
 
         // updat meter
         updateMeterStyle(probe);
+        if (probe == null)
+        console.log(probe);
       });
     this.moIdSubject.next(this.mo_id);
 
@@ -81,6 +83,8 @@ export class CarStatusComponent implements OnInit, OnActivate {
     var modalCallsArray = Array.prototype.slice.call(document.querySelectorAll('.numCounter'), 0);
 
     modalCallsArray.forEach(function(el) {
+            console.log(el.innerHTML);
+
             var number = parseInt(el.innerHTML);
             var delay = number;
 
