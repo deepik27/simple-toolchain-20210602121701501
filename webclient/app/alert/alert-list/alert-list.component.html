@@ -61,10 +61,7 @@
 				<td>{{alert.description}}</td>
 				<td>{{alert.simulated ? "Yes" : "No"}}</td>
 				<td class="alignCenter actionTD">
-					<a class="dropdown_base" (click)="selected_row_index=selected_row_index!==i?i:null" href="javascript:void(0)" title="Open menu"></a>
-					<div [ngClass]="selected_row_index===i?'dropdown':'hidden'" [hidden]="selected_row_index!==i" style="right:10px">
-							<a class="dropdown_menu" [routerLink]="['/carStatus', '/'+alert.mo_id]">Show Car Status</a>
-					</div>
+					<a class="dropdown_base icon-status" [routerLink]="['/carStatus', '/'+alert.mo_id]" title="Show Car Status"></a>
 				</td>
 			</tr>
 		</tbody>
