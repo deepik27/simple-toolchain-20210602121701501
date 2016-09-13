@@ -61,6 +61,8 @@ export class AppComponent {
             el.onclick=function(e){
                 e.preventDefault();
 
+                document.body.style.overflowY = "hidden";
+
                 document.getElementById(el.rel).classList.add('em-Modal-show');
                 document.getElementById(el.rel).querySelector('.em-Modal-Content').classList.add('em-Modal-Content-show');
                 document.getElementById(el.rel).querySelector('.em-Modal-Close').classList.add('em-Modal-Close-show');
@@ -69,6 +71,8 @@ export class AppComponent {
                     if (event) {
                         event.preventDefault();
                     }
+
+                    document.body.style.overflowY = "scroll";
 
                     document.getElementById(el.rel).querySelector('.em-Modal-Close').classList.remove('em-Modal-Close-show');
                     document.getElementById(el.rel).classList.remove('em-Modal-show');
