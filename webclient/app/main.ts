@@ -13,7 +13,10 @@ let webApiHost = (function(){
     console.warn('WARNING');
     console.warn('WARNING: This client seems hosted by lite-server. Directing Web APIs to ' +  window.location.hostname + ':3000' + '.');
     console.warn('WARNING');
-    return window.location.hostname + ':3000';
+
+    // return window.location.hostname + ':3000';
+
+    return "iota-starter-server-fleetmanagement-dev.stage1.mybluemix.net";
   }
   return window.location.host;
 })();

@@ -44,6 +44,13 @@ export class CarStatusComponent implements OnInit, OnActivate {
 
         // updat meter
         updateMeterStyle(probe);
+
+        var cardOverlay = document.getElementById('cardOverlay');
+        if (probe == null && cardOverlay.style.opacity == '0') {
+            cardOverlay.style.opacity = '1';
+        } else if (probe == null && cardOverlay.style.opacity == '1') {
+            cardOverlay.style.opacity = '0';
+        }
       });
     this.moIdSubject.next(this.mo_id);
 
@@ -81,6 +88,8 @@ export class CarStatusComponent implements OnInit, OnActivate {
     var modalCallsArray = Array.prototype.slice.call(document.querySelectorAll('.numCounter'), 0);
 
     modalCallsArray.forEach(function(el) {
+            console.log(el.innerHTML);
+
             var number = parseInt(el.innerHTML);
             var delay = number;
 

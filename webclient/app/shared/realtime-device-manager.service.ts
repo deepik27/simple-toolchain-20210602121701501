@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@angular/core';
 import { Http, Request, Response, URLSearchParams } from '@angular/http';
-import { Observable, Subject } from 'rxjs/Rx.DOM';
+import { Observable } from 'rxjs/Observable';
 
 import { RealtimeDeviceDataProvider } from './realtime-device';
 

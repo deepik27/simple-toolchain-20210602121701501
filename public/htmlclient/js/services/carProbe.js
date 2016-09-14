@@ -118,7 +118,7 @@ angular.module('htmlClient')
 			        		self.driveEvent.engineTemp = self.vehicleData.engineTemp;
 			        	}else{
 			        		if(isNaN(self.driveEvent.engineTemp) || self.driveEvent.engineTemp > 130) self.driveEvent.engineTemp = 80;
-			        		self.driveEvent.engineTemp = Math.round((self.driveEvent.engineTemp+(Math.random()*0.5-0.15))*100)/100;
+			        		self.driveEvent.engineTemp = Math.round((Number(self.driveEvent.engineTemp)+(Math.random()*0.5-0.15))*100)/100;
 				        }
 			        }
 	        	}, function() {

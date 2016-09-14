@@ -50,4 +50,55 @@ export class AppComponent {
     }
     return lhs.startsWith(rhs);
   }
+
+  ngOnInit() {
+    /*   ===   Navigation on smaller screens   ===   */
+    var modalCalls = document.querySelectorAll('.em-Modal-Call');
+    var modalCallsArray = Array.prototype.slice.call(modalCalls, 0);
+
+    modalCallsArray.forEach(function(el) {
+        if (document.getElementById(el.rel)) {
+            el.onclick=function(e){
+                e.preventDefault();
+
+                document.body.style.overflowY = "hidden";
+
+                document.getElementById(el.rel).classList.add('em-Modal-show');
+                document.getElementById(el.rel).querySelector('.em-Modal-Content').classList.add('em-Modal-Content-show');
+                document.getElementById(el.rel).querySelector('.em-Modal-Close').classList.add('em-Modal-Close-show');
+
+                var close = function(event) {
+                    if (event) {
+                        event.preventDefault();
+                    }
+
+                    document.body.style.overflowY = "scroll";
+
+                    document.getElementById(el.rel).querySelector('.em-Modal-Close').classList.remove('em-Modal-Close-show');
+                    document.getElementById(el.rel).classList.remove('em-Modal-show');
+                    document.getElementById(el.rel).querySelector('.em-Modal-Content').classList.remove('em-Modal-Content-show');
+                    
+                    document.querySelector('header').classList.remove('blur');
+                    document.querySelector('.content').classList.remove('blur');
+                };
+
+                document.onkeydown = function(event) {
+                    event = event || window.event;
+                    if (event.keyCode == 27) {
+                        close();
+                    }
+                };
+
+                document.getElementById(el.rel).querySelector('.em-Modal-Content .em-Modal-Close').addEventListener("click", close);
+                
+                Array.prototype.slice.call(document.querySelectorAll('.em-Modal-Content ul.modalMenu a'), 0).forEach(function(modalLink) {
+                    modalLink.addEventListener("click", close);
+                });
+                
+                document.querySelector('header').classList.add('blur');
+                document.querySelector('.content').classList.add('blur');
+            };
+        }
+    });
+  }
 }

@@ -71,6 +71,10 @@ strong {
     font-weight: 500;
 }
 
+table th {
+    text-align: left;
+}
+
 .container,
 .container-50 {
     padding: 20px 30px;
@@ -230,6 +234,7 @@ i.iconBlock {
 }
 
 .card {
+    position: relative;
     display: table;
     width: 100%;
     background: #fff;
@@ -250,6 +255,44 @@ i.iconBlock {
     -webkit-transition: all .1s ease-in;
     transition:         all .1s ease-in;
 }
+
+.cardOverlay {
+    position: absolute;
+    display: block;
+    margin: -20px;
+    width: 100%;
+    height: 100%;
+    background: rgba(256, 256, 256, 0.85);
+    z-index: 5;
+    -moz-transition:    all .1s ease-in;
+    -webkit-transition: all .1s ease-in;
+    transition:         all .1s ease-in;
+}
+
+.cardOverlay p {
+    position: absolute;
+    font-size: 30px;
+    font-weight: 700;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.statusCircle {
+    display: block;
+    width: 10px;
+    height: 10px;
+    border-radius: 500px;
+}
+
+.greenStatus{
+    background: #00d500;
+}
+
+.redStatus{
+    background: #ff0000;
+}
+
 
 /* === 2. Header Styles === */
 
@@ -1145,8 +1188,7 @@ div.em-Modal {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-    padding: 0 30px;
-    overflow: hidden;
+    overflow: scroll;
     color: #fff;
     opacity: 0;
     visibility: hidden;
@@ -1180,6 +1222,25 @@ div.em-Modal div.em-Modal-Content {
     transition: all .2s ease-in;
     -webkit-transition-delay: .1s;
     transition-delay: .1s;
+    overflow-y: scroll;
+}
+
+div.em-Modal div.em-Modal-Content::-webkit-scrollbar-track
+{
+	background-color: transparent;
+}
+
+div.em-Modal div.em-Modal-Content::-webkit-scrollbar
+{
+    margin-right: -10px;
+	width: 6px;
+	background-color: transparent;
+}
+
+div.em-Modal div.em-Modal-Content::-webkit-scrollbar-thumb
+{
+    margin-right: -10px;
+	background-color: #1d375b;
 }
 
 div.em-Modal div.em-Modal-Content-show {
@@ -1199,7 +1260,7 @@ div.em-Modal div.em-Modal-Close {
     opacity: 0;
     visibility: hidden;
     position: fixed;
-    right: 10px;
+    right: 30px;
     top: 30px;
     font-size: 50px;
     line-height: 0;
@@ -1565,6 +1626,14 @@ table th[class*="col-"] {
 .table-responsive {
   overflow-x: auto;
   min-height: 0.01%;
+}
+.table-responsive thead th,
+.table thead tr th {
+  font-weight: 500;
+}
+.table-responsive tbody tr td {
+  padding-top: 20px;
+  padding-bottom: 20px;
 }
 @media screen and (max-width: 767px) {
   .table-responsive {

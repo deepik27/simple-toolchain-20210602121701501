@@ -36,14 +36,11 @@
   border-right: 5px solid transparent;
 }
 
-.dropdown_base {
+.dropdown_base,
+.actionTD a {
   cursor: pointer;
   vertical-align: middle;
-  font-size:0;
-  border-bottom: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 10px solid #b0b0b0;
+  margin-left: 10px;
 }
 
 .dropdown_base:hover {
