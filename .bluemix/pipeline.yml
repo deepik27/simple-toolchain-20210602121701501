@@ -26,10 +26,7 @@ stages:
         npm install
         echo "-- Compiling typescript..."
         npm run tsc
-        if [ "$NPM_ENV" = "production" ]; then
-          echo "-- Building bundle for production..."
-          npm run bundle:prod
-        fi
+        npm run gulp
         # Cleaning up node_modules
         rm -Rf ./node_modules
         popd

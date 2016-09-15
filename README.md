@@ -59,6 +59,7 @@ To do this, you can either use the _Deploy to Bluemix_ button for an automated d
 
   ```
   $ npm run tsc
+  $ npm run gulp
   $ cd ..
   ```
 
