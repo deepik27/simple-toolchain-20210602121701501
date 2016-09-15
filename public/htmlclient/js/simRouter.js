@@ -20,6 +20,7 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 		$locationProvider.html5Mode(true); 
 		$stateProviderRef = $stateProvider;
 	}])
+ 
 	/* === GENERAL CONTROLLERS === */
 	.controller('mainCtrl', ['$scope', '$state', '$http', '$sce', '$location', function($scope, $state, $http, $sce, $location) {
 		// Get simulation vehicles
@@ -27,6 +28,8 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 			method: "GET",
 			url: "/user/simulatedVehicles"
 		}).success(function(data, status){
+			console.log(data);
+			
 			var vehicles = data.data; 
 			if(vehicles.length > 5){
 				vehicles = vehicles.slice(0, 5);
@@ -57,11 +60,15 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 				// dynamic state
 				if(vehicles.length > 0){
 					for (i=0; i < vehicles.length; i++) {
-						var newState = {
-							'url': "/fleet.html#" + vehicles[i].mo_id,
-							'templateUrl': '/htmlclient/vehicle.html'
-						};
-						$stateProviderRef.state(vehicles[i].mo_id, newState);
+						$stateProviderRef.state(vehicles[i].mo_id, {
+							url: "/fleet.html#" + vehicles[i].mo_id,
+							views: {
+								'vehicle': {
+									templateUrl: '/htmlclient/vehicle.html',
+									persist: true
+								}
+							}
+						});
 					}
 					$scope.selectedIndex = 0;
 					$state.go(vehicles[0].mo_id);

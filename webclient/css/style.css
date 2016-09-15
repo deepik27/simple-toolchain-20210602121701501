@@ -278,8 +278,22 @@ i.iconBlock {
     transform: translate(-50%, -50%);
 }
 
+.radarCircles {
+    position: relative;
+}
+
+.radarCircles,
 .statusCircle {
     display: block;
+    width: 10px;
+    height: 10px;
+}
+
+.statusCircle {
+    position: absolute;
+    display: block;
+    left: 0;
+    top: 0;
     width: 10px;
     height: 10px;
     border-radius: 500px;
@@ -287,6 +301,33 @@ i.iconBlock {
 
 .greenStatus{
     background: #00d500;
+}
+
+.greenStatusZoom {
+    -webkit-animation:    radarEffect 1s 5;
+    -moz-animation:       radarEffect 1s 5;
+    -o-animation:         radarEffect 1s 5;
+    animation:            radarEffect 1s 5;
+}
+
+@-webkit-keyframes radarEffect {
+  0%   { transform: scale(1); opacity: 0.75; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@-moz-keyframes radarEffect {
+  0%   { transform: scale(1); opacity: 0.75; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@-o-keyframes radarEffect {
+  0%   { transform: scale(1); opacity: 0.75; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes radarEffect {
+  0%   { transform: scale(1); opacity: 0.75; }
+  100% { transform: scale(2.5); opacity: 0; }
 }
 
 .redStatus{
