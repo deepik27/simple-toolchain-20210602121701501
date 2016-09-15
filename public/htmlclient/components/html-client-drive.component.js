@@ -38,7 +38,11 @@
 			    		return;
 					}));
 					return $q.all(promise).then(function(){
-						var tripId = carProbeService.makeTrip();
+						var tripId = carProbeService.makeTrip(function(probe) {
+							if (self.requiredEvents > 0) {
+								self.requiredEvents--;
+							}
+						});
 						return tripId;
 					});
 				});
@@ -93,6 +97,8 @@
 						$scope.requestSending = false;
 					});
 				} else {
+					// clean route dots
+					routeLayer.getSource().clear();
 					$scope.drivingButtonLabel = "Preparing Driving";
 					$scope.requestSending = true;
 					startDriving().then(function(tripId) {
@@ -144,8 +150,10 @@
 			//
 			var map = null;
 			var carFeature = null;
+			var destFeature = null;
 			var carsLayer = null;
 	    	var routeLayer = null;
+	    	var tripLayer = null;
 	    	var routeStyle = null;
 	    	var matchedRouteStyle = null;
 			var DEFAULT_ZOOM = 16;
@@ -178,12 +186,13 @@
 
 			// Update UI when car probe date is changed
 			// add start/end icon
-			function plotRoute(position, style){
+			function plotRoute(position, style, route){
 				if(!routeLayer){
 					return;
 				}
 				var feature = new ol.Feature({
 					geometry: new ol.geom.Point(position),
+					route : route
 				});
 				feature.setStyle(style);
 				routeLayer.getSource().addFeature(feature);
@@ -213,7 +222,7 @@
 	        		if(data.matchedData && carProbeService.hasTripId()){
 	        			var loc = [data.matchedData.matched_longitude||0, data.matchedData.matched_latitude||0];
 	    				var matchedPosition = ol.proj.fromLonLat(loc);
-	        			plotRoute(matchedPosition, matchedRouteStyle);
+	        			plotRoute(matchedPosition, matchedRouteStyle, data.matchedData);
 	        		}
 		        }
 		        return false;
@@ -238,12 +247,31 @@
 				map.on("click", function(e){
 					if(carProbeService.settings.simulation){
 						var loc = ol.proj.toLonLat(e.coordinate);
-						virtualGeoLocation.setCurrentPosition({lat: loc[1], lon: loc[0]});
+						/* move-vehicle */
+						virtualGeoLocation.setCurrentPosition({lat: loc[1], lon: loc[0]}).then(function(tripRoute){
+							_plotTripRoute(tripRoute);
+						});
 						carFeature.getGeometry().setCoordinates(e.coordinate);
 					}
 				});
 			}
 
+			function _plotTripRoute(tripRoute){
+				if(!tripLayer){
+					return;
+				}
+				tripLayer.getSource().clear();
+				var lines = [];
+				for (i=0; i<(tripRoute.length-1); i++) {
+					lines.push([ol.proj.fromLonLat([tripRoute[i].lon, tripRoute[i].lat]), 
+								ol.proj.fromLonLat([tripRoute[i+1].lon, tripRoute[i+1].lat])]);
+				}
+				var lineStrings = new ol.geom.MultiLineString([]);
+				lineStrings.setCoordinates(lines);
+				var feature = new ol.Feature(lineStrings);
+				tripLayer.getSource().addFeature( feature );
+			}
+			
 	    	// start monitoring car probe date
 	    	function startPositionMonitoring(interval) {
 	    		stopPositionMonitoring();
@@ -262,6 +290,24 @@
 	        	}
 	    	}
 			
+	    	function setDestination(location){
+	    		if(!destFeature){
+					destFeature = new ol.Feature({geometry:new ol.geom.Point(location)});	
+					var destStyle = new ol.style.Style({
+						image: new ol.style.Circle({
+							radius:8,
+							fill : new ol.style.Fill({
+								color: 'rgba(255, 0, 0, 0.7)'
+							})
+						})
+					});
+					destFeature.setStyle(destStyle);
+					carsLayer.getSource().addFeature(destFeature);
+				}
+				
+				destFeature.getGeometry().setCoordinates(location);
+	    	}
+			
 		    // Initialize a map
 			var initMap = function initMap(location){
 				var centerPosition = ol.proj.fromLonLat([location.lng||0, location.lat||0]);
@@ -277,6 +323,7 @@
 						src: 'images/car.png'
 					})
 				});
+				carsLayer = new ol.layer.Vector({source: new ol.source.Vector({features: [carFeature]}), style: carStyle});	
 
 				// create route layer
 				routeStyle = new ol.style.Style({
@@ -290,7 +337,8 @@
 							color: 'rgba(200, 0, 0, 0.7)'
 						})
 					})
-				})
+				});
+				
 				matchedRouteStyle = new ol.style.Style({
 					image: new ol.style.Circle({
 						radius:3,
@@ -302,18 +350,31 @@
 							color: 'rgba(0, 200, 0, 0.7)'
 						})
 					})
-				})
+				});
+				
 				routeLayer = new ol.layer.Vector({
 					source: new ol.source.Vector()
 				});
 
+				// trip layer
+				var tripStyle = new ol.style.Style({
+					stroke: new ol.style.Stroke({ color: 'rgba(120, 120, 120, 0.7)', width: 3 }),
+				});
+				tripLayer = new ol.layer.Vector({source: new ol.source.Vector(), style: tripStyle});	
+				
+				// event layer
+				eventLayer = new ol.layer.Vector({
+					source: new ol.source.Vector()
+				});
+				
 				// create a map
 				map =  new ol.Map({
 					target: document.getElementById("locationMap"),
 					layers: [
 						new ol.layer.Tile({source: new ol.source.OSM({}), preload: 4}),  // map layer
-						new ol.layer.Vector({source: new ol.source.Vector({features: [carFeature]}), style: carStyle}),  // car layer
-						routeLayer
+						carsLayer,
+						routeLayer,
+						tripLayer
 					],
 					view: new ol.View({
 						center: centerPosition,
@@ -341,6 +402,12 @@
         		carProbeService.getProbeData(true).then(function(data) {
         			// Show current location
 					initMap(data.deviceLocation);
+					if(carProbeService.settings.simulation){
+						virtualGeoLocation.setCurrentPosition({lat: data.deviceLocation.lat, lon: data.deviceLocation.lng}).then(function(tripRoute){
+							_plotTripRoute(tripRoute);
+						});
+					}
+					
         		}, function(err) {
 					initMap({lat: 0, lng: 0});
         		});
