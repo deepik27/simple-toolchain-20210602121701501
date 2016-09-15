@@ -18,7 +18,12 @@
 	angular.module('htmlClient').
 	component('clientDrive', {
 		templateUrl: scriptBaseUrl + 'html-client-drive.html',
-		controller: function ClientTop($scope, $http ,$q, assetService, carProbeService, virtualGeoLocation) {
+		controller: function ClientTop($scope, $http ,$q, assetService, carProbeService, virtualGeoLocation, $window) {
+			$window.onbeforeunload = function (e) {
+				// inactivate when user closes simulator window
+				assetService.activateAssets(false);
+			};
+			
 			$scope.drivingButtonLabel = "Start Driving";
 			var updateUIHandle = null;
 			// start driving
@@ -121,6 +126,7 @@
 		    
 	        // device ID
 		    $scope.connectOnStartup = carProbeService.getSettings().connectOnStartup;
+			$scope.simulation = carProbeService.settings.simulation;
 		    
 		    $scope.traceCurrentLocation = true;
 		    

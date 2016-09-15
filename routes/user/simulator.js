@@ -79,7 +79,7 @@ var _createSimulatedVehicles = function(res, exsiting_vehicles){
 	}
 	Q.all(defList).then(function(){
 		debug("Simulated cars were created");
-		Q.when(driverInsightsAsset.getVehicleList({"vendor": VENDOR_NAME}), function(response){
+		Q.when(driverInsightsAsset.getVehicleList({"vendor": VENDOR_NAME, "status": "inactive"}), function(response){
 			res.send(response);
 		})["catch"](function(err){
 			_sendError(res, err);
@@ -92,7 +92,7 @@ var _createSimulatedVehicles = function(res, exsiting_vehicles){
 router.get("/simulatedVehicles", authenticate, function(req, res){
 	Q.when(driverInsightsAsset.getVendor(VENDOR_NAME), function(response){
 		debug("There is vendor: " + VENDOR_NAME);
-		Q.when(driverInsightsAsset.getVehicleList({"vendor": VENDOR_NAME}), function(response){
+		Q.when(driverInsightsAsset.getVehicleList({"vendor": VENDOR_NAME, "status": "inactive"}), function(response){
 			if(response && response.data && response.data.length < NUM_OF_SIMULATOR){
 				// create additional vehicles
 				_createSimulatedVehicles(res, response.data);
