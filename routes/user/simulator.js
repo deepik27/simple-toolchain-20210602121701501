@@ -20,6 +20,7 @@
 var router = module.exports = require('express').Router();
 var Q = require('q');
 var _ = require('underscore');
+var fs = require('fs-extra');
 var debug = require('debug')('simulator');
 debug.log = console.log.bind(console);
 
@@ -44,15 +45,37 @@ var _sendError = function(res, err){
 var VENDOR_NAME = "IBM";
 var NUM_OF_SIMULATOR = 5;
 
+
+var deviceModelSamples; // caches the template file in memory
+var deviceModelSamplesNextSampleIndex = 0;
+var _getDeviceModelInfo = function(){
+	var samples = deviceModelSamples;
+	if (!Array.isArray(samples)){
+		samples = fs.readJsonSync('_deviceModelInfoSamples.json').templates;
+		if (!samples){
+			console.error('Failed to load ./_deviceModelInfoSamples.json');
+			samples = [];
+		}
+		deviceModelSamples = samples;
+	}
+	// randomly pick one
+	if (!samples || samples.length == 0)
+		return {}
+	return samples[(deviceModelSamplesNextSampleIndex++) % samples.length];
+};
+	
 var _createSimulatedVehicles = function(res, exsiting_vehicles){
 	var num = exsiting_vehicles ? (NUM_OF_SIMULATOR - exsiting_vehicles.length) : NUM_OF_SIMULATOR;
 	debug("Simulated car will be created [" + num + "]");
 	var defList = [];
 	for(var i=0; i < num; i++){
-		defList.push(driverInsightsAsset.addVehicle({
+		var vehicle = {
 			"vendor": VENDOR_NAME, 
 			"serial_number": "simulated_vehicle_" + (NUM_OF_SIMULATOR-i)
-		}));
+		};
+		vehicle.properties = _getDeviceModelInfo();
+		vehicle.model = vehicle.properties.makeModel;
+		defList.push(driverInsightsAsset.addVehicle(vehicle));
 	}
 	Q.all(defList).then(function(){
 		debug("Simulated cars were created");
