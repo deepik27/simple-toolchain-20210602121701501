@@ -51,30 +51,23 @@ app.use(auth.authenticate);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/user', user);
 
-var webClientModulePath = 'node_modules/iota-starter-server-fleetmanagement-webclient';
+var webClientModulePath = 'webclient';
+var webClientTop = path.join(__dirname, webClientModulePath + '/index.html');
 if ('development' === app.get('env')){
-	console.log('Settig up the webclient for DEVELOPMENT mode...');
+	console.log('Settig up the webclient for DEVELOPMENT mode..., which uses all the resources under webclient');
 	// add the base path
 	app.use('/webclient', express.static(path.join(__dirname, 'webclient')));
-	
-	// add node_moduples for webclient
-	var nmPath = path.join(__dirname, 'webclient/node_modules');
-	try{
-		fs.accessSync(nmPath, fs.F_OK);
-	}catch(e){
-		console.log('The node_modules under ./webclient is not accessble. So, use one under the Web client module path.');
-		nmPath = path.join(__dirname, webClientModulePath + '/node_modules');
-	}
-	app.use('/webclient/node_modules', express.static(nmPath));
 }else{
 	console.log('Settig up the webclient for NON-DEVELOPMENT mode...');
+	webClientTop = path.join(__dirname, webClientModulePath + '/dist/index.html');
+	app.use('/webclient', express.static(path.join(__dirname, webClientModulePath + '/dist')));
 	app.use('/webclient', express.static(path.join(__dirname, webClientModulePath)));
 }
-app.get('/webclient/map*', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
-app.get('/webclient/carStatus*', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
-app.get('/webclient/alert*', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
-app.get('/webclient/users*', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
-app.get('/webclient/vehicle*', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
+app.get('/webclient/map*', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/carStatus*', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/alert*', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/users*', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/vehicle*', function (req, res) { res.status(200).sendFile(webClientTop); });
 
 // development only
 if ('development' === app.get('env')) {

@@ -20,12 +20,17 @@
 angular.module('htmlClient')
 .factory('virtualGeoLocation', function($q, $interval, $http, mobileClientService) {
     var service = {
+    	driving: false,
     	tripRouteIndex: 0,
     	tripRoute: null,
     	prevLoc: {lat:48.134994,lon:11.671026,speed:0,init:true},
+    	destination: null,
     	
     	watchPosition: function(callback){
-    		this._resetRoute();
+    		if(!this.tripRoute) {
+    			this._resetRoute();
+    		}
+    		this.driving = true;
     		var self = this;
     		return $interval(function(){
     			self.getCurrentPosition(callback);
@@ -33,10 +38,10 @@ angular.module('htmlClient')
     	},
     	clearWatch: function(watchId){
 			$interval.cancel(watchId);
-			this.tripRoute = null;
+    		this.driving = false;
     	},
-    	setCurrentPosition: function(loc){
-    		if(this.tripRoute){
+    	setCurrentPosition: function(loc /* lat, lon */, donotResetRoute){
+    		if(this.driving){
     			// under driving
     			return;
     		}
@@ -44,6 +49,18 @@ angular.module('htmlClient')
     		if(isNaN(this.prevLoc.speed)){
     			this.prevLoc.speed = 0;
     		}
+    		return donotResetRoute ? null : this._resetRoute();
+    	},
+    	setDestinationPosition: function(loc){
+    		if(this.driving){
+    			// under driving
+    			return;
+    		}
+    		this.destination = loc;
+    		return this._resetRoute();
+    	},
+    	getDestination: function() {
+    		return this.destination;
     	},
     	getCurrentPosition: function(callback){
     		var p = this._getCurrentPosition();
@@ -61,7 +78,7 @@ angular.module('htmlClient')
 	    		if(navigator.geolocation){
 		    		navigator.geolocation.getCurrentPosition(function(position){
 		    			var c = position.coords;
-		    			self.setCurrentPosition({lat:c.latitude, lon:c.longitude, speed: c.speed});
+		    			self.setCurrentPosition({lat:c.latitude, lon:c.longitude, speed: c.speed}, true);
 		    			callback(position);
 		    		});
 		    	}else{
@@ -69,19 +86,28 @@ angular.module('htmlClient')
 		    	}
     		}
     	},
-    	_resetRoute:function(){
+    	_resetRoute:function(retryCount){
+    		var retryCount = retryCount || 0;
+    		var deferred = $q.defer();
 			var self=this;
 			// select random location in about 10km from the current location
 			var ddist = (Math.random()/2 + 0.5) * 0.15 / 2;
 			var dtheta = 2 * Math.PI * Math.random();
 			var slat = this.prevLoc.lat;
 			var slng = this.prevLoc.lon;
-			var dlat = +slat + ddist * Math.sin(dtheta);
-			var dlng = +slng + ddist * Math.cos(dtheta);
+			var dlat = 0;
+			var dlng = 0;
+			if(this.destination){
+				dlat = this.destination.lat;
+				dlng = this.destination.lon;
+			}else{
+				dlat = +slat + ddist * Math.sin(dtheta);
+				dlng = +slng + ddist * Math.cos(dtheta);
+			}
 
 			$http(mobileClientService.makeRequestOption({
 				method: "GET",
-				url: "/user/routesearch?orig_latitude=" + slat + "&orig_longitude=" + slng + "&target_latitude=" + dlat + "&target_longitude=" + dlng
+				url: "/user/routesearch?orig_latitude=" + slat + "&orig_longitude=" + slng + "&target_latitude=" + dlat + "&target_longitude=" + dlng + "&option=avoid_event"
 			})).success(function(data, status){
 				var routeArray = [];
 				data.link_shapes.forEach(function(shapes){
@@ -94,10 +120,21 @@ angular.module('htmlClient')
 					self.tripRouteIndex = 0;
 					self.tripRoute = routeArray;
 					self.prevLoc = routeArray[0];
+					deferred.resolve(self.tripRoute);
+					return;
+				}else if(retryCount++ < 3){
+					console.log("failed to search route. retry[" + retryCount + "]");
+					return self._resetRoute(retryCount).then(function(result){
+						deferred.resolve(self.tripRoute);
+					});
 				}
-			}).error(function(error, status){
 				console.error("Cannot get route for simulation");
+				deferred.reject();
+			}).error(function(error, status){
+				console.error("Error[" + statu + "] in route search: " + error);
+				deferred.reject();
 			});
+			return deferred.promise;
     	},
     	_getCurrentPosition(){
 			if(!this.tripRoute || this.tripRoute.length < 2){

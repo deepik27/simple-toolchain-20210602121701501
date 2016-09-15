@@ -67,7 +67,7 @@ export class AppComponent {
                 document.getElementById(el.rel).querySelector('.em-Modal-Content').classList.add('em-Modal-Content-show');
                 document.getElementById(el.rel).querySelector('.em-Modal-Close').classList.add('em-Modal-Close-show');
 
-                var close = function(event) {
+                var close = function(event?) {
                     if (event) {
                         event.preventDefault();
                     }
@@ -82,7 +82,7 @@ export class AppComponent {
                     document.querySelector('.content').classList.remove('blur');
                 };
 
-                document.onkeydown = function(event) {
+                document.onkeydown = function(event: any) {
                     event = event || window.event;
                     if (event.keyCode == 27) {
                         close();

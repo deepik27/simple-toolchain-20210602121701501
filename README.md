@@ -59,6 +59,7 @@ To do this, you can either use the _Deploy to Bluemix_ button for an automated d
 
   ```
   $ npm run tsc
+  $ npm run gulp
   $ cd ..
   ```
 
@@ -81,25 +82,37 @@ To do this, you can either use the _Deploy to Bluemix_ button for an automated d
   $ cf create-service cloudantNoSQLDB Shared FleetCloudantDB
   ```
 
-11 Push the app to Bluemix.
+11 Push the app to Bluemix. You need to perform additional steps when it is deployed, so you must add the option --no-start argument.
   ```
-  $ cf push
+  $ cf push --no-start
   ```
 
 You now have your very own instance of the IoT for Automotive Starter app on Bluemix.  
 
-## Confirm the app health
-1. Open the [Bluemix dashboard][bluemix_dashboard_url] in your browser.
+## Before using the app
+Before using the IoT for Automotive Starter app, you need to set up services and install a mobile app.
 
-2. Start the app if the app is not running.
+### Activate IBM IoT for Automotive service  
+Follow the steps below to make the IBM IoT for Automotive service ready for use.
 
-Congratulations! You are ready to use your own instance of IoT for Automotive Starter app now. Open `http://<host>.mybluemix.net` in your browser and follow the instructions in the top page to connect your mobile app to the IoT for Automotive Starter app.
+1. Make sure that the app is not running on Bluemix.
+
+2. Open the [Bluemix dashboard][bluemix_dashboard_url] in your browser.
+
+3. Open the IBM IoT for Automotive service and wait for a few seconds until credentials show up.
 
 ### Default user name and the password
 
 To protect your app instance, access to the app needs user authentication. The default user name is `starter`, and the password is `Starter4Iot`.
 
 You may change the user name and the password by setting `APP_USER` and `APP_PASSWORD` environment variables. You may also remove the authentication by specifying `none` to the both environment variables.
+
+## Start the app
+1. Open the [Bluemix dashboard][bluemix_dashboard_url] in your browser.
+
+2. Start the app.
+
+Congratulations! You are ready to use your own instance of IoT for Automotive Starter app now. Open `http://<host>.mybluemix.net` in your browser and follow the instructions in the top page to connect your mobile app to the IoT for Automotive Starter app.
 
 ## Usage
 
