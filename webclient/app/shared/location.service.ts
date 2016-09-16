@@ -10,11 +10,11 @@ export class LocationService {
   //   - the default zoom value is 15
   //
   areas: MapArea[] = [
-    {id: 'vegas1'  , name: 'MGM Grand, Las Vegas', center:  [-115.165571,36.102118]},
-    {id: 'vegas2' ,name: 'Mandalay Bay, Las Vegas', center:  [-115.176670,36.090754]},
-    {id: 'munch1'  ,name: 'Hellabrunn Zoo, Munich', center:  [11.55848,48.0993]},
-    {id: 'munch2'  ,name: 'Nymphenburg Palace, Munich', center:  [11.553583,48.176656]},
-    {id: 'tokyo1' ,name: 'Tokyo, Japan', center:  [139.731992,35.709026]},
+    {id: 'vegas1'  , name: 'MGM Grand, Las Vegas', center:  [-115.1664377,36.102894]},
+    {id: 'vegas2' ,name: 'Mandalay Bay, Las Vegas', center:  [-115.177541,36.093703]},
+    {id: 'munch1'  ,name: 'Hellabrunn Zoo, Munich', center:  [11.558721,48.100317]},
+    {id: 'munch2'  ,name: 'Nymphenburg Palace, Munich', center:  [11.555974,48.176261]},
+    {id: 'tokyo1', name: 'Tokyo, Japan', center: [139.731992, 35.709026] },
   ];
 
   //
