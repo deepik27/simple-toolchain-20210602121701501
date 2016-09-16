@@ -27,9 +27,7 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 		$http({
 			method: "GET",
 			url: "/user/simulatedVehicles"
-		}).success(function(data, status){
-			console.log(data);
-			
+		}).success(function(data, status){					
 			var vehicles = data.data; 
 			if(vehicles.length > 5){
 				vehicles = vehicles.slice(0, 5);

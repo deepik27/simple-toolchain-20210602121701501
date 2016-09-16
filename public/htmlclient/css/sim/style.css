@@ -257,6 +257,10 @@ header .userImg img {
     height: 35px;
 }
 
+header a.em-Modal-Call {
+    color: #fff;
+}
+
 
 /* === 3. Content === */
 
@@ -422,6 +426,24 @@ input.vehicleDataValue {
   -webkit-transform:scale3d(0.75, 0.75, 0.75);
   -moz-transform:scale3d(0.75, 0.75, 0.75);
   transform:scale3d(0.75, 0.75, 0.75);
+}
+
+/* === 13. General Media Queries === */
+
+@media (max-width: 767px) {
+    .medium-show {
+        display: table;
+    }
+
+    .medium-hide {
+        display: none;
+    }
+}
+
+@media (min-width: 768px) {
+    .large-hide {
+        display: none;
+    }
 }
 
 /* === 11. Grid System === */

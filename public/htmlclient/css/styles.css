@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import url('icons.css');
+
 header {
     position: fixed;
     z-index: 1000;
