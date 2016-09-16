@@ -56,6 +56,28 @@
     "drive": "FF"
   },
   {
+    "makeModel": "Simulated Car",
+    "year": 2010,
+    "mileage": 80000,
+    "stars": 4,
+    "hourlyRate": 25,
+    "dailyRate": 60,
+    "thumbnailURL": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Isuzu_N-Series_%28Elf%29.jpg/280px-Isuzu_N-Series_%28Elf%29.jpg",
+    "type": "Truck",
+    "drive": "4WD"
+  },
+  {
+    "makeModel": "Simulated Car",
+    "year": 2009,
+    "mileage": 70000,
+    "stars": 3,
+    "hourlyRate": 30,
+    "dailyRate": 70,
+    "thumbnailURL": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/1995_Mazda_T3500_2-door_truck_%282009-06-07%29.jpg/264px-1995_Mazda_T3500_2-door_truck_%282009-06-07%29.jpg",
+    "type": "Truck",
+    "drive": "4WD"
+  },
+  {
     "makeModel": "BMW Z4",
     "year": 2004,
     "mileage": 72000,
