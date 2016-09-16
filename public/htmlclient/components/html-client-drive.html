@@ -1,21 +1,20 @@
 <div class="html-client-drive">
-	<div class="column-8-med">
-		<h4>Define All Simulation Data: </h4>
+	<h4>Define All Simulation Data: </h4>
 
-		<div class="alignRight marginTop">
-			<h5 class="floatLeft">Vehicle Data</h5>
-			<select ng-model="vehicleDataName" ng-init="vehicleDataName = null"  ng-change="updateVehicleDataName()">
-				<option value="engineTemp">Engine Temperature</option>
-				<option value="fuel">Fuel Level</option>
-			</select>
-		</div>
-
-		<div class="alignRight">
-			<input ng-disabled="!vehicleDataName" placeholder="Value" ng-model="vehicleDataValue" class="vehicleDataValue" ng-change="updateVehicleDataValue()" />
-		</div>
-
-		<h5 class="marginTop">Location</h5>
+	<div class="alignRight marginTop">
+		<h5 class="floatLeft">Vehicle Data</h5>
+		<select ng-model="vehicleDataName" ng-init="vehicleDataName = null"  ng-change="updateVehicleDataName()">
+			<option value="engineTemp">Engine Temperature</option>
+			<option value="fuel">Fuel Level</option>
+		</select>
 	</div>
+
+	<div class="alignRight">
+		<input ng-disabled="!vehicleDataName" placeholder="Value" ng-model="vehicleDataValue" class="vehicleDataValue" ng-change="updateVehicleDataValue()" />
+	</div>
+
+	<h5 class="marginTop">Location</h5>
+	
 	<div id="locationMap" class="locationMap">
 	 <button class="button mapConnect" ng-disabled="requestSending" ng-show="!connectOnStartup" ng-click="onCurrentLocation()">{{isConnected?"Disconnect":"Connect"}}</button>
 	 <button class="button mapCurrentLocation" ng-show="!traceCurrentLocation" ng-click="onCurrentLocation()">Current Location</button>

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@import url('icons.css');
-
 header {
     position: fixed;
     z-index: 1000;

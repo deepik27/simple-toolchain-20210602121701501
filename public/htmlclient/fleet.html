@@ -43,7 +43,7 @@
     <header>
         <div class="container noTopPadding">
             <div class="floatLeft productTitle">
-                <a ui-sref="overview">IoT for Automotive - <strong>Fleet Management Simulator</strong></a>
+                <a ui-sref="overview">IoT for Automotive<strong class="medium-hide"> - Fleet Management Simulator</strong></a>
             </div>
             
             <div class="floatRight">
@@ -72,10 +72,11 @@
                 </li>
             </ul>
         </aside>
-		<div class="mainContent row">
+		<div class="container-50 noTopPadding container-30-right mainContent row">
 			<div class="column-4-med" ui-view="vehicle"></div>
-			<div class="column-8-med" ng-repeat="vehicle in vehicles track by $index">
-				<iframe ng-src="{{vehicle.url}}" style="display:{{vehicle.display}}" width="600" height="650" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" ></iframe>
+			<div class="column-8-med" ng-repeat="vehicle in vehicles track by $index" style="display: {{vehicle.display}};">
+                {{vehicle.display}}
+				<iframe ng-src="{{vehicle.url}}" style="width: 100%; min-height: 600px;" width="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" ></iframe>
 			</div>
 		</div>        
 	</div>
