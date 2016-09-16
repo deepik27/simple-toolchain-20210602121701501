@@ -89,7 +89,7 @@ angular.module('htmlClient')
     	
     	// find a random location in about 5km from the specified location
     	_getDestLoc: function(slat, slng){
-			var ddist = (Math.random()/2 + 0.5) * 0.03 / 2;
+			var ddist = (Math.random()/2 + 0.5) * 0.025 / 2;
 			var dtheta = 2 * Math.PI * Math.random();
 			var dlat = 0;
 			var dlng = 0;
@@ -114,6 +114,9 @@ angular.module('htmlClient')
 				var dest2 = self._getDestLoc(slat, slng);
 				if(this.destination){
 					// if the destination specified, just trip from source to the destination
+					self.tripRouteIndex = 0;
+					self.tripRoute = routeArray1;
+					self.prevLoc = routeArray1[0];
 					deferred.resolve(totalRoute1);
 				}else{
 					// find a trip route with 3 positions (source -> destination1 -> destination2 -> source)
@@ -153,7 +156,8 @@ angular.module('htmlClient')
 				if(routeArray.length >= 2){
 					deferred.resolve(routeArray);
 					return;
-				}else if(retryCount++ < 3){
+				}else if(retryCount++ < 5){
+					// retry 5 times
 					console.log("failed to search route. retry[" + retryCount + "]");
 					return self._findRoute(retryCount, slat, slng, dlat, dlng).then(function(result){
 						deferred.resolve(result);
