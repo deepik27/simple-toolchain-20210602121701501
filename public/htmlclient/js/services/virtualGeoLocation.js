@@ -86,15 +86,11 @@ angular.module('htmlClient')
 		    	}
     		}
     	},
-    	_resetRoute:function(retryCount){
-    		var retryCount = retryCount || 0;
-    		var deferred = $q.defer();
-			var self=this;
-			// select random location in about 10km from the current location
-			var ddist = (Math.random()/2 + 0.5) * 0.15 / 2;
+    	
+    	// find a random location in about 5km from the specified location
+    	_getDestLoc: function(slat, slng){
+			var ddist = (Math.random()/2 + 0.5) * 0.03 / 2;
 			var dtheta = 2 * Math.PI * Math.random();
-			var slat = this.prevLoc.lat;
-			var slng = this.prevLoc.lon;
 			var dlat = 0;
 			var dlng = 0;
 			if(this.destination){
@@ -104,6 +100,44 @@ angular.module('htmlClient')
 				dlat = +slat + ddist * Math.sin(dtheta);
 				dlng = +slng + ddist * Math.cos(dtheta);
 			}
+			return {lat: dlat, lng: dlng};
+		},
+		
+		// reset trip route
+		_resetRoute:function(){
+			var deferred = $q.defer();
+			var slat = this.prevLoc.lat;
+			var slng = this.prevLoc.lon;
+			var dest = this._getDestLoc(slat, slng);
+			var self = this;
+			this._findRoute(0, slat, slng, dest.lat, dest.lng).then(function(routeArray1){
+				var dest2 = self._getDestLoc(slat, slng);
+				if(this.destination){
+					// if the destination specified, just trip from source to the destination
+					deferred.resolve(totalRoute1);
+				}else{
+					// find a trip route with 3 positions (source -> destination1 -> destination2 -> source)
+					self._findRoute(0, dest.lat, dest.lng, dest2.lat, dest2.lng).then(function(routeArray2){
+						self._findRoute(0, dest2.lat, dest2.lng, slat, slng).then(function(routeArray3){
+							var totalRoute = routeArray1.concat(routeArray2, routeArray3);
+							self.tripRouteIndex = 0;
+							self.tripRoute = totalRoute;
+							self.prevLoc = totalRoute[0];
+							deferred.resolve(totalRoute);
+						});
+					});
+				}
+    		})["catch"](function(error){
+    			deferred.reject(error);
+    		});
+    		return deferred.promise;
+    	},
+    	
+    	// find a route from a specific location to a specific location
+    	_findRoute:function(retryCount, slat, slng, dlat, dlng){
+    		var retryCount = retryCount || 0;
+    		var deferred = $q.defer();
+			var self=this;
 
 			$http(mobileClientService.makeRequestOption({
 				method: "GET",
@@ -117,15 +151,12 @@ angular.module('htmlClient')
 					});
 				});
 				if(routeArray.length >= 2){
-					self.tripRouteIndex = 0;
-					self.tripRoute = routeArray;
-					self.prevLoc = routeArray[0];
-					deferred.resolve(self.tripRoute);
+					deferred.resolve(routeArray);
 					return;
 				}else if(retryCount++ < 3){
 					console.log("failed to search route. retry[" + retryCount + "]");
-					return self._resetRoute(retryCount).then(function(result){
-						deferred.resolve(self.tripRoute);
+					return self._findRoute(retryCount, slat, slng, dlat, dlng).then(function(result){
+						deferred.resolve(result);
 					});
 				}
 				console.error("Cannot get route for simulation");
@@ -136,6 +167,7 @@ angular.module('htmlClient')
 			});
 			return deferred.promise;
     	},
+    	
     	_getCurrentPosition(){
 			if(!this.tripRoute || this.tripRoute.length < 2){
 				return this.prevLoc;
@@ -164,8 +196,9 @@ angular.module('htmlClient')
 			// keep the previous info
 			this.prevLoc = loc;
 
-			if(this.tripRouteIndex < this.tripRoute.length-1){
-    			this.tripRouteIndex++;
+			this.tripRouteIndex++;
+			if(this.tripRouteIndex >= this.tripRoute.length){
+				this.tripRouteIndex = 0;
 			}
 			return loc;
     	},
