@@ -72,11 +72,12 @@
                 </li>
             </ul>
         </aside>
-		<div ui-view="vehicle"></div>
-        
-		<div ng-repeat="vehicle in vehicles track by $index">
-			<iframe ng-src="{{vehicle.url}}" style="display:{{vehicle.display}}" width="600" height="650" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" ></iframe>
-		</div>
-    </div>
+		<div class="mainContent row">
+			<div class="column-4-med" ui-view="vehicle"></div>
+			<div class="column-8-med" ng-repeat="vehicle in vehicles track by $index">
+				<iframe ng-src="{{vehicle.url}}" style="display:{{vehicle.display}}" width="600" height="650" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" ></iframe>
+			</div>
+		</div>        
+	</div>
 
 <script src="js/simRouter.js"></script>
