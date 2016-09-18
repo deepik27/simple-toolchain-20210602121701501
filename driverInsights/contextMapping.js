@@ -37,47 +37,53 @@ var contextMapping = {
 		throw new Exception("!!! no provided credentials for DriverInsights. using shared one !!!");
 	}(),
 	
+	_addAuthOption: function(config, options) {
+		if (config.username && config.password) {
+			return _.extend(options, {
+				rejectUnauthorized: false,
+				auth: {
+					user: config.username,
+					pass: config.password,
+					sendImmediately: true
+				}
+			});
+		}
+		return options;
+	},
+	
 	/*
 	 * Get options for an HTTP request
 	 */
 	_getRequestOptions: function(path, queries, base){
 		var qps = queries ? _.clone(queries) : {};
-		qps.tenant_id = this.contextMappingConfig.tenant_id;
+		if (this.contextMappingConfig.tenant_id) {
+			qps.tenant_id = this.contextMappingConfig.tenant_id;
+		}
 		var qs = Object.keys(qps).map(function(k){
 			return k + '=' + encodeURIComponent(qps[k].toString());
 		}).join('&');
-		return _.extend(base || {}, {
-				url: this.contextMappingConfig.baseURL + path + (qs ? ('?' + qs) : ''),
-				rejectUnauthorized: false,
-				auth: {
-					user: this.contextMappingConfig.username,
-					pass: this.contextMappingConfig.password,
-					sendImmediately: true
-				}
-		});
+		return this._addAuthOption(this.contextMappingConfig, _.extend(base || {}, {
+				url: this.contextMappingConfig.baseURL + path + (qs ? ('?' + qs) : '')
+		}));
 	},
 
 	/**
 	 * Async get route from (orig_lat, orig_lon) to (dest lat, dest_lon).
 	 */
-	routeSearch: function(orig_lat, orig_lon, dest_lat, dest_lon){
+	routeSearch: function(orig_lat, orig_lon, dest_lat, dest_lon, option){
 		var deferred = Q.defer();
 
-		var options = {
+		var tenant_id = this.contextMappingConfig.tenant_id;
+		var options = this._addAuthOption(this.contextMappingConfig, {
 				url: this.contextMappingConfig.baseURL + '/mapservice/routesearch' + 
-					'?tenant_id=' + this.contextMappingConfig.tenant_id + 
-					'&orig_heading=0&dest_heading=0' + 
+					'?orig_heading=0&dest_heading=0' +
 					'&orig_latitude=' + orig_lat.toString() +
 					'&orig_longitude=' + orig_lon.toString() +
 					'&dest_latitude=' + dest_lat.toString() +
-					'&dest_longitude=' + dest_lon.toString(),
-				rejectUnauthorized: false,
-				'auth': {
-					'user': this.contextMappingConfig.username,
-					'pass': this.contextMappingConfig.password,
-					'sendImmediately': true
-				}
-		};
+					'&dest_longitude=' + dest_lon.toString() +
+					(option ? ('&option=' + option) : '') +
+					(tenant_id ? ('&tenant_id=' + tenant_id) : '')
+		});
 		debug("calling routesearch URL: " + options.url);
 		request(options, function (error, response, body) {
 			if(error){
@@ -117,21 +123,16 @@ var contextMapping = {
 	 */
 	matchMapRaw: function(lat, lon, errorOnErrorResponse){
 		var deferred = Q.defer();
-		
-		var options = {
+
+		var tenant_id = this.contextMappingConfig.tenant_id;
+		var options = this._addAuthOption(this.contextMappingConfig, {
 				url: this.contextMappingConfig.baseURL + '/mapservice/map/matching' +
-						'?tenant_id=' + this.contextMappingConfig.tenant_id + 
-						'&latitude=' + lat.toString() + 
-						'&longitude=' + lon.toString(),
-				rejectUnauthorized: false,
-				'auth': {
-					'user': this.contextMappingConfig.username,
-					'pass': this.contextMappingConfig.password,
-					'sendImmediately': true
-				},
+						'?latitude=' + lat.toString() + 
+						'&longitude=' + lon.toString() +
+						(tenant_id ? ('&tenant_id=' + tenant_id) : ''),
 				pool: contextMapping._matchMapPool,
 				agentOptions: contextMapping._matchMapAgentOptions,
-		};
+		});
 		debug("calling map matching URL: " + options.url);
 		request(options, function (error, response, body) {
 			if (!error && (!errorOnErrorResponse || response.statusCode == 200)) {
@@ -215,17 +216,12 @@ var contextMapping = {
 		}
 		
 		var deferred = Q.defer();
-		var options = {
+		var tenant_id = this.contextMappingConfig.tenant_id;
+		var options = this._addAuthOption(this.contextMappingConfig, {
 			url: this.contextMappingConfig.baseURL + "/mapservice/link" +
-				"?tenant_id=" + this.contextMappingConfig.tenant_id +
-				"&link_id=" + link_id,
-			rejectUnauthorized: false,
-			auth: {
-				user: this.contextMappingConfig.username,
-				pass: this.contextMappingConfig.password,
-				sendImmediately: true
-			}
-		};
+				"?link_id=" + link_id +
+				(tenant_id ? ('&tenant_id=' + tenant_id) : '')
+		});
 		var this_ = this;
 		request(options, function(error, response, body){
 			if(!error){
@@ -271,15 +267,15 @@ var contextMapping = {
 		});
 		debug('Creating a new event: ', options);
 		request(options, function(error, response, body){
-			if(!error || (response && response.statusCode == 200)){
+			if(response && response.statusCode < 300) {
 				debug('   Event created: ', body);
 				try{
-					return deferred.resolve(JSON.parse(body));
+					return deferred.resolve(body);
 				}catch(e){
 					console.error("error on parsing createEvent result\n url: " + options.url + "\n body: " + body);
 					return deferred.reject(e);
 				}
-			}else{
+			}else {
 				return deferred.reject(error || response.toJSON());
 			}
 		});
@@ -296,7 +292,7 @@ var contextMapping = {
 		});
 		debug('Deleting an event: ', event_id);
 		request(options, function(error, response, body){
-			if(!error || response.statusCode == 200){
+			if(response && response.statusCode < 300) {
 				debug('   Event created: ', response);
 				return deferred.resolve(event_id);
 			}else{
@@ -326,7 +322,32 @@ var contextMapping = {
 		
 		var options = contextMapping._getRequestOptions('/eventservice/event/query', params);
 		request(options, function(error, response, body){
-			if(!error && response.statusCode == 200){
+			if(response && response.statusCode < 300) {
+				try{
+					var responseJson = JSON.parse(body);
+					deferred.resolve(responseJson);
+				}catch(e){
+					deferred.reject(e);
+				}
+			}else{
+				return deferred.reject(error || response.toJSON());
+			}
+		});
+		return deferred.promise;
+	},
+	/**
+	 * Query events in the Context Mapping service
+	 * https://developer.ibm.com/api/view/id-194:title-IBM__Watson_IoT_Context_Mapping#GET/eventservice/event/query
+	 * @param min_lat, min_lng, max_lat, max_lng: areas to query
+	 * @param event_type: optional
+	 * @param status: optional
+	 * @returns deferred.
+	 */
+	getEvent: function(event_id){
+		var deferred = Q.defer();
+		var options = contextMapping._getRequestOptions('/eventservice/event', {event_id: event_id});
+		request(options, function(error, response, body){
+			if(response && response.statusCode < 300) {
 				try{
 					var responseJson = JSON.parse(body);
 					deferred.resolve(responseJson);
@@ -376,7 +397,7 @@ var contextMapping = {
 		if (num_rec_in_page) params.num_rec_in_page = num_rec_in_page;
 		var options = contextMapping._getRequestOptions('/eventservice/event/allevents', params);
 		request(options, function(error, response, body){
-			if(!error && response.statusCode == 200){
+			if(response && response.statusCode < 300) {
 				try{
 					var responseJson = JSON.parse(body);
 					debug('  result getAllEventsRaw: # of events is ' + responseJson.events.length);

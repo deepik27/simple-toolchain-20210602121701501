@@ -102,20 +102,26 @@ _.extend(driverInsightsAnalyze, {
 
 		var config = this.driverInsightsConfig;
 		var api = "/jobcontrol/job";
+		var url = config.baseURL+api;
+		if (config.tenant_id) {
+			url += ('?tenant_id='+config.tenant_id);
+		}
 		var body = JSON.stringify({
 			from: from,
 			to: to
 		});
 		var options = {
 			method: 'POST',
-			url: config.baseURL+api+'?tenant_id='+config.tenant_id,
+			url: url,
 			headers: {
 				'Content-Type':'application/json; charset=UTF-8',
 				"Content-Length": Buffer.byteLength(body)
 			},
 			body: body
 		};
-		_.extend(options, this.authOptions);
+		if (config.username && config.password) {
+			_.extend(options, this.authOptions);
+		}
 		console.log("Call SendJobRequest: " + JSON.stringify(options));
 		var self = this;
 		request(options, function(error, response, body){
@@ -145,15 +151,24 @@ _.extend(driverInsightsAnalyze, {
 		var deferred = Q.defer();
 		
 		var config = this.driverInsightsConfig;
-		var url = config.baseURL+'/drbresult/tripSummaryList?tenant_id='+config.tenant_id;
+		var url = config.baseURL+'/drbresult/tripSummaryList';
+		var queryParams = [];
+		if (config.tenant_id) {
+			queryParams.push('tenant_id='+config.tenant_id);
+		}
 		if(trip_id){
-			url = url + '&trip_id=' + trip_id;
+			queryParams.push('trip_id=' + trip_id);
+		}
+		if (queryParams.length > 0) {
+			url += ('?' + queryParams.join('&'));
 		}
 		var options = {
 			method: 'GET',
 			url: url
 		};
-		_.extend(options, this.authOptions);
+		if (config.username && config.password) {
+			_.extend(options, this.authOptions);
+		}
 		request(options, function(error, response, body){
 			if (!error && response.statusCode === 200) {
 				var value = JSON.parse(body);
@@ -254,11 +269,23 @@ _.extend(driverInsightsAnalyze, {
 			
 			var config = this.driverInsightsConfig;
 			var api = "/drbresult/trip";
+			var url = config.baseURL+api;
+			var queryParams = [];
+			if (config.tenant_id) {
+				queryParams.push('tenant_id='+config.tenant_id);
+			}
+			queryParams.push('trip_uuid='+tripuuid);
+			if (queryParams.length > 0) {
+				url += ('?' + queryParams.join('&'));
+			}
+
 			var options = {
 				method: 'GET',
-				url: config.baseURL+api+'?tenant_id='+config.tenant_id+'&trip_uuid='+tripuuid
+				url: url
 			};
-			_.extend(options, this.authOptions);
+			if (config.username && config.password) {
+				_.extend(options, this.authOptions);
+			}
 			request(options, function(error, response, body){
 				if (!error && response.statusCode === 200) {
 					deferred.resolve(JSON.parse(body));
@@ -628,13 +655,19 @@ _.extend(driverInsightsAnalyze, {
 			return;
 		}
 		var config = this.driverInsightsConfig;
-		var uri = config.baseURL + api + "?tenant_id=" + config.tenant_id;
+		var uri = config.baseURL + api;
+		var prefix = '?';
+		if (config.tenant_id) {
+			uri += ('?tenant_id='+config.tenant_id);
+			prefix = '&';
+		}
+
 		if(uriParam === null || uriParam === undefined){
 			//do nothing
 		}else if(typeof uriParam === "string"){
 			uri += uriParam; // "&key1=value1&key2=value2..."
 		}else if(typeof uriParam === "object"){
-			uri += "&" + Object.keys(uriParam).map(function(key){return key + "=" + uriParam[key];}).join("&");
+			uri += prefix + Object.keys(uriParam).map(function(key){return key + "=" + uriParam[key];}).join("&");
 		}
 		var options = {
 			method: method,
@@ -643,7 +676,9 @@ _.extend(driverInsightsAnalyze, {
 				"Content-Type": "application/json; charset=UTF-8"
 			}
 		};
-		_.extend(options, this.authOptions);
+		if (config.username && config.password) {
+			_.extend(options, this.authOptions);
+		}
 		if(body){
 			options.body = JSON.stringify(body);
 			options.headers["Content-Length"] = Buffer.byteLength(options.body);

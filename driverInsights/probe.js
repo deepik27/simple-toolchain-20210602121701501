@@ -54,9 +54,9 @@ _.extend(driverInsightsProbe, {
 		var vcapSvc = userVcapSvc.iotforautomotive || VCAP_SERVICES.iotforautomotive;
 		if (vcapSvc) {
 			var vdhCreds = vcapSvc[0].credentials;
-			var vdh = vdhCreds.vehicle_data_hub.length > 0 && vdhCreds.vehicle_data_hub[0];
+			var vdh = vdhCreds.vehicle_data_hub && vdhCreds.vehicle_data_hub.length > 0 && vdhCreds.vehicle_data_hub[0];
 			return {
-				baseURL: "https://" + vdh,
+				baseURL: vdh ? ("https://" + vdh) : (vdhCreds.api + "vehicle"),
 				tenant_id : vdhCreds.tenant_id,
 				username : vdhCreds.username,
 				password : vdhCreds.password
@@ -64,6 +64,20 @@ _.extend(driverInsightsProbe, {
 		}
 		throw new Exception("!!! no provided credentials for Vehicle Data Hub. using shared one !!!");
 	}(),
+	
+	_addAuthOption: function(config, options) {
+		if (config.username && config.password) {
+			return _.extend(options, {
+				rejectUnauthorized: false,
+				auth: {
+					user: config.username,
+					pass: config.password,
+					sendImmediately: true
+				}
+			});
+		}
+		return options;
+	},
 
 	sendRawData: function(carProbeData, callback) {
 		var deviceType = "User Own Device";
@@ -93,8 +107,10 @@ _.extend(driverInsightsProbe, {
 
 		Q.when(driverInsightsProbe.sendProbeData([payload], "sync"), function(events){
 			debug("events: " + events);
+			var affected_events = null;
 			if(events){
 				var _events = JSON.parse(events);
+				affected_events = _events;
 				_events.forEach(function(event){
 					driverInsightsAlert.addAlertFromEvent(event);
 				});
@@ -122,6 +138,11 @@ _.extend(driverInsightsProbe, {
 
 				// Process alert probe rule
 				driverInsightsAlert.evaluateAlertRule(payload);
+
+				// Add affected events to response
+				if (affected_events && affected_events.length > 0) {
+					payload.affected_events = affected_events;
+				}
 
 				// Insert trip routes
 				var trip_id = payload.trip_id;
@@ -162,21 +183,27 @@ _.extend(driverInsightsProbe, {
 		var self = this;
 		var node = this.vdhConfig;
 		var api = "/carProbe";
-		opparam = op === "sync" ? "&op=sync" : "";
 		
-		var options = {
+		var url = node.baseURL+api;
+		var queryParams = [];
+		if (node.tenant_id) {
+			queryParams.push('tenant_id='+node.tenant_id);
+		}
+		if(op === "sync"){
+			queryParams.push('op=sync');
+		}
+		if (queryParams.length > 0) {
+			url += ('?' + queryParams.join('&'));
+		}
+		
+		var options = this._addAuthOption(node, {
 				method: 'POST',
-				url: node.baseURL+api+'?tenant_id='+node.tenant_id+opparam,
+				url: url,
 				headers: {
 					'Content-Type':'application/json; charset=UTF-8'
-				},
-				rejectUnauthorized: false,
-				auth: {
-					user: node.username,
-					pass: node.password,
-					sendImmediately: true
-				},
-		};
+				}
+		});
+		
 		for (var index = 0, len = carProbeData.length; index < len; index++) {
 			options.body = JSON.stringify(carProbeData[index]);
 			options.headers["Content-Length"] = Buffer.byteLength(options.body);
@@ -202,24 +229,24 @@ _.extend(driverInsightsProbe, {
 		var deferred = Q.defer();
 		var node = this.vdhConfig;
 		var api = "/carProbe";
-		var options = {
+		var url = node.baseURL + api;
+		var prefix = '?';
+		if (node.tenant_id) {
+			url += ('?tenant_id=' + node.tenant_id);
+			prefix = '&';
+		}
+		var options = this._addAuthOption(node, {
 				method: "GET",
-				url: node.baseURL + api + "?tenant_id=" + node.tenant_id,
-				rejectUnauthorized: false,
-				auth: {
-					user: node.username,
-					pass: node.password,
-					sendImmediately: true
-				}
-		};
+				url: url
+		});
 		for(var i = 0; i < carProbeData.length; i++){
 			var probe = carProbeData[i];
-			options.url += ("&min_longitude=" + (probe.longitude-0.001) +
+			options.url += (prefix + "min_longitude=" + (probe.longitude-0.001) +
 							"&max_longitude=" + (probe.longitude+0.001) +
 							"&min_latitude=" + (probe.latitude-0.001) +
 							"&max_latitude=" + (probe.latitude+0.001)) +
 							"&mo_id=" + probe.mo_id,
-							"&driver_id=" + probe.driver_id;
+							"driver_id=" +probe.driver_id;
 			debug("getProbeData(url): " + options.url);
 			request(options, function(error, response, body){
 				if(!error && response.statusCode === 200){
@@ -284,19 +311,17 @@ _.extend(driverInsightsProbe, {
 		
 		var node = this.driverInsightsConfig;
 		var api = "/datastore/carProbe/dateList";
-		var options = {
+		var url = node.baseURL + api;
+		if (node.tenant_id) {
+			url += ("?tenant_id=" + node.tenant_id);
+		}
+		var options = this._addAuthOption(node, {
 				method: 'GET',
-				url: node.baseURL+api+'?tenant_id='+node.tenant_id,
+				url: url,
 				headers: {
 //					'Content-Type':'application/json; charset=UTF-8',
-				},
-				rejectUnauthorized: false,
-				auth: {
-					user: node.username,
-					pass: node.password,
-					sendImmediately: true
-				},
-		};
+				}
+		});
 		request(options, function(error, response, body){
 			if (!error && response.statusCode === 200) {
 				callback && callback(body);
@@ -305,6 +330,133 @@ _.extend(driverInsightsProbe, {
 				console.error('error: '+ body );
 				callback && callback("{ \"error(getCarProbeDataListAsDate)\": \"" + body + "\" }");
 				deferred.reject(error||body);
+			}
+		});
+		return deferred.promise;
+	},
+	/**
+	 * Create an event in the Context Mapping servie
+	 * https://developer.ibm.com/api/view/id-194:title-IBM__Watson_IoT_Context_Mapping#POST/eventservice/event
+	 * @param event: a JSON object w/ s_latitude, s_longitude, event_type properties. 
+	 * @returns deferred. successful result returns the event ID (integer).
+	 */
+	createEvent: function(event, op){
+		var node = this.vdhConfig;
+		var api = "/event";
+		
+		var url = node.baseURL+api;
+		var queryParams = [];
+		if (node.tenant_id) {
+			queryParams.push('tenant_id='+node.tenant_id);
+		}
+		if(op === "sync"){
+			queryParams.push('op=sync');
+		}
+		if (queryParams.length > 0) {
+			url += ('?' + queryParams.join('&'));
+		}
+		
+		var options = this._addAuthOption(node, {
+			method: 'POST',
+			url: url,
+			headers: {
+				'Content-Type':'application/json; charset=UTF-8'
+			}
+		});
+		
+		var body = {event: event};
+		options.body = JSON.stringify(body);
+		options.headers["Content-Length"] = Buffer.byteLength(options.body);
+
+		var deferred = Q.defer();
+		debug('Creating a new event: ', options);
+		request(options, function(error, response, body){
+			if(response && response.statusCode < 300) {
+				debug('   Event created: ', body);
+				try{
+					var responseJson = JSON.parse(body);
+					return deferred.resolve(responseJson.contents);
+				}catch(e){
+					console.error("error on parsing createEvent result\n url: " + options.url + "\n body: " + body);
+					return deferred.reject(e);
+				}
+			}else {
+				return deferred.reject(error || response.toJSON());
+			}
+		});
+		return deferred.promise;
+	},
+	/**
+	 * Get events in the VDH service
+	 * https://developer.ibm.com/api/view/id-194:title-IBM__Watson_IoT_Context_Mapping#GET/eventservice/event/query
+	 * @param min_lat, min_lng, max_lat, max_lng: areas to query
+	 * @param event_type: optional
+	 * @param status: optional
+	 * @returns deferred.
+	 */
+	getEvent: function(min_lat, min_lng, max_lat, max_lng, event_type, status){
+		var queryParams = [];
+		queryParams.push("process_type=get");
+		queryParams.push("min_latitude=" + min_lat);
+		queryParams.push("min_longitude=" + min_lng);
+		queryParams.push("max_latitude=" + max_lat);
+		queryParams.push("max_longitude=" + max_lng);
+		if (event_type) queryParams.push("event_type=" + event_type);
+		if (status) queryParams.push("status=" + status);
+		return this.getOrQueryEvent(queryParams);
+	},
+	/**
+	 * Query events in the VDH service
+	 * @param lat, lng, distance, hedding: areas to query
+	 * @param event_type: optional
+	 * @param status: optional
+	 * @returns deferred.
+	 */
+	queryEvent: function(lat, lng, distance, heading, event_type, status){
+		var queryParams = [];
+		queryParams.push("process_type=query");
+		queryParams.push("latitude=" + lat);
+		queryParams.push("longitude=" + lng);
+		queryParams.push("distance=" + distance);
+		queryParams.push("heading=" + heading);
+		if (event_type) queryParams.push("event_type=" + event_type);
+		if (status) queryParams.push("status=" + status);
+		return this.getOrQueryEvent(queryParams);
+	},
+	/**
+	 * Get or query events in the VDH service
+	 * @returns deferred.
+	 */
+	getOrQueryEvent: function(queryParams){
+		var node = this.vdhConfig;
+		var api = "/event";
+		var url = node.baseURL+api;
+		
+		queryParams = queryParams || [];
+		if (node.tenant_id) {
+			queryParams.push('tenant_id='+node.tenant_id);
+		}
+		if (queryParams.length > 0) {
+			url += ('?' + queryParams.join('&'));
+		}
+
+		var options = this._addAuthOption(node, {
+			method: 'GET',
+			url: url,
+			headers: {'Content-Type':'application/json; charset=UTF-8'}
+		});
+
+		var deferred = Q.defer();
+		request(options, function(error, response, body){
+			if(response && response.statusCode < 300) {
+				try{
+					var responseJson = JSON.parse(body);
+					deferred.resolve(responseJson.contents);
+				}catch(e){
+					deferred.reject(e);
+				}
+			}else{
+				return deferred.reject(error || response.toJSON());
 			}
 		});
 		return deferred.promise;

@@ -165,7 +165,7 @@ _.extend(tripRoutes, {
 	},
 
 	getTripsByDevice: function(deviceID, limit){
-		return this._searchTripsIndex({q:'deviceID:'+deviceID, sort: '-org_ts', limit:(limit||5)})
+		return this._searchTripsIndex({q:'deviceID:'+dbClient.escapeKey(deviceID), sort: '-org_ts', limit:(limit||5)})
 			.then(function(result){
 				return result.rows.map(function(row){ return row.fields; });
 			});

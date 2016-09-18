@@ -171,6 +171,41 @@ router["delete"]("/vendor/:vendor", authenticate, function(req, res){
 		return handleAssetError(res, err);
 	});
 });
+router.get("/eventtype", authenticate, function(req, res){
+	var params = null;
+	if (req.query.num_rec_in_page || req.query.num_page) {
+		params = {num_rec_in_page: req.query.num_rec_in_page||50, num_page: req.query.num_page||1};
+	}
+	Q.when(driverInsightsAsset.getEventTypeList(params), function(response){
+		res.send(response);
+	})["catch"](function(err){
+		return handleAssetError(res, err);
+	}).done();
+});
+router.get("/eventtype/:event_type", authenticate, function(req, res){
+	var id = req.params.event_type;
+	Q.when(driverInsightsAsset.getEventType(id), function(response){
+		res.send(response);
+	})["catch"](function(err){
+		return handleAssetError(res, err);
+	}).done();
+});
+router.put("/eventtype/:event_type", authenticate, function(req, res){
+	var id = req.params.event_type;
+	Q.when(driverInsightsAsset.updateEventType(id, req.body), function(response){
+		res.send(response);
+	})["catch"](function(err){
+		return handleAssetError(res, err);
+	}).done();
+});
+router["delete"]("/eventtype/:event_type", authenticate, function(req, res){
+	var id = req.params.event_type;
+	Q.when(driverInsightsAsset.deleteEventType(id), function(response){
+		res.send(response);
+	})["catch"](function(err){
+		return handleAssetError(res, err);
+	});
+});
 router.post("/rule", authenticate, function(req, res){
 	var rule = req.body && req.body.rule;
 	Q.when(driverInsightsAsset.addRule(rule), function(response){
@@ -193,6 +228,14 @@ router.get("/rule", authenticate, function(req, res){
 router.get("/rule/:rule_id", authenticate, function(req, res){
 	var rule_id = req.params.rule_id;
 	Q.when(driverInsightsAsset.getRule(rule_id), function(response){
+		res.send(response);
+	})["catch"](function(err){
+		return handleAssetError(res, err);
+	}).done();
+});
+router.put("/rule/:rule_id", authenticate, function(req, res){
+	var rule_id = req.params.rule_id;
+	Q.when(driverInsightsAsset.updateRule(rule_id, req.body), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);

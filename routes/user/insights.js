@@ -34,6 +34,14 @@ var dbClient = require('../../cloudantHelper.js');
 var debug = require('debug')('monitoring:cars');
 debug.log = console.log.bind(console);
 
+function handleAssetError(res, err) {
+	//{message: msg, error: error, response: response}
+	console.error('error: ' + JSON.stringify(err));
+	var status = (err && (err.status||err.statusCode)) || 500;
+	var message = err.message || (err.data && err.data.message) || err;
+	return res.status(status).send(message);
+}
+
 router.post('/probeData',  authenticate, function(req, res) {
 	try{
 		driverInsightsProbe.sendRawData(req.body, function(msg){
@@ -44,7 +52,7 @@ router.post('/probeData',  authenticate, function(req, res) {
 			}
 		});
 	}catch(error){
-		res.send(error);
+		handleAssetError(res, error);
 	}
 });
 
@@ -52,11 +60,7 @@ router.get('/probeData',  authenticate, function(req, res) {
 	driverInsightsProbe.getCarProbeDataListAsDate().then(function(msg){
 		res.send(msg);
 	})["catch"](function(error){
-		if (error.statusCode) {
-			res.status(error.statusCode).send(error);
-		} else {
-			res.send(error);
-		}
+		handleAssetError(res, error);
 	});
 });
 
@@ -115,9 +119,9 @@ router.get('/driverInsights', authenticate, function(req, res) {
 	getUserTrips(req).then(function(tripIdList){
 		driverInsightsAnalyze.getList(tripIdList).then(function(msg){
 			res.send(msg);
-		});
+		});	
 	})["catch"](function(error){
-		res.send(error);
+		handleAssetError(res, error);
 	});
 });
 
@@ -125,9 +129,9 @@ router.get('/driverInsights/statistics', authenticate, function(req, res) {
 	getUserTrips(req).then(function(tripIdList){
 		driverInsightsAnalyze.getStatistics(tripIdList).then(function(msg){
 			res.send(msg);
-		});
+		});	
 	})["catch"](function(error){
-		res.send(error);
+		handleAssetError(res, error);
 	});
 });
 
@@ -137,7 +141,7 @@ router.get('/driverInsights/behaviors', authenticate, function(req, res) {
 			res.send(msg);
 		});
 	})["catch"](function(error){
-		res.send(error);
+		handleAssetError(res, error);
 	});
 });
 
@@ -145,7 +149,7 @@ router.get('/driverInsights/:trip_uuid', authenticate, function(req, res) {
 	driverInsightsAnalyze.getDetail(req.params.trip_uuid).then(function(msg){
 		res.send(msg);
 	})["catch"](function(error){
-		res.send(error);
+		handleAssetError(res, error);
 	});
 });
 
@@ -153,7 +157,7 @@ router.get('/driverInsights/behaviors/latest', authenticate, function(req, res) 
 	driverInsightsAnalyze.getLatestBehavior().then(function(msg){
 		res.send(msg);
 	})["catch"](function(error){
-		res.send(error);
+		handleAssetError(res, error);
 	});
 });
 
@@ -161,7 +165,7 @@ router.get('/driverInsights/behaviors/:trip_uuid', authenticate, function(req, r
 	driverInsightsAnalyze.getBehavior(req.params.trip_uuid).then(function(msg){
 		res.send(msg);
 	})["catch"](function(error){
-		res.send(error);
+		handleAssetError(res, error);
 	});
 });
 
@@ -169,7 +173,7 @@ router.get("/driverInsights/triproutes/:trip_uuid", function(req, res){
 	driverInsightsTripRoutes.getTripRoute(req.params.trip_uuid).then(function(msg){
 		res.send(msg);
 	})["catch"](function(error){
-		res.send(error);
+		handleAssetError(res, error);
 	})
 });
 
@@ -177,7 +181,7 @@ router.get("/triproutes/:trip_id", function(req, res){
 	driverInsightsTripRoutes.getTripRouteById(req.params.trip_id).then(function(msg){
 		res.send(msg);
 	})["catch"](function(error){
-		res.send(error);
+		handleAssetError(res, error);
 	});
 });
 
@@ -187,11 +191,12 @@ router.get("/routesearch", function(req, res){
 		q.orig_latitude,
 		q.orig_longitude,
 		q.target_latitude,
-		q.target_longitude
+		q.target_longitude,
+		q.option
 	).then(function(msg){
 		res.send(msg);
 	})["catch"](function(error){
-		res.send(error);
+		handleAssetError(res, error);
 	});
 });
 
@@ -229,6 +234,47 @@ router.get("/alert", function(req, res){
 	}else if(extentAsArray.some(function(v){ return isNaN(v); })){
 		res.status(400).send('One or more of the parameters are undefined or not a number')
 	}
+});
+
+router.get("/event/query", function(req, res){
+	var q = req.query;
+	driverInsightsContextMapping.queryEvent(
+		q.min_latitude,
+		q.min_longitude,
+		q.max_latitude,
+		q.max_longitude,
+		q.event_type,
+		q.status
+	).then(function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
+
+router.get("/event", function(req, res){
+	var q = req.params.event_id;
+	driverInsightsContextMapping.getEvent(req.query.event_id).then(function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
+
+router.post("/event", function(req, res){
+	driverInsightsProbe.createEvent(req.body, "sync").then(function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
+
+router["delete"]("/event", function(req, res){
+	driverInsightsContextMapping.deleteEvent(req.query.event_id).then(function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
 });
 
 function getUserTrips(req){

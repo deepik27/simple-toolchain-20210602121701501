@@ -633,6 +633,33 @@ cloudantHelper.searchIndex = function(db, ddocName, indexName, opts){
 	return deferred.promise;
 }
 
+/* 
+ * The following characters require escaping if you want to search on them: + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
+ * Escape these with a preceding backslash character.
+ */
+cloudantHelper.escapeKey = function(key) {
+	return key.replace(/\\/g, '\\\\')
+				.replace(/\+/g, '\\+')
+				.replace(/\-/g, '\\-')
+				.replace(/&&/g, '\\&&')
+				.replace(/\|\|/g, '\\||')
+				.replace(/!/g, '\\!')
+				.replace(/\(/g, '\\(')
+				.replace(/\)/g, '\\)')
+				.replace(/\{/g, '\\{')
+				.replace(/\}/g, '\\}')
+				.replace(/\[/g, '\\[')
+				.replace(/\]/g, '\\]')
+				.replace(/\^/g, '\\^')
+				.replace(/"/g, '\\"')
+				.replace(/~/g, '\\~')
+				.replace(/\*/g, '\\*')
+				.replace(/\?/g, '\\?')
+				.replace(/:/g, '\\:')
+				.replace(/\//g, '\\/')
+				;
+}
+
 //create a new Cloudant connection and returns a deferred DB
 cloudantHelper.getDB = function(dbName, designDoc, indices){
 	return cloudantHelper.getDeferredDB(dbName, designDoc, indices).db;
