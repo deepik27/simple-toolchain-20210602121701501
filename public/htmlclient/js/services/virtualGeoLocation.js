@@ -172,7 +172,7 @@ angular.module('htmlClient')
 			return deferred.promise;
     	},
     	
-    	_getCurrentPosition(){
+    	_getCurrentPosition: function(){
 			if(!this.tripRoute || this.tripRoute.length < 2){
 				return this.prevLoc;
 			}
