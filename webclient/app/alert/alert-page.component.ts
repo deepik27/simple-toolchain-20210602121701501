@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Http, Request, Response } from '@angular/http';
-import { Router, RouteSegment, OnActivate } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 
 import { AlertListComponent } from './alert-list/alert-list.component';
 
@@ -8,21 +8,25 @@ import { AlertListComponent } from './alert-list/alert-list.component';
   moduleId: module.id,
   selector: 'fmdash-fleet-alert',
   templateUrl: 'alert-page.component.html',
-  directives: [AlertListComponent]
 })
 
-export class AlertPageComponent implements OnActivate {
+export class AlertPageComponent implements OnInit {
   private extent: number[];
   private filterProp = '';
   private filterValue = '';
   private includeClosed = true;
   private showInput = true;
 
-  constructor(private router: Router){
+  constructor(private route: ActivatedRoute){
   }
 
-  routerOnActivate(current: RouteSegment){
-    var extent: any = current.getParam('extent'); // extent is comma-separated list of min_lng, min_lat, max_lng, max_lat
+  ngOnInit(): void {
+    var extent: any, status: any;
+    this.route.params.forEach((params: Params) => {
+      extent = extent || params['extent'];// extent is comma-separated list of min_lng, min_lat, max_lng, max_lat
+      status = status || params['status'];
+    });
+
     if(extent){
       if(extent.length == 4){
         this.extent = extent;
@@ -38,7 +42,6 @@ export class AlertPageComponent implements OnActivate {
       this.extent = undefined;
     }
 
-    let status = current.getParam('status');
     if(status === 'critical'){
       this.filterProp = 'severity';
       this.filterValue = 'High'; // FIXME: tentative. "Critical|High" is expected

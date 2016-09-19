@@ -1,8 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ROUTER_PROVIDERS, Routes, ROUTER_DIRECTIVES, Router } from '@angular/router';
 
-import { CarStatusSummaryComponent } from './summary/car-status-summary.component';
-import { CarStatusComponent } from './car-status.component';
 import { CarStatusDataService } from './summary/car-status-data.service';
 import { LocationService, MapArea } from '../shared/location.service';
 
@@ -12,13 +9,8 @@ import { RealtimeDeviceDataProviderService } from '../shared/realtime-device-man
   moduleId: module.id,
   selector: 'fmdash-car-status-page',
   templateUrl: 'car-status-page.component.html',
-  directives: [ROUTER_DIRECTIVES],
   providers: [CarStatusDataService],
 })
-@Routes([
-  {path:'/',       component: CarStatusSummaryComponent},
-  {path:'/:mo_id', component: CarStatusComponent},
-])
 export class CarStatusPageComponent implements OnInit {
   regions: MapArea[];
   selectedRegion: MapArea;

@@ -1,9 +1,5 @@
 import { Component, Input, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { Http, Request, Response } from '@angular/http';
-import { ROUTER_DIRECTIVES } from '@angular/router';
-import { OrderByPipe } from '../../utils/order-by.pipe';
-import { MomentPipe } from '../../utils/moment.pipe';
-import { AreaSelectComponent } from '../../shared/area-select.component';
 
 @Component({
   moduleId: module.id,
@@ -14,13 +10,11 @@ import { AreaSelectComponent } from '../../shared/area-select.component';
     .firstRow {
       padding-left: 20px;
     }
-    
+
     .actionTD {
       padding: 0 20px;
     }
   `],
-  pipes: [OrderByPipe, MomentPipe],
-  directives: [AreaSelectComponent, ROUTER_DIRECTIVES]
 })
 
 export class AlertListComponent{

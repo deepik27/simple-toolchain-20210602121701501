@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, RouteSegment, OnActivate, ROUTER_DIRECTIVES } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
@@ -14,9 +14,8 @@ import * as _ from 'underscore';
   moduleId: module.id,
   selector: 'fmdash-car-status',
   templateUrl: 'car-status.component.html',
-  directives: [ROUTER_DIRECTIVES],
 })
-export class CarStatusComponent implements OnInit, OnActivate {
+export class CarStatusComponent implements OnInit {
   private mo_id: string;
   private moIdSubject = new Subject<string>();
   private proveDataSubscription;
@@ -25,7 +24,7 @@ export class CarStatusComponent implements OnInit, OnActivate {
   private probeData: any; // probe data to show
 
   constructor(
-    private router: Router,
+    private route: ActivatedRoute,
     private carStatusDataService: CarStatusDataService,
     private realtimeDataProviderService: RealtimeDeviceDataProviderService
   ){
@@ -52,7 +51,13 @@ export class CarStatusComponent implements OnInit, OnActivate {
             cardOverlay.style.opacity = '0';
         }
       });
-    this.moIdSubject.next(this.mo_id);
+
+    var mo_id: any;
+    this.route.params.forEach((params: Params) => {
+        mo_id = mo_id || params['mo_id'];
+     });
+    this.mo_id = <string>mo_id;
+    this.moIdSubject.next(mo_id);
 
     var style;
     function updateMeterStyle(probe) {
@@ -117,11 +122,5 @@ export class CarStatusComponent implements OnInit, OnActivate {
       this.proveDataSubscription.unsubscribe();
       this.proveDataSubscription = null;
     }
-  }
-
-  routerOnActivate(current: RouteSegment){
-    var mo_id: any = current.getParam('mo_id');
-    this.mo_id = <string>mo_id;
-    this.moIdSubject.next(mo_id);
   }
 }

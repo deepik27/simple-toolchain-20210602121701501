@@ -18,7 +18,7 @@
     <tbody>
   		<tr *ngFor="let device of devices; let i = index">
   			<td class="alignCenter">{{i + 1}}</td>
-  			<td class="alignCenter"><a [routerLink]="['/carStatus', '/'+device.deviceID]">{{device.vehicle?.serial_number || device.deviceID}}</a></td>
+  			<td class="alignCenter"><a [routerLink]="['/carStatus', ''+device.deviceID]">{{device.vehicle?.serial_number || device.deviceID}}</a></td>
         <td class="alignCenter">{{device.latestSample?.props?.fuel}}</td>
         <td class="alignCenter">{{device.latestSample?.props?.engineTemp}}</td>
   		</tr>
