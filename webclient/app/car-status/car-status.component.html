@@ -7,66 +7,19 @@
     <a [routerLink]="['/map', {vehicleId: probeData?.mo_id}]">Show in Map</a>
   </div>
   <h3>Vehicle ID: {{device?.vehicle?.serial_number || mo_id}}</h3>
-    <div class="row">
-        <div class="column-6-med">
-            <div class="row noOffsetRow">
-                <div class="column-6-med">
-                    Fuel Level
-                </div>
 
-                <div class="column-6-med">
-                  <strong class="carStatus-strong"
-                    [ngClass]="{red: fuelStatus==='critical', orange: fuelStatus==='troubled', green: fuelStatus==='normal' }">
-                      <span class="numCounter">{{probeData?.props?.fuel}}</span>/{{60}}
-                  </strong>
-                </div>
-            </div>
-        </div>
-
-        <div class="column-6-med">
-            <div class="speedometer-container">
-                <div class="speedometer">
-                  <div class="pointer" id="speedometer-pointer"
-                    [ngClass]="{red: fuelStatus==='critical', orange: fuelStatus==='troubled', green: fuelStatus==='normal' }">
-                    </div>
-                  <div class="speedometer bottom-bar"></div>
-                </div>
-            </div>
-        </div>
-    </div><!--end row-->
-
-    <div class="row">
-        <div class="column-6-med">
-            <div class="row noOffsetRow">
-                <div class="column-6-med">
-                    Engine Oil Temperature
-                </div>
-
-                <div class="column-6-med">
-                    <strong class="carStatus-strong numCounter"
-                      [ngClass]="{red: engineTempStatus==='critical', orange: engineTempStatus==='troubled', green: engineTempStatus==='normal' }">
-                      {{probeData?.props?.engineTemp}}</strong>
-                    <br />Centigrade
-                </div>
-            </div>
-        </div>
-
-        <div class="column-6-med">
-            <div class="thermometer-container">
-                <ul class="thermometer">
-                    <li *ngFor="let i of [{cent: 30, frnh: 86},
-                                         {cent:  60, frnh: 140},
-                                         {cent:  90, frnh: 194},
-                                         {cent: 120, frnh: 248},
-                                         {cent: 150, frnh: 302}]">
-                        <p class="frnh">{{i.frnh}}</p>
-                        <p class="cent">{{i.cent}}</p>
-                    </li>
-                </ul>
-                <div class="thermometer-range" id="thermometer-range"
-                  [ngClass]="{red: engineTempStatus==='critical', orange: engineTempStatus==='troubled', green: engineTempStatus==='normal' }">
-                </div>
-            </div>
-        </div>
-    </div><!--end row-->
+  <status-meter [minValue]="0" [maxValue]="100"
+    [value]="probeData?.speed" status=""
+    title="Speed" valueSuffix="" valueUnit="MPH" graphType="gauge">
+  </status-meter>
+  <status-meter [minValue]="0" [maxValue]="60"
+    [value]="probeData?.props?.fuel"
+    [status]="probeData?.info?.alerts?.fuelStatus"
+    title="Fuel Level" valueSuffix="/60" valueUnit="" graphType="gauge">
+  </status-meter>
+  <status-meter [minValue]="30" [maxValue]="150"
+    [value]="probeData?.props?.engineTemp"
+    [status]="probeData?.info?.alerts?.engineTempStatus"
+    title="Engine Oil Temperature" valueSuffix="" valueUnit="Centigrade" graphType="temp-bar">
+  </status-meter>
 </div>

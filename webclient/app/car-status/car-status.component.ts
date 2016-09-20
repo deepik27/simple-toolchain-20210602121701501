@@ -23,9 +23,6 @@ export class CarStatusComponent implements OnInit {
   private device: RealtimeDeviceData;
   private probeData: any; // probe data to show
 
-  private fuelStatus: string;
-  private engineTempStatus: string;
-
   constructor(
     private route: ActivatedRoute,
     private carStatusDataService: CarStatusDataService,
@@ -42,12 +39,11 @@ export class CarStatusComponent implements OnInit {
         }
         return mo_id ? this.carStatusDataService.getProbe(mo_id) : Observable.of([]);
       }).subscribe(probe => {
+        // update data
         this.device = probe && this.realtimeDataProviderService.getProvider().getDevice(probe.mo_id);
         this.probeData = probe;
 
-        // updat meter
-        updateMeterStyle(probe);
-
+        // update overlay
         var cardOverlay = document.getElementById('cardOverlay');
         if (probe == null && cardOverlay.style.opacity != '1') {
             cardOverlay.style.opacity = '1';
@@ -64,43 +60,6 @@ export class CarStatusComponent implements OnInit {
      });
     this.mo_id = <string>mo_id;
     this.moIdSubject.next(mo_id);
-
-    var style;
-    function updateMeterStyle(probe) {
-      var createStyle = !style;
-      if(createStyle){
-        style = document.createElement('style');
-        style.type = 'text/css';
-      }
-
-      //
-      // Update style content
-      //
-      var fuel = (probe && probe.props.fuel) || 0;
-      var fuelRatio = Math.max(0, Math.min(1, fuel / 60));
-      var engineTemp = (probe && probe.props.engineTemp) || 0;
-      var engineTempRatio = Math.max(0, Math.min(1, ((engineTemp - 28) / (152 - 28))));
-      self.fuelStatus = (probe && probe.info && probe.info.alerts && probe.info.alerts.fuelStatus);
-      self.engineTempStatus = (probe && probe.info && probe.info.alerts && probe.info.alerts.engineTempStatus);
-
-      // set dynamic fuel level
-      style.innerHTML = '.pointerTriggered { transform: rotate(' + (fuelRatio * 180 - 90) + 'deg) !important; }'
-
-      // set dynamic engine oil temperature
-      // - note that the "28" is 30 (the minimal gauge) - 2 (adjustment), and
-      //   "152" is 150 (the maximum) + 2 (adjustment);
-                      + '.thermometerTriggered { width: ' + (engineTempRatio * 100) + '% !important; }';
-
-      console.log('Setting engine temp ratio to ' + engineTempRatio);
-
-      if(createStyle){
-        document.getElementsByTagName('head')[0].appendChild(style);
-        setTimeout(function () {
-            document.getElementById('speedometer-pointer').classList.add('pointerTriggered');
-            document.getElementById('thermometer-range').classList.add('thermometerTriggered');
-        }, 5);
-      }
-    }
 
     var modalCallsArray = Array.prototype.slice.call(document.querySelectorAll('.numCounter'), 0);
 
