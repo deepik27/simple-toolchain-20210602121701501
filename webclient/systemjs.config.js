@@ -1,5 +1,5 @@
 /**
- * System configuration for Angular 2 samples
+ * System configuration for Angular 2
  * Adjust as necessary for your application needs.
  */
 (function(global) {
@@ -8,7 +8,7 @@
     // 'bootstrap': ['jquery'],
   }
   var paths = {
-    'npm:': 'node_modules/', 
+    'npm:': 'node_modules/',
   };
   // map tells the System loader where to look for things
   var map = {

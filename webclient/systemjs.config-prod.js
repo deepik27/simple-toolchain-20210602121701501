@@ -9,7 +9,7 @@
 (function(global) {
   var paths = {
     'npm:': 'webclient/node_modules/',
-  }
+  };
   // map tells the System loader where to look for things
   var map = {
     'app': 'webclient/app', // 'dist',
@@ -42,6 +42,7 @@
 //    'angular2-in-memory-web-api': { main: 'index.js', defaultExtension: 'js' },
   };
   var config = {
+    paths: paths,
     map: map,
     packages: packages
   };
