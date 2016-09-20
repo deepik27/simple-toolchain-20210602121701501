@@ -61,7 +61,7 @@
 				<td>{{alert.description}}</td>
 				<td>{{alert.simulated ? "Yes" : "No"}}</td>
 				<td class="alignCenter actionTD">
-					<a class="dropdown_base icon-status" [routerLink]="['/carStatus', '/'+alert.mo_id]" title="Show Car Status"></a>
+					<a class="dropdown_base icon-status" [routerLink]="['/carStatus', ''+alert.mo_id]" title="Show Car Status"></a>
 				</td>
 			</tr>
 		</tbody>

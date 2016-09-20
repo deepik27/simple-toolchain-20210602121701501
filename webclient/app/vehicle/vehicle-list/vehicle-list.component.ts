@@ -1,7 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { Http, Response, Headers, RequestOptions } from '@angular/http';
 import { Observable }     from 'rxjs/Observable';
-import { ROUTER_DIRECTIVES } from '@angular/router';
 import { OrderByPipe } from '../../utils/order-by.pipe';
 import { MomentPipe } from '../../utils/moment.pipe';
 
@@ -10,8 +9,6 @@ import { MomentPipe } from '../../utils/moment.pipe';
   selector: 'vehicle-list',
   templateUrl: 'vehicle-list.component.html',
   styleUrls: ['../../../css/table.css', 'vehicle-list.component.css'],
-  pipes: [OrderByPipe, MomentPipe],
-  directives: [ROUTER_DIRECTIVES]
 })
 
 export class VehicleListComponent {

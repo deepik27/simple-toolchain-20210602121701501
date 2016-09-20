@@ -3,6 +3,7 @@ import { Http, Request, Response, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 
 import { RealtimeDeviceDataProvider } from './realtime-device';
+import { APP_CONFIG, AppConfig } from '../app-config';
 
 
 var CAR_PROBE_URL = '/user/carProbe';
@@ -14,6 +15,7 @@ var CAR_STATUS_REFRESH_PERIOD = 0 // was 15000; now, setting 0 not to update via
 
 @Injectable()
 export class RealtimeDeviceDataProviderService {
+  private webApiHost: string;
   //
 	// Devices management
 	//
@@ -28,8 +30,10 @@ export class RealtimeDeviceDataProviderService {
 
   constructor(
     private $http: Http,
-		@Inject('webApiHost') private webApiHost: string
-  ) {  }
+    @Inject(APP_CONFIG) appConfig: AppConfig
+  ) {
+    this.webApiHost = appConfig.webApiHost;
+   }
 
   private getQs(extent: any[], vehicleId: string){
     var xt = extent ? extent: [-180, -90, 180, 90];

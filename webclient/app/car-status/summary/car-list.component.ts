@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy, OnChanges, SimpleChange, Input } from '@angular/core';
-import { ROUTER_DIRECTIVES } from '@angular/router';
 
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
@@ -12,7 +11,6 @@ import * as _ from 'underscore';
   selector: 'fmdash-car-list',
   templateUrl: 'car-list.component.html',
   styleUrls: ['../../../css/table.css'],
-  directives: [ROUTER_DIRECTIVES]
 })
 export class CarListComponent implements OnInit, OnDestroy, OnChanges {
   @Input() groupProp: string;

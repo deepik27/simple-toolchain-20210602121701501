@@ -65,7 +65,7 @@ export class RealtimeMapComponent implements OnInit {
 	animatedDeviceManagerService: RealtimeDeviceDataProviderService;
 
   constructor(
-		private _router: Router,
+		private router: Router,
 		animatedDeviceManagerService: RealtimeDeviceDataProviderService
 	) {
 		this.animatedDeviceManagerService = animatedDeviceManagerService;
@@ -310,7 +310,7 @@ export class RealtimeMapComponent implements OnInit {
 		// register popover link event handler to document
 		document['_handleClick' + this.popoverElemetId] = (vehicleId) => {
 			console.log('Car ID link is clicked on the popover');
-			this._router.navigate(['/carStatus/', vehicleId]);
+			this.router.navigate(['/carStatus', vehicleId]);
 		};
 	}
 

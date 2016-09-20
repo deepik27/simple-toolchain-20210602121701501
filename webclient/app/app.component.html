@@ -28,7 +28,7 @@
 <div class="content">
     <aside class="sidebar" ng-controller="sidebar">
         <ul class="sidebarItems">
-            <li *ngFor="let sidebarItem of sidebarItems" [class.active]="isRouteActive([sidebarItem.route])">
+            <li *ngFor="let sidebarItem of sidebarItems" routerLinkActive="active">
                 <a [routerLink]="[sidebarItem.route]"><i class="{{sidebarItem.icon}}"></i>{{sidebarItem.title}}</a>
             </li>
         </ul>
