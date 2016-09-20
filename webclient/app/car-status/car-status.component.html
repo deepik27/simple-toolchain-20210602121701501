@@ -15,7 +15,10 @@
                 </div>
 
                 <div class="column-6-med">
-                    <strong class="carStatus-strong green"><span class="numCounter">{{probeData?.props?.fuel}}</span>/{{60}}</strong>
+                  <strong class="carStatus-strong"
+                    [ngClass]="{red: fuelStatus==='critical', orange: fuelStatus==='troubled', green: fuelStatus==='normal' }">
+                      <span class="numCounter">{{probeData?.props?.fuel}}</span>/{{60}}
+                  </strong>
                 </div>
             </div>
         </div>
@@ -23,8 +26,10 @@
         <div class="column-6-med">
             <div class="speedometer-container">
                 <div class="speedometer">
-                    <div class="pointer" id="speedometer-pointer"></div>
-                    <div class="speedometer bottom-bar"></div>
+                  <div class="pointer" id="speedometer-pointer"
+                    [ngClass]="{red: fuelStatus==='critical', orange: fuelStatus==='troubled', green: fuelStatus==='normal' }">
+                    </div>
+                  <div class="speedometer bottom-bar"></div>
                 </div>
             </div>
         </div>
@@ -38,7 +43,9 @@
                 </div>
 
                 <div class="column-6-med">
-                    <strong class="carStatus-strong red numCounter">{{probeData?.props?.engineTemp}}</strong>
+                    <strong class="carStatus-strong numCounter"
+                      [ngClass]="{red: engineTempStatus==='critical', orange: engineTempStatus==='troubled', green: engineTempStatus==='normal' }">
+                      {{probeData?.props?.engineTemp}}</strong>
                     <br />Centigrade
                 </div>
             </div>
@@ -56,8 +63,9 @@
                         <p class="cent">{{i.cent}}</p>
                     </li>
                 </ul>
-
-                <div class="thermometer-range" id="thermometer-range"></div>
+                <div class="thermometer-range" id="thermometer-range"
+                  [ngClass]="{red: engineTempStatus==='critical', orange: engineTempStatus==='troubled', green: engineTempStatus==='normal' }">
+                </div>
             </div>
         </div>
     </div><!--end row-->

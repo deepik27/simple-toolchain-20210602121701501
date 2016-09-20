@@ -24,6 +24,9 @@ export class CarStatusComponent implements OnInit, OnActivate {
   private device: RealtimeDeviceData;
   private probeData: any; // probe data to show
 
+  private fuelStatus: string;
+  private engineTempStatus: string;
+
   constructor(
     private router: Router,
     private carStatusDataService: CarStatusDataService,
@@ -32,6 +35,7 @@ export class CarStatusComponent implements OnInit, OnActivate {
   }
 
   ngOnInit() {
+    var self = this;
     this.proveDataSubscription = this.moIdSubject.switchMap(mo_id => {
         // in case the mo_id is not tracked, configure the service to track it
         if(!this.realtimeDataProviderService.getProvider().getDevice(mo_id)){
@@ -48,8 +52,10 @@ export class CarStatusComponent implements OnInit, OnActivate {
         var cardOverlay = document.getElementById('cardOverlay');
         if (probe == null && cardOverlay.style.opacity != '1') {
             cardOverlay.style.opacity = '1';
+            cardOverlay.style.display = 'block';
         } else if (probe != null && cardOverlay.style.opacity != '0') {
             cardOverlay.style.opacity = '0';
+            cardOverlay.style.display = 'none';
         }
       });
     this.moIdSubject.next(this.mo_id);
@@ -66,15 +72,21 @@ export class CarStatusComponent implements OnInit, OnActivate {
       // Update style content
       //
       var fuel = (probe && probe.props.fuel) || 0;
+      var fuelRatio = Math.max(0, Math.min(1, fuel / 60));
       var engineTemp = (probe && probe.props.engineTemp) || 0;
+      var engineTempRatio = Math.max(0, Math.min(1, ((engineTemp - 28) / (152 - 28))));
+      self.fuelStatus = (probe && probe.info && probe.info.alerts && probe.info.alerts.fuelStatus);
+      self.engineTempStatus = (probe && probe.info && probe.info.alerts && probe.info.alerts.engineTempStatus);
 
       // set dynamic fuel level
-      style.innerHTML = '.pointerTriggered { transform: rotate(' + ((fuel / 60) * 180 - 90) + 'deg) !important; }'
+      style.innerHTML = '.pointerTriggered { transform: rotate(' + (fuelRatio * 180 - 90) + 'deg) !important; }'
 
       // set dynamic engine oil temperature
       // - note that the "28" is 30 (the minimal gauge) - 2 (adjustment), and
       //   "152" is 150 (the maximum) + 2 (adjustment);
-                      + '.thermometerTriggered { width: ' + (((engineTemp - 28) / (152 - 28)) * 100) + '% !important; }';
+                      + '.thermometerTriggered { width: ' + (engineTempRatio * 100) + '% !important; }';
+
+      console.log('Setting engine temp ratio to ' + engineTempRatio);
 
       if(createStyle){
         document.getElementsByTagName('head')[0].appendChild(style);

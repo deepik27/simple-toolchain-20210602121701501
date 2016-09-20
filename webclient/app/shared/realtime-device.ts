@@ -38,6 +38,17 @@ export class RealtimeDeviceDataProvider {
             }
           }
 
+          // polyfill status
+          if(sample.info && sample.info.alerts && sample.info.alerts.byType){
+            var byType = sample.info.alerts.byType;
+            if(!sample.info.alerts.fuelStatus){
+              sample.info.alerts.fuelStatus = byType.low_fuel ? 'critical' : (byType.half_fuel ? 'troubled' : 'normal');
+            }
+            if(!sample.info.alerts.engineTempStatus){
+              sample.info.alerts.engineTempStatus = byType.high_engine_temp ? 'critical' : 'normal';
+            }
+          }
+
           // update the device latest location
           var device = this.devices[sample.deviceID];
           if (device) {

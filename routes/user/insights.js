@@ -342,6 +342,8 @@ var initWebSocketServer = function(server, path){
 				} catch (e) {
 					console.error('Failed to send wss message: ', e);
 				}
+			})['catch'](function(err){
+				console.error('Failed to get car probe', err);
 			});
 		})).done(function(){
 			// re-schedule once all the wss.send has been completed
@@ -410,7 +412,7 @@ function getCarProbe(qs, addAlerts){
 				return "mo_id:"+probe.mo_id;
 			}).join(" OR ") + ")";
 			conditions.push(mo_id_condition);
-			return driverInsightsAlert.getAlerts(conditions, /*includeClosed*/false, probes.length).then(function(result){
+			return driverInsightsAlert.getAlerts(conditions, /*includeClosed*/false).then(function(result){
 				// result: { alerts: [ { closed_ts: n, description: s, mo_id: s, severity: s, timestamp: s, ts: n, type: s }, ...] }
 				var alertsByMoId = _.groupBy(result.alerts || [], function(alert){ return alert.mo_id; });
 				probes.forEach(function(probe){
@@ -419,7 +421,20 @@ function getCarProbe(qs, addAlerts){
 						var alertCounts = _.countBy(alertsForMo, function(alert){
 							return alert.severity;
 						});
-						// alertCounts.items = alertsForMo; // details if needed
+						//alertCounts.items = alertsForMo; // details if needed
+						
+						// calculate summary
+						var alertsByType = _.groupBy(alertsForMo, function(alert) { return alert.type; });
+						// severity: High: 100, Medium: 10, Low: 1, None: 0 for now
+						var severityByType = _.mapObject(alertsByType, function(alerts, type){
+							if(alerts && alerts.length === 0) return undefined;
+							return _.max(alerts, function(alert){
+								var s = alerts.severity && alerts.severity.toLowerCase();
+								return s === 'high' ? 100 : (s === 'medium' ? 10 : (s === 'low' ? 1 : 0));
+							}).severity;
+						});
+						alertCounts.byType = severityByType;
+						//
 						probe.info = _.extend(probe.info || {}, { alerts: alertCounts }); // inject alert counts
 					}
 				})

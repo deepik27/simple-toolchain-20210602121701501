@@ -717,7 +717,7 @@ strong.carStatus-strong {
 }
 
 .speedometer-container .pointer {
-    background: #f05153;
+    background-color: #bbbbbb;
     bottom: 0px;
     width: 10px;
     height: 65%;
@@ -737,6 +737,22 @@ strong.carStatus-strong {
     margin-right: auto;
     left: 0;
     right: 0;
+}
+
+.speedometer-container .pointer.green {
+    background-color: #58a946;
+}
+
+.speedometer-container .pointer.blue {
+    background-color: #3774ba;
+}
+
+.speedometer-container .pointer.orange {
+    background-color: #f67734;
+}
+
+.speedometer-container .pointer.red {
+    background-color: #f05153;
 }
 
 @media (max-width: 440px) {
@@ -833,6 +849,22 @@ ul.thermometer li::before {
     -moz-transition:    all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
     -webkit-transition: all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
     transition:         all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+}
+
+.thermometer-container .thermometer-range.green {
+  background-color: #58a946;
+}
+
+.thermometer-container .thermometer-range.blue {
+  background-color: #3774ba;
+}
+
+.thermometer-container .thermometer-range.orange {
+  background-color: #f67734;
+}
+
+.thermometer-container .thermometer-range.red {
+  background-color: #f05153;
 }
 
 /* === 10. Angular Styles === */

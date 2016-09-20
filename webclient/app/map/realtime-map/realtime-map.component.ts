@@ -220,6 +220,9 @@ export class RealtimeMapComponent implements OnInit {
 					result.content += '<div style="white-space: nowrap;">Timestamp: ' + _.escape(sample.timestamp) + "</div>";
 				}
 				if(info){
+					if(info.alerts && this.DEBUG){
+						result.content += '<div style="white-space: nowrap;">Alerts: ' + _.escape(JSON.stringify(info.alerts)) + "</div>";
+					}
 					if(info.name && info.makeModel){
 						result.title = info.name;
 					}else if(info.name){
