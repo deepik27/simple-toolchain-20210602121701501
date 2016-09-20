@@ -1007,6 +1007,13 @@ ul.thermometer li::before {
     flex-basis: 58.333333333%;
 }
 
+.column-8-med {
+    max-width: 66.6666666%;
+    -ms-flex-preferred-size: 66.6666666%;
+    -webkit-flex-basis: 66.6666666%;
+    flex-basis: 66.6666666%;
+}
+
 .column-9-med {
     max-width: 75%;
     -ms-flex-preferred-size: 75%;

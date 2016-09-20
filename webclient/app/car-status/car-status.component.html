@@ -22,4 +22,21 @@
     [status]="probeData?.info?.alerts?.engineTempStatus"
     title="Engine Oil Temperature" valueSuffix="" valueUnit="Centigrade" graphType="temp-bar">
   </status-meter>
+
+  <div class="row marginTop-15">
+    <div class="column-6-med">
+        <status-hist-graph [minValue]="0" [maxValue]="80" [interval]="5000" [historyCount]="20"
+          [value]="probeData?.speed"
+          [status]=""
+          title="Speed History" valueSuffix="" valueUnit="MPH">
+        </status-hist-graph>
+    </div>
+    <div class="column-6-med">
+        <status-hist-graph [minValue]="0" [maxValue]="60" [interval]="5000" [historyCount]="20"
+          [value]="probeData?.props?.fuel"
+          [status]="probeData?.info?.alerts?.fuelStatus"
+          title="Fuel Level History" valueSuffix="" valueUnit="">
+        </status-hist-graph>
+    </div>
+  </div>
 </div>
