@@ -73,7 +73,7 @@ export class RealtimeMapComponent implements OnInit {
 	animatedDeviceManagerService: RealtimeDeviceDataProviderService;
 
   constructor(
-		private _router: Router,
+		private router: Router,
 		animatedDeviceManagerService: RealtimeDeviceDataProviderService,
 		private eventService: EventService,
 		private geofenceService: GeofenceService

@@ -41,7 +41,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
     let geometry = geofence.geometry;
     if (geofence.geometry_type === "circle") {
       let center: ol.Coordinate = ol.proj.transform([geometry.longitude, geometry.latitude], "EPSG:4326", "EPSG:3857");
-      let circle = new ol.geom.Circle(center, geometry.radius);
+      let circle = new (<any>ol.geom.Circle)(center, geometry.radius);
       let feature = new ol.Feature(circle);
       features.push(feature);
     } else {
