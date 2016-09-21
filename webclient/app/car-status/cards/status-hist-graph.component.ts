@@ -1,5 +1,7 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 
+import { Observable } from 'rxjs/Observable';
+
 @Component({
   moduleId: module.id,
   selector: 'status-hist-graph',
@@ -13,10 +15,11 @@ import { Component, Input, OnInit, OnDestroy } from '@angular/core';
     </div>
     <div class="column-8-med">
       <div class="graph-container">
-        <div *ngFor="let item of items; trackBy:item?.ts"
+        <div *ngFor="let item of items; let i = index;"
           class="graph-bar"
           [ngClass]="item.statusClass"
-          [class.inactive]="!item.active">
+          [style.left]="(100 * (i - 1) / historyCount) + '%'"
+          [style.width]="(100 / historyCount) + '%'">
           <div [style.height]="(item.ratio*100 + 1) + '%'"></div>
         </div>
       </div>
@@ -26,35 +29,38 @@ import { Component, Input, OnInit, OnDestroy } from '@angular/core';
   styles: [`
     .value-container {
       height: 100%;
-      display: -webkit-flex; /* Safari */
-      -webkit-flex-direction: column; /* Safari */
-      -webkit-justify-content: space-between; /* Safari */
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      /* safari */
+      display: -webkit-flex;
+      -webkit-flex-direction: column;
+      -webkit-justify-content: space-between;
     }
     .value-container .value-item {
       margin-bottom: 20px;
     }
     .graph-container {
       background-color: #f8f8f8;
-      display: table;
-      table-layout: fixed;
+      position: relative;
+      overflow: hidden;
+      overflow-x: hidden;
       width: 100%;
       height: 150px;
     }
     .graph-container .graph-bar {
-      display: table-cell;
+      position: absolute;
+      top: 0px;
+      bottom: 0px;
       align: center;
-      vertical-align: bottom;
-      width: 100%;
-      //-moz-transition:    all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
-      //-webkit-transition: all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
-      //transition:         all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+      -moz-transition:    all 0.5s linear;
+      -webkit-transition: all 0.5s linear;
+      transition:         all 0.5s linear;
     }
     .graph-container .graph-bar div {
-      margin-left: 20%;
-      margin-right: 20%;
+      position: absolute;
+      bottom: 0px;
+      width: 50%;
       background: #666666;
     }
     .graph-container .graph-bar.blue div {
@@ -96,40 +102,39 @@ export class StatusHistoryGrahpComponent implements OnInit, OnDestroy {
   private lastStatusClass = {};
 
   private timer;
-
-  private updateBarItem(ratio, value, statusClass) {
-    let now = Date.now();
-    if(!this.items){
-      this.items = [];
-      for(let i=0; i<this.historyCount; i++){
-        this.items.push({ts: now - this.historyCount + i - 1, ratio: 0, value: '-', statusClass: statusClass, active: true});
-      }
-  //    this.items.push({ts: now - 1, ratio: 0, active: true});
-    }
-    this.items.shift();
-//    this.items[0].active = false;
-    this.items.push({ts: now, ratio: ratio, value: value, statusClass: statusClass, active: true});
-  }
+  private subscription;
 
   ngOnInit(){
-    let intervalFunc = () => {
+    // initialize items
+    this.items = [];
+    let now = Date.now();
+    for(let i=0; i <= this.historyCount; i++){
+      this.items.push({ts: now - this.historyCount + i - 1, ratio: 0, value: '-', statusClass: {}, active: i !== 0});
+    }
+
+    this.subscription = Observable.interval(this.interval).startWith(-1).map(() => {
       var ratio = Math.max(0, Math.min(1, (this.value - this.minValue) / (this.maxValue - this.minValue)));
       var status = this.status;
       var statusClass = {red: status==='critical', orange: status==='troubled', green: status==='normal', blue: undefined };
       statusClass.blue = (!statusClass.red && !statusClass.orange && !statusClass.green);
-      this.updateBarItem(ratio, this.value, statusClass);
+      let now = Date.now();
       this.lastValue = this.value;
       this.lastStatusClass = statusClass;
-    };
-    this.timer = setInterval(intervalFunc, this.interval);
-    this.updateBarItem(0, 0, {});
-    intervalFunc();
+      this.items.push({ts: now, ratio: ratio, value: this.value, statusClass: statusClass, active: true});
+    }).delay(Math.min(this.interval/2, 100)).subscribe(() => {
+      // start animation
+      this.items.shift();
+    })
   }
 
   ngOnDestroy(){
     if(this.timer){
       clearInterval(this.timer);
       this.timer = null;
+    }
+    if(this.subscription){
+      this.subscription.unsubscribe();
+      this.subscription = null;
     }
   }
 }
