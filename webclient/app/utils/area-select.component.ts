@@ -21,14 +21,23 @@ export class AreaSelectComponent{
 
 	constructor(private locationService: LocationService) {
 		this.areas = [{id: "nolocation", name: ""}].concat(locationService.getRegions());
+		let mapregion = locationService.getMapRegion();
+		if(mapregion && mapregion.extent){
+			this.areas.push({id: "maplocation", name:"Location selected in the Map Page", extent: mapregion.extent});
+		}
 	}
 
 	ngOnInit(){
 		if(this.extent){
 			var area = this._matchPredefinedArea();
 			if(!area){
-				area = {id: "maplocation", name:"Location selected in the Map Page", extent: this.extent};
-				this.areas.push(area);
+				area = this.areas.find(ares => area.id === "maplication");
+				if(!area){
+					area = {id: "maplocation", name:"Location selected in the Map Page", extent: this.extent};
+					this.areas.push(area);
+				}else{
+					area.extent = this.extent;
+				}
 			}
 			this.selectedArea = area;
 		}
