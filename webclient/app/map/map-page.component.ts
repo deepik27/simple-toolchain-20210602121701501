@@ -69,6 +69,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
         this.areas.push(this.locationService.getCurrentAreaRawSync());
       }
       this.areas.push(this.locationService.getMapRegion());
+      this.selectedArea = this.areas[this.areas.length - 1];
     } else {
       this.locationService.getCurrentArea().then(area => {
         if(this.locationService.getCurrentAreaRawSync()){

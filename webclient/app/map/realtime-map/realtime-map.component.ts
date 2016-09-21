@@ -331,8 +331,10 @@ export class RealtimeMapComponent implements OnInit {
 		});
 	}
 
-  ngOnInit() {
-    this.initMap();
+	ngOnInit() {
+		this.initMap();
+		this.region && this.mapHelper.moveMap(this.region);
+
 		// register popover link event handler to document
 		document['_handleClick' + this.popoverElemetId] = (vehicleId) => {
 			console.log('Car ID link is clicked on the popover');
