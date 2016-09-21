@@ -117,6 +117,11 @@ export class RealtimeMapComponent implements OnInit {
 		var opt = new ol.Object();
 
 		this.map =  new ol.Map({
+			controls: ol.control.defaults({
+				attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
+					collapsible: false
+				})
+			}),
 			target: document.getElementById(this.mapElementId),
 			layers: [
 				new ol.layer.Tile({

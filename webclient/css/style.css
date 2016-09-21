@@ -2054,6 +2054,10 @@ table th[class*="col-"] {
     bottom: 30px;
 }
 
+.carMonitorMap .ol-attribution.ol-uncollapsible {
+    height: 1.5em;
+}
+
 .carMonitorMap .popover {
     max-width: 414px;
 }

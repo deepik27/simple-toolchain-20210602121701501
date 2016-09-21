@@ -156,6 +156,11 @@
 				// create a map
 				var init_lat = (initialCoords && [initialCoords.longitude, initialCoords.latitude]) || [0, 0];
 				map =  new ol.Map({
+					controls: ol.control.defaults({
+						attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
+								collapsible: false
+						})
+					}),
 					target: document.getElementById($scope.mapElementId),
 					layers: [
 						new ol.layer.Tile({

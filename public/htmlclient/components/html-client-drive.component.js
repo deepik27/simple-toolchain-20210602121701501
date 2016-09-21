@@ -369,6 +369,11 @@
 				
 				// create a map
 				map =  new ol.Map({
+					controls: ol.control.defaults({
+						attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
+								collapsible: false
+						})
+					}),
 					target: document.getElementById("locationMap"),
 					layers: [
 						new ol.layer.Tile({source: new ol.source.OSM({}), preload: 4}),  // map layer
