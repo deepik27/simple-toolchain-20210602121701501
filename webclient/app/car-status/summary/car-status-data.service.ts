@@ -12,14 +12,14 @@ export interface StatusGroup {
 }
 
 var fuelStatusGroups = [
-  {label: 'Low', predicate: (device => (device.latestSample.props.fuel < 5))},
-  {label: 'Less than half', predicate: (device => (device.latestSample.props.fuel < 25))},
+  {label: 'Low', predicate: (device => (device.latestSample.info.alerts.fuelStatus === 'critical'))},
+  {label: 'Less than half', predicate: (device => (device.latestSample.info.alerts.fuelStatus === 'troubled'))},
   {label: 'No issue', predicate: (device => true)}
 ];
 
 var engineTempStatusGroups = [
-  {label: 'Over heated', predicate: (device => (device.latestSample.props.engineTemp >= 120))},
-  {label: 'High', predicate: (device => (device.latestSample.props.engineTemp >= 120))},
+  {label: 'Over heated', predicate: (device => (device.latestSample.info.alerts.engineTempStatus === 'critical'))},
+  {label: 'High', predicate: (device => (device.latestSample.info.alerts.engineTempStatus === 'troubled'))},
   {label: 'No issue', predicate: (device => true)}
 ];
 
