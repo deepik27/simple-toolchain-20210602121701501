@@ -35,7 +35,7 @@ var chartComponentNextId = 0;
       <div class="thermometer-container" *ngIf="graphType==='bar' || graphType==='temp-bar'">
           <ul class="thermometer">
               <li *ngFor="let i of thermometerTicks">
-                  <p class="frnh"><span *ngIf="graphType==='temp-bar'">{{(i * 1.8 + 32) | number}}</span></p>
+<!--                  <p class="frnh"><span *ngIf="graphType==='temp-bar'">{{(i * 1.8 + 32) | number}}</span></p>-->
                   <p class="cent">{{i}}</p>
               </li>
           </ul>
