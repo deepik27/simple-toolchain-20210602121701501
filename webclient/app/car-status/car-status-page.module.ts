@@ -10,6 +10,8 @@ import { UtilsModule } from '../utils/utils.module';
 import { CarStatusSummaryComponent } from './summary/car-status-summary.component';
 import { CarListComponent } from './summary/car-list.component';
 import { ChartItemComponent } from './summary/chart-item.component';
+import { StatusMeterComponent } from './cards/status-meter.component';
+import { StatusHistoryGrahpComponent } from './cards/status-hist-graph.component';
 import { CarStatusComponent } from './car-status.component';
 import { CarStatusPageComponent } from './car-status-page.component';
 
@@ -26,6 +28,8 @@ import { carStatusRouting } from './car-status-page.routing';
     CarStatusSummaryComponent,
     CarListComponent,
     ChartItemComponent,
+    StatusMeterComponent,
+    StatusHistoryGrahpComponent,
     CarStatusComponent,
     CarStatusPageComponent
   ],

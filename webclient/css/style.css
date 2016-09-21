@@ -717,7 +717,7 @@ strong.carStatus-strong {
 }
 
 .speedometer-container .pointer {
-    background-color: #bbbbbb;
+    background-color: #666666;
     bottom: 0px;
     width: 10px;
     height: 65%;
@@ -842,7 +842,7 @@ ul.thermometer li::before {
 }
 
 .thermometer-container .thermometer-range {
-    background: #f05153;
+    background: #666666;
     width: 2px;
     height: 10px;
     margin-top: -10px;
@@ -1005,6 +1005,13 @@ ul.thermometer li::before {
     -ms-flex-preferred-size: 58.333333333%;
     -webkit-flex-basis: 58.333333333%;
     flex-basis: 58.333333333%;
+}
+
+.column-8-med {
+    max-width: 66.6666666%;
+    -ms-flex-preferred-size: 66.6666666%;
+    -webkit-flex-basis: 66.6666666%;
+    flex-basis: 66.6666666%;
 }
 
 .column-9-med {
