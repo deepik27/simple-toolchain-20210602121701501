@@ -61,6 +61,7 @@ import { Observable } from 'rxjs/Observable';
       position: absolute;
       bottom: 0px;
       width: 50%;
+      margin-left: 25%;
       background: #666666;
     }
     .graph-container .graph-bar.blue div {
@@ -101,14 +102,13 @@ export class StatusHistoryGrahpComponent implements OnInit, OnDestroy {
   private lastValue: any = '-';
   private lastStatusClass = {};
 
-  private timer;
   private subscription;
 
   ngOnInit(){
     // initialize items
     this.items = [];
     let now = Date.now();
-    for(let i=0; i <= this.historyCount; i++){
+    for(let i=0; i <= this.historyCount + 1; i++){
       this.items.push({ts: now - this.historyCount + i - 1, ratio: 0, value: '-', statusClass: {}, active: i !== 0});
     }
 
@@ -120,18 +120,21 @@ export class StatusHistoryGrahpComponent implements OnInit, OnDestroy {
       let now = Date.now();
       this.lastValue = this.value;
       this.lastStatusClass = statusClass;
-      this.items.push({ts: now, ratio: ratio, value: this.value, statusClass: statusClass, active: true});
-    }).delay(Math.min(this.interval/2, 100)).subscribe(() => {
-      // start animation
+      let lastItem = this.items[this.items.length - 1];
+      lastItem.ratio = ratio;
+      lastItem.value = this.value;
+      lastItem.statusClass = statusClass;
+      lastItem.active = true;
+      this.items.push({ts: now, ratio: 0, value: 0, statusClass: statusClass, active: false});
+      let firstItem = this.items[0];
+      firstItem.active = false;
       this.items.shift();
+    }).delay(Math.min(this.interval/2, 500)).subscribe(() => {
+      // start animation
     })
   }
 
   ngOnDestroy(){
-    if(this.timer){
-      clearInterval(this.timer);
-      this.timer = null;
-    }
     if(this.subscription){
       this.subscription.unsubscribe();
       this.subscription = null;
