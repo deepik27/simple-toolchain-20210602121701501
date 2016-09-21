@@ -4,12 +4,14 @@ import { Component, OnInit } from '@angular/core';
 
 import { LocationService } from './shared/location.service';
 import { RealtimeDeviceDataProviderService } from './shared/realtime-device-manager.service';
+import { EventService } from './shared/iota-event.service';
+import { GeofenceService } from './shared/iota-geofence.service';
 
 @Component({
   selector: 'fmdash-app',
   moduleId: module.id,
   templateUrl: 'app.component.html',
-  providers: [RealtimeDeviceDataProviderService, LocationService]
+  providers: [RealtimeDeviceDataProviderService, LocationService, EventService, GeofenceService]
 })
 export class AppComponent {
   title = "IoT for Automotive Starter - Monitoring";

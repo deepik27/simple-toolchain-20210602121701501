@@ -4,6 +4,10 @@ import { Router } from '@angular/router';
 import * as ol from 'openlayers';
 
 import { MapHelper } from './map-helper';
+import { MapEventHelper } from '../../shared/map-event-helper';
+import { EventService } from '../../shared/iota-event.service';
+import { MapGeofenceHelper } from '../../shared/map-geofence-helper';
+import { GeofenceService } from '../../shared/iota-geofence.service';
 import { RealtimeDeviceData, RealtimeDeviceDataProvider } from '../../shared/realtime-device';
 import { RealtimeDeviceDataProviderService } from '../../shared/realtime-device-manager.service';
 
@@ -48,9 +52,13 @@ export class RealtimeMapComponent implements OnInit {
 
 	// Mapping
 	map: ol.Map;
+	mapEventsLayer: ol.layer.Vector;
+	mapGeofenceLayer: ol.layer.Vector;
 	eventsLayer: ol.layer.Vector;
 	carsLayer: ol.layer.Vector;
 	mapHelper: MapHelper;
+	eventHelper: MapEventHelper;
+	geofenceHelper: MapGeofenceHelper;
 
 	mapElementId = 'carmonitor';
 	popoverElemetId = 'carmonitorpop';
@@ -65,8 +73,10 @@ export class RealtimeMapComponent implements OnInit {
 	animatedDeviceManagerService: RealtimeDeviceDataProviderService;
 
   constructor(
-		private router: Router,
-		animatedDeviceManagerService: RealtimeDeviceDataProviderService
+		private _router: Router,
+		animatedDeviceManagerService: RealtimeDeviceDataProviderService,
+		private eventService: EventService,
+		private geofenceService: GeofenceService
 	) {
 		this.animatedDeviceManagerService = animatedDeviceManagerService;
 		this.animatedDeviceManager = animatedDeviceManagerService.getProvider();
@@ -96,6 +106,13 @@ export class RealtimeMapComponent implements OnInit {
 				return getCarStyle(feature.get('carStatus'));
 			}
 		});
+		this.mapEventsLayer = new ol.layer.Vector({
+			source: new ol.source.Vector()
+		});
+		this.mapGeofenceLayer = new ol.layer.Vector({
+			source: new ol.source.Vector()
+		});
+
 		// create a map
 		var opt = new ol.Object();
 
@@ -111,6 +128,8 @@ export class RealtimeMapComponent implements OnInit {
 					preload: 4,
 				}),
 				this.eventsLayer,
+				this.mapGeofenceLayer,
+				this.mapEventsLayer,
 				this.carsLayer
 			],
 			view: new ol.View({
@@ -119,6 +138,8 @@ export class RealtimeMapComponent implements OnInit {
 			}),
 		});
 		this.mapHelper = new MapHelper(this.map);
+		this.eventHelper = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
+		this.geofenceHelper = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService);
 
 		// setup view change event handler
 		this.mapHelper.postChangeViewHandlers.push(extent => {

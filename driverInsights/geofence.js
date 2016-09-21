@@ -62,7 +62,11 @@ _.extend(driverInsightsGeofence, {
 	queryGeofence: function(min_latitude, min_longitude, max_latitude, max_longitude) {
 		var deferred = Q.defer();
 		Q.when(this._queryGeofenceDoc(min_longitude, min_latitude, max_longitude, max_latitude), function(response) {
-			deferred.resolve(response);
+			var result = response.map(function(doc) {
+				doc.geofence.id = doc.id;
+				return doc.geofence;
+			});
+			deferred.resolve(result);
 		})["catch"](function(err){
 			deferred.reject(err);
 		}).done();
@@ -71,8 +75,9 @@ _.extend(driverInsightsGeofence, {
 
 	getGeofence: function(geofence_id) {
 		var deferred = Q.defer();
-		Q.when(this._getGeofenceDoc(geofence_id), function(response) {
-			deferred.resolve(response.geofence);
+		Q.when(this._getGeofenceDoc(geofence_id), function(doc) {
+			doc.geofence.id = doc.id;
+			deferred.resolve(doc.geofence);
 		})["catch"](function(err){
 			deferred.reject(err);
 		}).done();
