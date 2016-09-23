@@ -421,7 +421,7 @@ function getCarProbe(qs, addAlerts){
 						var alertCounts = _.countBy(alertsForMo, function(alert){
 							return alert.severity;
 						});
-						//alertCounts.items = alertsForMo; // details if needed
+						alertCounts.items = alertsForMo; // details if needed
 						
 						// calculate summary
 						var alertsByType = _.groupBy(alertsForMo, function(alert) { return alert.type; });

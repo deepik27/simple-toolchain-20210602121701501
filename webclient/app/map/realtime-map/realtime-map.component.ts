@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChange
 import { Router } from '@angular/router';
 
 import * as ol from 'openlayers';
+import { Observable } from 'rxjs/Observable';
 
 import { MapHelper } from './map-helper';
 import { MapEventHelper } from '../../shared/map-event-helper';
@@ -115,6 +116,7 @@ export class RealtimeMapComponent implements OnInit {
 
 		// create a map
 		var opt = new ol.Object();
+		var mapTargetElement = document.getElementById(this.mapElementId);
 
 		this.map =  new ol.Map({
 			controls: ol.control.defaults({
@@ -122,7 +124,7 @@ export class RealtimeMapComponent implements OnInit {
 					collapsible: false
 				})
 			}),
-			target: document.getElementById(this.mapElementId),
+			target: mapTargetElement,
 			layers: [
 				new ol.layer.Tile({
 					//source: new ol.source.MapQuest({layer: 'sat'}),
@@ -281,6 +283,65 @@ export class RealtimeMapComponent implements OnInit {
 			}
 			return null;
 		}
+
+		// setup alert popover
+		// - 1. create alerts Observable
+		let alertsProvider = Observable.interval(2000).map(() => {
+			// get all the alerts here
+			let result = [];
+			this.animatedDeviceManager.getDevices().forEach(device => {
+				if(device.latestSample.info.alerts.items){
+					result.push(...device.latestSample.info.alerts.items);
+				}
+			});
+			return result;
+		});
+
+		// setup alert popover
+		// - 2. setup popover
+		let alertPopoverHandle = this.mapHelper.addModelBasedPopover(alertsProvider, {
+			getKey: (alert => alert._id),
+			getFeature: ((alert, map) => this.deviceFeatures[alert.mo_id]),
+			createOverlay: ((model, map) => {
+				let elem = document.createElement('div');
+				elem.classList.add('mapAlertPopover', 'opening');
+				if(model.severity === 'Critical' || model.severity === 'High'){
+					elem.classList.add('red');
+				}else if(model.severity === 'Medium'){
+					elem.classList.add('orange');
+				}else if(model.severity === 'Low'){
+					elem.classList.add('blue');
+				}else{
+					elem.classList.add('green');
+				}
+				elem.innerHTML = `
+					<a class="close" href="javascript: void(0);">&times;</a>
+					<div class="content">${_.escape(model.description)}</div>					
+				`;
+				mapTargetElement.appendChild(elem);
+
+				let r = new ol.Overlay({
+					element: elem,
+					offset: [-10,-3],
+					positioning: 'bottom-right',
+					stopEvent: true
+				});
+				return r;
+			}),
+			showPopover: function showInfoPopover(elem, feature, pinned, model, closeFunc){
+				// schedule opening animation
+				_.delay(() => elem.classList.remove('opening'), 100);
+				var c = $(elem).find('.close')
+				c && c.on('click', function(){
+					setTimeout(() => closeFunc(), 5); // schedule element removel
+				});				
+			},
+			destroyPopover: function destroyInfoPopover(elem, feature, pin, model, closeFunc){
+				elem.classList.add('closing');
+				setTimeout(() => closeFunc(), 500); // schedule element removel
+				return true;
+			}
+		});
 
 		// setup animation
 		// - workaround styles

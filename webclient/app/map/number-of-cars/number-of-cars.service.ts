@@ -22,9 +22,9 @@ export class NumberOfCarsService {
       .map(x => {
         let devices = this.animatedDeviceManager.getDevices();
         var all = devices.length;
-        var all_troubled = devices.filter(device => (device.latestInfo && device.latestInfo.alerts && Object.keys(device.latestInfo.alerts).length > 0)).length;
-        var critical = devices.filter(device => (device.latestInfo && device.latestInfo.alerts && (device.latestInfo.alerts.Critical || device.latestInfo.alerts.High))).length;
-        return <Counts>{ _region: region, all: all, troubled: all_troubled - critical, critical: critical };
+        var troubled = devices.filter(device => (device.latestSample && device.latestSample.status === 'troubled')).length;
+        var critical = devices.filter(device => (device.latestSample && device.latestSample.status === 'critical')).length;
+        return <Counts>{ _region: region, all: all, troubled: troubled, critical: critical };
       })
       .startWith(loadingData)
       .do(counts => this.log('getNumberOfCars(%s) item: %s', debugKey, counts.all));

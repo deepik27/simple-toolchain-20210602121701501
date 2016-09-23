@@ -1,4 +1,5 @@
 import * as ol from 'openlayers';
+import { Observable } from 'rxjs/Observable';
 
 /**
  * The default zoom value when the map `region` is set by `center`
@@ -11,6 +12,8 @@ var ANIMATION_DELAY = 2000;
 var DEFAULT_MOVE_REFRESH_DELAY = 500;
 var CAR_STATUS_REFRESH_PERIOD = 0 // was 15000; now, setting 0 not to update via polling (but by WebSock)
 var NEXT_MAP_ELEMENT_ID = 1;
+
+var NEXT_MODEL_KEY_ID = 1;
 
 /* --------------------------------------------------------------
  * MapHelper
@@ -245,7 +248,7 @@ export class MapHelper {
    * @destroyPopOver a function called on dismissing the popover: function(elm, feature, pinned)
    *   where @elm is the `elm` given as the first parameter to this method,
    *         @feature is ol.Feature, @pinned is boolean showing the "pin" state (true is pinned)
-   * @pdatePopOver a function called on updating popover content: function(elm, feature, pinned)
+   * @updatePopOver a function called on updating popover content: function(elm, feature, pinned)
    */
   addPopOver(options, showPopOver, destroyPopOver, updatePopOver){
     // check and normalize arguments
@@ -401,6 +404,74 @@ export class MapHelper {
   }
 
   /**
+   * Add model list-based popover to the map
+   * - Comparing to the normal popover, the info popover can
+   *   - Open multiple opovers concurrently
+   *
+   * @options
+   *    optoins.createOverlay: A parent element instance of all the popover DIV element
+   *    options.getKey: take a key and returns the identity function(model), otherwise the instance identity
+   *                    is used as the identity.
+   *    options.getFeature: get ol.Feature for the model object function(model)
+   * @showPopOver: show popover function(element, feature, pin=false, model, closeFunc)
+   * @destroyPopOver:
+   * @updatePopOver:
+   */
+  addModelBasedPopover(dataSource: Observable<any>, options: {
+    createOverlay: (model: any, map) => ol.Overlay,
+    getKey?: (model: any) => string,
+    getFeature: (model: any, map: ol.Map) => ol.Feature,
+    showPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => void,
+    destroyPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => (void|boolean),
+    updatePopover?: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => void,
+  }){
+    const context = {
+      activeControllers: <{ [key: string]: ModelBasedPopoverCtrl }>{},
+      subscription: undefined,
+    };
+    var activeControllers = context.activeControllers;
+    
+    var syncModelAndController = (models) => {
+      var syncedKeys = {};
+
+      models.forEach(model => {
+        let feature = options.getFeature(model, this.map);
+        let getKey = options.getKey || ((model) => { return (<any>model).__key__ || ((<any>model).__key__ = NEXT_MODEL_KEY_ID++) });
+        let key = getKey(model);
+        syncedKeys[key] = true; // mark the key synced
+        
+        let ctrl = activeControllers[key];
+        if(ctrl && ctrl.isDisposed()){
+          return; // ctrl can be disposed due to timeout or so. Will be removed from the list later
+        }
+        
+        // create popover
+        if(!ctrl){
+          // create new controller
+          ctrl = new ModelBasedPopoverCtrl(options, this.map, model);
+          activeControllers[key] = ctrl;
+        }
+        // update info
+        ctrl.update(feature);
+      });
+      // dispose model-missing controllers
+      Object.keys(activeControllers).forEach(key => {
+        if (!syncedKeys[key]){
+          var ctrl = activeControllers[key];
+          ctrl.close();
+          delete activeControllers[key];        
+        }
+      });
+    };
+    
+    // subscribe
+    context.subscription = dataSource.subscribe((models) => {
+      syncModelAndController(models);
+    });
+    return context;
+  }
+
+  /**
    * Install workaorund for map size issue.
    * Sometimes, OpenLayer's map canvas size and the underlying DIV element's size
    * wont be synced. It causes inconsistency in conversion from screen pixcel to
@@ -493,5 +564,124 @@ export class MapHelper {
     setTimeout(function(){
       workaroundLayer.setVisible(false);
     }, 100);
+  }
+}
+
+
+/**
+ * This class is a utility for realizing "POPOVER" capability and is a "controller" class.
+ * - the model class can be any
+ * - the view class is the `element` and `overlay`
+ *
+ * This take care of the lifecycle of the popover for a model object
+ * - Creation (constructor), update, and destruction of the view
+ * - Handle user's close request (`closeFunc` method)
+ * - Track the model's ol.Feature, and update the popover location
+ */
+class ModelBasedPopoverCtrl {
+  private disposed = false;
+  private disposedLater: any;
+  private targetFeature: any;
+
+  private overlay: ol.Overlay; // the overlay
+  private element: Element; // DOM element
+
+  private trackGeometryListener = () => {
+          var coord = (<any>this.targetFeature.getGeometry()).getCoordinates();
+          this.overlay.setPosition(coord);
+        };
+  private closeFunc = (elementDisposed?: boolean) => {
+        this.dispose(); 
+  };
+
+  /**
+   * Create resources for the popover
+   */
+  constructor(
+    private options: {
+      createOverlay: (model: any, map) => ol.Overlay,
+      showPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => void,
+      destroyPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => (boolean|void),
+      updatePopover?: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => void,
+    },
+    private map: ol.Map,
+    public model: any
+  ){
+    this.overlay = options.createOverlay(this.model, this.map);
+    this.element = this.overlay.getElement();
+    this.map.addOverlay(this.overlay);
+  }
+  /**
+   * Dispose this controller. Can call multiple times.
+   */
+  dispose() {
+    if(this.isDisposed())
+      return;
+
+    this.disposed = true;
+    
+    // cleanup feature
+    if(this.targetFeature){
+      this.update(null);
+    }
+    // dispose overlay
+    if(this.overlay){
+      this.map.removeOverlay(this.overlay);
+      this.overlay = null;
+    }
+    // dispose element
+    if(this.element){
+      this.element.parentElement && this.element.parentElement.removeChild(this.element);
+      this.element = null;
+    }
+    // cleanup everything
+    this.options = this.map = null;
+    this.trackGeometryListener = null;
+    this.closeFunc = null;
+  }
+
+  /**
+   * Just return whetere this controller is disposed or not
+   */
+  isDisposed() {
+    return this.disposed;
+  }
+
+  /**
+   * Close
+   */
+  close(){
+    this.update(null);
+    if(!this.disposedLater)
+      this.dispose();
+  }
+
+  /**
+   * Update track target, and the popover content
+   */
+  update(feature: ol.Feature){
+    if(this.targetFeature === feature) {
+      this.options && this.options.updatePopover && this.options.updatePopover(this.element, feature, false, this.model, this.closeFunc);
+      return;
+    }
+
+    if(this.targetFeature){
+      this.targetFeature.un('change:geometry', this.trackGeometryListener);
+      if(feature){
+        this.options && this.options.updatePopover && this.options.updatePopover(this.element, feature, false, this.model, this.closeFunc);
+      }else{
+        this.disposedLater = this.options && this.options.destroyPopover && this.options.destroyPopover(this.element, feature, false, this.model, this.closeFunc);
+      }
+    }
+
+    let oldFeature = this.targetFeature;
+    this.targetFeature = feature;
+
+    if(this.targetFeature){
+      this.targetFeature.on('change:geometry', this.trackGeometryListener);
+      if(!oldFeature){
+        this.options && this.options.showPopover && this.options.showPopover(this.element, feature, false, this.model, this.closeFunc);
+      }
+    }
   }
 }
