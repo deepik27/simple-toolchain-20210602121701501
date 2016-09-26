@@ -109,7 +109,7 @@ export class MapHelper {
    * Note that we want to get estimated server time as follow:
    *   estimated server time ~== Date.now() - this.serverTimeDelay
    */
-	setTimeFromServerRightNow(serverTime, now?){
+    setTimeFromServerRightNow(serverTime, now?){
     this.serverTimeDelay = (now || Date.now()) - serverTime;
     console.log('Set server time delay to %d.', this.serverTimeDelay);
   }
@@ -118,7 +118,7 @@ export class MapHelper {
     return (now || Date.now()) - this.serverTimeDelay;
   }
   // handle precompose event and delegate it to handlers
-	private _onPreCompose(event){
+    private _onPreCompose(event){
     if (this.animating){
       //var vectorContext = event.vectorContext;
       var frameState = event.frameState;
@@ -420,35 +420,49 @@ export class MapHelper {
   addModelBasedPopover(dataSource: Observable<any>, options: {
     createOverlay: (model: any, map) => ol.Overlay,
     getKey?: (model: any) => string,
+    getLastUpdated?: (model: any) => number,
     getFeature: (model: any, map: ol.Map) => ol.Feature,
     showPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => void,
     destroyPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => (void|boolean),
     updatePopover?: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => void,
   }){
+    let getKey = options.getKey || ((model) => { return (<any>model).__model_key__ || ((<any>model).__model_key__ = NEXT_MODEL_KEY_ID++) });
+    let getLastUpdated = options.getLastUpdated || ((model) => { return (<any>model).__model_key__ || ((<any>model).__model_key__ = NEXT_MODEL_KEY_ID++) });
+
     const context = {
       activeControllers: <{ [key: string]: ModelBasedPopoverCtrl }>{},
       subscription: undefined,
     };
     var activeControllers = context.activeControllers;
-
+    
     var syncModelAndController = (models) => {
       var syncedKeys = {};
 
       models.forEach(model => {
         let feature = options.getFeature(model, this.map);
-        let getKey = options.getKey || ((model) => { return (<any>model).__key__ || ((<any>model).__key__ = NEXT_MODEL_KEY_ID++) });
         let key = getKey(model);
         syncedKeys[key] = true; // mark the key synced
-
+        
         let ctrl = activeControllers[key];
-        if(ctrl && ctrl.isDisposed()){
-          return; // ctrl can be disposed due to timeout or so. Will be removed from the list later
+        if(ctrl){
+          if(ctrl.isUpdated(model)){
+            if(ctrl.isDisposed()) {
+              ctrl = null; // give chance to create a new controller
+            } else {
+              ctrl.model = model; // update the model instance
+            }
+          } else {
+            if(ctrl.isDisposed()){
+              return; // ctrl can be disposed due to timeout or so. The controller Will be removed from the list when the model is gone
+            }
+            ctrl.model = model; // update the model instance
+          }
         }
-
+        
         // create popover
         if(!ctrl){
           // create new controller
-          ctrl = new ModelBasedPopoverCtrl(options, this.map, model);
+          ctrl = new ModelBasedPopoverCtrl(options, this.map, model, getLastUpdated);
           activeControllers[key] = ctrl;
         }
         // update info
@@ -459,11 +473,11 @@ export class MapHelper {
         if (!syncedKeys[key]){
           var ctrl = activeControllers[key];
           ctrl.close();
-          delete activeControllers[key];
+          delete activeControllers[key];        
         }
       });
     };
-
+    
     // subscribe
     context.subscription = dataSource.subscribe((models) => {
       syncModelAndController(models);
@@ -585,13 +599,14 @@ class ModelBasedPopoverCtrl {
 
   private overlay: ol.Overlay; // the overlay
   private element: Element; // DOM element
+  private lastUpdated: number;
 
   private trackGeometryListener = () => {
           var coord = (<any>this.targetFeature.getGeometry()).getCoordinates();
           this.overlay.setPosition(coord);
         };
   private closeFunc = (elementDisposed?: boolean) => {
-        this.dispose();
+        this.dispose(); 
   };
 
   /**
@@ -605,8 +620,10 @@ class ModelBasedPopoverCtrl {
       updatePopover?: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => void,
     },
     private map: ol.Map,
-    public model: any
+    public model: any,
+    private getLastUpdated: (model: any) => number
   ){
+    this.lastUpdated = getLastUpdated(this.model);
     this.overlay = options.createOverlay(this.model, this.map);
     this.element = this.overlay.getElement();
     this.map.addOverlay(this.overlay);
@@ -619,7 +636,7 @@ class ModelBasedPopoverCtrl {
       return;
 
     this.disposed = true;
-
+    
     // cleanup feature
     if(this.targetFeature){
       this.update(null);
@@ -660,6 +677,8 @@ class ModelBasedPopoverCtrl {
    * Update track target, and the popover content
    */
   update(feature: ol.Feature){
+    this.lastUpdated = this.getLastUpdated(this.model);
+
     if(this.targetFeature === feature) {
       this.options && this.options.updatePopover && this.options.updatePopover(this.element, feature, false, this.model, this.closeFunc);
       return;
@@ -684,4 +703,13 @@ class ModelBasedPopoverCtrl {
       }
     }
   }
+
+  /**
+   * See if the model is updated or not
+   */
+  isUpdated(model: any){
+    let lastUpdated = this.getLastUpdated(model);
+    return this.lastUpdated < lastUpdated;
+  }
+
 }

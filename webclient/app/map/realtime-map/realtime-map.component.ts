@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChange
 import { Router } from '@angular/router';
 
 import * as ol from 'openlayers';
+import * as _ from 'underscore';
 import { Observable } from 'rxjs/Observable';
 
 import { MapHelper } from '../../shared/map-helper';
@@ -304,38 +305,68 @@ export class RealtimeMapComponent implements OnInit {
 
 		// setup alert popover
 		// - 1. create alerts Observable
+		let getSeverityVal = (alert: any): number => {
+							return (alert.severity === 'Critical' || alert.severity === 'High') ? 3 :
+										 (alert.severity === 'Medium' || alert.severity === 'Low') ? 2 :
+										 (alert.severity === 'Info') ? 1 : 0;
+		}
+		let getSeverityColor = (sev: number) => ['green', 'blue', 'orange', 'red'][sev];
+
+		let severityToValue = {Critical: 3, High: 'red', Medium: 'orange', Low: 'orange', Info: 'blue'};
 		let alertsProvider = Observable.interval(2000).map(() => {
 			// get all the alerts here
-			let result = [];
-			this.animatedDeviceManager.getDevices().forEach(device => {
-				if(device.latestSample.info.alerts.items){
-					result.push(...device.latestSample.info.alerts.items);
-				}
-			});
-			return result;
+			let result = this.animatedDeviceManager.getDevices()
+				.filter(device => (device.latestSample.info && 
+													 device.latestSample.info.alerts && 
+													 device.latestSample.info.alerts.items &&
+													 device.latestSample.info.alerts.items.length > 0))
+				.map(device => {
+					let alerts = device.latestSample.info.alerts.items;
+					let getColor = () => {
+						var col = Math.max(...alerts.map(getSeverityVal));
+						return getSeverityColor(col);
+					};
+					let getContent = () => {
+						var rows = alerts.map(alert => `<tr><td>${
+								_.escape(alert.description)
+							}</td><td class="${_.escape(getSeverityColor(getSeverityVal(alert)))}">${
+								_.escape(alert.severity)
+							}</td></tr>`);
+						var content = `<table class="table table-hover table-striped"><tbody>\n` +
+													`<thead><tr><th>Messages</th><th>Severity</th></tr></thead>\n` +
+														rows.join('\n') +
+													`</tbody></table>`;
+						return content;	
+					};
+					let getLastUpdated = () => {
+						return Math.max(...alerts.map((alert:any) => { 
+							return alert.ts || Date.parse(alert.timestamp);
+						}));
+					}
+					return {
+						mo_id: device.deviceID,
+						lastUpdated: getLastUpdated(),
+						contentHTML: getContent(),
+						colorClass: getColor(),
+					}
+				});
+				return result;
 		});
 
 		// setup alert popover
 		// - 2. setup popover
 		let alertPopoverHandle = this.mapHelper.addModelBasedPopover(alertsProvider, {
-			getKey: (alert => alert._id),
-			getFeature: ((alert, map) => this.deviceFeatures[alert.mo_id]),
+			getKey: (model => model.mo_id),
+			getLastUpdated: (model => model.lastUpdated),
+			getFeature: ((model, map) => this.deviceFeatures[model.mo_id]),
 			createOverlay: ((model, map) => {
+				// prepare DIV element for popup
 				let elem = document.createElement('div');
 				elem.classList.add('mapAlertPopover', 'opening');
-				if(model.severity === 'Critical' || model.severity === 'High'){
-					elem.classList.add('red');
-				}else if(model.severity === 'Medium'){
-					elem.classList.add('orange');
-				}else if(model.severity === 'Low'){
-					elem.classList.add('blue');
-				}else{
-					elem.classList.add('green');
-				}
-				elem.innerHTML = `
-					<a class="close" href="javascript: void(0);">&times;</a>
-					<div class="content">${_.escape(model.description)}</div>
-				`;
+				model.colorClass && elem.classList.add(model.colorClass);
+				// prepare the content
+				let alertPopoverContent = model.contentHTML;
+				elem.innerHTML = `<a class="close" href="javascript: void(0);">&times;</a><div class="content">${alertPopoverContent}</div>`;
 				mapTargetElement.appendChild(elem);
 
 				let r = new ol.Overlay({
@@ -351,8 +382,21 @@ export class RealtimeMapComponent implements OnInit {
 				_.delay(() => elem.classList.remove('opening'), 100);
 				var c = $(elem).find('.close')
 				c && c.on('click', function(){
-					setTimeout(() => closeFunc(), 5); // schedule element removel
+					elem.classList.add('closing');
+					setTimeout(() => closeFunc(), 500); // schedule element removel
 				});
+			},
+			updatePopover: function updateInfoPopover(elem, feature, pin, model, closeFunc){
+				// update color
+				if(model.colorClass){
+					elem.classList.remove('green', 'blue', 'orange', 'red');
+					elem.classList.add(model.colorClass);
+				}
+				// update content
+				var c = $(elem).find('.content');
+				c && c.get().forEach((e: Element) => {
+					e.innerHTML = model.contentHTML;
+				})
 			},
 			destroyPopover: function destroyInfoPopover(elem, feature, pin, model, closeFunc){
 				elem.classList.add('closing');

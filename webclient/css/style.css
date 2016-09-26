@@ -2093,18 +2093,6 @@ table th[class*="col-"] {
   border-radius: 3px;
 }
 
-.carMonitorMap .popover .popover-title .remove {
-  display: inline-block;
-  margin-top: -3px;
-  margin-bottom: 0;
-  margin-left: 4px;
-  margin-right: -10px;
-  padding: 0px 2px;
-  line-height: 1.2;
-  font-size: 16px;
-  border-radius: 3px;
-}
-
 .carMonitorMap .popover .popover-content {
 	font-weight: lighter;
 }
