@@ -29,6 +29,7 @@ htmlClient.config(['$stateProvider', '$urlRouterProvider', function($stateProvid
 					}
 					if($stateParams.vehicleId){
 						assetService.setVehicleId($stateParams.vehicleId);
+						assetService.setAutoManagedAsset(true);
 					}
 					if($stateParams.driverId){
 						assetService.setDriverId($stateParams.driverId);
