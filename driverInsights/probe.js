@@ -27,6 +27,7 @@ var driverInsightsTripRoutes = require("./tripRoutes.js");
 var debug = require('debug')('probe');
 debug.log = console.log.bind(console);
 
+var lastProbeTimeByMoId = {};
 var tripRouteCache = {};
 var insertTripRouteTimer = null;
 
@@ -82,13 +83,16 @@ _.extend(driverInsightsProbe, {
 	sendRawData: function(carProbeData, callback) {
 		var deviceType = "User Own Device";
 		var deviceId = carProbeData.mo_id;
-
+		
 		// check mandatory field
 		if(!carProbeData.trip_id || carProbeData.trip_id.length === 0 || !carProbeData.lng || !carProbeData.lat || isNaN(carProbeData.lng) || isNaN(carProbeData.lat) || isNaN(carProbeData.speed)){
 			callback("error");
 			return;
 		}
 		var ts = carProbeData.ts || Date.now();
+		// keep the last probe for each mo_id
+		lastProbeTimeByMoId[deviceId] = ts;
+
 		var payload = {
 				// assign ts if missing
 				ts: ts,
@@ -105,32 +109,30 @@ _.extend(driverInsightsProbe, {
 			payload.props = carProbeData.props;
 		}
 
-		Q.when(driverInsightsProbe.sendProbeData([payload], "sync"), function(events){
-			debug("events: " + events);
+		Q.when(driverInsightsProbe.sendProbeData([payload], "sync"), function(result){
+			debug("events: " + result);
 			var affected_events = null;
-			if(events){
-				var _events = JSON.parse(events);
-				affected_events = _events;
-				_events.forEach(function(event){
+			if(result){
+				affected_events = result.contents;
+				affected_events.forEach(function(event){
 					driverInsightsAlert.addAlertFromEvent(event);
 				});
 			}
 
 			Q.when(driverInsightsProbe.getProbeData([payload]), function(response){
-				var parsed = JSON.parse(response);
 				var probe = null;
-				if(parsed.contents && parsed.contents.length > 0){
+				if(response.contents && response.contents.length > 0){
 					// Workaround:
 					//   IoT for Automotive service returns probes of multiple vehicle in the area for now
 					//   even if the request specifies only one mo_id
-					for(var i=0; i<parsed.contents.length; i++){
-						if(parsed.contents[i].mo_id === payload.mo_id){
-							probe = parsed.contents[i];
+					for(var i=0; i<response.contents.length; i++){
+						if(response.contents[i].mo_id === payload.mo_id){
+							probe = response.contents[i];
 							break;
 						}
 					}
 					if(!probe){
-						callback(err);
+						callback("no probe data for " + payload.mo_id);
 						return;
 					}
 					_.extend(payload, probe, {ts: ts});
@@ -213,7 +215,11 @@ _.extend(driverInsightsProbe, {
 				if (!error && response.statusCode === 200) {
 					debug('sendProbData response: '+ body);
 					self.last_prob_ts = moment().valueOf(); //TODO Need to care in the case that payload.ts is older than last_prob_ts
-					deferred.resolve(body);
+					try {
+						deferred.resolve(JSON.parse(body));
+					} catch (e) {
+						deferred.reject({error: "(sendProbeData)" + body, statusCode: 500});
+					}
 				} else {
 					var statusCode = response ? response.statusCode : 500;
 					console.error("sendProbeData:" + options.body);
@@ -225,6 +231,10 @@ _.extend(driverInsightsProbe, {
 
 		return deferred.promise;
 	},
+	
+	/*
+	* get probe data with reference probe
+	*/ 
 	getProbeData: function(carProbeData){
 		var deferred = Q.defer();
 		var node = this.vdhConfig;
@@ -251,7 +261,11 @@ _.extend(driverInsightsProbe, {
 			request(options, function(error, response, body){
 				if(!error && response.statusCode === 200){
 					debug("getProbeData response: " + body);
-					deferred.resolve(body);
+					try {
+						deferred.resolve(JSON.parse(body));
+					} catch (e) {
+						deferred.reject({error: "(getProbeData)" + body, statusCode: response.statusCode});
+					}
 				}else{
 					var statusCode = response ? response.statusCode : 500;
 					console.error("getProbeData: " + options.body);
@@ -271,17 +285,11 @@ _.extend(driverInsightsProbe, {
 		var deferred = Q.defer();
 		var node = this.vdhConfig;
 		var api = "/carProbe";
-		var options = {
-				method: "GET",
-				url: node.baseURL + api + "?tenant_id=" + node.tenant_id,
-				qs: qs,
-				rejectUnauthorized: false,
-				auth: {
-					user: node.username,
-					pass: node.password,
-					sendImmediately: true
-				}
-		};
+		var options =  this._addAuthOption(node, {
+			method: "GET",
+			url: node.baseURL + api + "?tenant_id=" + node.tenant_id,
+			qs: qs
+		});
 		debug("getCarProbe(url): " + options.url);
 		request(options, function(error, response, body){
 			if(!error && response.statusCode === 200){
@@ -305,7 +313,7 @@ _.extend(driverInsightsProbe, {
 		});
 		return deferred.promise;
 	},
-
+	
 	getCarProbeDataListAsDate: function(callback) {
 		var deferred = Q.defer();
 		
@@ -460,6 +468,10 @@ _.extend(driverInsightsProbe, {
 			}
 		});
 		return deferred.promise;
+	},
+	
+	getLastProbeTime: function(mo_id){
+		return lastProbeTimeByMoId[mo_id];
 	}
 });
 

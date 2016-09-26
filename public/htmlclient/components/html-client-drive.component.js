@@ -18,7 +18,7 @@
 	angular.module('htmlClient').
 	component('clientDrive', {
 		templateUrl: scriptBaseUrl + 'html-client-drive.html',
-		controller: function ClientTop($scope, $http ,$q, assetService, carProbeService, eventService, geofenceService, virtualGeoLocation, $window) {
+		controller: function ClientTop($scope, $http ,$q, assetService, carProbeService, eventService, geofenceService, virtualGeoLocation, $window, $timeout) {
 			$window.onbeforeunload = function (e) {
 				// inactivate when user closes simulator window
 				assetService.activateAssets(false);
@@ -132,8 +132,6 @@
 		    	});
 		    };
 		    
-			$scope.eventTypes = [];
-
 	        // device ID
 		    $scope.connectOnStartup = carProbeService.getSettings().connectOnStartup;
 			$scope.simulation = carProbeService.settings.simulation;
@@ -149,9 +147,6 @@
 			$scope.fuel = null;
 			$scope.engineTemp = null;
 			
-			$scope.events = [];
-			$scope.eventTypes = [];
-
 			//
 			// Compose Map component
 			//
@@ -166,8 +161,6 @@
 	    	var routeStyle = null;
 	    	var matchedRouteStyle = null;
 			var DEFAULT_ZOOM = 16;
-			
-			var eventLoadingHandle = null;
 			
 			var mapHelper = null;
 			var eventHelper = null;
@@ -278,7 +271,7 @@
 					}
 				});
 			}
-			
+
 			function _plotTripRoute(tripRoute){
 				if(!tripLayer){
 					return;
@@ -423,7 +416,7 @@
 				enableMoveListener();
 				
 				window.onresize = function() {
-					setTimeout( function() { 
+					$timeout( function() { 
 	    				if ($scope.traceCurrentLocation) {
 	    					lockPosition = true;
 	    				}
@@ -539,6 +532,7 @@
 						virtualGeoLocation.setCurrentPosition({lat: data.deviceLocation.lat, lon: data.deviceLocation.lng}).then(function(tripRoute){
 							_plotTripRoute(tripRoute);
 						});
+						$timeout($scope.onDriving, 3000); // automatically start driving after 3 seconds
 					}
 					
         		}, function(err) {
