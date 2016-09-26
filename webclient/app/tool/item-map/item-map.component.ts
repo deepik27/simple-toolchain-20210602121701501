@@ -77,7 +77,7 @@ export class ItemMapComponent implements OnInit {
         handleUpEvent: self.onMouseUp
       });
     };
-    ol.inherits(interaction, ol.interaction.Pointer);
+    (<any>ol).inherits(interaction, ol.interaction.Pointer);
 
 		// create layyers
     this.mapEventsLayer = new ol.layer.Vector({

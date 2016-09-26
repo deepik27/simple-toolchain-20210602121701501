@@ -2093,6 +2093,18 @@ table th[class*="col-"] {
   border-radius: 3px;
 }
 
+.carMonitorMap .popover .popover-title .remove {
+  display: inline-block;
+  margin-top: -3px;
+  margin-bottom: 0;
+  margin-left: 4px;
+  margin-right: -10px;
+  padding: 0px 2px;
+  line-height: 1.2;
+  font-size: 16px;
+  border-radius: 3px;
+}
+
 .carMonitorMap .popover .popover-content {
 	font-weight: lighter;
 }
@@ -2411,18 +2423,26 @@ table th[class*="col-"] {
 
 .mapAlertPopover {
   position: relative;
-  background: rgba(255, 255, 255, 0.7);
+  background-color: #fff; /* rgba(204, 204, 204, 1);*/
 
   margin: 0px auto;
-  padding: 5px;
-  border-radius: 4px;
+  padding: 3px;
 
   width: auto;
-  max-width: 400px;
+  max-width: 500px;
 
   transition: all 0.5s ease-in-out;
-  transform: scale(1);
-  opacity: 0.9;
+  transform: scale(1); 
+
+  /* style from popover */
+  background-color: #ffffff;
+  -webkit-background-clip: padding-box;
+          background-clip: padding-box;
+  border: 1px solid #cccccc;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 }
 
 .mapAlertPopover .close {
@@ -2443,8 +2463,8 @@ table th[class*="col-"] {
 }
 
 .mapAlertPopover .content {
-  padding: 10px;
-  max-height: 30%;
+  padding: 2px 2px;
+  max-height: 160px;
   overflow: auto;
 }
 
@@ -2477,4 +2497,14 @@ table th[class*="col-"] {
 .mapAlertPopover.blue {
   color: black;
   background-color: #3774ba;
+}
+
+.mapAlertPopover .table {
+  margin-bottom: 0px !important;
+  margin-top: 0px !important;
+  background-color: #ffffff;
+}
+
+.mapAlertPopover .table > tbody > tr > td, .mapAlertPopover .table > thead > tr > th {
+  padding: 1px 5px;
 }

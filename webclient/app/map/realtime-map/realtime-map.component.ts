@@ -221,7 +221,7 @@ export class RealtimeMapComponent implements OnInit {
 			});
 
 		// popover - generate popover content from ol.Feature
-		var getPopOverContent = (feature)=> {
+		var getPopOverContent = (feature): {title?: string, content: string} => {
 			var content = <string>feature.get('popoverContent');
 			if(content)
 				return {content: '<span style="white-space: nowrap;">' + _.escape(content) + '</span>' };

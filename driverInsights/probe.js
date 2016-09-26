@@ -114,7 +114,7 @@ _.extend(driverInsightsProbe, {
 			var affected_events = null;
 			if(result){
 				affected_events = result.contents;
-				affected_events.forEach(function(event){
+				[].concat(affected_events).forEach(function(event){
 					driverInsightsAlert.addAlertFromEvent(event);
 				});
 			}

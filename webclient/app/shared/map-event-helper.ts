@@ -76,7 +76,7 @@ export class MapEventHelper extends MapItemHelper<Event> {
         feature.setStyle(style);
         return style;
       };
-    }();
+    }(undefined);
     itemLayer.setStyle(getEventStyle);
     this.eventService.getEventTypes().subscribe(data => { this.eventTypes = data; });
   }
