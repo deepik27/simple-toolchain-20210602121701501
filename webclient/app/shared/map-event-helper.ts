@@ -7,38 +7,30 @@ import{ Item } from "./map-item-helper";
 @Injectable()
 export class MapEventHelper extends MapItemHelper<Event> {
   defaultStyle: ol.style.Style;
-  dirEventStyles: ol.style.Style[];
   dirs: string[];
+  eventTypes = [];
+  eventIcon = null;
 
-  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public eventService: EventService) {
-    super(map, itemLayer);
-
-    let eventIcon = new ol.style.Icon({
-        scale: 0.14,
-        anchor: [79, 158],
-        anchorXUnits: "pixels",
-        anchorYUnits: "pixels",
-        src: "img/iota-event.png"
-    });
-
-    this.defaultStyle = new ol.style.Style({image: eventIcon});
-    itemLayer.setStyle(this.defaultStyle);
-    this.dirEventStyles = [];
-    this.dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-    this.dirs.forEach(function(dir) {
-      this.dirEventStyles.push(new ol.style.Style({
-        image: eventIcon,
-        text: new ol.style.Text({
-            fill: new ol.style.Fill({color: "#808080"}),
-            scale: 0.9,
-            textAlign: "center",
-            textBaseline: "bottom",
-            offsetY: -7,
-            text: dir,
-            font: "monospace"
+  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public eventService: EventService, public itemLabel: string = "Event") {
+    super(map, itemLayer, itemLabel);
+    this.eventIcon = new ol.style.Circle({
+        radius: 10,
+        stroke : new ol.style.Stroke({
+          color: "#ffc000",
+          width: 1
+        }),
+        fill : new ol.style.Fill({
+          color: "yellow"
         })
-      }));
-    }.bind(this));
+      });
+
+    this.defaultStyle = new ol.style.Style({image: this.eventIcon});
+    itemLayer.setStyle(this.defaultStyle);
+    this.eventService.getEventTypes().subscribe(data => { this.eventTypes = data; });
+  }
+
+  public getItemType() {
+    return "event";
   }
 
   // query items within given area
@@ -61,20 +53,40 @@ export class MapEventHelper extends MapItemHelper<Event> {
     let coordinates: ol.Coordinate = [event.s_longitude || 0, event.s_latitude || 0];
     let position = ol.proj.fromLonLat(coordinates, undefined);
     let feature = new ol.Feature({geometry: new ol.geom.Point(position), item: event});
-    let index = Math.floor(((event.heading / 360 + 1 / 32) % 1) * 16);
-    let style = index < this.dirEventStyles.length ? this.dirEventStyles[index] : this.defaultStyle;
+    let arrowTexts = ["\u2191", "\u2197", "\u2192", "\u2198", "\u2193", "\u2199", "\u2190", "\u2196"];
+    let textIndex = Math.floor((event.heading % 360) / Math.floor(360 / arrowTexts.length));
+    let rotation = (event.heading % 360) % Math.floor(360 / arrowTexts.length);
+    if (rotation > Math.floor(360 / arrowTexts.length) / 2) {
+      textIndex++;
+      if (textIndex === arrowTexts.length)
+        textIndex = 0;
+    }
+    let text = arrowTexts[textIndex];
+    rotation = 0; // 3.14 * rotation / 180;
+    let style = new ol.style.Style({
+        image: this.eventIcon,
+        text: new ol.style.Text({
+            fill: new ol.style.Fill({color: "#606060"}),
+            scale: 1.0,
+            textAlign: "center",
+            textBaseline: "middle",
+            text: text,
+            rotation: rotation,
+            font: "16px monospace"
+        })
+      });
     feature.setStyle(style);
     console.log("created an event feature : " + event.event_id);
     return [feature];
   }
 
-  public createEventDescriptionHTML(event, eventTypes) {
-    eventTypes = eventTypes || [];
-    let result = { content: "", title: undefined };
-    result.title = event.event_id;
-    result.content = "<table><tbody>";
+  public createItem(param: any) {
+    return new Event(param);
+  }
 
-		// event type or description
+  public getHoverProps(event) {
+    let eventTypes =   this.eventTypes || [];
+    // event type or description
     let description = event.event_type;
     for (let i = 0; i < eventTypes.length; i++) {
       let type = eventTypes[i];
@@ -83,26 +95,28 @@ export class MapEventHelper extends MapItemHelper<Event> {
         break;
       }
     }
+
+    let props = [];
     if (description) {
-      result.content += "<tr><th style='white-space: nowrap;text-align:right;'><span style='margin-right:10px;'>TYPE:</span></th><td>" + _.escape(description) + "</td></tr>";
+      props.push({key: "type", value: description});
     }
-		// location and heading
+    // location and heading
     let index = Math.floor(((event.heading / 360 + 1 / 32) % 1) * 16);
-    let dir = this.dirs[index];
-    result.content += "<tr><th style='white-space: nowrap;text-align:right;'><span style='margin-right:10px;'>LOCATION:</span></th><td style='white-space: nowrap'>" + Math.round(event.s_latitude * 10000000) / 10000000 + "," + Math.round(event.s_longitude * 10000000) / 10000000 + "</td></tr>" +
-              "<tr><th style='white-space: nowrap;text-align:right;'><span style='margin-right:10px;'>HEADING:</span></th><td>" + Math.round(event.heading * 10000000) / 10000000 + " [" + dir + "]" + "</td></tr>";
+    let dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+    let dir = dirs[index];
+    props.push({key: "location", value: Math.round(event.s_latitude * 10000000) / 10000000 + "," + Math.round(event.s_longitude * 10000000) / 10000000});
+    props.push({key: "heading", value: Math.round(event.heading * 10000000) / 10000000 + " [" + dir + "]"});
 
 		// duration
     if (event.start_time) {
       let startTime = new Date(event.start_time).toLocaleString();
-      result.content += "<tr><th style='white-space: nowrap;text-align:right;'><span style='margin-right:10px;'>START:</span></th><td style='white-space: nowrap'>" + startTime + "</td></tr>";
+      props.push({key: "start", value: startTime});
     }
     if (event.end_time) {
       let endTime = new Date(event.end_time).toLocaleString();
-      result.content += "<tr><th style='white-space: nowrap;text-align:right;'><span style='margin-right:10px;'>END:</span></th><td style='white-space: nowrap'>" + endTime + "</td></tr>";
+      props.push({key: "end", value: endTime});
     }
-    result.content += "</tbody><table>";
-    return result;
+    return props;
   }
 }
 
@@ -121,5 +135,8 @@ export class Event extends Item {
 
   public getId() {
     return this.event_id;
+  }
+  public getItemType() {
+    return "event";
   }
 }

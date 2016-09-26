@@ -430,7 +430,7 @@ export class MapHelper {
       subscription: undefined,
     };
     var activeControllers = context.activeControllers;
-    
+
     var syncModelAndController = (models) => {
       var syncedKeys = {};
 
@@ -439,12 +439,12 @@ export class MapHelper {
         let getKey = options.getKey || ((model) => { return (<any>model).__key__ || ((<any>model).__key__ = NEXT_MODEL_KEY_ID++) });
         let key = getKey(model);
         syncedKeys[key] = true; // mark the key synced
-        
+
         let ctrl = activeControllers[key];
         if(ctrl && ctrl.isDisposed()){
           return; // ctrl can be disposed due to timeout or so. Will be removed from the list later
         }
-        
+
         // create popover
         if(!ctrl){
           // create new controller
@@ -459,11 +459,11 @@ export class MapHelper {
         if (!syncedKeys[key]){
           var ctrl = activeControllers[key];
           ctrl.close();
-          delete activeControllers[key];        
+          delete activeControllers[key];
         }
       });
     };
-    
+
     // subscribe
     context.subscription = dataSource.subscribe((models) => {
       syncModelAndController(models);
@@ -591,7 +591,7 @@ class ModelBasedPopoverCtrl {
           this.overlay.setPosition(coord);
         };
   private closeFunc = (elementDisposed?: boolean) => {
-        this.dispose(); 
+        this.dispose();
   };
 
   /**
@@ -619,7 +619,7 @@ class ModelBasedPopoverCtrl {
       return;
 
     this.disposed = true;
-    
+
     // cleanup feature
     if(this.targetFeature){
       this.update(null);

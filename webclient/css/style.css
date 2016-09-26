@@ -2093,6 +2093,18 @@ table th[class*="col-"] {
   border-radius: 3px;
 }
 
+.carMonitorMap .popover .popover-title .remove {
+  display: inline-block;
+  margin-top: -3px;
+  margin-bottom: 0;
+  margin-left: 4px;
+  margin-right: -10px;
+  padding: 0px 2px;
+  line-height: 1.2;
+  font-size: 16px;
+  border-radius: 3px;
+}
+
 .carMonitorMap .popover .popover-content {
 	font-weight: lighter;
 }
@@ -2421,7 +2433,7 @@ table th[class*="col-"] {
   max-width: 400px;
 
   transition: all 0.5s ease-in-out;
-  transform: scale(1); 
+  transform: scale(1);
   opacity: 0.9;
 }
 
@@ -2449,12 +2461,12 @@ table th[class*="col-"] {
 }
 
 .mapAlertPopover.opening {
-  transform: scale(3); 
+  transform: scale(3);
   opacity: 0;
 }
 
 .mapAlertPopover.closing {
-  transform: scale(0.2); 
+  transform: scale(0.2);
   opacity: 0;
 }
 
@@ -2471,7 +2483,7 @@ table th[class*="col-"] {
 
 .mapAlertPopover.green {
   color: black;
-  background-color: #58a946;  
+  background-color: #58a946;
 }
 
 .mapAlertPopover.blue {

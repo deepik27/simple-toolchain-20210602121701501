@@ -7,10 +7,23 @@ export abstract class MapItemHelper<T extends Item> {
   loadingHandle = null;
   itemMap = {};
 
-  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector) {
+  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public itemLabel: string) {
     this.map.getView().on("change:center", this.viewChanged.bind(this));
     this.map.getView().on("change:resolution", this.viewChanged.bind(this));
     setTimeout(this.updateView.bind(this), 100);
+  }
+
+  public getItemType() {
+    return "unknown";
+  }
+
+  public getItemLabel() {
+    let label = this.itemLabel;
+    if (!label) {
+      label = this.getItemType();
+      label = label.charAt(0).toUpperCase() + label.slice(1);
+    }
+    return label;
   }
 
   // callback function to be called when view position is changed
@@ -92,7 +105,7 @@ export abstract class MapItemHelper<T extends Item> {
 
     if (itemsToAdd.length > 0 || itemsToRemove.length > 0) {
       this.itemListChangedListeners.forEach(function(listener) {
-        listener(items);
+        listener(items, itemsToAdd, itemsToRemove);
       });
     }
   }
@@ -104,7 +117,7 @@ export abstract class MapItemHelper<T extends Item> {
         let features = this.createItemFeatures(item);
         if (features) {
           this.itemLayer.getSource().addFeatures(features);
-          this.itemMap[id] = {item: item, feature: features};
+          this.itemMap[id] = {item: item, features: features};
         }
       }
     }.bind(this));
@@ -115,7 +128,11 @@ export abstract class MapItemHelper<T extends Item> {
       let id = item.getId();
       if (this.itemMap[id]) {
         let features = this.itemMap[id].features;
-        this.itemLayer.getSource().removeFeatures(features);
+        if (features) {
+          features.forEach(function(feature) {
+            this.itemLayer.getSource().removeFeature(feature);
+          }.bind(this));
+        }
         delete this.itemMap[id];
       }
     }.bind(this));
@@ -130,7 +147,32 @@ export abstract class MapItemHelper<T extends Item> {
     return null;
   }
 
+  public abstract createItem(param: any): T;
+
   public abstract createItemFeatures(item: T);
+
+  public createEventDescriptionHTML(item: T) {
+    let props = this.getHoverProps(item);
+
+    let title = this.getItemLabel();
+    let content: string = "<table><tbody>";
+    if (props) {
+      props.forEach(function(prop) {
+        if (prop.key === "id") {
+          title += " (" + _.escape(prop.value) + ")";
+        } else {
+          content += "<tr><th style='white-space: nowrap;text-align:right;'><span style='margin-right:10px;'>" + _.escape(prop.key.toUpperCase()) +
+                            ":</span></th><td>" + _.escape(prop.value) + "</td></tr>";
+        }
+      });
+    }
+    content += "</tbody><table>";
+    return {title: title, content: content};
+  }
+
+  public getHoverProps(item) {
+    return [];
+  }
 }
 
 @Injectable()
@@ -142,4 +184,7 @@ export abstract class Item {
   }
 
   public abstract getId();
+  public getItemType() {
+    return "unknown";
+  }
 }

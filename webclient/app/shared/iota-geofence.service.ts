@@ -46,20 +46,32 @@ export class GeofenceService {
      return this.http.get(url);
    }
 
-  public createGeoFence(geofence) {
-    let url = "/user/geofence";
-    let body = JSON.stringify({geofence: geofence});
-    let headers = new Headers({"Content-Type": "application/JSON;charset=utf-8"});
-    let options = new RequestOptions({headers: headers});
+   public createGeofence(geofence) {
+     let url = "/user/geofence";
+     let body = JSON.stringify(geofence);
+     let headers = new Headers({"Content-Type": "application/JSON;charset=utf-8"});
+     let options = new RequestOptions({headers: headers});
 
-    return this.http.post(url, body, options).map(data => {
+     return this.http.post(url, body, options).map(data => {
         let resJson = data.json();
         return resJson;
-    });
+      });
   }
 
-  public deleteGeoFence(id) {
-    return this.http.delete("/user/rule/" + id).map(data => {
+   public updateGeofence(geofence_id, geofence) {
+     let url = "/user/geofence/" + geofence_id;
+     let body = JSON.stringify(geofence);
+     let headers = new Headers({"Content-Type": "application/JSON;charset=utf-8"});
+     let options = new RequestOptions({headers: headers});
+
+     return this.http.put(url, body, options).map(data => {
+        let resJson = data.json();
+        return resJson;
+      });
+  }
+
+  public deleteGeofence(id) {
+    return this.http.delete("/user/geofence/" + id).map(data => {
         let resJson = data.json();
         return resJson;
     });

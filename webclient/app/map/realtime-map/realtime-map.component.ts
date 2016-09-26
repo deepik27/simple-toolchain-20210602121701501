@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import * as ol from 'openlayers';
 import { Observable } from 'rxjs/Observable';
 
-import { MapHelper } from './map-helper';
+import { MapHelper } from '../../shared/map-helper';
 import { MapEventHelper } from '../../shared/map-event-helper';
 import { EventService } from '../../shared/iota-event.service';
 import { MapGeofenceHelper } from '../../shared/map-geofence-helper';
@@ -319,7 +319,7 @@ export class RealtimeMapComponent implements OnInit {
 				}
 				elem.innerHTML = `
 					<a class="close" href="javascript: void(0);">&times;</a>
-					<div class="content">${_.escape(model.description)}</div>					
+					<div class="content">${_.escape(model.description)}</div>
 				`;
 				mapTargetElement.appendChild(elem);
 
@@ -337,7 +337,7 @@ export class RealtimeMapComponent implements OnInit {
 				var c = $(elem).find('.close')
 				c && c.on('click', function(){
 					setTimeout(() => closeFunc(), 5); // schedule element removel
-				});				
+				});
 			},
 			destroyPopover: function destroyInfoPopover(elem, feature, pin, model, closeFunc){
 				elem.classList.add('closing');

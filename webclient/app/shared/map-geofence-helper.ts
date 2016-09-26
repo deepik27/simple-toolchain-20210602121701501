@@ -6,9 +6,9 @@ import{ Item } from "./map-item-helper";
 
 @Injectable()
 export class MapGeofenceHelper extends MapItemHelper<Geofence> {
-
-  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public geofenceService: GeofenceService) {
-    super(map, itemLayer);
+  handleStyle: ol.style.Style;
+  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public geofenceService: GeofenceService, public itemLabel: string = "Geofence") {
+    super(map, itemLayer, itemLabel);
     let defaultStyle = new ol.style.Style({
         fill: new ol.style.Fill({
           color: [255, 0, 128, 0.1]
@@ -19,6 +19,10 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
         })
     });
     itemLayer.setStyle(defaultStyle);
+  }
+
+  public getItemType() {
+    return "geofence";
   }
 
   // query items within given area
@@ -42,30 +46,44 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
     if (geofence.geometry_type === "circle") {
       let center: ol.Coordinate = ol.proj.transform([geometry.longitude, geometry.latitude], "EPSG:4326", "EPSG:3857");
       let circle = new (<any>ol.geom.Circle)(center, geometry.radius);
-      let feature = new ol.Feature(circle);
+      let feature = new ol.Feature({geometry: circle, item: geofence});
       features.push(feature);
     } else {
-      let points = [];
-      points.push(ol.proj.transform([geometry.min_longitude, geometry.min_latitude], "EPSG:4326", "EPSG:3857"));
-      points.push(ol.proj.transform([geometry.min_longitude, geometry.max_latitude], "EPSG:4326", "EPSG:3857"));
-      points.push(ol.proj.transform([geometry.max_longitude, geometry.max_latitude], "EPSG:4326", "EPSG:3857"));
-      points.push(ol.proj.transform([geometry.max_longitude, geometry.min_latitude], "EPSG:4326", "EPSG:3857"));
-      points.push(ol.proj.transform([geometry.min_longitude, geometry.min_latitude], "EPSG:4326", "EPSG:3857"));
-
-      let polygonCoordinates = [];
-      for (let i = 0; i < points.length - 1; i++) {
-        polygonCoordinates.push([points[i], points[i + 1]]);
-      }
-
-      let poiygon = new ol.geom.Polygon([]);
-      poiygon.setCoordinates(polygonCoordinates);
-      let feature = new ol.Feature({geometry: poiygon, item: geofence});
+      let polygonCoordinates = this.createGeofenceCoordinate(geometry);
+      let polygon = new ol.geom.Polygon([polygonCoordinates]);
+      let feature = new ol.Feature({geometry: polygon, item: geofence});
       features.push(feature);
     }
     return features;
   }
+
+  createGeofenceCoordinate(geometry) {
+    let points = [];
+    points.push(ol.proj.transform([geometry.max_longitude, geometry.max_latitude], "EPSG:4326", "EPSG:3857"));
+    points.push(ol.proj.transform([geometry.max_longitude, geometry.min_latitude], "EPSG:4326", "EPSG:3857"));
+    points.push(ol.proj.transform([geometry.min_longitude, geometry.min_latitude], "EPSG:4326", "EPSG:3857"));
+    points.push(ol.proj.transform([geometry.min_longitude, geometry.max_latitude], "EPSG:4326", "EPSG:3857"));
+    points.push(ol.proj.transform([geometry.max_longitude, geometry.max_latitude], "EPSG:4326", "EPSG:3857"));
+
+    let polygonCoordinates = [];
+    for (let i = 0; i < points.length; i++) {
+      polygonCoordinates.push([points[i][0], points[i][1]]);
+    }
+    return polygonCoordinates;
+  }
+
+  public createItem(param: any) {
+    return new Geofence(param);
+  }
+
+  public getHoverProps(geofence) {
+    let props = [];
+    props.push({key: "direction", value: geofence.direction});
+    return props;
+  }
 }
 
+@Injectable()
 export class Geofence extends Item {
   id: string;
   direction: string;
@@ -86,5 +104,8 @@ export class Geofence extends Item {
 
   public getId() {
     return this.id;
+  }
+  public getItemType() {
+    return "geofence";
   }
 }

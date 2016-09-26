@@ -449,22 +449,23 @@ _.extend(driverInsightsGeofence, {
 			if (doc.geofence && doc.geofence.geometry) {
 				var geofence = doc.geofence.geometry;
 				var geometry = {type: "Polygon", coordinates: []};
-				if (doc.geofence.geometry_type === "circle") {
+				if (!isNaN(geofence.min_longitude)) {
 					geometry.coordinates.push([
-						    [[parseFloat(geofence.longitude) - parseFloat(geofence.radius), parseFloat(geofence.latitude) - parseFloat(geofence.radius)]],
-						    [[parseFloat(geofence.longitude) + parseFloat(geofence.radius), parseFloat(geofence.latitude) - parseFloat(geofence.radius)]],
-						    [[parseFloat(geofence.longitude) + parseFloat(geofence.radius), parseFloat(geofence.latitude) + parseFloat(geofence.radius)]],
-						    [[parseFloat(geofence.longitude) - parseFloat(geofence.radius), parseFloat(geofence.latitude) + parseFloat(geofence.radius)]],
-						    [[parseFloat(geofence.longitude) - parseFloat(geofence.radius), parseFloat(geofence.latitude) - parseFloat(geofence.radius)]]
-						  ]);
-				} else {
+		   					    [parseFloat(geofence.min_longitude), parseFloat(geofence.min_latitude)],
+		   					    [parseFloat(geofence.max_longitude), parseFloat(geofence.min_latitude)],
+		   					    [parseFloat(geofence.max_longitude), parseFloat(geofence.max_latitude)],
+		   					    [parseFloat(geofence.min_longitude), parseFloat(geofence.max_latitude)],
+		   					    [parseFloat(geofence.min_longitude), parseFloat(geofence.min_latitude)]
+		   					  ]);
+				} else if (!isNaN(geofence.longitude)) {
+		            var r = 0.0001;
 					geometry.coordinates.push([
-						    [parseFloat(geofence.min_longitude), parseFloat(geofence.min_latitude)],
-						    [parseFloat(geofence.max_longitude), parseFloat(geofence.min_latitude)],
-						    [parseFloat(geofence.max_longitude), parseFloat(geofence.max_latitude)],
-						    [parseFloat(geofence.min_longitude), parseFloat(geofence.max_latitude)],
-						    [parseFloat(geofence.min_longitude), parseFloat(geofence.min_latitude)]
-						  ]);
+		   					    [parseFloat(geofence.longitude)-r, parseFloat(geofence.latitude)-r],
+		   					    [parseFloat(geofence.longitude)+r, parseFloat(geofence.latitude)-r],
+		   					    [parseFloat(geofence.longitude)+r, parseFloat(geofence.latitude)+r],
+		   					    [parseFloat(geofence.longitude)-r, parseFloat(geofence.latitude)+r],
+		   					    [parseFloat(geofence.longitude)-r, parseFloat(geofence.latitude)-r]
+		   					  ]);
 				}
 				st_index(geometry);
 			}

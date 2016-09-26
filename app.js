@@ -68,6 +68,7 @@ app.get('/webclient/carStatus*', function (req, res) { res.status(200).sendFile(
 app.get('/webclient/alert*', function (req, res) { res.status(200).sendFile(webClientTop); });
 app.get('/webclient/users*', function (req, res) { res.status(200).sendFile(webClientTop); });
 app.get('/webclient/vehicle*', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/tool*', function (req, res) { res.status(200).sendFile(webClientTop); });
 
 // development only
 if ('development' === app.get('env')) {

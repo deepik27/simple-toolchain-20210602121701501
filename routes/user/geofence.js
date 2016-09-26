@@ -64,7 +64,6 @@ router.get("/geofence/:geofence_id", authenticate, function(req, res){
 });
 router.put("/geofence/:geofence_id", authenticate, function(req, res){
 	var geofence_id = req.params.geofence_id;
-	var geofenceJson = req.body && req.body.geofence;
 	Q.when(driverInsightsGeofence.updateGeofence(geofence_id, req.body), function(response){
 		res.send(response);
 	})["catch"](function(err){
