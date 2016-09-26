@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChange } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChange, Inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 import * as ol from 'openlayers';
@@ -11,6 +11,7 @@ import { MapGeofenceHelper } from '../../shared/map-geofence-helper';
 import { GeofenceService } from '../../shared/iota-geofence.service';
 import { RealtimeDeviceData, RealtimeDeviceDataProvider } from '../../shared/realtime-device';
 import { RealtimeDeviceDataProviderService } from '../../shared/realtime-device-manager.service';
+import { AppConfig, APP_CONFIG } from '../../app-config';
 
 declare var $; // jQuery from <script> tag in the index.html
 // as bootstrap type definitoin doesn't extend jQuery $'s type definition
@@ -77,7 +78,8 @@ export class RealtimeMapComponent implements OnInit {
 		private router: Router,
 		animatedDeviceManagerService: RealtimeDeviceDataProviderService,
 		private eventService: EventService,
-		private geofenceService: GeofenceService
+		private geofenceService: GeofenceService,
+		@Inject(APP_CONFIG) private appConfig: AppConfig
 	) {
 		this.animatedDeviceManagerService = animatedDeviceManagerService;
 		this.animatedDeviceManager = animatedDeviceManagerService.getProvider();
@@ -85,6 +87,7 @@ export class RealtimeMapComponent implements OnInit {
 
 	switchDebug(){
 		this.DEBUG = !this.DEBUG;
+		this.appConfig.DEBUG = !this.appConfig.DEBUG;
 	}
 	debugOut(){
 		var extent = this.map.getView().calculateExtent(this.map.getSize());
@@ -348,6 +351,9 @@ export class RealtimeMapComponent implements OnInit {
 		this.mapHelper.preloadStyles(this.map, CAR_STYLES);
 		// - define feature synchronizer
 		var syncCarFeatures = (devices, frameTime, surpussEvent = true) => {
+			if(this.appConfig.DEBUG){
+				console.log('DEBUG-MAP: syncing car features. Number of devices=' + devices.length + ', frameTime=' + new Date(frameTime));
+			}
 			devices.forEach((device) => {
 				var cur = device.getAt(frameTime); // get state of the device at frameTime
 				var curPoint = (cur.lng && cur.lat) ? new ol.geom.Point(ol.proj.fromLonLat([cur.lng, cur.lat], undefined)) : null;
@@ -385,7 +391,11 @@ export class RealtimeMapComponent implements OnInit {
 		}
 		// // - register rendering handlers
 		this.mapHelper.preComposeHandlers.push((event, frameTime) => {
-			syncCarFeatures(this.animatedDeviceManager.getDevices(), frameTime);
+			try{
+				syncCarFeatures(this.animatedDeviceManager.getDevices(), frameTime);
+			} catch(e) {
+				console.error('DEBUG-MAP: got exception while syncing car features', e);
+			}
 		});
 		this.mapHelper.postComposeHandlers.push((event, frameTime) => {
 			return INV_MAX_FPS; // give delay for next frame if not other events captured
