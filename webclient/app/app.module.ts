@@ -8,6 +8,7 @@ import { MapPageModule } from './map/map-page.module';
 import { CarStatusPageModule } from './car-status/car-status-page.module';
 import { AlertPageModule } from './alert/alert-page.module';
 import { VehiclePageModule } from './vehicle/vehicle-page.module';
+import { MapItemPageModule } from './tool/map-item-page.module';
 
 import { routing, appRoutingProviders } from './app.routing';
 
@@ -37,7 +38,7 @@ class AppRequestOptions extends BaseRequestOptions {
     FormsModule,
     HttpModule,
     routing,
-    MapPageModule, CarStatusPageModule, AlertPageModule, VehiclePageModule,
+    MapPageModule, CarStatusPageModule, AlertPageModule, VehiclePageModule, MapItemPageModule,
   ],
   declarations: [
     AppComponent,

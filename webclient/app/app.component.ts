@@ -19,7 +19,8 @@ export class AppComponent {
            { title: "Map", route: "map", icon: 'icon-location', active: false },
            { title: "Car Status", route: "carStatus", icon: "icon-car", active: false},
            { title: "Alert", route: "alert", icon: "icon-idea", active: false},
-           { title: "Vehicle", route: "vehicle", icon: 'icon-car', active: false }
+           { title: "Vehicle", route: "vehicle", icon: 'icon-car', active: false },
+           { title: "Events", route: "tool", icon: 'icon-location', active: false }
        ];
 
   constructor(){
