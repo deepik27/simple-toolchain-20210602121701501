@@ -40,7 +40,6 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
   }
 
   public createItemFeatures(geofence: Geofence) {
-    // Setup current event position
     let features = [];
     let geometry = geofence.geometry;
     if (geofence.geometry_type === "circle") {

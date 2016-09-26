@@ -48,7 +48,7 @@ export class ItemMapComponent implements OnInit {
   mapGeofenceLayer: ol.layer.Vector;
   mapHelper: MapHelper;
   mapItemHelpers: any = {};
-  showTool:boolean = false;
+  showTool: boolean = false;
   dragging: boolean = false;
   dragFeatureCoordinate = null;
   dragStartCoordinate = null;
@@ -111,6 +111,7 @@ export class ItemMapComponent implements OnInit {
       let coordinate = ol.proj.toLonLat(e.coordinate, undefined);
       this.commandExecutor.locationClicked({longitude: coordinate[0], latitude: coordinate[1]});
     }.bind(this));
+
     // add helpers
     this.mapHelper = new MapHelper(this.map);
     this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);

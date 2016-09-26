@@ -59,8 +59,7 @@ export class RealtimeMapComponent implements OnInit {
 	eventsLayer: ol.layer.Vector;
 	carsLayer: ol.layer.Vector;
 	mapHelper: MapHelper;
-	eventHelper: MapEventHelper;
-	geofenceHelper: MapGeofenceHelper;
+	mapItemHelpers = {};
 
 	mapElementId = 'carmonitor';
 	popoverElemetId = 'carmonitorpop';
@@ -148,8 +147,8 @@ export class RealtimeMapComponent implements OnInit {
 			}),
 		});
 		this.mapHelper = new MapHelper(this.map);
-		this.eventHelper = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
-		this.geofenceHelper = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService);
+		this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
+    this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, "Boundary");
 
 		// setup view change event handler
 		this.mapHelper.postChangeViewHandlers.push(extent => {
@@ -284,6 +283,22 @@ export class RealtimeMapComponent implements OnInit {
 				}
 				return result;
 			}
+			let item = feature.get("item");
+			if (item) {
+				let helper = this.mapItemHelpers[item.getItemType()];
+				if (helper) {
+					let props = helper.getHoverProps(item);
+					let title = helper.getItemLabel() + " (" + item.getId() + ")";
+					let details: string = "<table><tbody>";
+					props && props.forEach(function(prop) {
+						details += "<tr><th style='white-space: nowrap;text-align:right;'><span style='margin-right:10px;'>" + _.escape(prop.key.toUpperCase()) +
+																":</span></th><td>" + _.escape(prop.value) + "</td></tr>";
+					});
+					details += "</tbody><table>";
+					return {title: title, content: details};
+				}
+			}
+
 			return null;
 		}
 
