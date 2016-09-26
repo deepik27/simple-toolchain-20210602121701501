@@ -27,6 +27,7 @@ var driverInsightsTripRoutes = require("./tripRoutes.js");
 var debug = require('debug')('probe');
 debug.log = console.log.bind(console);
 
+var lastProbeTimeByMoId = {};
 var tripRouteCache = {};
 var insertTripRouteTimer = null;
 
@@ -82,13 +83,16 @@ _.extend(driverInsightsProbe, {
 	sendRawData: function(carProbeData, callback) {
 		var deviceType = "User Own Device";
 		var deviceId = carProbeData.mo_id;
-
+		
 		// check mandatory field
 		if(!carProbeData.trip_id || carProbeData.trip_id.length === 0 || !carProbeData.lng || !carProbeData.lat || isNaN(carProbeData.lng) || isNaN(carProbeData.lat) || isNaN(carProbeData.speed)){
 			callback("error");
 			return;
 		}
 		var ts = carProbeData.ts || Date.now();
+		// keep the last probe for each mo_id
+		lastProbeTimeByMoId[deviceId] = ts;
+
 		var payload = {
 				// assign ts if missing
 				ts: ts,
@@ -130,7 +134,7 @@ _.extend(driverInsightsProbe, {
 						}
 					}
 					if(!probe){
-						callback(err);
+						callback("no probe data for " + payload.mo_id);
 						return;
 					}
 					_.extend(payload, probe, {ts: ts});
@@ -225,6 +229,10 @@ _.extend(driverInsightsProbe, {
 
 		return deferred.promise;
 	},
+	
+	/*
+	* get probe data with reference probe
+	*/ 
 	getProbeData: function(carProbeData){
 		var deferred = Q.defer();
 		var node = this.vdhConfig;
@@ -271,17 +279,11 @@ _.extend(driverInsightsProbe, {
 		var deferred = Q.defer();
 		var node = this.vdhConfig;
 		var api = "/carProbe";
-		var options = {
-				method: "GET",
-				url: node.baseURL + api + "?tenant_id=" + node.tenant_id,
-				qs: qs,
-				rejectUnauthorized: false,
-				auth: {
-					user: node.username,
-					pass: node.password,
-					sendImmediately: true
-				}
-		};
+		var options =  this._addAuthOption(node, {
+			method: "GET",
+			url: node.baseURL + api + "?tenant_id=" + node.tenant_id,
+			qs: qs
+		});
 		debug("getCarProbe(url): " + options.url);
 		request(options, function(error, response, body){
 			if(!error && response.statusCode === 200){
@@ -305,7 +307,7 @@ _.extend(driverInsightsProbe, {
 		});
 		return deferred.promise;
 	},
-
+	
 	getCarProbeDataListAsDate: function(callback) {
 		var deferred = Q.defer();
 		
@@ -460,6 +462,10 @@ _.extend(driverInsightsProbe, {
 			}
 		});
 		return deferred.promise;
+	},
+	
+	getLastProbeTime: function(mo_id){
+		return lastProbeTimeByMoId[mo_id];
 	}
 });
 

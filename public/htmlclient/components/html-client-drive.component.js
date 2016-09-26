@@ -18,7 +18,7 @@
 	angular.module('htmlClient').
 	component('clientDrive', {
 		templateUrl: scriptBaseUrl + 'html-client-drive.html',
-		controller: function ClientTop($scope, $http ,$q, assetService, carProbeService, virtualGeoLocation, $window) {
+		controller: function ClientTop($scope, $http ,$q, assetService, carProbeService, virtualGeoLocation, $window, $timeout) {
 			$window.onbeforeunload = function (e) {
 				// inactivate when user closes simulator window
 				assetService.activateAssets(false);
@@ -390,7 +390,7 @@
 				enableMoveListener();
 
 				window.onresize = function() {
-					setTimeout( function() { 
+					$timeout( function() { 
 	    				if ($scope.traceCurrentLocation) {
 	    					lockPosition = true;
 	    				}
@@ -411,6 +411,7 @@
 						virtualGeoLocation.setCurrentPosition({lat: data.deviceLocation.lat, lon: data.deviceLocation.lng}).then(function(tripRoute){
 							_plotTripRoute(tripRoute);
 						});
+						$timeout($scope.onDriving, 3000); // automatically start driving after 3 seconds
 					}
 					
         		}, function(err) {

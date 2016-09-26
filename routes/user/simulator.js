@@ -21,10 +21,12 @@ var router = module.exports = require('express').Router();
 var Q = require('q');
 var _ = require('underscore');
 var fs = require('fs-extra');
+var moment = require("moment");
 var debug = require('debug')('simulator');
 debug.log = console.log.bind(console);
 
 var driverInsightsAsset = require('../../driverInsights/asset.js');
+var driverInsightsProbe = require('../../driverInsights/probe.js');
 
 var authenticate = require('./auth.js').authenticate;
 
@@ -59,14 +61,51 @@ var _getDeviceModelInfo = function(){
 		deviceModelSamples = samples;
 	}
 	// randomly pick one
-	if (!samples || samples.length == 0)
-		return {}
+	if (!samples || samples.length === 0)
+		return {};
 	return samples[(deviceModelSamplesNextSampleIndex++) % samples.length];
 };
-	
-var _createSimulatedVehicles = function(res, exsiting_vehicles){
-	var num = exsiting_vehicles ? (NUM_OF_SIMULATOR - exsiting_vehicles.length) : NUM_OF_SIMULATOR;
+
+var _deactivateFleeSimulatedVehicles = function(num){
+	var deferred = Q.defer();
+	debug("Try to find free active simulated cars [" + num + "]");
+	Q.when(driverInsightsAsset.getVehicleList({"vendor": VENDOR_NAME, "status": "active"}), function(response){
+		var vehicles = response.data;
+		debug("Active vehicles: " + JSON.stringify(vehicles));
+		var defList = [];
+		for(var i=0; i<vehicles.length; i++){
+			var deactivate = false;
+			var mo_id = vehicles[i].mo_id;
+			var last_probe_time = driverInsightsProbe.getLastProbeTime(mo_id);
+			if(last_probe_time){
+				var since_last_modified = moment().diff(moment(last_probe_time), "seconds");
+				debug("since last modified = " + since_last_modified);
+				if(since_last_modified > 600){
+					deactivate = true;
+				}
+			}else{
+				// server may have been rebooted
+				deactivate = true;
+			}
+			if(deactivate){
+				num--;
+				debug("try to inactivate: " + mo_id );
+				defList.push(driverInsightsAsset.updateVehicle(mo_id, {"status": "inactive"}));
+			}
+		}
+		Q.all(defList).then(function(){
+			deferred.resolve(num);
+		});
+	})["catch"](function(err){
+		debug("No active free simulated cars.");
+		deferred.resolve(num);
+	}).done();
+	return deferred.promise;
+};
+
+var _createNewSimulatedVehicles = function(num){
 	debug("Simulated car will be created [" + num + "]");
+	var deferred = Q.defer();
 	var defList = [];
 	for(var i=0; i < num; i++){
 		var vehicle = {
@@ -78,13 +117,36 @@ var _createSimulatedVehicles = function(res, exsiting_vehicles){
 		defList.push(driverInsightsAsset.addVehicle(vehicle));
 	}
 	Q.all(defList).then(function(){
-		debug("Simulated cars were created");
-		Q.when(driverInsightsAsset.getVehicleList({"vendor": VENDOR_NAME, "status": "inactive"}), function(response){
-			res.send(response);
-		})["catch"](function(err){
-			_sendError(res, err);
-		}).done();
+		debug("created " + num + " vehicles");
+		deferred.resolve();
 	})["catch"](function(err){
+		debug("Failed to create simulated car");
+		deferred.reject(err);
+	}).done();
+	return deferred.promise;
+};
+
+var _createSimulatedVehicles = function(res, exsiting_vehicles){
+	var num = exsiting_vehicles ? (NUM_OF_SIMULATOR - exsiting_vehicles.length) : NUM_OF_SIMULATOR;
+	debug("Get inactive simulated cars [" + num + "]");
+	if(num === 0){
+		return Q();
+	}
+	return Q.when(_deactivateFleeSimulatedVehicles(num)).then(function(){
+		return _createNewSimulatedVehicles(num);
+	});
+};
+
+var _getAvailableVehicles = function(res, exsiting_vehicles){
+	Q.when(_createSimulatedVehicles(res, exsiting_vehicles))
+	.then(function(){
+		debug("get inactive cars again");
+		return driverInsightsAsset.getVehicleList({"vendor": VENDOR_NAME, "status": "inactive"});
+	}).then(function(response){
+		debug("_getAvailableVehicles: " + response);
+		res.send(response);
+	})["catch"](function(err){
+		debug("Failed to get simulated cars");
 		_sendError(res, err);
 	}).done();
 };
@@ -95,13 +157,13 @@ router.get("/simulatedVehicles", authenticate, function(req, res){
 		Q.when(driverInsightsAsset.getVehicleList({"vendor": VENDOR_NAME, "status": "inactive"}), function(response){
 			if(response && response.data && response.data.length < NUM_OF_SIMULATOR){
 				// create additional vehicles
-				_createSimulatedVehicles(res, response.data);
+				_getAvailableVehicles(res, response.data);
 			}else{
 				res.send(response);
 			}
 		})["catch"](function(err){
 			// assume vehicle is not available 
-			_createSimulatedVehicles(res);
+			_getAvailableVehicles(res);
 		}).done();
 	})["catch"](function(err){
 		var status = (err.response && (err.response.status||err.response.statusCode)) || 500;

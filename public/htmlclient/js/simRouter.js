@@ -22,7 +22,22 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 	}])
  
 	/* === GENERAL CONTROLLERS === */
-	.controller('mainCtrl', ['$scope', '$state', '$http', '$sce', '$location', function($scope, $state, $http, $sce, $location) {
+	.controller('mainCtrl', ['$scope', '$state', '$http', '$sce', '$location', '$window', '$timeout', function($scope, $state, $http, $sce, $location, $window, $timeout) {
+		$window.onbeforeunload = function (e) {
+			// inactivate when user closes simulator window
+			$scope.vehicles.forEach(function(v){
+				$http({
+					method: "PUT",
+					url: "/user/vehicle/" + v.mo_id + "?addition=true",
+					headers: {
+						"Content-Type": "application/JSON;charset=utf-8"
+					},
+					data: {mo_id: v.mo_id, status: "inactive"}
+				});
+			});
+			$timeout(function(){}, 3000);
+			return "Top simultors?";
+		};
 		// Get simulation vehicles
 		$http({
 			method: "GET",
