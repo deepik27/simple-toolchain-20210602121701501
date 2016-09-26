@@ -216,7 +216,7 @@ _.extend(driverInsightsProbe, {
 					debug('sendProbData response: '+ body);
 					self.last_prob_ts = moment().valueOf(); //TODO Need to care in the case that payload.ts is older than last_prob_ts
 					try {
-						deferred.resolve(JSON.parse(body));
+						deferred.resolve(JSON.parse(body || "{}"));
 					} catch (e) {
 						deferred.reject({error: "(sendProbeData)" + body, statusCode: 500});
 					}
@@ -262,7 +262,7 @@ _.extend(driverInsightsProbe, {
 				if(!error && response.statusCode === 200){
 					debug("getProbeData response: " + body);
 					try {
-						deferred.resolve(JSON.parse(body));
+						deferred.resolve(JSON.parse(body || "{}"));
 					} catch (e) {
 						deferred.reject({error: "(getProbeData)" + body, statusCode: response.statusCode});
 					}
