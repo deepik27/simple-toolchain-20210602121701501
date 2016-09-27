@@ -383,6 +383,16 @@ header .userImg img {
     height: 35px;
 }
 
+
+/* === 3. Content === */
+
+.content {
+    padding-left: 200px;
+    -webkit-transition: all .2s ease-in;
+    -moz-transition: all .2s ease-in;
+    transition: all .2s ease-in;
+}
+
 @media only screen 
 and (min-device-width : 768px) 
 and (max-device-width : 1024px) 
@@ -398,16 +408,6 @@ and (orientation : portrait) {
     header p#hamburger {
         display: table;
     }
-}
-
-
-/* === 3. Content === */
-
-.content {
-    padding-left: 200px;
-    -webkit-transition: all .2s ease-in;
-    -moz-transition: all .2s ease-in;
-    transition: all .2s ease-in;
 }
 
 @media (max-width: 992px) {
