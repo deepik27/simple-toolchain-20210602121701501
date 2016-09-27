@@ -6,8 +6,8 @@
           <tr>
             <td colspan="3" style="padding-bottom:10px;"><label for="creationGroup">Mouse click action: </label></td>
           <tr>
-            <td style="white-space:nowrap"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" value="none">Select</td>
-            <td style="white-space:nowrap"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" value="event">Create an event</td>
+            <td style="white-space:nowrap"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="none">Select</td>
+            <td style="white-space:nowrap"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="event">Create an event</td>
 <!--
             <td style="white-space:nowrap"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" value="geofence">Create a boundary</td>
 -->

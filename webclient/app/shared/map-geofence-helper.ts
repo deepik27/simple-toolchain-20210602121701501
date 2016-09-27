@@ -39,6 +39,13 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
     });
   }
 
+  // get item with id
+  public getItem(id: string) {
+    return this.geofenceService.getGeofence(id).map(data => {
+      return new Geofence(data);
+    });
+  }
+
   public createItemFeatures(geofence: Geofence) {
     let features = [];
     let geometry = geofence.geometry;

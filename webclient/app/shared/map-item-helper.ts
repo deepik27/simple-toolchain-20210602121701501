@@ -6,6 +6,7 @@ export abstract class MapItemHelper<T extends Item> {
   itemListChangedListeners = [];
   loadingHandle = null;
   itemMap = {};
+  tentativeItemMap = {};
 
   constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public itemLabel: string) {
     this.map.getView().on("change:center", this.viewChanged.bind(this));
@@ -67,6 +68,9 @@ export abstract class MapItemHelper<T extends Item> {
   // query items within given area
   public abstract queryItems(min_longitude: number, min_latitude: number, max_longitude: number, max_latitude: number);
 
+  // get item with id
+  public abstract getItem(id: string);
+
   // Show items on a view
   public updateItems(items: T[]) {
     if (!items) {
@@ -110,9 +114,64 @@ export abstract class MapItemHelper<T extends Item> {
     }
   }
 
+  public addTentativeItem(id: string, loc: any) {
+    if (id && !this.itemMap[id] && !this.tentativeItemMap[id]) {
+      let features = this.createTentativeFeatures(id, loc);
+      if (features) {
+        this.tentativeItemMap[id] = {features: features};
+        this.itemLayer.getSource().addFeatures(features);
+        this.monitorTentativeItems([id]);
+      }
+    }
+  }
+
+  monitorTentativeItems(monitoringIds) {
+    let promises = [];
+    if (!monitoringIds) {
+      monitoringIds = [];
+      for (let id in this.tentativeItemMap) {
+        monitoringIds.push(id);
+      }
+    }
+    for (let i = 0; i < monitoringIds.length; i++) {
+      let id = monitoringIds[i];
+      promises.push(new Promise((resolve, reject) => {
+        this.getItem(id).subscribe(data => {
+          if (data.getId()) {
+            this.addItemsToView([data]);
+          }
+          resolve();
+        }, error => {
+          if (error.statusCode !== 404) {
+            delete this.tentativeItemMap[id];
+          }
+          resolve();
+        });
+      }));
+    }
+
+    Promise.all(promises).then(function() {
+      if (Object.keys(this.tentativeItemMap).length > 0) {
+        setTimeout(function() {
+          this.monitorTentativeItems();
+        }.bind(this), 1000);
+      }
+    }.bind(this));
+  }
+
   addItemsToView(items: T[]) {
-    items.forEach(function(item: T) {
+    for (let i = 0; i < items.length; i++) {
+      let item = items[i];
       let id = item.getId();
+      if (this.tentativeItemMap[id]) {
+        let features = this.tentativeItemMap[id].features;
+        delete this.tentativeItemMap[id];
+        if (features) {
+          for (let j = 0; j < features.length; j++) {
+            this.itemLayer.getSource().removeFeature(features[j]);
+          }
+        }
+      }
       if (!this.itemMap[id]) {
         let features = this.createItemFeatures(item);
         if (features) {
@@ -120,36 +179,32 @@ export abstract class MapItemHelper<T extends Item> {
           this.itemMap[id] = {item: item, features: features};
         }
       }
-    }.bind(this));
+    }
   }
 
   removeItemsFromView(items: T[]) {
-    items.forEach(function(item: T) {
+    for (let i = 0; i < items.length; i++) {
+      let item = items[i];
       let id = item.getId();
       if (this.itemMap[id]) {
         let features = this.itemMap[id].features;
         if (features) {
-          features.forEach(function(feature) {
-            this.itemLayer.getSource().removeFeature(feature);
-          }.bind(this));
+          for (let j = 0; j < features.length; j++) {
+            this.itemLayer.getSource().removeFeature(features[j]);
+          }
         }
         delete this.itemMap[id];
       }
-    }.bind(this));
-  }
-
-  getItemForFeature(feature) {
-    for (let key in this.itemMap) {
-      if (this.itemMap[key].feature === feature) {
-        return this.itemMap[key].item;
-      }
     }
-    return null;
   }
 
   public abstract createItem(param: any): T;
 
   public abstract createItemFeatures(item: T);
+
+  public createTentativeFeatures(id: string, loc: any) {
+    return null;
+  }
 
   public createEventDescriptionHTML(item: T) {
     let props = this.getHoverProps(item);

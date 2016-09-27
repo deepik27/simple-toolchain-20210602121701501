@@ -6,18 +6,18 @@ import{ Item } from "./map-item-helper";
 
 @Injectable()
 export class MapEventHelper extends MapItemHelper<Event> {
-  defaultStyle: ol.style.Style;
   dirs: string[];
   eventTypes = [];
   eventIcon = null;
   styles: ol.style.Style[];
   affectedStyles: ol.style.Style[];
+  defaultStyle: ol.style.Style;
 
   constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public eventService: EventService, public itemLabel: string = "Event") {
     super(map, itemLayer, itemLabel);
     let self = this;
 
-    let getEventStyle = function getEventStyle(feature) {
+    let getEventStyle = function getEventStyle(feature: ol.Feature) {
       let eventIcon = new ol.style.Circle({
           radius: 10,
           stroke : new ol.style.Stroke({
@@ -38,6 +38,18 @@ export class MapEventHelper extends MapItemHelper<Event> {
             color: "#ffc000"
           })
         });
+        let tentativeIcon = new ol.style.Circle({
+            radius: 10,
+            stroke : new ol.style.Stroke({
+              color: "#ffc000",
+              width: 1,
+              lineDash: [3, 3]
+            }),
+            fill : new ol.style.Fill({
+              color: "rgba(240,240,0,0.7)"
+            })
+          });
+      self.defaultStyle = new ol.style.Style({image: tentativeIcon});
 
       let arrowTexts = ["\u2191", "\u2197", "\u2192", "\u2198", "\u2193", "\u2199", "\u2190", "\u2196"];
       self.styles = arrowTexts.map(function(text) {
@@ -81,10 +93,10 @@ export class MapEventHelper extends MapItemHelper<Event> {
     this.eventService.getEventTypes().subscribe(data => { this.eventTypes = data; });
   }
 
-  getEventStyle(feature) {
+  getEventStyle(feature: ol.Feature) {
     let event = feature.get("item");
     if (!event) {
-      return;
+      return this.defaultStyle;
     }
     let textIndex = Math.floor((event.heading % 360) / Math.floor(360 / this.styles.length));
     let rotation = (event.heading % 360) % Math.floor(360 / this.styles.length);
@@ -128,12 +140,26 @@ export class MapEventHelper extends MapItemHelper<Event> {
     });
   }
 
+  // query items within given area
+  public getItem(id: string) {
+    return this.eventService.getEvent(id).map(data => {
+      return new Event(data);
+    });
+  }
+
   public createItemFeatures(event: Event) {
     // Setup current event position
     let coordinates: ol.Coordinate = [event.s_longitude || 0, event.s_latitude || 0];
     let position = ol.proj.fromLonLat(coordinates, undefined);
     let feature = new ol.Feature({geometry: new ol.geom.Point(position), item: event});
     console.log("created an event feature : " + event.event_id);
+    return [feature];
+  }
+
+  public createTentativeFeatures(id: string, loc: any) {
+    // Setup current event position
+    let position = ol.proj.fromLonLat([loc.longitude, loc.latitude], undefined);
+    let feature = new ol.Feature({geometry: new ol.geom.Point(position)});
     return [feature];
   }
 

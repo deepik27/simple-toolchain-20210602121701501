@@ -109,7 +109,17 @@ export class ItemMapComponent implements OnInit {
 
     this.map.on("click", function(e) {
       let coordinate = ol.proj.toLonLat(e.coordinate, undefined);
-      this.commandExecutor.locationClicked({longitude: coordinate[0], latitude: coordinate[1]});
+      let loc = {longitude: coordinate[0], latitude: coordinate[1]};
+      this.commandExecutor.locationClicked(loc).then(function(data) {
+        if (data && data.data) {
+          let helper = this.mapItemHelpers[data.type];
+          if (helper) {
+            helper.addTentativeItem(data.data, loc);
+          }
+        }
+      }.bind(this), function(error) {
+        console.log(error);
+      });
     }.bind(this));
 
     // add helpers

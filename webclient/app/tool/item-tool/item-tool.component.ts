@@ -41,6 +41,14 @@ export class ItemToolComponent implements OnInit {
     });
   }
 
+  onChangeMode() {
+    if (this.creationMode === "event") {
+      this.itemMap.map.getViewport().style.cursor = "pointer";
+    } else {
+      this.itemMap.map.getViewport().style.cursor = "default";
+    }
+  }
+
   onCreateGeofence() {
     let extent = this.itemMap.getMapExtent();
     let offset_x = (extent.max_longitude - extent.min_longitude) / 4;
@@ -79,11 +87,17 @@ export class ItemToolComponent implements OnInit {
   }
 
   execute(command) {
-    if (!command) {
-      return null;
-    }
-    return command.execute().subscribe(data => {
-      this.itemMap.updateMapItems(command.getCommandTarget());
+    return new Promise((resolve, reject) => {
+      if (!command) {
+        return resolve({type: this.creationMode, data: null});
+      }
+      command.execute().subscribe(data => {
+        this.itemMap.updateMapItems(command.getCommandTarget());
+        let result = {type: this.creationMode, data: data};
+        resolve(result);
+      }, error => {
+        reject(error);
+      });
     });
   }
 
