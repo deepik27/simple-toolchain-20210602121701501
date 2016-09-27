@@ -417,6 +417,18 @@ and (orientation : portrait) {
         -moz-transition: all .2s ease-in;
         transition: all .2s ease-in;
     }
+
+    header div.userImg {
+        display: none;
+    }
+
+    header p#userName {
+        display: none;
+    }
+
+    header p#hamburger {
+        display: table;
+    }
 }
 
 aside.sidebar,
