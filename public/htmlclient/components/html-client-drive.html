@@ -4,8 +4,7 @@
 	<div class="alignRight marginTop">
 		<h5 class="floatLeft">Vehicle Data</h5>
 		<select ng-model="vehicleDataName" ng-init="vehicleDataName = null"  ng-change="updateVehicleDataName()">
-			<option value="engineTemp">Engine Temperature</option>
-			<option value="fuel">Fuel Level</option>
+			<option ng-repeat="rule in rules" value="{{rule.propName}}">{{rule.label}}</option>
 		</select>
 	</div>
 

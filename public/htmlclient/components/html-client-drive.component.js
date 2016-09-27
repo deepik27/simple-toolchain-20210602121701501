@@ -143,6 +143,19 @@
 	        $scope.deviceLocation = {};
 	        $scope.driveEvent = {};
 
+			// rules
+			// should be synced with rules defined in /driverinsights/fleetalert.js
+			$scope.rules = [
+				{propName: "engineTemp", label: "Engine Temprature (Critical if larger than 120)"},
+				{propName: "fuel", label: "Fuel"}
+			];
+			assetService.getVehicle(assetService.getVehicleId()).then(function(vehicle){
+				var tank = vehicle.properties.fuelTank;
+				if(tank){
+					$scope.rules[1].label = "Fuel (Troubled if smaller than " + tank/2 + ", Critical if smaller than " + tank/10 + ")";
+				}
+			});
+			
 			// vehicle data control panel
 			$scope.fuel = null;
 			$scope.engineTemp = null;
