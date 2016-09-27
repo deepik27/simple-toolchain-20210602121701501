@@ -366,7 +366,7 @@ export class RealtimeMapComponent implements OnInit {
 				model.colorClass && elem.classList.add(model.colorClass);
 				// prepare the content
 				let alertPopoverContent = model.contentHTML;
-				elem.innerHTML = `<a class="close" href="javascript: void(0);">&times;</a><div class="content">${alertPopoverContent}</div>`;
+				elem.innerHTML = `<div class="title"><div style="text-align: right"><a class="close" href="javascript: void(0);">&times;</a></div></div><div class="content">${alertPopoverContent}</div>`;
 				mapTargetElement.appendChild(elem);
 
 				let r = new ol.Overlay({

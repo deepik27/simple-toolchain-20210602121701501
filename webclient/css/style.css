@@ -2445,17 +2445,17 @@ table th[class*="col-"] {
   box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 }
 
-.mapAlertPopover .close {
-  float: right;
-/*  position: absolute;
-  top: 20px;
-  right: 30px;*/
-  margin: 5px;
+.mapAlertPopover .title {
+  padding-bottom: 3px;
+}
+
+.mapAlertPopover .title .close {
+  margin: 2px 5px 8px 5px;
   transition: all 200ms;
   font-size: 16px;
   font-weight: normal;
   text-decoration: none;
-  color: #333;
+  color: #000;
 }
 
 .mapAlertPopover .close::hover {
@@ -2463,6 +2463,7 @@ table th[class*="col-"] {
 }
 
 .mapAlertPopover .content {
+  font-size: 90%;
   padding: 2px 2px;
   max-height: 160px;
   overflow: auto;
@@ -2475,28 +2476,33 @@ table th[class*="col-"] {
 
 .mapAlertPopover.closing {
   transform: scale(0.2);
+  transform-origin: bottom right;  
   opacity: 0;
 }
 
 
 .mapAlertPopover.red {
   color: black;
-  background-color: #f05153;
+  /*background-color: #f05153;*/
+  background: rgba(240, 81, 83, 0.6);
 }
 
 .mapAlertPopover.orange {
   color: black;
-  background-color: #f67734;
+  /*background-color: #f67734;*/
+  background: rgba(246, 119, 52, 0.6);
 }
 
 .mapAlertPopover.green {
   color: black;
-  background-color: #58a946;
+  /*background-color: #58a946;*/
+  background: rgba(88, 169, 70, 0.6);
 }
 
 .mapAlertPopover.blue {
   color: black;
-  background-color: #3774ba;
+  /*background-color: #3774ba;*/
+  background: rgba(55, 116, 186, 0.6);
 }
 
 .mapAlertPopover .table {
