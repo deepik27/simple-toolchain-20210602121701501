@@ -33,6 +33,7 @@ htmlClient.config(['$stateProvider', '$urlRouterProvider', function($stateProvid
 					}
 					if($stateParams.driverId){
 						assetService.setDriverId($stateParams.driverId);
+						assetService.shared_driver = true;
 					}
 					assetService.serial_number = $stateParams.serial_number; 
 					assetService.vendor = $stateParams.vendor; 

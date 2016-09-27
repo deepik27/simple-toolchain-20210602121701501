@@ -33,6 +33,7 @@ angular.module('htmlClient')
 		*/
 		vendor: undefined,
 		serial_number: undefined,
+		shared_driver: false,
 		/*
 		 * Methods to get/set settings
 		 */
@@ -285,6 +286,9 @@ angular.module('htmlClient')
 		},
 		
 		activateDriver: function(toActive){
+			if (!toActive && this.shared_driver) {
+				return;
+			}
 			var deferred = $q.defer();
 			var driver_id = this.getDriverId();
 			$http(mobileClientService.makeRequestOption({

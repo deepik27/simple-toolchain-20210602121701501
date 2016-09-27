@@ -166,7 +166,7 @@ angular.module('htmlClient')
 				console.error("Cannot get route for simulation");
 				deferred.reject();
 			}).error(function(error, status){
-				console.error("Error[" + statu + "] in route search: " + error);
+				console.error("Error[" + status + "] in route search: " + error);
 				deferred.reject();
 			});
 			return deferred.promise;
