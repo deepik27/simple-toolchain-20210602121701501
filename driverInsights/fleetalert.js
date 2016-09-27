@@ -28,15 +28,17 @@ var debug = require('debug')('alert');
 debug.log = console.log.bind(console);
 
 var FLEETALERT_DB_NAME = "fleet_alert";
+var VEHICLE_VENDOR_IBM = "IBM";
 
 _.extend(driverInsightsAlert, {
 	/*
 	 * {mo_id: {
 	 * 	vehicleInfo: {status: "Active", properties: {fuelTank: 60}},
-	 * 	prevProbe: {timestamp: "2016-08-01T12:34:56+09:00", ...., props: {fuel: 49.1, engineTemp: 298.2}}
+	 * 	prevProbe: {ts: xxxxxxxxx, ...., props: {fuel: 49.1, engineTemp: 298.2}}
 	 * }}
 	 */
 	_vehicles: {},
+
 	/*
 	 * {name: {
 	 * 	fireRule: function(probe, vehicle){return newAlerts;},
@@ -44,13 +46,26 @@ _.extend(driverInsightsAlert, {
 	 * }}
 	 */
 	alertRules: {},
-	alerts: [],
+
+	/*
+	 * {
+	 * 	mo_id: {
+	 * 		alert_type("half_fuel"): {source: {type: "script", id: "half_fuel"}, type: "half_fuel", description: "xxx", severity: "Critical/High/Medium/Low", mo_id: "xxxx-xxxx-xxx...", ts: xxxx},
+	 * 		message_type("message_xxxxx"): {source: {type: "message", id: message_type}, type: message_type, description: "xxx", severity: "Critical/High/Medium/Low", mo_id: "xxxx-xxxx-xxx...", ts: xxxx},
+	 * 		event_id("yyyyy"): {source: {type: "event", id: event_id}, type: "023", description: "Major Event", severity: "Low", ...}
+	 * 	},
+	 * 	mo_id: {...}
+	 * }
+	 */
+	alerts: {},
 	db: null,
 	_init: function(){
 		var self = this;
 		this.db = dbClient.getDB(FLEETALERT_DB_NAME, this._getDesignDoc());
 		Q.when(this.getAlerts([], false, 200), function(docs){
-			self.alerts = self.alerts.concat(docs.alerts);
+			(docs.alerts||[]).forEach(function(alert){
+				self._cacheAlert(alert);
+			});
 		});
 
 		// Low Fuel
@@ -65,14 +80,16 @@ _.extend(driverInsightsAlert, {
 					var fuel = probe.props.fuel;
 					if(prevFuel/fuelTank >= 0.1 && fuel/fuelTank < 0.1){
 						var alert = {
+								source: {type: "script", id: "low_fuel"},
 								type: "low_fuel",
 								description: "Fuel at 1/10 tank",
 								severity: "High",
 								mo_id: probe.mo_id,
 								ts: probe.ts,
-								timestamp: probe.timestamp
+								latitude: probe.matched_latitude || probe.latitude,
+								longitude: probe.matched_longitude || probe.longitude,
+								simulated: VEHICLE_VENDOR_IBM === vehicle.vehicleInfo.vendor
 							};
-						alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM === vehicle.vehicleInfo.vendor;
 						alerts.push(alert);
 					}
 				}
@@ -103,14 +120,16 @@ _.extend(driverInsightsAlert, {
 					var fuel = probe.props.fuel;
 					if(prevFuel/fuelTank >= 0.5 && fuel/fuelTank < 0.5){
 						var alert = {
+								source: {type: "script", id: "half_fuel"},
 								type: "half_fuel",
 								description: "Fuel at half full",
 								severity: "Medium",
 								mo_id: probe.mo_id,
 								ts: probe.ts,
-								timestamp: probe.timestamp
+								latitude: probe.matched_latitude || probe.latitude,
+								longitude: probe.matched_longitude || probe.longitude,
+								simulated: VEHICLE_VENDOR_IBM === vehicle.vehicleInfo.vendor
 							};
-						alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM === vehicle.vehicleInfo.vendor;
 						alerts.push(alert);
 					}
 				}
@@ -137,14 +156,16 @@ _.extend(driverInsightsAlert, {
 				if(vehicle && vehicle.prevProbe && vehicle.prevProbe.props && vehicle.prevProbe.props.engineTemp <= 120
 				&& probe && probe.props && probe.props.engineTemp > 120){
 					var alert = {
+							source: {type: "script", id: "high_engine_temp"},
 							type: "high_engine_temp",
 							description: "Engine temperature is too high.",
 							severity: "High",
 							mo_id: probe.mo_id,
 							ts: probe.ts,
-							timestamp: probe.timestamp
+							latitude: probe.matched_latitude || probe.latitude,
+							longitude: probe.matched_longitude || probe.longitude,
+							simulated: VEHICLE_VENDOR_IBM === vehicle.vehicleInfo.vendor
 						};
-					alert.simulated = driverInsightsAsset.VEHICLE_VENDOR_IBM === vehicle.vehicleInfo.vendor;
 					alerts.push(alert);
 				}
 				return alerts;
@@ -170,15 +191,17 @@ _.extend(driverInsightsAlert, {
 	},
 	_getDesignDoc: function(){
 		var fleetAlertIndexer = function(doc){
-			if(doc.timestamp && doc.mo_id && doc.type && doc.severity){
-				index("ts", doc.ts, {store:true});
-				index("timestamp", doc.timestamp, {store: true});
+			if(doc.ts && doc.mo_id && doc.type && doc.severity){
+				index("ts", doc.ts, {store: true});
 				index("mo_id", doc.mo_id, {store: true});
 				index("type", doc.type, {store: true});
 				index("severity", doc.severity, {store: true});
-				index("description", doc.description, {store: true});
 				index("closed_ts", doc.closed_ts||-1, {store: true});
 				index("simulated", doc.simulated, {store: true});
+
+				index("description", doc.description||"", {store: true});
+				index("latitude", doc.latitude, {store: true});
+				index("longitude", doc.longitude, {store: true});
 			}
 		};
 		var designDoc = {
@@ -197,18 +220,10 @@ _.extend(driverInsightsAlert, {
 		var self = this;
 		var vehicle = this._vehicles[probe.mo_id];
 		var promise;
-		if(!vehicle){
-			Q.when(driverInsightsAsset.getVehicle(probe.mo_id), function(vehicleInfo){
-				self._vehicles[probe.mo_id] = vehicle = {
-					vehicleInfo: vehicleInfo
-				};
-				self._evaluateAlertRule(probe, _.clone(vehicle));
-				vehicle.prevProbe = probe;
-			});
-		}else{
-			this._evaluateAlertRule(probe, _.clone(vehicle));
+		Q.when(this._getVehicle(probe.mo_id), function(vehicle){
+			self._evaluateAlertRule(probe, _.clone(vehicle));
 			vehicle.prevProbe = probe;
-		}
+		});
 	},
 	_evaluateAlertRule: function(probe, vehicle){
 		var self = this;
@@ -227,8 +242,10 @@ _.extend(driverInsightsAlert, {
 			});
 		});
 		var _alerts = _.clone(this.alerts);
-		_alerts.forEach(function(alert, index){
-			if(alert.mo_id === probe.mo_id){
+		var _alertsForVehicle = _alerts[probe.mo_id] || {};
+		Object.keys(_alertsForVehicle).forEach(function(key){
+			var alert = _alertsForVehicle[key];
+			if(alert && alert.source && alert.source.type === "script"){
 				setImmediate(function(){
 					var rule = self.alertRules[alert.type];
 					var deferred = null;
@@ -238,12 +255,13 @@ _.extend(driverInsightsAlert, {
 							deferred = self.updateAlert(closedAlert);
 						}
 					}else{
+						alert.closed_ts = probe.ts;
 						deferred = self.updateAlert(alert);
 					}
 					if(deferred){
 						Q.when(deferred, function(result){
 							if(result && result.ok){
-								self.alerts.splice(index, 1);
+								delete self.alerts[probe.mo_id][key];
 								debug("An alert is closed: " + JSON.stringify(alert));
 							}
 						}, function(error){
@@ -254,8 +272,100 @@ _.extend(driverInsightsAlert, {
 			}
 		});
 	},
-	addAlertFromEvent: function(event){
-		//TODO
+	_getVehicle: function(mo_id){
+		var self = this;
+		var deferred = Q.defer();
+		var vehicle = this._vehicles[mo_id];
+		if(vehicle){
+			deferred.resolve(vehicle);
+		}else{
+			Q.when(driverInsightsAsset.getVehicle(mo_id), function(vehicleInfo){
+				self._vehicles[mo_id] = vehicle = {
+					vehicleInfo: vehicleInfo
+				};
+				deferred.resolve(vehicle);
+			}, function(error){
+				console.error(error);
+				deferred.reject(error);
+			});
+		}
+		return deferred.promise;
+	},
+
+	handleEvents: function(mo_id, events){
+		this.closeAlertFromEvents(mo_id, events);
+		this.addAlertFromEvents(mo_id, events);
+	},
+	addAlertFromEvents: function(mo_id, events){
+		var self = this;
+		var ts = moment().valueOf();
+		(events||[]).forEach(function(event){
+			if(!self.alerts[mo_id]){
+				self.alerts[mo_id] = {};
+			}
+			var props = event.props || {}; // A message should have props
+			var event_id = String(event.event_id || props.message_type);
+			var sourceType = "";
+			if(event.event_id){
+				sourceType = "event";
+			}else if(props.message_type){
+				sourceType = "message";
+			}
+			if(!event_id){
+				return;
+			}
+			var alert = self.alerts[mo_id][event_id];
+			if(alert){
+				// Do nothing during same id/type of events/messages are coming consecutively
+			}else{
+				Q.when(self._getVehicle(mo_id), function(vehicle){
+					alert = {
+							source: {type: sourceType, id: event_id},
+							type: event.event_type || props.message_type,
+							description: event.event_name || event.message,
+							severity: props.severity || "Info",
+							mo_id: mo_id,
+							ts: ts,
+							latitude: event.s_latitude || event.latitude,
+							longitude: event.s_longitude || event.longitude,
+							simulated: VEHICLE_VENDOR_IBM === vehicle.vehicleInfo.vendor
+						};
+					Q.when(self.addAlert(alert), function(result){
+						if(result && result.ok){
+							alert._id = result.id;
+							alert._rev = result.rev;
+							self.alerts[mo_id][event_id] = alert;
+							debug("An alert for event/message is created: " + JSON.stringify(alert));
+						}
+					});
+				});
+			}
+		});
+	},
+	closeAlertFromEvents: function(mo_id, events){
+		var self = this;
+		var closed_ts = moment().valueOf();
+		var _alerts = _.clone(this.alerts || {});
+		var _alertsForVehicle = _alerts[mo_id] || {};
+		Object.keys(_alertsForVehicle).forEach(function(key){
+			if((events || []).every(function(event){
+				// No related event/message is included in events
+				var props = event.props || {}; // A message should have props
+				var event_id = event.event_id || props.message_type;
+				return !event_id || key !== String(event_id);
+			})){
+				var alert = _alertsForVehicle[key];
+				alert.closed_ts = closed_ts;
+				Q.when(self.updateAlert(alert), function(result){
+					if(result && result.ok){
+						delete self.alerts[mo_id][key];
+						debug("An alert for event/message is closed: " + JSON.stringify(alert));
+					}
+				}, function(error){
+					console.error(error);
+				});
+			}
+		});
 	},
 
 	getAlertsForVehicleInArea: function(conditions, area, includeClosed, limit){
@@ -298,15 +408,26 @@ _.extend(driverInsightsAlert, {
 			});
 	},
 
+	_cacheAlert: function(alert){
+		var alertsForVehicle = this.alerts[alert.mo_id];
+		if(!alertsForVehicle){
+			alertsForVehicle = this.alerts[alert.mo_id] = {};
+		}
+		var existingAlert = alertsForVehicle[alert.source && alert.source.id];
+		if(!existingAlert){
+			alertsForVehicle[alert.source.id] = alert;
+		}
+	},
 	addAlert: function(alert){
-		this.alerts.push(alert);
 		var deferred = Q.defer();
+		var self = this;
 		Q.when(this.db, function(db){
 			db.insert(alert, null, function(error, result){
 				if(error){
 					deferred.reject(error);
 					console.error("Add an alert failed: " + JSON.stringify(error));
 				}else{
+					self._cacheAlert(alert);
 					deferred.resolve(result);
 				}
 			});

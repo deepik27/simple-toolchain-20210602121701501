@@ -114,9 +114,7 @@ _.extend(driverInsightsProbe, {
 			var affected_events = null;
 			if(result){
 				affected_events = result.contents;
-				[].concat(affected_events).forEach(function(event){
-					driverInsightsAlert.addAlertFromEvent(event);
-				});
+				driverInsightsAlert.handleEvents(carProbeData.mo_id, affected_events);
 			}
 
 			Q.when(driverInsightsProbe.getProbeData([payload]), function(response){
