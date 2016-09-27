@@ -46,6 +46,8 @@ app.use(function (req, res, next) {
 
 //basic authentication to all routes
 app.use(auth.authenticate);
+//mandate eula acceptance
+app.use(auth.eula);
 
 //access to server contents
 app.use(express.static(path.join(__dirname, 'public')));

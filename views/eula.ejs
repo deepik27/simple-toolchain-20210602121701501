@@ -1,0 +1,45 @@
+<html>
+  <head>
+    <title>IoT for Automotive Starter - EULA</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.1.1/css/bootstrap.min.css" integrity="sha256-6VA0SGkrc43SYPvX98q/LhHwm2APqX5us6Vuulsafps=" crossorigin="anonymous" />
+    <style type="text/css">
+      .container {
+        height: 100%;
+        margin-top: 20px;
+        text-align: center;
+      }
+      .panel .content {
+        text-align: left;
+        margin 10px;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+  <div class="container">
+    <div class="panel panel-default">
+      <div class="panel-header"><h2>End User License Agreement</h2></div>
+      <div class="panel-body">
+        <div class="well">
+          <div class="content"><%- license %></div>
+        </div>
+      </div>
+      <div class="panel-footer" style="text-align: center">
+        <button id="acceptEula" type="button" class="btn btn-primary btn-lg">Accept</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    var accept = document.getElementById('acceptEula');
+    accept.addEventListener("click", function(){
+        var d = new Date();
+        d.setTime(d.getTime() + 365*24*60*60*1000);
+        var expires = ""; //"; expires=" + d.toUTCString();
+        document.cookie = "eulaStatus=Accepted" + expires;
+        location.reload(true); // reaload
+    });
+  </script>
+  </body>
+</html>

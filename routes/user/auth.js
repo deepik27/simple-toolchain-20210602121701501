@@ -19,6 +19,10 @@
  * Exports: router: Router
  *          authenticate: Authenticate function
  */
+var fs = require('fs-extra');
+var path = require('path');
+var _ = require('underscore');
+
 var router = module.exports.router = require('express').Router();
 var basicAuth = require('basic-auth');
 var appEnv = require("cfenv").getAppEnv();
@@ -45,5 +49,19 @@ var authenticate = function(req,res,next){
 	}
 };
 
+var eula = function(req,res,next){
+	if(req.cookies.eulaStatus === 'Accepted')
+		return next();
+	if(!req.accepts('html') || req.xhr)
+		return next();
+	fs.readFile(path.join(__dirname, '../../LICENSE'), function(err, license){
+		if(err) return res.status(500).send(err);
+		license = '<p>' + _.escape('' + license).split('\n\n').join('</p>\n\n<p>') + '</p>';
+		res.render('eula', {license: license});
+	});
+}
+
 module.exports.router = router;
 module.exports.authenticate = authenticate; // export the authentication router
+module.exports.eula = eula; // export the eula middleware
+
