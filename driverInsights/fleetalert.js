@@ -29,6 +29,7 @@ debug.log = console.log.bind(console);
 
 var FLEETALERT_DB_NAME = "fleet_alert";
 var VEHICLE_VENDOR_IBM = "IBM";
+var BULK_INSERT_INTERVAL = "1000";
 
 _.extend(driverInsightsAlert, {
 	/*
@@ -58,7 +59,14 @@ _.extend(driverInsightsAlert, {
 	 * }
 	 */
 	alerts: {},
+
+	/*
+	 * Accumulate alerts to insert(create/close) and insert by bulk
+	 */
+	alertsToInsert: {},
+	insertTimeout: null,
 	db: null,
+
 	_init: function(){
 		var self = this;
 		this.db = dbClient.getDB(FLEETALERT_DB_NAME, this._getDesignDoc());
@@ -231,13 +239,7 @@ _.extend(driverInsightsAlert, {
 			setImmediate(function(){
 				var alerts = rule.fireRule(probe, vehicle);
 				alerts.forEach(function(alert){
-					Q.when(self.addAlert(alert), function(result){
-						if(result && result.ok){
-							alert._id = result.id;
-							alert._rev = result.rev;
-							debug("An alert is created: " + JSON.stringify(alert));
-						}
-					});
+					self.addAlert(alert);
 				});
 			});
 		});
@@ -330,14 +332,7 @@ _.extend(driverInsightsAlert, {
 							longitude: event.s_longitude || event.longitude,
 							simulated: VEHICLE_VENDOR_IBM === vehicle.vehicleInfo.vendor
 						};
-					Q.when(self.addAlert(alert), function(result){
-						if(result && result.ok){
-							alert._id = result.id;
-							alert._rev = result.rev;
-							self.alerts[mo_id][event_id] = alert;
-							debug("An alert for event/message is created: " + JSON.stringify(alert));
-						}
-					});
+					self.addAlert(alert);
 				});
 			}
 		});
@@ -348,6 +343,10 @@ _.extend(driverInsightsAlert, {
 		var _alerts = _.clone(this.alerts || {});
 		var _alertsForVehicle = _alerts[mo_id] || {};
 		Object.keys(_alertsForVehicle).forEach(function(key){
+			var sourceType = _alertsForVehicle[key].source && _alertsForVehicle[key].source.type;
+			if(sourceType !== "event" && sourceType !== "message"){
+				return;
+			}
 			if((events || []).every(function(event){
 				// No related event/message is included in events
 				var props = event.props || {}; // A message should have props
@@ -415,24 +414,19 @@ _.extend(driverInsightsAlert, {
 		}
 		var existingAlert = alertsForVehicle[alert.source && alert.source.id];
 		if(!existingAlert){
-			alertsForVehicle[alert.source.id] = alert;
+			alertsForVehicle[alert.source && alert.source.id] = alert;
 		}
 	},
 	addAlert: function(alert){
-		var deferred = Q.defer();
-		var self = this;
-		Q.when(this.db, function(db){
-			db.insert(alert, null, function(error, result){
-				if(error){
-					deferred.reject(error);
-					console.error("Add an alert failed: " + JSON.stringify(error));
-				}else{
-					self._cacheAlert(alert);
-					deferred.resolve(result);
-				}
-			});
-		});
-		return deferred.promise;
+		var alertsForVehicle = this.alertsToInsert[alert.mo_id];
+		if(!alertsForVehicle){
+			alertsForVehicle = this.alertsToInsert[alert.mo_id] = {};
+		}
+		var alertToInsert = alertsForVehicle[alert.source && alert.source.id];
+		if(!alertToInsert){
+			alertsForVehicle[alert.source && alert.source.id] = alert;
+		}
+		this._bulkInsert();
 	},
 	updateAlert: function(alert){
 		if(!alert._id || !alert._rev){
@@ -450,6 +444,43 @@ _.extend(driverInsightsAlert, {
 			});
 		});
 		return deferred.promise;
+	},
+	_bulkInsert: function(){
+		if(!this.insertTimeout){
+			var self = this;
+			this.insertTimeout = setTimeout(function(){
+				Q.when(self.db, function(db){
+					var docs = [];
+					Object.keys(self.alertsToInsert).forEach(function(mo_id){
+						Object.keys(self.alertsToInsert[mo_id]).forEach(function(sourceId){
+							docs.push(self.alertsToInsert[mo_id][sourceId]);
+						});
+					});
+					if(docs.length > 0){
+						db.bulk({docs: docs}, "insert", function(err, body){
+							if(err){
+								console.error("inserting alerts failed");
+								self.insertTimeout = null;
+							}else{
+								debug("inserting alerts succeeded");
+								self.alertsToInsert = {};
+								self.insertTimeout = null;
+								body.forEach(function(inserted, index){
+									if(inserted.error){
+										self.addAlert(docs[index]);
+									}else{
+										var alert = docs[index];
+										alert._id = inserted.id;
+										alert._rev = inserted.rev;
+										self._cacheAlert(alert);
+									}
+								});
+							}
+						});
+					}
+				});
+			}, BULK_INSERT_INTERVAL);
+		}
 	},
 	deleteAlert: function(alertId){
 		if(!alertId){
