@@ -151,6 +151,30 @@ export class RealtimeMapComponent implements OnInit {
 		this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
     this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, "Boundary");
 
+		/*
+		* Monitor devices to update affected events. If there are affected events, highlight the events
+		*/
+		let eventMonitor = Observable.interval(2000).map(() => {
+			// get all the alerts here
+			return _.union(_.flatten(this.animatedDeviceManager.getDevices()
+				.filter(device => (device.latestSample.info &&
+													 device.latestSample.info.alerts &&
+													 device.latestSample.info.alerts.items &&
+													 device.latestSample.info.alerts.items.length > 0))
+				.map(device => {
+					let alerts = device.latestSample.info.alerts.items;
+					let ids = alerts.filter(alert => { return alert.source && alert.source.type === "event"; })
+															.map(alert => { return alert.source.id; });
+				return _.uniq(ids);
+			})));
+		});
+		eventMonitor.subscribe(data => {
+			let helper = this.mapItemHelpers["event"];
+			if (helper) {
+				helper.updateAffectedItems(data);
+			}
+		});
+
 		// setup view change event handler
 		this.mapHelper.postChangeViewHandlers.push(extent => {
 			//this.animatedDeviceManagerService.stopTracking(true, this.mapHelper); // true to move to next extent smoothly
@@ -316,8 +340,8 @@ export class RealtimeMapComponent implements OnInit {
 		let alertsProvider = Observable.interval(2000).map(() => {
 			// get all the alerts here
 			let result = this.animatedDeviceManager.getDevices()
-				.filter(device => (device.latestSample.info && 
-													 device.latestSample.info.alerts && 
+				.filter(device => (device.latestSample.info &&
+													 device.latestSample.info.alerts &&
 													 device.latestSample.info.alerts.items &&
 													 device.latestSample.info.alerts.items.length > 0))
 				.map(device => {
@@ -336,10 +360,10 @@ export class RealtimeMapComponent implements OnInit {
 													`<thead><tr><th>Messages</th><th>Severity</th></tr></thead>\n` +
 														rows.join('\n') +
 													`</tbody></table>`;
-						return content;	
+						return content;
 					};
 					let getLastUpdated = () => {
-						return Math.max(...alerts.map((alert:any) => { 
+						return Math.max(...alerts.map((alert:any) => {
 							return alert.ts || Date.parse(alert.timestamp);
 						}));
 					}

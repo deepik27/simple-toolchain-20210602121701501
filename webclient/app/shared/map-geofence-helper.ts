@@ -6,7 +6,6 @@ import{ Item } from "./map-item-helper";
 
 @Injectable()
 export class MapGeofenceHelper extends MapItemHelper<Geofence> {
-  handleStyle: ol.style.Style;
   constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public geofenceService: GeofenceService, public itemLabel: string = "Geofence") {
     super(map, itemLayer, itemLabel);
     let defaultStyle = new ol.style.Style({
@@ -109,7 +108,7 @@ export class Geofence extends Item {
   }
 
   public getId() {
-    return this.id;
+    return this.id ? this.id.toString() : null;
   }
   public getItemType() {
     return "geofence";

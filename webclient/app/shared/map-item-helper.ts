@@ -1,5 +1,6 @@
 import { Injectable } from "@angular/core";
 import * as ol from "openlayers";
+import * as _ from "underscore";
 
 @Injectable()
 export abstract class MapItemHelper<T extends Item> {
@@ -84,7 +85,7 @@ export abstract class MapItemHelper<T extends Item> {
       itemsToRemoveMap[key] = this.itemMap[key].item;
     }
 
-    items.forEach(function(item: T) {
+    _.each(items, function(item: T) {
       let id = item.getId();
 
       if (!this.itemMap[id]) {
@@ -108,9 +109,9 @@ export abstract class MapItemHelper<T extends Item> {
     }
 
     if (itemsToAdd.length > 0 || itemsToRemove.length > 0) {
-      this.itemListChangedListeners.forEach(function(listener) {
+      _.each(this.itemListChangedListeners, (function(listener) {
         listener(items, itemsToAdd, itemsToRemove);
-      });
+      }));
     }
   }
 
@@ -128,13 +129,9 @@ export abstract class MapItemHelper<T extends Item> {
   monitorTentativeItems(monitoringIds) {
     let promises = [];
     if (!monitoringIds) {
-      monitoringIds = [];
-      for (let id in this.tentativeItemMap) {
-        monitoringIds.push(id);
-      }
+      monitoringIds = _.map(this.tentativeItemMap, function(value, key) { return key; });
     }
-    for (let i = 0; i < monitoringIds.length; i++) {
-      let id = monitoringIds[i];
+    _.each(monitoringIds, function(id) {
       promises.push(new Promise((resolve, reject) => {
         this.getItem(id).subscribe(data => {
           if (data.getId()) {
@@ -148,7 +145,7 @@ export abstract class MapItemHelper<T extends Item> {
           resolve();
         });
       }));
-    }
+    }.bind(this));
 
     Promise.all(promises).then(function() {
       if (Object.keys(this.tentativeItemMap).length > 0) {
@@ -160,42 +157,42 @@ export abstract class MapItemHelper<T extends Item> {
   }
 
   addItemsToView(items: T[]) {
-    for (let i = 0; i < items.length; i++) {
-      let item = items[i];
+    let self = this;
+    _.each(items, function(item) {
       let id = item.getId();
-      if (this.tentativeItemMap[id]) {
-        let features = this.tentativeItemMap[id].features;
-        delete this.tentativeItemMap[id];
+      if (self.tentativeItemMap[id]) {
+        let features = self.tentativeItemMap[id].features;
+        delete self.tentativeItemMap[id];
         if (features) {
-          for (let j = 0; j < features.length; j++) {
-            this.itemLayer.getSource().removeFeature(features[j]);
-          }
+          _.each(features, function(feature: ol.Feature) {
+            self.itemLayer.getSource().removeFeature(feature);
+          });
         }
       }
-      if (!this.itemMap[id]) {
-        let features = this.createItemFeatures(item);
+      if (!self.itemMap[id]) {
+        let features = self.createItemFeatures(item);
         if (features) {
-          this.itemLayer.getSource().addFeatures(features);
-          this.itemMap[id] = {item: item, features: features};
+          self.itemLayer.getSource().addFeatures(features);
+          self.itemMap[id] = {item: item, features: features};
         }
       }
-    }
+    });
   }
 
   removeItemsFromView(items: T[]) {
-    for (let i = 0; i < items.length; i++) {
-      let item = items[i];
+    let self = this;
+    _.each(items, function(item) {
       let id = item.getId();
-      if (this.itemMap[id]) {
-        let features = this.itemMap[id].features;
+      if (self.itemMap[id]) {
+        let features = self.itemMap[id].features;
         if (features) {
-          for (let j = 0; j < features.length; j++) {
-            this.itemLayer.getSource().removeFeature(features[j]);
-          }
+          _.each(features, function(feature: ol.Feature) {
+            self.itemLayer.getSource().removeFeature(feature);
+          });
         }
-        delete this.itemMap[id];
+        delete self.itemMap[id];
       }
-    }
+    });
   }
 
   public abstract createItem(param: any): T;
@@ -204,6 +201,22 @@ export abstract class MapItemHelper<T extends Item> {
 
   public createTentativeFeatures(id: string, loc: any) {
     return null;
+  }
+
+  public getFeatureStyle(feature: ol.Feature) {
+    return this.itemLayer.getStyle();
+  }
+
+  public updateAffectedItems(ids: string[]) {
+    _.each(this.itemMap, function(value, key) {
+      let item = value.item;
+      let feature = value.features[0];
+      let affected = _.contains(ids, item.getId());
+      if (feature.get("affected") !== affected) {
+        feature.set("affected", affected);
+        feature.setStyle(this.getFeatureStyle(feature));
+      }
+    }.bind(this));
   }
 
   public createEventDescriptionHTML(item: T) {
