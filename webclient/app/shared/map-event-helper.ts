@@ -17,7 +17,7 @@ export class MapEventHelper extends MapItemHelper<Event> {
     super(map, itemLayer, itemLabel);
     let self = this;
 
-    let getEventStyle = function getEventStyle(feature: ol.Feature) {
+    let getFeatureStyle = function getFeatureStyle(feature: ol.Feature) {
       let eventIcon = new ol.style.Circle({
           radius: 10,
           stroke : new ol.style.Stroke({
@@ -84,16 +84,16 @@ export class MapEventHelper extends MapItemHelper<Event> {
       });
 
       return function(feature, resolution) {
-        let style = self.getEventStyle(feature);
+        let style = self.getFeatureStyle(feature);
         feature.setStyle(style);
         return style;
       };
     }(undefined);
-    itemLayer.setStyle(getEventStyle);
+    itemLayer.setStyle(getFeatureStyle);
     this.eventService.getEventTypes().subscribe(data => { this.eventTypes = data; });
   }
 
-  getEventStyle(feature: ol.Feature) {
+  getFeatureStyle(feature: ol.Feature) {
     let event = feature.get("item");
     if (!event) {
       return this.defaultStyle;
@@ -108,19 +108,6 @@ export class MapEventHelper extends MapItemHelper<Event> {
     let affected = feature.get("affected");
     return affected ? this.affectedStyles[textIndex] : this.styles[textIndex];
   };
-
-  public updateAffectedEvents(events) {
-    let ids = (events || []).map(function(e)  { return e.event_id; });
-    for (let key in this.itemMap) {
-      let event = this.itemMap[key].item;
-      let feature = this.itemMap[key].features[0];
-      let affected = ids.indexOf(event.event_id) >= 0;
-      if (feature.get("affected") !== affected) {
-        feature.set("affected", affected);
-        feature.setStyle(this.getEventStyle(feature));
-      }
-    }
-  }
 
   public getItemType() {
     return "event";
@@ -207,7 +194,7 @@ export class Event extends Item {
   }
 
   public getId() {
-    return this.event_id;
+    return this.event_id ? this.event_id.toString() : null;
   }
   public getItemType() {
     return "event";
