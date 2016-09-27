@@ -42,7 +42,7 @@
 							if (self.requiredEvents > 0) {
 								self.requiredEvents--;
 							}
-							updateVehicle(probe, probe.affected_events && probe.affected_events.contents);
+							updateVehicle(probe, probe.affected_events);
 						});
 						return tripId;
 					});
