@@ -23,6 +23,8 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
  
 	/* === GENERAL CONTROLLERS === */
 	.controller('mainCtrl', ['$scope', '$state', '$http', '$sce', '$location', '$window', '$timeout', function($scope, $state, $http, $sce, $location, $window, $timeout) {
+		$scope.pageLoaded = false;
+
 		$window.onbeforeunload = function (e) {
 			// inactivate when user closes simulator window
 			$scope.vehicles.forEach(function(v){
@@ -38,6 +40,7 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 			$timeout(function(){}, 3000);
 			return "Top simultors?";
 		};
+		
 		// Get simulation vehicles
 		$http({
 			method: "GET",
@@ -68,6 +71,7 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 					vehicle.url = $sce.trustAsResourceUrl(url);
 					vehicle.display = i == 0 ? "" : "none";		
 				});
+
 				$scope.vehicles = vehicles;
 
 				// dynamic state
@@ -83,6 +87,8 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 							}
 						});
 					}
+
+					$scope.pageLoaded = true;
 					$scope.selectedIndex = 0;
 					$state.go(vehicles[0].mo_id);
 				}
