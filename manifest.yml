@@ -1,7 +1,7 @@
 declared-services:
   FleetCloudantDB: 
     label: cloudantNoSQLDB 
-    plan: Shared
+    plan: Lite
   FleetIoTForAuto:
     label: iotforautomotive
     plan: free_shared

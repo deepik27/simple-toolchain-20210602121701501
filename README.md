@@ -79,7 +79,7 @@ To do this, you can either use the _Deploy to Bluemix_ button for an automated d
 10. This app uses Cloudant NoSQL DB service as well. Create the service in Bluemix.
 
   ```
-  $ cf create-service cloudantNoSQLDB Shared FleetCloudantDB
+  $ cf create-service cloudantNoSQLDB Lite FleetCloudantDB
   ```
 
 11 Push the app to Bluemix. You need to perform additional steps when it is deployed, so you must add the option --no-start argument.
