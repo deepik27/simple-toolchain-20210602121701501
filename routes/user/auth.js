@@ -54,9 +54,9 @@ var eula = function(req,res,next){
 		return next();
 	if(!req.accepts('html') || req.xhr)
 		return next();
-	fs.readFile(path.join(__dirname, '../../LICENSE'), function(err, license){
+	fs.readFile(path.join(__dirname, '../../LICENSE'), 'ascii', function(err, license){
 		if(err) return res.status(500).send(err);
-		license = '<p>' + _.escape('' + license).split('\n\n').join('</p>\n\n<p>') + '</p>';
+		license = '<p>' + _.escape('' + license).split('\n').join('</p>\n<p>') + '</p>';
 		res.render('eula', {license: license});
 	});
 }
