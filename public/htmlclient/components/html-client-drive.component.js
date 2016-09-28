@@ -121,7 +121,8 @@
 		    };
 		    $scope.updateVehicleDataValue = function(){
 		    	if($scope.vehicleDataName){
-		    		vehicleData[$scope.vehicleDataName] = $scope.vehicleDataValue;
+		    		var value = $scope.vehicleDataName === "engineTemp" ? String(($scope.vehicleDataValue-32)*5/9) : $scope.vehicleDataValue;
+		    		vehicleData[$scope.vehicleDataName] = value;
 			    	carProbeService.setVehicleData(vehicleData);
 			    }
 		    };
@@ -146,7 +147,7 @@
 			// rules
 			// should be synced with rules defined in /driverinsights/fleetalert.js
 			$scope.rules = [
-				{propName: "engineTemp", label: "Engine Temprature (Critical if larger than 120)"},
+				{propName: "engineTemp", label: "Engine Temprature (Critical if larger than 248)"},
 				{propName: "fuel", label: "Fuel"}
 			];
 			assetService.getVehicle(assetService.getVehicleId()).then(function(vehicle){
@@ -513,7 +514,7 @@
 							result.content = '<table><tbody>' +
 										'<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">LOCATION:</span></th><td style="white-space: nowrap">' + Math.round(lat * 10000000) / 10000000 + ',' + Math.round(lon * 10000000) / 10000000 + '</td></tr>' +
 										'<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">HEADING:</span></th><td>' + Math.round(heading * 10000000) / 10000000 + ' [' + dir + ']' + '</td></td>' +
-										'<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">SPEED:</span></th><td>' + Math.round(speed * 100) / 100 + 'km/h</td></tr>' +
+										'<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">SPEED:</span></th><td>' + Math.round(speed / 0.01609344) / 100 + 'MPH</td></tr>' +
 										'<tbody><table>'
 							return result;
 						} else if (feature === carFeature) {
