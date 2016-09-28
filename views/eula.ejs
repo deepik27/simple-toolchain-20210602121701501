@@ -36,8 +36,8 @@
     accept.addEventListener("click", function(){
         var d = new Date();
         d.setTime(d.getTime() + 365*24*60*60*1000);
-        var expires = ""; //"; expires=" + d.toUTCString();
-        document.cookie = "eulaStatus=Accepted" + expires;
+        var expires = ";expires=" + d.toUTCString();
+        document.cookie = "eulaStatus=Accepted;path=/" + expires;
         location.reload(true); // reaload
     });
   </script>

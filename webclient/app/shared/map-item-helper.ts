@@ -219,26 +219,7 @@ export abstract class MapItemHelper<T extends Item> {
     }.bind(this));
   }
 
-  public createEventDescriptionHTML(item: T) {
-    let props = this.getHoverProps(item);
-
-    let title = this.getItemLabel();
-    let content: string = "<table><tbody>";
-    if (props) {
-      props.forEach(function(prop) {
-        if (prop.key === "id") {
-          title += " (" + _.escape(prop.value) + ")";
-        } else {
-          content += "<tr><th style='white-space: nowrap;text-align:right;'><span style='margin-right:10px;'>" + _.escape(prop.key.toUpperCase()) +
-                            ":</span></th><td>" + _.escape(prop.value) + "</td></tr>";
-        }
-      });
-    }
-    content += "</tbody><table>";
-    return {title: title, content: content};
-  }
-
-  public getHoverProps(item) {
+  public getHoverProps(item: T) {
     return [];
   }
 }

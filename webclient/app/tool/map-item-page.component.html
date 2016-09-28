@@ -8,5 +8,5 @@
   <h4>EVENT EDITOR</h4>
 </div>
 <div class="editorMap" style="height: 80%;">
-  <fmdash-item-map [region]="selectedArea" (invokeCommand)="onInvokeCommand($event)"></fmdash-item-map>
+  <fmdash-item-map [region]="selectedArea" (extentChanged)="onMapExtentChanged($event)"></fmdash-item-map>
 </div>

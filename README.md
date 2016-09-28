@@ -9,7 +9,7 @@ With IoT for Automotive Starter app, you will experience real-time monitoring an
 
 This app demonstrates how quickly you can build an app on Bluemix using the following services:
 
-   * [IBM Watson IoT Platform](https://console.ng.bluemix.net/catalog/services/internet-of-things-platform/)
+   * [IoT for Automotive (Experimental)](https://console.ng.bluemix.net/catalog/services/iot-for-automotive/)
    * [Cloudant NoSQL DB](https://console.ng.bluemix.net/catalog/services/cloudant-nosql-db/)
 
 You can follow the steps below to set up the IoT for Automotive Starter app.
@@ -79,7 +79,7 @@ To do this, you can either use the _Deploy to Bluemix_ button for an automated d
 10. This app uses Cloudant NoSQL DB service as well. Create the service in Bluemix.
 
   ```
-  $ cf create-service cloudantNoSQLDB Shared FleetCloudantDB
+  $ cf create-service cloudantNoSQLDB Lite FleetCloudantDB
   ```
 
 11 Push the app to Bluemix. You need to perform additional steps when it is deployed, so you must add the option --no-start argument.

@@ -20,7 +20,15 @@ export class GeofenceService {
 	 * 			latitude: center latitude of geo fence, valid when area_type is circle
 	 * 			longitude: center logitude of geo fence, valid when area_type is circle
 	 * 			radius: radius of geo fence, valid when area_type is circle
-	 * 		}
+	 * 		},
+   *    target: {
+   *      area {
+   * 	  		min_latitude: start latitude of geo fence target, valid when direction is out
+	 * 		  	min_longitude: start logitude of geo fence target, valid when direction is out
+	 * 		  	max_latitude:  end latitude of geo fence target, valid when direction is out
+	 * 			  max_longitude:  start logitude of geo fence target, valid when direction is out
+   *      }
+   *    }
 	 * }
 	 */
 
@@ -39,11 +47,14 @@ export class GeofenceService {
      });
    }
 
-   public getGeofence(event_id: string) {
-     let url = "/user/geofence?geofence_id=" + event_id;
+   public getGeofence(geofence_id: string) {
+     let url = "/user/geofence/" + geofence_id;
      console.log("get geofence: " + url);
 
-     return this.http.get(url);
+     return this.http.get(url).map(data => {
+        let resJson = data.json();
+        return resJson;
+      });
    }
 
    public createGeofence(geofence) {

@@ -1,7 +1,7 @@
 declared-services:
   FleetCloudantDB-SUFFIX-: 
     label: cloudantNoSQLDB 
-    plan: Shared
+    plan: Lite
   FleetIoTForAuto-SUFFIX-:
     label: iotforautomotive
     plan: free_shared

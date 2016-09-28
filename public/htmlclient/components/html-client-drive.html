@@ -20,9 +20,9 @@
 	 <button class="button mapControlPanelButton" ng-show="false" ng-click="showControlPanel()">Control Panel</button>
 	 <div class="mapProbe" ng-show="driveEvent.trip_id">
 	 					Location=({{deviceLocation.lat}},{{deviceLocation.lng}})<br> 
-	 					Speed={{driveEvent.speed}} km/h<br>
-	 					Fuel={{driveEvent.fuel}} l<br>
-	 					Engine Temperature={{driveEvent.engineTemp}} C</div>
+	 					Speed={{(driveEvent.speed/1.609344).toPrecision(3)}} MPH<br>
+	 					Fuel={{driveEvent.fuel}}<br>
+	 					Engine Temperature={{(driveEvent.engineTemp*9/5+32).toPrecision(3)}} F</div>
 	 <div id="controlPanel" class="controlPanel" ng-show="isControlPanelDisplayed">
 	 	Fuel: <input type="number" ng-model="fuel" ng-change="updateVehicleData()"><br>
 	 	Engine Temperature: <input type="number" ng-model="engineTemp" ng-change="updateVehicleData()">

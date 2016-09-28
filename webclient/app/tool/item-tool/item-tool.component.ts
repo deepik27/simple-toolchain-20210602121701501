@@ -4,6 +4,8 @@ import { Router } from '@angular/router';
 import { EventService } from '../../shared/iota-event.service';
 import { GeofenceService } from '../../shared/iota-geofence.service';
 
+import * as ol from 'openlayers';
+
 declare var $; // jQuery from <script> tag in the index.html
 // as bootstrap type definitoin doesn't extend jQuery $'s type definition
 
@@ -69,7 +71,19 @@ export class ItemToolComponent implements OnInit {
         max_longitude: extent.max_longitude - offset_x
       };
     }
-    return this.execute(new CreateGeofenceCommand(this.geofenceService, range, this.geofenceDirection));
+    let target = null;
+    if (this.geofenceDirection === "out") {
+      let target_len = ol.proj.toLonLat([500, 500], undefined);
+      target = {
+        area: {
+          min_longitude: range.min_longitude - target_len[0],
+          min_latitude: range.min_latitude - target_len[1],
+          max_longitude: range.max_longitude + target_len[0],
+          max_latitude: range.max_latitude + target_len[1]
+        }
+      };
+    }
+    return this.execute(new CreateGeofenceCommand(this.geofenceService, range, this.geofenceDirection, target));
   }
 
   setItemMap(itemMap) {
@@ -79,6 +93,14 @@ export class ItemToolComponent implements OnInit {
   locationClicked(loc) {
     let extent = this.itemMap.getMapExtent();
     return this.execute(this.getLocationCommand(extent, loc));
+  }
+
+  moveItem(item, delta) {
+    return this.execute(this.getMoveCommand(item, delta));
+  }
+
+  resizeItem(item, delta, handleIndex) {
+    return this.execute(this.getResizeCommand(item, delta, handleIndex));
   }
 
   deleteItem(item) {
@@ -124,32 +146,52 @@ export class ItemToolComponent implements OnInit {
         geometry.longitude += delta[0];
         geometry.latitude += delta[1];
       }
-      return new UpdateGeofenceCommand(this.geofenceService, item.getId(), geometry, item.direction);
-    } else {
-      item.s_longitude += delta.deltaX;
-      item.s_latitude += delta.deltaY;
-      return new UpdateEventCommand(this.eventService, item.getId(), item);
+      let target = item.target;
+      if (target && target.area) {
+        target.area.min_longitude += delta[0];
+        target.area.max_longitude += delta[0];
+        target.area.min_latitude += delta[1];
+        target.area.max_latitude += delta[1];
+      }
+      return new UpdateGeofenceCommand(this.geofenceService, item.getId(), geometry, item.direction, target);
     }
   }
 
   getResizeCommand(item, delta, handleIndex) {
     if (item.getItemType() === "geofence") {
       let geometry = item.geometry;
+      let target = item.target;
       if (isNaN(geometry.longitude)) {
         return;
       }
       if (handleIndex === 0) {
         geometry.min_longitude += delta[0];
         geometry.min_latitude += delta[1];
+        if (target && target.area) {
+          target.area.min_longitude += delta[0];
+          target.area.min_latitude += delta[1];
+        }
       } else if (handleIndex === 1) {
         geometry.min_longitude += delta[0];
         geometry.max_latitude += delta[1];
+        if (target && target.area) {
+          target.area.min_longitude += delta[0];
+          target.area.max_latitude += delta[1];
+        }
       } else if (handleIndex === 2) {
         geometry.max_longitude += delta[0];
         geometry.max_latitude += delta[1];
+        if (target && target.area) {
+          target.area.max_longitude += delta[0];
+          target.area.max_latitude += delta[1];
+        }
       } else if (handleIndex === 3) {
         geometry.max_longitude += delta[0];
         geometry.min_latitude += delta[1];
+        if (target && target.area) {
+          target.area.max_longitude += delta[0];
+          target.area.min_latitude += delta[1];
+        }
       }
       if (geometry.min_longitude > geometry.max_longitude) {
         let lon = geometry.min_longitude;
@@ -161,13 +203,7 @@ export class ItemToolComponent implements OnInit {
         geometry.min_latitude = geometry.max_latitude;
         geometry.max_latitude = lat;
       }
-      return new UpdateGeofenceCommand(this.geofenceService, item.getId(), geometry, item.direction);
-    }
-  }
-
-  getUpdateCommand(item, params): ToolCommand {
-    if (item.getItemType() === "geofence") {
-      return new UpdateGeofenceCommand(this.geofenceService, item.getId(), params.geometry, params.direction);
+      return new UpdateGeofenceCommand(this.geofenceService, item.getId(), geometry, item.direction, target);
     }
   }
 
@@ -217,15 +253,6 @@ export class CreateEventCommand extends ToolCommand {
   }
 }
 
-export class UpdateEventCommand extends ToolCommand {
-  constructor(private eventService, private event_id, private event) {
-    super("event");
-  }
-  public execute() {
-    return this.eventService.updateEvent(this.event_id, event);
-  }
-}
-
 export class DeleteEventCommand extends ToolCommand {
   constructor(private eventService, private event_id) {
     super("event");
@@ -236,7 +263,7 @@ export class DeleteEventCommand extends ToolCommand {
 }
 
 export class CreateGeofenceCommand extends ToolCommand {
-  constructor(private geofenceService, private geometry, private direction) {
+  constructor(private geofenceService, private geometry, private direction, private target) {
     super("geofence");
   }
   public execute() {
@@ -244,14 +271,17 @@ export class CreateGeofenceCommand extends ToolCommand {
     let geofence = {
       direction: this.direction,
       geometry_type: geometry_type,
-      geometry: this.geometry
+      geometry: this.geometry,
     };
+    if (this.target) {
+      geofence["target"] = this.target;
+    }
     return this.geofenceService.createGeofence(geofence);
   }
 }
 
 export class UpdateGeofenceCommand extends ToolCommand {
-  constructor(private geofenceService, private geofence_id, private geometry, private direction) {
+  constructor(private geofenceService, private geofence_id, private geometry, private direction, private target) {
     super("geofence");
   }
   public execute() {
@@ -261,6 +291,9 @@ export class UpdateGeofenceCommand extends ToolCommand {
       geometry_type: geometry_type,
       geometry: this.geometry
     };
+    if (this.target) {
+      geofence["target"] = this.target;
+    }
     return this.geofenceService.updateGeofence(this.geofence_id, geofence);
   }
 }
