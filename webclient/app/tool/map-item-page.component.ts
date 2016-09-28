@@ -36,7 +36,13 @@ export class MapItemPageComponent implements OnInit {
     this.regions = locationService.getRegions().map(x => x);
   }
 
-  get htmlClientInitialLocation(){
+  onMapExtentChanged(event) {
+    let extent = event.extent;
+    this.locationService.setMapRegionExtent(extent);
+    this.mapLastSelectedArea = _.extend({}, this.locationService.getMapRegion()); // fire extent change
+  }
+
+  get htmlClientInitialLocation() {
     let mapRegion = this.locationService.getMapRegion();
     let e = mapRegion && mapRegion.extent;
     if (e) {
@@ -49,14 +55,15 @@ export class MapItemPageComponent implements OnInit {
   ngOnInit() {
     // move location
     this.selectedArea = this.areas[this.areas.length - 1];
-    if (this.locationService.getMapRegion()) {
-      if (this.locationService.getCurrentAreaRawSync()) {
+    if(this.locationService.getMapRegion()) {
+      if(this.locationService.getCurrentAreaRawSync()) {
         this.areas.push(this.locationService.getCurrentAreaRawSync());
       }
       this.areas.push(this.locationService.getMapRegion());
+      this.selectedArea = this.areas[this.areas.length - 1];
     } else {
       this.locationService.getCurrentArea().then(area => {
-        if (this.locationService.getCurrentAreaRawSync()) {
+        if(this.locationService.getCurrentAreaRawSync()) {
           this.areas.push(this.locationService.getCurrentAreaRawSync());
         }
         this.selectedArea = area;

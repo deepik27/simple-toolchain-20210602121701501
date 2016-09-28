@@ -38,9 +38,8 @@ let DEFAULT_ZOOM = 15;
 })
 export class ItemMapComponent implements OnInit {
   @Input() region: any;
-  @Output() locationSelected = new EventEmitter<any>();
+  @Output() extentChanged = new EventEmitter<any>();
   @ViewChild(ItemToolComponent) itemTool: ItemToolComponent;
-
 	// Mapping
   map: ol.Map;
   handleStyle: ol.style.Style;
@@ -89,7 +88,7 @@ export class ItemMapComponent implements OnInit {
 
     // create a map
     let mouseInteration = new interaction();
-//    mouseInteration.commandExecutor = this.commandExecutor;
+    mouseInteration.commandExecutor = this.commandExecutor;
     this.map =  new ol.Map({
       interactions: ol.interaction.defaults(undefined).extend([mouseInteration]),
       target: document.getElementById(this.mapElementId),
@@ -126,6 +125,12 @@ export class ItemMapComponent implements OnInit {
     this.mapHelper = new MapHelper(this.map);
     this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
     this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, "Boundary");
+
+		// setup view change event handler
+    this.mapHelper.postChangeViewHandlers.push(extent => {
+			// fire event
+      this.extentChanged.emit({extent: extent});
+    });
 
     this.handleStyle = new ol.style.Style({
       text: new ol.style.Text({
@@ -212,14 +217,16 @@ export class ItemMapComponent implements OnInit {
           let helper = this.mapItemHelpers[item.getItemType()];
           if (helper) {
             let props = helper.getHoverProps(item);
-            let title = helper.getItemLabel() + " (" + item.getId() + ")";
-            let details: string = "<table><tbody>";
-            props && props.forEach(function(prop) {
-              details += "<tr><th style='white-space: nowrap;text-align:right;'><span style='margin-right:10px;'>" + _.escape(prop.key.toUpperCase()) +
-                                  ":</span></th><td>" + _.escape(prop.value) + "</td></tr>";
-            });
-            details += "</tbody><table>";
-            hoverContent = {title: title, content: details, removeable: true};
+            if (props && props.length > 0) {
+              let title = helper.getItemLabel() + " (" + item.getId() + ")";
+              let details: string = "<table><tbody>";
+              props.forEach(function(prop) {
+                details += "<tr><th style='white-space: nowrap;text-align:right;'><span style='margin-right:10px;'>" + _.escape(prop.key.toUpperCase()) +
+                                    ":</span></th><td>" + _.escape(prop.value) + "</td></tr>";
+              });
+              details += "</tbody><table>";
+              hoverContent = {title: title, content: details, removeable: true};
+            }
           }
         }
       }
@@ -230,6 +237,7 @@ export class ItemMapComponent implements OnInit {
   ngOnInit() {
     this.commandExecutor = this.itemTool.getCommandExecutor();
     this.initMap();
+    this.region && this.mapHelper.moveMap(this.region);
     this.initPopup();
     this.itemTool.setItemMap(this);
   }
@@ -291,6 +299,20 @@ export class ItemMapComponent implements OnInit {
         });
 
     if (feature) {
+      let item = feature.get("item");
+      if (item) {
+        if (!this.commandExecutor.getMoveCommand(item, [0, 0])) {
+          return false;
+        }
+      } else {
+        let handle = this.dragFeature.get("resizeHandle");
+        if (handle) {
+          if (!this.commandExecutor.resizeItem(handle.item, [0, 0], handle.index)) {
+            return false;
+          }
+        }
+      }
+
       this.dragFeatureCoordinate = [e.coordinate[0], e.coordinate[1]];
       this.dragStartCoordinate = [e.coordinate[0], e.coordinate[1]];
       this.dragFeature = feature;
@@ -309,27 +331,21 @@ export class ItemMapComponent implements OnInit {
       let geometry = (this.dragFeature.getGeometry());
       geometry.translate(deltaX, deltaY);
 
-      deltaX = e.coordinate[0] - this.dragStartCoordinate[0];
-      deltaY = e.coordinate[1] - this.dragStartCoordinate[1];
+      let start = ol.proj.toLonLat(this.dragStartCoordinate, undefined);
+      let end = ol.proj.toLonLat(e.coordinate, undefined);
+      deltaX = end[0] - start[0];
+      deltaY = end[1] - start[1];
       if (deltaX === 0 && deltaY === 0) {
         return;
       }
 
       let item = this.dragFeature.get("item");
-      let delta = ol.proj.toLonLat([deltaX, deltaY], undefined);
       if (item) {
-        let command = this.commandExecutor.getMoveCommand(item, delta);
-        if (command) {
-          command.execute();
-        }
+        this.commandExecutor.moveItem(item, [deltaX, deltaY]);
       } else {
         let handle = this.dragFeature.get("resizeHandle");
         if (handle) {
-          let delta = ol.proj.toLonLat([deltaX, deltaY], undefined);
-          let command = this.commandExecutor.getResizeCommand(handle.item, delta, handle.index);
-          if (command) {
-            command.execute();
-          }
+          this.commandExecutor.resizeItem(handle.item, [deltaX, deltaY], handle.index);
         }
       }
     } finally {

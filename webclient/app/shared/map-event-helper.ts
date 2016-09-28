@@ -89,7 +89,7 @@ export class MapEventHelper extends MapItemHelper<Event> {
         return style;
       };
     }(undefined);
-    itemLayer.setStyle(getFeatureStyle);
+    this.itemLayer.setStyle(getFeatureStyle);
     this.eventService.getEventTypes().subscribe(data => { this.eventTypes = data; });
   }
 
@@ -154,7 +154,7 @@ export class MapEventHelper extends MapItemHelper<Event> {
     return new Event(param);
   }
 
-  public getHoverProps(event) {
+  public getHoverProps(event: Event) {
     let eventTypes =   this.eventTypes || [];
     // event type or description
     let description = event.event_type;
