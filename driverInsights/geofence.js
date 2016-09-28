@@ -288,7 +288,9 @@ _.extend(driverInsightsGeofence, {
 				end_longitude: geofenceJson.geometry.max_longitude
 			}
 		}
-		
+		if (geofenceJson.target) {
+			ruleJson.target = geofenceJson.target;
+		}
 		ruleJson.actions = geofenceJson.actions
 						|| {vehicle_actions: [{
 							message: "iota-starter-geofence:" + range,
