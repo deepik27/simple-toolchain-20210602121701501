@@ -118,44 +118,62 @@ export class MapHelper {
     return (now || Date.now()) - this.serverTimeDelay;
   }
   // handle precompose event and delegate it to handlers
-    private _onPreCompose(event){
-    if (this.animating){
-      //var vectorContext = event.vectorContext;
-      var frameState = event.frameState;
-      var frameTime = this.getServerTime(frameState.time) - this.animationDelay;
-      if(this.nextRenderFrameTime < frameTime){
-        this.preComposeHandlers.forEach(function(handler){ handler(event, frameTime); });
-        this.nextRenderFrameTime = 0; // unschedule next
-        //console.log('Updated fatures.');
+  private _onPreCompose(event){
+    try{
+      if (this.animating){
+        //var vectorContext = event.vectorContext;
+        var frameState = event.frameState;
+        var frameTime = this.getServerTime(frameState.time) - this.animationDelay;
+        if(this.nextRenderFrameTime < frameTime){
+          this.preComposeHandlers.forEach(function(handler){
+            try{
+              handler(event, frameTime);
+            }catch(e){
+              console.error(e);
+            }
+          });
+          this.nextRenderFrameTime = 0; // unschedule next
+          //console.log('Updated fatures.');
+        }
       }
+    }catch(e){
+      console.error(e);
     }
   }
   // handle postcompose event and delegate it to handlers, schedule next render
   private _onPostCompose(event){
-    if (this.animating){
-      //var vectorContext = event.vectorContext;
-      var frameState = event.frameState;
-      var frameTime = this.getServerTime(frameState.time) - this.animationDelay;
-      var nextRender = -1;
-      this.postComposeHandlers.forEach(function(handler){
-        var nextRenderDuration = handler(event, frameTime);
-        nextRenderDuration = parseInt(nextRenderDuration);
-        if(nextRenderDuration >= 0 && nextRender < nextRenderDuration)
-          nextRender = nextRenderDuration;
-      });
-      // set next render time when not scheduled
-      if(!this.nextRenderFrameTime){
-        this.nextRenderFrameTime = frameTime + (nextRender > 0 ? nextRender : 0);
-        if(nextRender <= 10){
-          if(this.animating)
-            this.map.render();
-        }else{
-          setTimeout((function(){
+    try{
+      if (this.animating){
+        //var vectorContext = event.vectorContext;
+        var frameState = event.frameState;
+        var frameTime = this.getServerTime(frameState.time) - this.animationDelay;
+        var nextRender = -1;
+        this.postComposeHandlers.forEach(function(handler){
+          try{
+            var nextRenderDuration = handler(event, frameTime);
+            nextRenderDuration = parseInt(nextRenderDuration);
+            if(nextRenderDuration >= 0 && nextRender < nextRenderDuration)
+              nextRender = nextRenderDuration;
+          }catch(e){
+            console.error(e);
+          }
+        });
+        // set next render time when not scheduled
+        if(!this.nextRenderFrameTime){
+          this.nextRenderFrameTime = frameTime + (nextRender > 0 ? nextRender : 0);
+          if(nextRender <= 10){
             if(this.animating)
               this.map.render();
-          }).bind(this), nextRender);
+          }else{
+            setTimeout((function(){
+              if(this.animating)
+                this.map.render();
+            }).bind(this), nextRender);
+          }
         }
       }
+    }catch(e){
+      console.error(e);
     }
   }
 

@@ -51,18 +51,6 @@ export class EventService {
     });
   }
 
-  public updateEvent(event_id, event) {
-    let url = "/user/event?event_id=" + event_id;
-    let body = JSON.stringify(event);
-    let headers = new Headers({"Content-Type": "application/JSON;charset=utf-8"});
-    let options = new RequestOptions({headers: headers});
-
-    return this.http.put(url, body, options).map(data => {
-        let resJson = data.json();
-        return resJson;
-    });
-  }
-
   public deleteEvent(event_id) {
     return this.http.delete("/user/event?event_id=" + event_id).map(data => {
         let resJson = data.json();

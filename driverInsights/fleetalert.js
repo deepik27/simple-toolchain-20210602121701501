@@ -58,7 +58,7 @@ _.extend(driverInsightsAlert, {
 	 * 	mo_id: {...}
 	 * }
 	 */
-	alerts: {},
+	currentAlerts: {},
 
 	/*
 	 * Accumulate alerts to insert(create/close) and insert by bulk
@@ -243,32 +243,21 @@ _.extend(driverInsightsAlert, {
 				});
 			});
 		});
-		var _alerts = _.clone(this.alerts);
+		var _alerts = _.clone(this.currentAlerts);
 		var _alertsForVehicle = _alerts[probe.mo_id] || {};
 		Object.keys(_alertsForVehicle).forEach(function(key){
 			var alert = _alertsForVehicle[key];
 			if(alert && alert.source && alert.source.type === "script"){
 				setImmediate(function(){
 					var rule = self.alertRules[alert.type];
-					var deferred = null;
 					if(rule){
 						var closedAlert = rule.closeRule(alert, probe, vehicle);
 						if(closedAlert){
-							deferred = self.updateAlert(closedAlert);
+							self.updateAlert(closedAlert);
 						}
 					}else{
 						alert.closed_ts = probe.ts;
-						deferred = self.updateAlert(alert);
-					}
-					if(deferred){
-						Q.when(deferred, function(result){
-							if(result && result.ok){
-								delete self.alerts[probe.mo_id][key];
-								debug("An alert is closed: " + JSON.stringify(alert));
-							}
-						}, function(error){
-							console.error(error);
-						});
+						self.updateAlert(alert);
 					}
 				});
 			}
@@ -302,8 +291,8 @@ _.extend(driverInsightsAlert, {
 		var self = this;
 		var ts = moment().valueOf();
 		(events||[]).forEach(function(event){
-			if(!self.alerts[mo_id]){
-				self.alerts[mo_id] = {};
+			if(!self.currentAlerts[mo_id]){
+				self.currentAlerts[mo_id] = {};
 			}
 			var props = event.props || {}; // A message should have props
 			var event_id = String(event.event_id || props.message_type);
@@ -316,7 +305,7 @@ _.extend(driverInsightsAlert, {
 			if(!event_id){
 				return;
 			}
-			var alert = self.alerts[mo_id][event_id];
+			var alert = self.currentAlerts[mo_id][event_id];
 			if(alert){
 				// Do nothing during same id/type of events/messages are coming consecutively
 			}else{
@@ -340,7 +329,7 @@ _.extend(driverInsightsAlert, {
 	closeAlertFromEvents: function(mo_id, events){
 		var self = this;
 		var closed_ts = moment().valueOf();
-		var _alerts = _.clone(this.alerts || {});
+		var _alerts = _.clone(this.currentAlerts || {});
 		var _alertsForVehicle = _alerts[mo_id] || {};
 		Object.keys(_alertsForVehicle).forEach(function(key){
 			var sourceType = _alertsForVehicle[key].source && _alertsForVehicle[key].source.type;
@@ -355,14 +344,7 @@ _.extend(driverInsightsAlert, {
 			})){
 				var alert = _alertsForVehicle[key];
 				alert.closed_ts = closed_ts;
-				Q.when(self.updateAlert(alert), function(result){
-					if(result && result.ok){
-						delete self.alerts[mo_id][key];
-						debug("An alert for event/message is closed: " + JSON.stringify(alert));
-					}
-				}, function(error){
-					console.error(error);
-				});
+				self.updateAlert(alert);
 			}
 		});
 	},
@@ -408,9 +390,12 @@ _.extend(driverInsightsAlert, {
 	},
 
 	_cacheAlert: function(alert){
-		var alertsForVehicle = this.alerts[alert.mo_id];
+		if(alert.closed_ts){
+			return;
+		}
+		var alertsForVehicle = this.currentAlerts[alert.mo_id];
 		if(!alertsForVehicle){
-			alertsForVehicle = this.alerts[alert.mo_id] = {};
+			alertsForVehicle = this.currentAlerts[alert.mo_id] = {};
 		}
 		var existingAlert = alertsForVehicle[alert.source && alert.source.id];
 		if(!existingAlert){
@@ -424,26 +409,43 @@ _.extend(driverInsightsAlert, {
 		}
 		var alertToInsert = alertsForVehicle[alert.source && alert.source.id];
 		if(!alertToInsert){
+			debug("addAlert: " + JSON.stringify(alert));
 			alertsForVehicle[alert.source && alert.source.id] = alert;
 		}
 		this._bulkInsert();
 	},
 	updateAlert: function(alert){
 		if(!alert._id || !alert._rev){
-			return Q.reject({message: "_id and _rev are required to update alert: " + JSON.stringify(alert)});
+			console.error({message: "_id and _rev are required to update alert: " + JSON.stringify(alert)});
 		}
-		var deferred = Q.defer();
-		Q.when(this.db, function(db){
-			db.insert(alert, null, function(error, result){
-				if(error){
-					deferred.reject(error);
-					console.error("Update an alert failed: " + JSON.stringify(error));
+		var alertsForVehicle = this.alertsToInsert[alert.mo_id];
+		if(!alertsForVehicle){
+			alertsForVehicle = this.alertsToInsert[alert.mo_id] = {};
+		}
+		var alertToInsert = alertsForVehicle[alert.source && alert.source.id];
+		if(alertToInsert){
+			if(alertToInsert._id){
+				if(alertToInsert._id === alert._id){
+					if(Number(alertToInsert._rev.split("-")[0]) < Number(alert._rev.split("-"[0]))){
+						debug("updateAlert: " + JSON.stringify(alert));
+						alertsForVehicle[alert.source && alert.source.id] = alert;
+					}
 				}else{
-					deferred.resolve(result);
+					// Close invalid alert
+					alert.closd_ts = alert.closed_ts || moment().valueOf();
+					debug("updateAlert(close and mark as invalid): " + JSON.stringify(alert));
+					this.alertsToInsert["invalid"][alert._id] = alert;
 				}
-			});
-		});
-		return deferred.promise;
+			}else{
+				// The alert has already inserted. This must be invalid state.
+				console.warn("updateAlert: " + JSON.stringify(alert));
+				alertsForVehicle[alert.source && alert.source.id] = alert;
+			}
+		}else{
+			debug("updateAlert: " + JSON.stringify(alert));
+			alertsForVehicle[alert.source && alert.source.id] = alert;
+		}
+		this._bulkInsert();
 	},
 	_bulkInsert: function(){
 		if(!this.insertTimeout){
@@ -472,7 +474,14 @@ _.extend(driverInsightsAlert, {
 										var alert = docs[index];
 										alert._id = inserted.id;
 										alert._rev = inserted.rev;
-										self._cacheAlert(alert);
+										if(alert.closed_ts){
+											delete self.currentAlerts[alert.mo_id][alert.source && alert.source.id];
+											if(self.currentAlerts[alert.mo_id].length <= 0){
+												delete self.currentAlerts[alert.mo_id];
+											}
+										}else{
+											self._cacheAlert(alert);
+										}
 									}
 								});
 							}

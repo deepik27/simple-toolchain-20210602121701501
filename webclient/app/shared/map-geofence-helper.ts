@@ -6,19 +6,60 @@ import{ Item } from "./map-item-helper";
 
 @Injectable()
 export class MapGeofenceHelper extends MapItemHelper<Geofence> {
+  styles = {};
+  targetStyle: ol.style.Style;
   constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public geofenceService: GeofenceService, public itemLabel: string = "Geofence") {
     super(map, itemLayer, itemLabel);
-    let defaultStyle = new ol.style.Style({
-        fill: new ol.style.Fill({
-          color: [255, 0, 128, 0.1]
-        }),
-        stroke: new ol.style.Stroke({
-          color: [255, 0, 128, 0.3],
-          width: 2
-        })
-    });
-    itemLayer.setStyle(defaultStyle);
+
+    let self = this;
+    let getFeatureStyle = function getFeatureStyle(feature: ol.Feature) {
+      self.styles["out"] = new ol.style.Style({
+          fill: new ol.style.Fill({
+            color: [0, 0, 255, 0.1]
+          }),
+          stroke: new ol.style.Stroke({
+            color: [0, 0, 255, 0.3],
+            width: 2
+          })
+      });
+      self.styles["in"] = new ol.style.Style({
+          fill: new ol.style.Fill({
+            color: [255, 0, 128, 0.1]
+          }),
+          stroke: new ol.style.Stroke({
+            color: [255, 0, 128, 0.3],
+            width: 2
+          })
+      });
+      self.targetStyle = new ol.style.Style({
+          fill: new ol.style.Fill({
+            color: [100, 100, 100, 0.1]
+          }),
+          stroke: new ol.style.Stroke({
+            color: [100, 100, 100, 0.3],
+            width: 2
+          })
+      });
+
+      return function(feature, resolution) {
+        let style = self.getFeatureStyle(feature);
+        feature.setStyle(style);
+        return style;
+      };
+    }(undefined);
+    this.itemLayer.setStyle(getFeatureStyle);
   }
+
+  getFeatureStyle(feature: ol.Feature) {
+    if (feature.get("area")) {
+      return this.targetStyle;
+    }
+    let geofence = feature.get("item");
+    if (!geofence) {
+      return null;
+    }
+    return this.styles[geofence.direction || "out"];
+  };
 
   public getItemType() {
     return "geofence";
@@ -47,6 +88,12 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
 
   public createItemFeatures(geofence: Geofence) {
     let features = [];
+    if (geofence.target && geofence.target.area) {
+      let polygonCoordinates = this.createGeofenceCoordinate(geofence.target.area);
+      let polygon = new ol.geom.Polygon([polygonCoordinates]);
+      let feature = new ol.Feature({geometry: polygon, item: geofence, area: geofence.target.area});
+      features.push(feature);
+    }
     let geometry = geofence.geometry;
     if (geofence.geometry_type === "circle") {
       let center: ol.Coordinate = ol.proj.transform([geometry.longitude, geometry.latitude], "EPSG:4326", "EPSG:3857");
@@ -81,7 +128,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
     return new Geofence(param);
   }
 
-  public getHoverProps(geofence) {
+  public getHoverProps(geofence: Geofence) {
     let props = [];
     props.push({key: "direction", value: geofence.direction});
     return props;
@@ -101,6 +148,14 @@ export class Geofence extends Item {
     latitude: number,
     longitude: number,
     radius: number
+  };
+  target: {
+    area: {
+      min_latitude: number,
+      min_longitude: number,
+      max_latitude: number,
+      max_longitude: number
+    }
   };
 
   constructor(params) {

@@ -129,7 +129,7 @@ export abstract class MapItemHelper<T extends Item> {
   monitorTentativeItems(monitoringIds) {
     let promises = [];
     if (!monitoringIds) {
-      monitoringIds = _.map(this.tentativeItemMap, function(value, key) { return key; });
+      monitoringIds = _.map(<any>this.tentativeItemMap, function(value, key) { return key; });
     }
     _.each(monitoringIds, function(id) {
       promises.push(new Promise((resolve, reject) => {
@@ -208,7 +208,7 @@ export abstract class MapItemHelper<T extends Item> {
   }
 
   public updateAffectedItems(ids: string[]) {
-    _.each(this.itemMap, function(value, key) {
+    _.each(<any>this.itemMap, function(value, key) {
       let item = value.item;
       let feature = value.features[0];
       let affected = _.contains(ids, item.getId());
@@ -219,26 +219,7 @@ export abstract class MapItemHelper<T extends Item> {
     }.bind(this));
   }
 
-  public createEventDescriptionHTML(item: T) {
-    let props = this.getHoverProps(item);
-
-    let title = this.getItemLabel();
-    let content: string = "<table><tbody>";
-    if (props) {
-      props.forEach(function(prop) {
-        if (prop.key === "id") {
-          title += " (" + _.escape(prop.value) + ")";
-        } else {
-          content += "<tr><th style='white-space: nowrap;text-align:right;'><span style='margin-right:10px;'>" + _.escape(prop.key.toUpperCase()) +
-                            ":</span></th><td>" + _.escape(prop.value) + "</td></tr>";
-        }
-      });
-    }
-    content += "</tbody><table>";
-    return {title: title, content: content};
-  }
-
-  public getHoverProps(item) {
+  public getHoverProps(item: T) {
     return [];
   }
 }

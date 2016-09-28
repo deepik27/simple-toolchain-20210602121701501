@@ -51,11 +51,11 @@
                     <img src="images/user.jpg" class="circularImg" />
                 </div>
                 
-                <p class="floatRight medium-hide">
+                <p class="floatRight medium-hide" id="userName">
                     Archie
                 </p>
 
-                <p class="floatRight medium-show large-hide">
+                <p class="floatRight medium-show large-hide" id="hamburger">
                     <a href="#" class="em-Modal-Call" rel="loginModal">
                         <i class="icon-menu"></i>
                     </a>
@@ -78,7 +78,20 @@
                 {{vehicle.display}}
 				<iframe ng-src="{{vehicle.url}}" style="width: 100%; min-height: 600px;" width="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" ></iframe>
 			</div>
-		</div>        
+		</div>
+
+        <div class="em-Modal loadingModal" ng-class="{'em-Modal-show': !pageLoaded}">
+            <div class="em-Modal-Content alignCenter" ng-class="{'em-Modal-Content-show': !pageLoaded}">
+                <div class="em-Modal-Close">
+                    <a href="#">
+                        <i class="icon-close"></i>
+                    </a>
+                </div>
+                
+                <div class="loadingSpinner loadingSpinner-inner center"></div>
+                <div class="loadingSpinner loadingSpinner-outter center"></div>
+            </div>
+        </div>     
 	</div>
 
 <script src="js/simRouter.js"></script>
