@@ -22,6 +22,7 @@ var Q = require('q');
 var _ = require('underscore');
 var fs = require('fs-extra');
 var moment = require("moment");
+var chance = require("chance")();
 var debug = require('debug')('simulator');
 debug.log = console.log.bind(console);
 
@@ -110,7 +111,7 @@ var _createNewSimulatedVehicles = function(num){
 	for(var i=0; i < num; i++){
 		var vehicle = {
 			"vendor": VENDOR_NAME, 
-			"serial_number": "simulated_vehicle_" + (NUM_OF_SIMULATOR-i)
+			"serial_number": "s-" + chance.hash({length: 6})
 		};
 		vehicle.properties = _getDeviceModelInfo();
 		vehicle.model = vehicle.properties.makeModel;

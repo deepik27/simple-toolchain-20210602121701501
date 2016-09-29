@@ -68,7 +68,7 @@
         <aside class="sidebar">
             <ul class="sidebarItems">
                 <li ng-repeat="vehicle in vehicles track by $index" ui-sref-active="active">
-                    <a ui-sref="{{vehicle.mo_id}}" ng-click="selectItem($index)">Simulated Car {{$index+1}}</a>
+                    <a ui-sref="{{vehicle.mo_id}}" ng-click="selectItem($index)">{{vehicle.serial_number}}</a>
                 </li>
             </ul>
         </aside>
