@@ -400,6 +400,16 @@ _.extend(driverInsightsAlert, {
 		var existingAlert = alertsForVehicle[alert.source && alert.source.id];
 		if(!existingAlert){
 			alertsForVehicle[alert.source && alert.source.id] = alert;
+		}else{
+			// Close older alert and cache newer alert
+			if(existingAlert.ts > alert.ts){
+				alert.closed_ts = moment().valueOf();
+				this.updateAlert(alert);
+			}else{
+				alertsForVehicle[alert.source && alert.source.id] = alert;
+				existingAlert.closed_ts = moment().valueOf();
+				this.updateAlert(existingAlert);
+			}
 		}
 	},
 	addAlert: function(alert){
