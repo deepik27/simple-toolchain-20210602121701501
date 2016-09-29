@@ -14,7 +14,7 @@ import { GeofenceService } from './shared/iota-geofence.service';
   providers: [RealtimeDeviceDataProviderService, LocationService, EventService, GeofenceService]
 })
 export class AppComponent {
-  title = "IoT for Automotive Starter - Monitoring";
+  title = "IBM IoT for Automotive - Fleet Management Starter Application - Monitoring";
   sidebarItems = [
            { title: "Map", route: "map", icon: 'icon-location', active: false },
            { title: "Car Status", route: "carStatus", icon: "icon-car", active: false},

@@ -25,8 +25,6 @@ var appEnv = require("cfenv").getAppEnv();
 var router = module.exports = require('express').Router();
 var authenticate = require('./auth.js').authenticate;
 var driverInsightsProbe = require('../../driverInsights/probe');
-var driverInsightsAnalyze = require('../../driverInsights/analyze');
-var driverInsightsTripRoutes = require('../../driverInsights/tripRoutes.js');
 var driverInsightsContextMapping = require('../../driverInsights/contextMapping');
 var driverInsightsAlert = require('../../driverInsights/fleetalert.js');
 var dbClient = require('../../cloudantHelper.js');
@@ -113,76 +111,6 @@ router.get('/carProbe', authenticate, function(req, res) {
 router.get('/carProbeMonitor', authenticate, function(req, res) {
 	var qs = req.url.substring('/carProbeMonitor?'.length);
 	res.render('carProbeMonitor', { appName: appEnv.name, qs: qs });
-});
-
-router.get('/driverInsights', authenticate, function(req, res) {
-	getUserTrips(req).then(function(tripIdList){
-		driverInsightsAnalyze.getList(tripIdList).then(function(msg){
-			res.send(msg);
-		});	
-	})["catch"](function(error){
-		handleAssetError(res, error);
-	});
-});
-
-router.get('/driverInsights/statistics', authenticate, function(req, res) {
-	getUserTrips(req).then(function(tripIdList){
-		driverInsightsAnalyze.getStatistics(tripIdList).then(function(msg){
-			res.send(msg);
-		});	
-	})["catch"](function(error){
-		handleAssetError(res, error);
-	});
-});
-
-router.get('/driverInsights/behaviors', authenticate, function(req, res) {
-	getUserTrips(req).then(function(tripIdList){
-		driverInsightsAnalyze.getTripList(tripIdList, req.query.all).then(function(msg){
-			res.send(msg);
-		});
-	})["catch"](function(error){
-		handleAssetError(res, error);
-	});
-});
-
-router.get('/driverInsights/:trip_uuid', authenticate, function(req, res) {
-	driverInsightsAnalyze.getDetail(req.params.trip_uuid).then(function(msg){
-		res.send(msg);
-	})["catch"](function(error){
-		handleAssetError(res, error);
-	});
-});
-
-router.get('/driverInsights/behaviors/latest', authenticate, function(req, res) {
-	driverInsightsAnalyze.getLatestBehavior().then(function(msg){
-		res.send(msg);
-	})["catch"](function(error){
-		handleAssetError(res, error);
-	});
-});
-
-router.get('/driverInsights/behaviors/:trip_uuid', authenticate, function(req, res) {
-	driverInsightsAnalyze.getBehavior(req.params.trip_uuid).then(function(msg){
-		res.send(msg);
-	})["catch"](function(error){
-		handleAssetError(res, error);
-	});
-});
-
-router.get("/driverInsights/triproutes/:trip_uuid", function(req, res){
-	driverInsightsTripRoutes.getTripRoute(req.params.trip_uuid).then(function(msg){
-		res.send(msg);
-	})["catch"](function(error){
-		handleAssetError(res, error);
-	})
-});
-
-router.get("/triproutes/:trip_id", function(req, res){
-	driverInsightsTripRoutes.getTripRouteById(req.params.trip_id).then(function(msg){
-		res.send(msg);
-	})["catch"](function(error){
-		handleAssetError(res, error);
-	});
 });
 
 router.get("/routesearch", function(req, res){
@@ -276,28 +204,6 @@ router["delete"]("/event", function(req, res){
 		handleAssetError(res, error);
 	});
 });
-
-function getUserTrips(req){
-	var userid = req.user && req.user.id;
-	var mo_id = req.query.mo_id;
-	if(!mo_id){
-		return Q([]);
-	}
-	var deferred = Q.defer();
-	driverInsightsTripRoutes.getTripsByDevice(mo_id, 100).then(
-		function(tripRoutes){
-			var trip_ids = tripRoutes.map(function(item) {
-				return item.trip_id;
-			}).filter(function(trip_id){
-				return trip_id;
-			});
-			deferred.resolve(trip_ids);
-		}
-	)["catch"](function(error){
-		deferred.reject(error);
-	});
-	return deferred.promise;
-}
 
 /*
  * Shared WebSocket server instance
