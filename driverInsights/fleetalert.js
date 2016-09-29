@@ -390,7 +390,7 @@ _.extend(driverInsightsAlert, {
 	},
 
 	_cacheAlert: function(alert){
-		if(alert.closed_ts){
+		if(alert.closed_ts > 0){
 			return;
 		}
 		var alertsForVehicle = this.currentAlerts[alert.mo_id];
