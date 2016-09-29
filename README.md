@@ -1,8 +1,8 @@
-# IoT for Automotive Starter app server
+# IBM IoT for Automotive - Fleet Management Starter Application
 A demo app that uses Internet of Things Platform service.
 
 ## Overview
-With IoT for Automotive Starter app, you will experience real-time monitoring and management of the car fleet on Bluemix.  
+With IBM IoT for Automotive - Fleet Management Starter Application, you will experience real-time monitoring and management of the car fleet on Bluemix.  
 * On a map users can see availability of cars in the fleet, availability in different zones and cars that might be in critical conditions (e.g. low in fuel, engine over heated). Using the "Manage Vehicles" link, users can manage cars registered in the IoT Platform. Selecting the summary of cars that might be in critical conditions takes users to show the condition of cars in the fleet(sorted by by severity).  
 * Users can get an overview of the health of the fleet. User can drill down into diagnostics details of a chosen vehicle.  
 * Users can view event history(e.g. fuel is low, engine is too hot) of the fleet. User can drill down to view details of chosen vehicle in the fleet.
@@ -12,7 +12,7 @@ This app demonstrates how quickly you can build an app on Bluemix using the foll
    * [IoT for Automotive (Experimental)](https://console.ng.bluemix.net/catalog/services/iot-for-automotive/)
    * [Cloudant NoSQL DB](https://console.ng.bluemix.net/catalog/services/cloudant-nosql-db/)
 
-You can follow the steps below to set up the IoT for Automotive Starter app.
+You can follow the steps below to set up the IBM IoT for Automotive - Fleet Management Starter Application.
 
 ## Deploy the app on Bluemix
 You can deploy your own instance of IoT Automotive Starter app to Bluemix.
@@ -87,10 +87,10 @@ To do this, you can either use the _Deploy to Bluemix_ button for an automated d
   $ cf push --no-start
   ```
 
-You now have your very own instance of the IoT for Automotive Starter app on Bluemix.  
+You now have your very own instance of the IBM IoT for Automotive - Fleet Management Starter Application on Bluemix.  
 
 ## Before using the app
-Before using the IoT for Automotive Starter app, you need to set up services and install a mobile app.
+Before using the IBM IoT for Automotive - Fleet Management Starter Application, you need to set up services.
 
 ### Activate IBM IoT for Automotive service  
 Follow the steps below to make the IBM IoT for Automotive service ready for use.
@@ -112,7 +112,7 @@ You may change the user name and the password by setting `APP_USER` and `APP_PAS
 
 2. Start the app.
 
-Congratulations! You are ready to use your own instance of IoT for Automotive Starter app now. Open `http://<host>.mybluemix.net` in your browser and follow the instructions in the top page to connect your mobile app to the IoT for Automotive Starter app.
+Congratulations! You are ready to use your own instance of the IBM IoT for Automotive - Fleet Management Starter Application now. Open `http://<host>.mybluemix.net` in your browser.
 
 ## Usage
 
