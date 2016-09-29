@@ -13,10 +13,11 @@ export class MapEventHelper extends MapItemHelper<Event> {
   affectedStyles: ol.style.Style[];
   defaultStyle: ol.style.Style;
 
-  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public eventService: EventService, public itemLabel: string = "Event") {
-    super(map, itemLayer, itemLabel);
-    let self = this;
+  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public eventService: EventService, public featureExtension: any = undefined, public itemLabel: string = "Event") {
+    super(map, itemLayer, featureExtension);
 
+    this.setItemLabel(this.itemLabel);
+    let self = this;
     let getFeatureStyle = function getFeatureStyle(feature: ol.Feature) {
       let eventIcon = new ol.style.Circle({
           radius: 10,

@@ -8,9 +8,10 @@ import{ Item } from "./map-item-helper";
 export class MapGeofenceHelper extends MapItemHelper<Geofence> {
   styles = {};
   targetStyle: ol.style.Style;
-  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public geofenceService: GeofenceService, public itemLabel: string = "Geofence") {
-    super(map, itemLayer, itemLabel);
+  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public geofenceService: GeofenceService, public featureExtension: any = undefined, public itemLabel: string = "Geofence") {
+    super(map, itemLayer, featureExtension);
 
+    this.setItemLabel(this.itemLabel);
     let self = this;
     let getFeatureStyle = function getFeatureStyle(feature: ol.Feature) {
       self.styles["out"] = new ol.style.Style({
@@ -88,22 +89,32 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
 
   public createItemFeatures(geofence: Geofence) {
     let features = [];
+    let target = null;
     if (geofence.target && geofence.target.area) {
       let polygonCoordinates = this.createGeofenceCoordinate(geofence.target.area);
       let polygon = new ol.geom.Polygon([polygonCoordinates]);
       let feature = new ol.Feature({geometry: polygon, item: geofence, area: geofence.target.area});
       features.push(feature);
+      target = feature;
     }
     let geometry = geofence.geometry;
     if (geofence.geometry_type === "circle") {
       let center: ol.Coordinate = ol.proj.transform([geometry.longitude, geometry.latitude], "EPSG:4326", "EPSG:3857");
       let circle = new (<any>ol.geom.Circle)(center, geometry.radius);
       let feature = new ol.Feature({geometry: circle, item: geofence});
+      if (target) {
+        feature.set("decorators", [target]);
+        target.set("decorates", feature);
+      }
       features.push(feature);
     } else {
       let polygonCoordinates = this.createGeofenceCoordinate(geometry);
       let polygon = new ol.geom.Polygon([polygonCoordinates]);
       let feature = new ol.Feature({geometry: polygon, item: geofence});
+      if (target) {
+        feature.set("decorators", [target]);
+        target.set("decorates", feature);
+      }
       features.push(feature);
     }
     return features;
@@ -111,11 +122,11 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
 
   createGeofenceCoordinate(geometry) {
     let points = [];
-    points.push(ol.proj.transform([geometry.max_longitude, geometry.max_latitude], "EPSG:4326", "EPSG:3857"));
-    points.push(ol.proj.transform([geometry.max_longitude, geometry.min_latitude], "EPSG:4326", "EPSG:3857"));
     points.push(ol.proj.transform([geometry.min_longitude, geometry.min_latitude], "EPSG:4326", "EPSG:3857"));
     points.push(ol.proj.transform([geometry.min_longitude, geometry.max_latitude], "EPSG:4326", "EPSG:3857"));
     points.push(ol.proj.transform([geometry.max_longitude, geometry.max_latitude], "EPSG:4326", "EPSG:3857"));
+    points.push(ol.proj.transform([geometry.max_longitude, geometry.min_latitude], "EPSG:4326", "EPSG:3857"));
+    points.push(ol.proj.transform([geometry.min_longitude, geometry.min_latitude], "EPSG:4326", "EPSG:3857"));
 
     let polygonCoordinates = [];
     for (let i = 0; i < points.length; i++) {

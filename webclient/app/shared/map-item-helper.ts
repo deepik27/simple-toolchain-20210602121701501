@@ -4,12 +4,12 @@ import * as _ from "underscore";
 
 @Injectable()
 export abstract class MapItemHelper<T extends Item> {
-  itemListChangedListeners = [];
   loadingHandle = null;
   itemMap = {};
   tentativeItemMap = {};
+  itemLabel: string;
 
-  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public itemLabel: string) {
+  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public featureExtension: any) {
     this.map.getView().on("change:center", this.viewChanged.bind(this));
     this.map.getView().on("change:resolution", this.viewChanged.bind(this));
     setTimeout(this.updateView.bind(this), 100);
@@ -17,6 +17,10 @@ export abstract class MapItemHelper<T extends Item> {
 
   public getItemType() {
     return "unknown";
+  }
+
+  public setItemLabel(itemLabel: string) {
+    this.itemLabel = itemLabel;
   }
 
   public getItemLabel() {
@@ -35,22 +39,6 @@ export abstract class MapItemHelper<T extends Item> {
       this.loadingHandle = null;
     }
     this.loadingHandle = setTimeout(this.updateView.bind(this), 1000);
-  }
-
-  // add a listener to be called when view items are changed
-  public addItemChangedListener(listener: Function) {
-    let index = this.itemListChangedListeners.indexOf(listener);
-    if (index < 0) {
-      this.itemListChangedListeners.push(listener);
-    }
-  }
-
-  // remove a listener to be called when view items are changed
-  public removeItemChangedListener(listener: Function) {
-    let index = this.itemListChangedListeners.indexOf(listener);
-    if (index >= 0) {
-      this.itemListChangedListeners.splice(index, 1);
-    }
   }
 
   // update view items according to the current location
@@ -106,12 +94,6 @@ export abstract class MapItemHelper<T extends Item> {
     }
     if (itemsToRemove.length > 0) {
       this.removeItemsFromView(itemsToRemove);
-    }
-
-    if (itemsToAdd.length > 0 || itemsToRemove.length > 0) {
-      _.each(this.itemListChangedListeners, (function(listener) {
-        listener(items, itemsToAdd, itemsToRemove);
-      }));
     }
   }
 
@@ -172,6 +154,9 @@ export abstract class MapItemHelper<T extends Item> {
       if (!self.itemMap[id]) {
         let features = self.createItemFeatures(item);
         if (features) {
+          if (self.featureExtension && self.featureExtension.decorate) {
+            self.featureExtension.decorate(item, features);
+          }
           self.itemLayer.getSource().addFeatures(features);
           self.itemMap[id] = {item: item, features: features};
         }
@@ -185,11 +170,10 @@ export abstract class MapItemHelper<T extends Item> {
       let id = item.getId();
       if (self.itemMap[id]) {
         let features = self.itemMap[id].features;
-        if (features) {
-          _.each(features, function(feature: ol.Feature) {
+        _.each(features || [], function(feature: ol.Feature) {
+          if (feature)
             self.itemLayer.getSource().removeFeature(feature);
-          });
-        }
+        });
         delete self.itemMap[id];
       }
     });

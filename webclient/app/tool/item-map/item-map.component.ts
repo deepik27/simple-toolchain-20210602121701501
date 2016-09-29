@@ -53,6 +53,7 @@ export class ItemMapComponent implements OnInit {
   dragStartCoordinate = null;
   dragFeature = null;
   commandExecutor = null;
+  decorators: any = [];
 
   mapElementId = 'item-map';
   popoverElemetId = 'popover';
@@ -69,11 +70,10 @@ export class ItemMapComponent implements OnInit {
     let self = this;
     function interaction() {
       ol.interaction.Pointer.call(this, {
-        mapItemHelpers: self.mapItemHelpers,
-        handleDownEvent: self.onMouseDown,
-        handleDragEvent: self.onDrag,
-        handleMoveEvent: self.onMouseMove,
-        handleUpEvent: self.onMouseUp
+        handleDownEvent: self.onMouseDown.bind(self),
+        handleDragEvent: self.onDrag.bind(self),
+        handleMoveEvent: self.onMouseMove.bind(self),
+        handleUpEvent: self.onMouseUp.bind(self)
       });
     };
     (<any>ol).inherits(interaction, ol.interaction.Pointer);
@@ -88,7 +88,6 @@ export class ItemMapComponent implements OnInit {
 
     // create a map
     let mouseInteration = new interaction();
-    mouseInteration.commandExecutor = this.commandExecutor;
     this.map =  new ol.Map({
       interactions: ol.interaction.defaults(undefined).extend([mouseInteration]),
       target: document.getElementById(this.mapElementId),
@@ -124,23 +123,102 @@ export class ItemMapComponent implements OnInit {
     // add helpers
     this.mapHelper = new MapHelper(this.map);
     this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
-    this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, "Boundary");
+    this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, <any>function() {
+      let handleStyle = new ol.style.Style({
+        text: new ol.style.Text({
+            fill: new ol.style.Fill({color: "#404040"}),
+            scale: 1.0,
+            textAlign: "center",
+            textBaseline: "middle",
+            text: "\u25cf",
+            font: "18px monospace"
+        })
+      });
+      return {
+        decorate: function(item: any, features: ol.Feature[]) {
+          if (item.geometry && item.geometry_type === "rectangle") {
+            _.each(features, function(feature) {
+              if (feature.get("item") && !feature.get("area")) {
+                let geometry = item.geometry;
+                let points: ol.Coordinate[] = [];
+                points.push([geometry.min_longitude, geometry.min_latitude]);
+                points.push([geometry.min_longitude, geometry.max_latitude]);
+                points.push([geometry.max_longitude, geometry.max_latitude]);
+                points.push([geometry.max_longitude, geometry.min_latitude]);
+
+                let handles: ol.Feature[] = [];
+                _.each(points, function(coordinates: ol.Coordinate, index) {
+                  let position = ol.proj.fromLonLat(coordinates, undefined);
+                  let handle = new ol.Feature({geometry: new ol.geom.Point(position), resizeHandle: {item: item, index: index, constraint: function(point) {
+                    // update managing feature
+                    let geometry = feature.getGeometry();
+                    let coordinates = (<any>geometry).getCoordinates()[0];
+                    let handle_x;
+                    let handle_y;
+                    if (index === 0) {
+                      coordinates[0][0] = point[0];
+                      coordinates[0][1] = point[1];
+                      coordinates[4][0] = point[0];
+                      coordinates[4][1] = point[1];
+                      coordinates[1][0] = point[0];
+                      coordinates[3][1] = point[1];
+                      handle_x = 1;
+                      handle_y = 3;
+                    } else if (index === 1) {
+                      coordinates[1][0] = point[0];
+                      coordinates[1][1] = point[1];
+                      coordinates[0][0] = point[0];
+                      coordinates[4][0] = point[0];
+                      coordinates[2][1] = point[1];
+                      handle_x = 0;
+                      handle_y = 2;
+                    } else if (index === 2) {
+                      coordinates[2][0] = point[0];
+                      coordinates[2][1] = point[1];
+                      coordinates[3][0] = point[0];
+                      coordinates[1][1] = point[1];
+                      handle_x = 3;
+                      handle_y = 1;
+                    } else if (index === 3) {
+                      coordinates[3][0] = point[0];
+                      coordinates[3][1] = point[1];
+                      coordinates[2][0] = point[0];
+                      coordinates[0][1] = point[1];
+                      coordinates[4][1] = point[1];
+                      handle_x = 2;
+                      handle_y = 0;
+                    }
+                    (<any>geometry).setCoordinates([coordinates]);
+
+                    // update related handles
+                    let h_geometry = handles[handle_x].getGeometry();
+                    let h_coordinates = (<any>h_geometry).getCoordinates();
+                    h_coordinates[0] = point[0];
+                    (<any>h_geometry).setCoordinates(h_coordinates);
+                    h_geometry = handles[handle_y].getGeometry();
+                    h_coordinates = (<any>h_geometry).getCoordinates();
+                    h_coordinates[1] = point[1];
+                    (<any>h_geometry).setCoordinates(h_coordinates);
+                  }}});
+                  handle.setStyle(handleStyle);
+                  handles.push(handle);
+                  features.push(handle);
+                });
+
+                let decorators = feature.get("decorators") || [];
+                decorators = decorators.concat(handles);
+                feature.set("decorators", decorators);
+              }
+            });
+          }
+        }
+      };
+    }(), "Boundary");
 
 		// setup view change event handler
     this.mapHelper.postChangeViewHandlers.push(extent => {
 			// fire event
       this.extentChanged.emit({extent: extent});
-    });
-
-    this.handleStyle = new ol.style.Style({
-      text: new ol.style.Text({
-          fill: new ol.style.Fill({color: "#404040"}),
-          scale: 1.0,
-          textAlign: "center",
-          textBaseline: "middle",
-          text: "\u25cf",
-          font: "18px monospace"
-      })
     });
   }
 
@@ -299,15 +377,19 @@ export class ItemMapComponent implements OnInit {
         });
 
     if (feature) {
+      let decorates = feature.get("decorates");
+      if (decorates) {
+        feature = decorates;
+      }
       let item = feature.get("item");
       if (item) {
         if (!this.commandExecutor.getMoveCommand(item, [0, 0])) {
           return false;
         }
       } else {
-        let handle = this.dragFeature.get("resizeHandle");
+        let handle = feature.get("resizeHandle");
         if (handle) {
-          if (!this.commandExecutor.resizeItem(handle.item, [0, 0], handle.index)) {
+          if (!this.commandExecutor.getResizeCommand(handle.item, [0, 0], handle.index)) {
             return false;
           }
         }
@@ -365,11 +447,30 @@ export class ItemMapComponent implements OnInit {
     let deltaX = e.coordinate[0] - this.dragFeatureCoordinate[0];
     let deltaY = e.coordinate[1] - this.dragFeatureCoordinate[1];
 
-    let geometry = (this.dragFeature.getGeometry());
-    geometry.translate(deltaX, deltaY);
-
     this.dragFeatureCoordinate[0] = e.coordinate[0];
     this.dragFeatureCoordinate[1] = e.coordinate[1];
+
+    this._moveFeature(this.dragFeature, deltaX, deltaY);
+    let handle = this.dragFeature.get("resizeHandle");
+    if (handle) {
+      handle.constraint && handle.constraint(e.coordinate);
+    }
+  }
+
+  _moveFeature(feature, deltaX, deltaY) {
+    if (!feature) {
+      return;
+    }
+    let geometry = feature.getGeometry();
+    (<any>geometry).translate(deltaX, deltaY);
+
+    let decorators = feature.get("decorators");
+    if (decorators) {
+      let self = this;
+      _.each(<ol.Feature[]>decorators, function(d) {
+        self._moveFeature(d, deltaX, deltaY);
+      });
+    }
   }
 
   _updateFeature() {

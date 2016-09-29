@@ -149,7 +149,7 @@ export class RealtimeMapComponent implements OnInit {
 		});
 		this.mapHelper = new MapHelper(this.map);
 		this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
-    this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, "Boundary");
+    this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, null, "Boundary");
 
 		/*
 		* Monitor devices to update affected events. If there are affected events, highlight the events

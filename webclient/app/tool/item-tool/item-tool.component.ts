@@ -161,7 +161,7 @@ export class ItemToolComponent implements OnInit {
     if (item.getItemType() === "geofence") {
       let geometry = item.geometry;
       let target = item.target;
-      if (isNaN(geometry.longitude)) {
+      if (!isNaN(geometry.longitude)) {
         return;
       }
       if (handleIndex === 0) {
