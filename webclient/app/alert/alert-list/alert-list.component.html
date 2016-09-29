@@ -56,7 +56,7 @@
 				<td class="firstRow">{{i+1}}</td>
 				<td>{{alert.ts|moment:"MMM DD/YY, HH:mm:ss"}}</td>
 				<td *ngIf="includeClosed">{{alert.closed_ts>0?(alert.closed_ts|moment:"MMM DD/YY, HH:mm:ss"):"-"}}</td>
-				<td [ngClass]="alert.severity === 'Medium' ? 'green' : 'red'" >{{alert.severity}}</td>
+				<td [ngClass]="alert.severity === 'Info' ? 'blue' : alert.severity === 'Medium' ? 'green' : 'red'" >{{alert.severity}}</td>
 				<td><a href="javascript:void(0)" (click)="onMoIdClicked($event, alert.mo_id)">{{alert.serial_number || alert.mo_id}}</a></td>
 				<td>{{alert.description}}</td>
 				<td>{{alert.simulated ? "Yes" : "No"}}</td>

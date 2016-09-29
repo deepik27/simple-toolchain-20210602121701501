@@ -219,6 +219,7 @@ export class AlertProp {
     new PropValue("High", "High"),
     new PropValue("Medium", "Medium"),
     new PropValue("Low", "Low"),
+    new PropValue("Info", "Info")
   ]);
   static MoId = new AlertProp("mo_id", "Vehicle ID", []);
 
