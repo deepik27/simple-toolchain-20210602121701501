@@ -21,16 +21,11 @@ var request = require("request");
 var cfenv = require("cfenv");
 var fs = require("fs-extra");
 var moment = require("moment");
-//var IOTF = require('../watsonIoT');
 var driverInsightsAlert = require("./fleetalert.js");
-var driverInsightsTripRoutes = require("./tripRoutes.js");
 var debug = require('debug')('probe');
 debug.log = console.log.bind(console);
 
 var lastProbeTimeByMoId = {};
-var tripRouteCache = {};
-var insertTripRouteTimer = null;
-
 
 _.extend(driverInsightsProbe, {
 	last_prob_ts: moment().valueOf(),
@@ -142,22 +137,6 @@ _.extend(driverInsightsProbe, {
 				// Add affected events to response
 				if (affected_events && affected_events.length > 0) {
 					payload.affected_events = affected_events;
-				}
-
-				// Insert trip routes
-				var trip_id = payload.trip_id;
-				var routeCache = tripRouteCache[trip_id];
-				if(!routeCache){
-					tripRouteCache[trip_id] = routeCache = {routes: [], deviceType: deviceType, deviceID: deviceId };
-				}
-				routeCache.routes.push(payload);
-				if(!insertTripRouteTimer){
-					insertTripRouteTimer = setTimeout(function(){
-						var tmp = Object.assign({}, tripRouteCache);
-						tripRouteCache = {};
-						driverInsightsTripRoutes.insertTripRoutes(tmp);
-						insertTripRouteTimer = null;
-					}, 5000);
 				}
 
 				callback(payload);

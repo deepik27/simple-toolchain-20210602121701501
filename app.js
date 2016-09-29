@@ -6,7 +6,6 @@
 VCAP_SERVICES = JSON.parse(process.env.VCAP_SERVICES || '{}')
 
 var express = require('express')
-  , tripRoutes = require('./driverInsights/tripRoutes.js')
   , auth = require('./routes/user/auth.js')
   , user = require('./routes/user')
   , http = require('http')
