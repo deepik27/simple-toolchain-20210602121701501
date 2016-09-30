@@ -107,9 +107,13 @@ _.extend(driverInsightsProbe, {
 		Q.when(driverInsightsProbe.sendProbeData([payload], "sync"), function(result){
 			debug("events: " + result);
 			var affected_events = null;
-			if(result){
-				affected_events = result.contents;
+			var notified_messages = null;
+			if(result && result.contents){
+				// previous version of sendCarProbe returned an array of affected events directly in contents
+				// new version returns affectedEvents and notifiedMessages objects
+				affected_events = _.isArray(result.contents) ? result.contents : result.contents.affectedEvents;
 				driverInsightsAlert.handleEvents(carProbeData.mo_id, affected_events);
+				notified_messages = result.contents.notifiedMessages;
 			}
 
 			Q.when(driverInsightsProbe.getProbeData([payload]), function(response){
@@ -134,9 +138,10 @@ _.extend(driverInsightsProbe, {
 				// Process alert probe rule
 				driverInsightsAlert.evaluateAlertRule(payload);
 
-				// Add affected events to response
-				if (affected_events && affected_events.length > 0) {
-					payload.affected_events = affected_events;
+				// Add notification to response
+				payload.notification = {
+					affected_events: affected_events || [],
+					notified_messages: notified_messages || []
 				}
 
 				callback(payload);

@@ -42,7 +42,7 @@
 							if (self.requiredEvents > 0) {
 								self.requiredEvents--;
 							}
-							updateVehicle(probe, probe.affected_events);
+							updateVehicle(probe, probe.notification);
 						});
 						return tripId;
 					});
@@ -220,12 +220,19 @@
 				routeLayer.getSource().addFeature(feature);
 			}
 			
-			function updateVehicle(probe, affectedEvents) {
-				affectedEvents = affectedEvents || [];
+			function updateVehicle(probe, notification) {
+				// affected events
+				var affectedEvents = (notification && notification.affected_events) || [];
 				affectedEvents.forEach(function(event) {
 					console.log("affected event = " + event.event_id);
 				});
 				eventHelper.updateAffectedEvents(affectedEvents);
+				
+				// notifed messages
+				var notifiedMessages = (notification && notification.notified_messages) || [];
+				notifiedMessages.forEach(function(message) {
+					console.log("notified message = " + message.message);
+				});
 			}
 			
 			function updateUI(force) {
