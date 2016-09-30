@@ -147,11 +147,7 @@ _.extend(driverInsightsAlert, {
 	_init: function(){
 		var self = this;
 		this.db = dbClient.getDB(FLEETALERT_DB_NAME, this._getDesignDoc());
-		Q.when(this.getAlerts([], false, 200), function(docs){
-			(docs.alerts||[]).forEach(function(alert){
-				self._cacheAlert(alert);
-			});
-		});
+		this.getAlerts([], false, 200); // Get and cache all alerts
 
 		// Low Fuel
 		this.registerAlertRule("low_fuel", {
@@ -460,9 +456,14 @@ _.extend(driverInsightsAlert, {
 				_.extend(opt, {limit: limit});
 			}
 		}
+		var self = this;
 		return this._searchAlertIndex(opt)
 			.then(function(result){
-				return {alerts: result.rows.map(function(row){return _.extend(row.doc, row.fields);})};
+				var alerts = (result.rows||[]).map(function(row){return _.extend(row.doc, row.fields);});
+				setImmediate(function(){
+					alerts.forEach(function(alert){self._cacheAlert(alert);});
+				});
+				return {alerts: alerts};
 			});
 	},
 
@@ -477,8 +478,10 @@ _.extend(driverInsightsAlert, {
 		var existingAlert = alertsForVehicle[alert.source && alert.source.id];
 		if(!existingAlert){
 			alertsForVehicle[alert.source && alert.source.id] = alert;
-		}else{
-			// Close older alert and cache newer alert
+		}else if(existingAlert._id !== alert._id){
+			console.warn("[WARNING] _cacheAlert(Duplicate alert): Close older alert and cache newer alert.");
+			console.warn("[WARNING] mo_id: " + alert.mo_id + ", source.type: " + alert.source.type + ", source.id: " + alert.source.id);
+			console.warn("[WARNING] alert1._id: " + (existingAlert._id||"-") + ", alert2._id: " + (alert._id||"-"));
 			if(existingAlert.ts > alert.ts){
 				alert.closed_ts = moment().valueOf();
 				this.updateAlert(alert);
@@ -513,15 +516,25 @@ _.extend(driverInsightsAlert, {
 		if(alertToInsert){
 			if(alertToInsert._id){
 				if(alertToInsert._id === alert._id){
+					// Duplicate inserts for the same cloudant document. Update for later revision and discard older revision
 					if(Number(alertToInsert._rev.split("-")[0]) < Number(alert._rev.split("-"[0]))){
-						debug("updateAlert: " + JSON.stringify(alert));
+						console.warn("[WARNING] updateAlert(Duplicate inserts for the same cloudant document): " + JSON.stringify(alert));
 						alertsForVehicle[alert.source && alert.source.id] = alert;
 					}
 				}else{
-					// Close invalid alert
-					alert.closd_ts = alert.closed_ts || moment().valueOf();
-					debug("updateAlert(close and mark as invalid): " + JSON.stringify(alert));
-					this.alertsToInsert["invalid"][alert._id] = alert;
+					// Duplicate documents for the same mo_id and source id. Close as invalid alert
+					if(alertToInsert.closed_ts < 0 && alert.closed_ts < 0){
+						console.warn("[WARNING] updateAlert(Duplicate open alerts for the same mo_id and source.id): Close and mark older alert as invalid. ");
+						this.alertsToInsert["invalid"] = this.alertsToInsert["invalid"] || {};
+						if(alertToInsert.ts > alert.ts){
+							alert.closed_ts = alert.ts;
+							this.alertsToInsert["invalid"][alert._id] = alert;
+						}else{
+							alertToInsert.closed_ts = alertToInsert.ts;
+							alertsForVehicle[alert.source && alert.source.id] = alert; // Update as valid alert
+							this.alertsToInsert["invalid"][alertToInsert._id] = alertToInsert;
+						}
+					}
 				}
 			}else{
 				// The alert has already inserted. This must be invalid state.
