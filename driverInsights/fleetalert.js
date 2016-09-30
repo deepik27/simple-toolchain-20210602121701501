@@ -199,7 +199,9 @@ _.extend(driverInsightsAlert, {
 					var fuelTank = vehicle.vehicleInfo.properties.fuelTank;
 					var prevFuel = vehicle.prevProbe.props.fuel;
 					var fuel = probe.props.fuel;
-					if(prevFuel/fuelTank >= 0.5 && fuel/fuelTank < 0.5){
+					var prevFuelRatio = prevFuel/fuelTank;
+					var fuelRatio = fuel/fuelTank;
+					if((prevFuelRatio < 0.1 || 0.5 <= prevFuelRatio) && (0.1 <= fuelRatio && fuelRatio < 0.5)){
 						var alert = {
 								source: {type: "script", id: "half_fuel"},
 								type: "half_fuel",
@@ -222,7 +224,8 @@ _.extend(driverInsightsAlert, {
 				&& probe && probe.props && probe.props.fuel){
 					var fuelTank = vehicle.vehicleInfo.properties.fuelTank;
 					var fuel = probe.props.fuel;
-					if(fuel/fuelTank >= 0.5){
+					var fuelRatio = fuel/fuelTank;
+					if(fuelRatio < 0.1 || 0.5 < fuelRatio){
 						alert.closed_ts = probe.ts;
 						return alert;
 					}
