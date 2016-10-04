@@ -190,8 +190,9 @@ _.extend(driverInsightsProbe, {
 				// new version returns affectedEvents and notifiedMessages objects
 				affected_events = _.isArray(result.contents) ? result.contents : result.contents.affectedEvents;
 				notified_messages = result.contents.notifiedMessages;
+				
+				driverInsightsAlert.handleEvents(carProbeData.mo_id, (affected_events||[]).concat(notified_messages||[]));
 			}
-			driverInsightsAlert.handleEvents(carProbeData.mo_id, affected_events);
 
 			Q.when(driverInsightsProbe.getProbeData([payload]), function(response){
 				var probe = null;

@@ -371,30 +371,30 @@ _.extend(driverInsightsAlert, {
 				self.currentAlerts[mo_id] = {};
 			}
 			var props = event.props || {}; // A message should have props
-			var event_id = String(event.event_id || props.message_type);
-			var sourceType = "";
+			var source_id = String(event.event_id || props.source_id);
+			var source_type = "";
 			if(event.event_id){
-				sourceType = "event";
+				source_type = "event";
 			}else if(props.message_type){
-				sourceType = "message";
+				source_type = "message";
 			}
-			if(!event_id){
+			if(!source_id){
 				return;
 			}
-			var alert = self.currentAlerts[mo_id][event_id];
+			var alert = self.currentAlerts[mo_id][source_id];
 			if(alert){
 				// Do nothing during same id/type of events/messages are coming consecutively
 			}else{
 				Q.when(self._getVehicle(mo_id), function(vehicle){
 					alert = {
-							source: {type: sourceType, id: event_id},
+							source: {type: source_type, id: source_id},
 							type: event.event_type || props.message_type,
 							description: event.event_name || event.message,
 							severity: props.severity || "Info",
 							mo_id: mo_id,
 							ts: ts,
-							latitude: event.s_latitude || event.latitude,
-							longitude: event.s_longitude || event.longitude,
+							latitude: event.s_latitude || event.latitude || props.latitude,
+							longitude: event.s_longitude || event.longitude || props.longitude,
 							simulated: VEHICLE_VENDOR_IBM === vehicle.vehicleInfo.vendor
 						};
 					self.addAlert(alert);
@@ -408,15 +408,15 @@ _.extend(driverInsightsAlert, {
 		var _alerts = _.clone(this.currentAlerts || {});
 		var _alertsForVehicle = _alerts[mo_id] || {};
 		Object.keys(_alertsForVehicle).forEach(function(key){
-			var sourceType = _alertsForVehicle[key].source && _alertsForVehicle[key].source.type;
-			if(sourceType !== "event" && sourceType !== "message"){
+			var source_type = _alertsForVehicle[key].source && _alertsForVehicle[key].source.type;
+			if(source_type === "script"){
 				return;
 			}
 			if((events || []).every(function(event){
 				// No related event/message is included in events
 				var props = event.props || {}; // A message should have props
-				var event_id = event.event_id || props.message_type;
-				return !event_id || key !== String(event_id);
+				var source_id = event.event_id || props.source_id;
+				return !source_id || key !== String(source_id);
 			})){
 				var alert = _alertsForVehicle[key];
 				alert.closed_ts = closed_ts;
