@@ -3,50 +3,50 @@
  *
  *
  * Data Privacy Disclaimer
- * 
+ *
  * This Program has been developed for demonstration purposes only to illustrate the technical
  * capabilities and potential business uses of the IBM IoT for Automotive
- * 
+ *
  * The components included in this Program may involve the processing of personal information
  * (for example location tracking and behavior analytics). When implemented in practice such
  * processing may be subject to specific legal and regulatory requirements imposed by country
  * specific data protection and privacy laws. Any such requirements are not addressed in
  * this Program.
- * 
+ *
  * Licensee is responsible for the ensuring Licensee's use of this Program and any deployed
  * solution meets applicable legal and regulatory requirements. This may require the implementation
  * of additional features and functions not included in the Program.
- * 
+ *
  * Apple License issue
- * 
+ *
  * This Program is intended solely for use with an Apple iOS product and intended to be used
  * in conjunction with officially licensed Apple development tools and further customized
  * and distributed under the terms and conditions of Licensee's licensed Apple iOS Developer
  * Program or Licensee's licensed Apple iOS Enterprise Program.
- * 
+ *
  * Licensee agrees to use the Program to customize and build the application for Licensee's own
  * purpose and distribute in accordance with the terms of Licensee's Apple developer program
- * 
+ *
  * Risk Mitigation / Product Liability Issues
- * 
+ *
  * The Program and any resulting application is not intended for design, construction, control,
  * or maintenance of automotive control systems where failure of such sample code or resulting
  * application could give rise to a material threat of death or serious personal injury.
- * 
+ *
  * IBM shall have no responsibility regarding the Program's or resulting application's compliance
  * with laws and regulations applicable to Licensee's business and content. Licensee is responsible
  * for use of the Program and any resulting application.
- * 
+ *
  * As with any development process, Licensee is responsible for developing, sufficiently testing
  * and remediating Licensee's products and applications and Licensee is solely responsible for any
  * foreseen or unforeseen consequences or failures of Licensee's products or applications.
- * 
+ *
  * REDISTRIBUTABLES
- * 
- * If the Program includes components that are Redistributable, they will be identified 
+ *
+ * If the Program includes components that are Redistributable, they will be identified
  * in the REDIST file that accompanies the Program. In addition to the license rights granted
  * in the Agreement, Licensee may distribute the Redistributables subject to the following terms:
- * 
+ *
  * 1) Redistribution must be in source code form only and must conform to all directions,
  *    instruction and specifications in the Program's accompanying REDIST or documentation;
  * 2) If the Program's accompanying documentation expressly allows Licensee to modify
@@ -79,13 +79,13 @@
  * 11) Licensee's license agreement with the end user of Licensee's Application must notify the end
  *     user that the Redistributables or their modifications may not be i) used for any purpose
  *     other than to enable Licensee's Application, ii) copied (except for backup purposes),
- *     iii) further distributed or transferred without Licensee's Application or 
+ *     iii) further distributed or transferred without Licensee's Application or
  *     iv) reverse assembled, reverse compiled, or otherwise translated except as specifically
  *     permitted by law and without the possibility of a contractual waiver. Furthermore, Licensee's
  *     license agreement must be at least as protective of IBM as the terms of this Agreement.
- * 
+ *
  * Feedback License
- * 
+ *
  * In the event Licensee provides feedback to IBM regarding the Program, Licensee agrees to assign
  * to IBM all right, title, and interest (including ownership of copyright) in any data, suggestions,
  * or written materials that 1) are related to the Program and 2) that Licensee provides to IBM.
@@ -200,112 +200,14 @@ export class ItemMapComponent implements OnInit {
     this.map.on("click", function(e) {
       let coordinate = ol.proj.toLonLat(e.coordinate, undefined);
       let loc = {longitude: coordinate[0], latitude: coordinate[1]};
-      this.commandExecutor.locationClicked(loc).then(function(data) {
-        if (data && data.data) {
-          let helper = this.mapItemHelpers[data.type];
-          if (helper) {
-            helper.addTentativeItem(data.data, loc);
-          }
-        }
-      }.bind(this), function(error) {
-        console.log(error);
-      });
+      this.commandExecutor.locationClicked(loc);
     }.bind(this));
 
     // add helpers
     this.mapHelper = new MapHelper(this.map);
     this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
-    this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, <any>function() {
-      let handleStyle = new ol.style.Style({
-        text: new ol.style.Text({
-            fill: new ol.style.Fill({color: "#404040"}),
-            scale: 1.0,
-            textAlign: "center",
-            textBaseline: "middle",
-            text: "\u25cf",
-            font: "18px monospace"
-        })
-      });
-      return {
-        decorate: function(item: any, features: ol.Feature[]) {
-          if (item.geometry && item.geometry_type === "rectangle") {
-            _.each(features, function(feature) {
-              if (feature.get("item") && !feature.get("area")) {
-                let geometry = item.geometry;
-                let points: ol.Coordinate[] = [];
-                points.push([geometry.min_longitude, geometry.min_latitude]);
-                points.push([geometry.min_longitude, geometry.max_latitude]);
-                points.push([geometry.max_longitude, geometry.max_latitude]);
-                points.push([geometry.max_longitude, geometry.min_latitude]);
-
-                let handles: ol.Feature[] = [];
-                _.each(points, function(coordinates: ol.Coordinate, index) {
-                  let position = ol.proj.fromLonLat(coordinates, undefined);
-                  let handle = new ol.Feature({geometry: new ol.geom.Point(position), resizeHandle: {item: item, index: index, constraint: function(point) {
-                    // update managing feature
-                    let geometry = feature.getGeometry();
-                    let coordinates = (<any>geometry).getCoordinates()[0];
-                    let handle_x;
-                    let handle_y;
-                    if (index === 0) {
-                      coordinates[0][0] = point[0];
-                      coordinates[0][1] = point[1];
-                      coordinates[4][0] = point[0];
-                      coordinates[4][1] = point[1];
-                      coordinates[1][0] = point[0];
-                      coordinates[3][1] = point[1];
-                      handle_x = 1;
-                      handle_y = 3;
-                    } else if (index === 1) {
-                      coordinates[1][0] = point[0];
-                      coordinates[1][1] = point[1];
-                      coordinates[0][0] = point[0];
-                      coordinates[4][0] = point[0];
-                      coordinates[2][1] = point[1];
-                      handle_x = 0;
-                      handle_y = 2;
-                    } else if (index === 2) {
-                      coordinates[2][0] = point[0];
-                      coordinates[2][1] = point[1];
-                      coordinates[3][0] = point[0];
-                      coordinates[1][1] = point[1];
-                      handle_x = 3;
-                      handle_y = 1;
-                    } else if (index === 3) {
-                      coordinates[3][0] = point[0];
-                      coordinates[3][1] = point[1];
-                      coordinates[2][0] = point[0];
-                      coordinates[0][1] = point[1];
-                      coordinates[4][1] = point[1];
-                      handle_x = 2;
-                      handle_y = 0;
-                    }
-                    (<any>geometry).setCoordinates([coordinates]);
-
-                    // update related handles
-                    let h_geometry = handles[handle_x].getGeometry();
-                    let h_coordinates = (<any>h_geometry).getCoordinates();
-                    h_coordinates[0] = point[0];
-                    (<any>h_geometry).setCoordinates(h_coordinates);
-                    h_geometry = handles[handle_y].getGeometry();
-                    h_coordinates = (<any>h_geometry).getCoordinates();
-                    h_coordinates[1] = point[1];
-                    (<any>h_geometry).setCoordinates(h_coordinates);
-                  }}});
-                  handle.setStyle(handleStyle);
-                  handles.push(handle);
-                  features.push(handle);
-                });
-
-                let decorators = feature.get("decorators") || [];
-                decorators = decorators.concat(handles);
-                feature.set("decorators", decorators);
-              }
-            });
-          }
-        }
-      };
-    }(), "Boundary");
+    this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, {itemLabel: "Boundary", editable: true});
+    this.mapItemHelpers["geofence"].setItemLabel("Boundary");
 
 		// setup view change event handler
     this.mapHelper.postChangeViewHandlers.push(extent => {

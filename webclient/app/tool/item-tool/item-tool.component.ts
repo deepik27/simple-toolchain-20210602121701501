@@ -71,19 +71,20 @@ export class ItemToolComponent implements OnInit {
         max_longitude: extent.max_longitude - offset_x
       };
     }
-    let target = null;
-    if (this.geofenceDirection === "out") {
-      let target_len = ol.proj.toLonLat([500, 500], undefined);
-      target = {
-        area: {
-          min_longitude: range.min_longitude - target_len[0],
-          min_latitude: range.min_latitude - target_len[1],
-          max_longitude: range.max_longitude + target_len[0],
-          max_latitude: range.max_latitude + target_len[1]
-        }
-      };
-    }
-    return this.execute(new CreateGeofenceCommand(this.geofenceService, range, this.geofenceDirection, target));
+    let helper = this.itemMap.mapItemHelpers["geofence"];
+    let commandId = helper.addTentativeItem({geometry_type: this.geofenceType, geometry: range});
+
+    return new Promise((resolve, reject) => {
+      let area = helper.createTargetArea(this.geofenceType, range, this.geofenceDirection);
+      let target = area ? {area: area} : null;
+      return this.execute(new CreateGeofenceCommand(this.geofenceService, range, this.geofenceDirection, target)).then(function(result: any) {
+        helper.setTentativeItemId(commandId, result.data.id, false);
+        resolve(result);
+      }, function(error) {
+        helper.removeTentativeItem(commandId);
+        reject(error);
+      });
+    });
   }
 
   setItemMap(itemMap) {
@@ -91,8 +92,21 @@ export class ItemToolComponent implements OnInit {
   }
 
   locationClicked(loc) {
+    if (this.creationMode !== "event") {
+      return;
+    }
     let extent = this.itemMap.getMapExtent();
-    return this.execute(this.getLocationCommand(extent, loc));
+    let helper = this.itemMap.mapItemHelpers[this.creationMode];
+    let commandId = helper.addTentativeItem(loc);
+    return new Promise((resolve, reject) => {
+      return this.execute(this.getLocationCommand(extent, loc)).then(function(result: any) {
+        helper.setTentativeItemId(commandId, result.data, true);
+        resolve(result);
+      }, function(error) {
+        helper.removeTentativeItem(commandId);
+        reject(error);
+      });
+    });
   }
 
   moveItem(item, delta) {

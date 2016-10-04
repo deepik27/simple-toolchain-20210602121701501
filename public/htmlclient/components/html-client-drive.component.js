@@ -1145,20 +1145,49 @@
 		this.geofenceLayer = layer;
 		this.geofenceService = geofenceService;
 		this.q = q;
+		this.styles = {};
+		this.targetStyle = null;
 
 		var self = this;
+	    layer.setStyle(function(feature, resolution) {
+	        self.styles["out"] = new ol.style.Style({
+	            fill: new ol.style.Fill({
+	              color: [0, 0, 255, 0.1]
+	            }),
+	            stroke: new ol.style.Stroke({
+	              color: [0, 0, 255, 0.3],
+	              width: 2
+	            })
+	        });
+	        self.styles["in"] = new ol.style.Style({
+	            fill: new ol.style.Fill({
+	              color: [255, 0, 128, 0.1]
+	            }),
+	            stroke: new ol.style.Stroke({
+	              color: [255, 0, 128, 0.3],
+	              width: 2
+	            })
+	        });
+	        self.targetStyle = new ol.style.Style({
+	            fill: new ol.style.Fill({
+	              color: [100, 100, 100, 0.1]
+	            }),
+	            stroke: new ol.style.Stroke({
+	              color: [100, 100, 100, 0.3],
+	              width: 2
+	            })
+	        });
+
+		    return function(feature, resolution) {
+		    	var style = self.getFeatureStyle(feature);
+			    feature.setStyle(style);
+			    return style;
+
+		    };
+	    }());
+
 		this.loadingHandle = null;
-	    let defaultStyle = new ol.style.Style({
-	        fill: new ol.style.Fill({
-	          color: [255, 0, 128, 0.1]
-	        }),
-	        stroke: new ol.style.Stroke({
-	          color: [255, 0, 128, 0.3],
-	          width: 2
-	        })
-	    });
-	    layer.setStyle(defaultStyle);
-		this.geofenceMap = {};
+	    this.geofenceMap = {};
 		
 	    this.map.getView().on('change:center', function() {
 	    	self.viewChanged();
@@ -1168,7 +1197,18 @@
 	    });
 		this.updateGeofences();
 	};
-	
+
+	GeofenceHelper.prototype.getFeatureStyle = function getFeatureStyle(feature) {
+		if (feature.get("area")) {
+			return this.targetStyle;
+		}
+		var geofence = feature.get("item");
+		if (!geofence) {
+			return this.tentativeStyle;
+		}
+		return this.styles[geofence.direction || "out"];
+	};
+
 	GeofenceHelper.prototype.viewChanged = function viewChanged() {
 		if (this.loadingHandle) {
 			clearTimeout(this.loadingHandle);
@@ -1229,9 +1269,9 @@
 			var geofence = geofences[i];
 			var geofence_id = geofence.id;
 			if (!this.geofenceMap[geofence_id]) {
-				var feature = this.createGeofenceFeature(geofence);
-				this.geofenceLayer.getSource().addFeature(feature);
-				this.geofenceMap[geofence_id] = {geofence: geofence, feature: feature};
+				var features = this.createGeofenceFeatures(geofence);
+				this.geofenceLayer.getSource().addFeatures(features);
+				this.geofenceMap[geofence_id] = {geofence: geofence, features: features};
  			}
 		}
 	};
@@ -1241,26 +1281,40 @@
 			var geofence = geofences[i];
 			var geofence_id = geofence.id;
 			if (this.geofenceMap[geofence_id]) {
-				var feature = this.geofenceMap[geofence_id].feature;
-				this.geofenceLayer.getSource().removeFeature(feature);
+				var self = this;
+				var features = this.geofenceMap[geofence_id].features;
+				_.each(features, function(feature) {
+					self.geofenceLayer.getSource().removeFeature(feature);
+				});
 				delete this.geofenceMap[geofence_id];
 			}
 		}
 	};
 
-	GeofenceHelper.prototype.createGeofenceFeature = function createGeofenceFeature(geofence) {
-	    var feature = null;
+	GeofenceHelper.prototype.createGeofenceFeatures = function createGeofenceFeatures(geofence) {
+	    var features = [];
+	    let target = null;
+	    if (geofence.target && geofence.target.area) {
+	      var polygonCoordinates = this.createGeofenceCoordinate(geofence.target.area);
+	      var polygon = new ol.geom.Polygon([polygonCoordinates]);
+	      var feature = new ol.Feature({geometry: polygon, item: geofence, area: geofence.target.area});
+	      features.push(feature);
+	      target = feature;
+	    }
+
 	    var geometry = geofence.geometry;
 	    if (geofence.geometry_type === "circle") {
 	      var center = ol.proj.transform([geometry.longitude, geometry.latitude], "EPSG:4326", "EPSG:3857");
 	      var circle = new ol.geom.Circle(center, geometry.radius);
-	      feature = new ol.Feature({geometry: circle, item: geofence});
+	      var feature = new ol.Feature({geometry: circle, item: geofence});
+	      features.push(feature);
 	    } else {
 	      var polygonCoordinates = this.createGeofenceCoordinate(geometry);
 	      var polygon = new ol.geom.Polygon([polygonCoordinates]);
-	      feature = new ol.Feature({geometry: polygon, item: geofence});
+	      var feature = new ol.Feature({geometry: polygon, item: geofence});
+	      features.push(feature);
 	    }
-	    return feature;
+	    return features;
 	};
 
 	GeofenceHelper.prototype.createGeofenceCoordinate = function createGeofenceCoordinate(geometry) {

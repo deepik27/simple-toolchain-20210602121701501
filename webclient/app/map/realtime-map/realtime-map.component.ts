@@ -3,50 +3,50 @@
  *
  *
  * Data Privacy Disclaimer
- * 
+ *
  * This Program has been developed for demonstration purposes only to illustrate the technical
  * capabilities and potential business uses of the IBM IoT for Automotive
- * 
+ *
  * The components included in this Program may involve the processing of personal information
  * (for example location tracking and behavior analytics). When implemented in practice such
  * processing may be subject to specific legal and regulatory requirements imposed by country
  * specific data protection and privacy laws. Any such requirements are not addressed in
  * this Program.
- * 
+ *
  * Licensee is responsible for the ensuring Licensee's use of this Program and any deployed
  * solution meets applicable legal and regulatory requirements. This may require the implementation
  * of additional features and functions not included in the Program.
- * 
+ *
  * Apple License issue
- * 
+ *
  * This Program is intended solely for use with an Apple iOS product and intended to be used
  * in conjunction with officially licensed Apple development tools and further customized
  * and distributed under the terms and conditions of Licensee's licensed Apple iOS Developer
  * Program or Licensee's licensed Apple iOS Enterprise Program.
- * 
+ *
  * Licensee agrees to use the Program to customize and build the application for Licensee's own
  * purpose and distribute in accordance with the terms of Licensee's Apple developer program
- * 
+ *
  * Risk Mitigation / Product Liability Issues
- * 
+ *
  * The Program and any resulting application is not intended for design, construction, control,
  * or maintenance of automotive control systems where failure of such sample code or resulting
  * application could give rise to a material threat of death or serious personal injury.
- * 
+ *
  * IBM shall have no responsibility regarding the Program's or resulting application's compliance
  * with laws and regulations applicable to Licensee's business and content. Licensee is responsible
  * for use of the Program and any resulting application.
- * 
+ *
  * As with any development process, Licensee is responsible for developing, sufficiently testing
  * and remediating Licensee's products and applications and Licensee is solely responsible for any
  * foreseen or unforeseen consequences or failures of Licensee's products or applications.
- * 
+ *
  * REDISTRIBUTABLES
- * 
- * If the Program includes components that are Redistributable, they will be identified 
+ *
+ * If the Program includes components that are Redistributable, they will be identified
  * in the REDIST file that accompanies the Program. In addition to the license rights granted
  * in the Agreement, Licensee may distribute the Redistributables subject to the following terms:
- * 
+ *
  * 1) Redistribution must be in source code form only and must conform to all directions,
  *    instruction and specifications in the Program's accompanying REDIST or documentation;
  * 2) If the Program's accompanying documentation expressly allows Licensee to modify
@@ -79,13 +79,13 @@
  * 11) Licensee's license agreement with the end user of Licensee's Application must notify the end
  *     user that the Redistributables or their modifications may not be i) used for any purpose
  *     other than to enable Licensee's Application, ii) copied (except for backup purposes),
- *     iii) further distributed or transferred without Licensee's Application or 
+ *     iii) further distributed or transferred without Licensee's Application or
  *     iv) reverse assembled, reverse compiled, or otherwise translated except as specifically
  *     permitted by law and without the possibility of a contractual waiver. Furthermore, Licensee's
  *     license agreement must be at least as protective of IBM as the terms of this Agreement.
- * 
+ *
  * Feedback License
- * 
+ *
  * In the event Licensee provides feedback to IBM regarding the Program, Licensee agrees to assign
  * to IBM all right, title, and interest (including ownership of copyright) in any data, suggestions,
  * or written materials that 1) are related to the Program and 2) that Licensee provides to IBM.
@@ -241,7 +241,7 @@ export class RealtimeMapComponent implements OnInit {
 		});
 		this.mapHelper = new MapHelper(this.map);
 		this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
-    this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, null, "Boundary");
+    this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, {itemLabel: "Boundary"});
 
 		/*
 		* Monitor devices to update affected events. If there are affected events, highlight the events
