@@ -193,20 +193,24 @@ export class RealtimeMapComponent implements OnInit {
 			source: new ol.source.Vector(),
 			style: function(feature){
 				return getDrivingEventStyle(feature.get('drivingEvent'));
-			}
+			},
+			renderOrder: undefined
 		});
 		// car layer with rendering style
 		this.carsLayer = new ol.layer.Vector({
 			source: new ol.source.Vector(),
 			style: function(feature){
 				return getCarStyle(feature.get('carStatus'));
-			}
+			},
+			renderOrder: undefined
 		});
 		this.mapEventsLayer = new ol.layer.Vector({
-			source: new ol.source.Vector()
+			source: new ol.source.Vector(),
+			renderOrder: undefined
 		});
 		this.mapGeofenceLayer = new ol.layer.Vector({
-			source: new ol.source.Vector()
+			source: new ol.source.Vector(),
+			renderOrder: undefined
 		});
 
 		// create a map
