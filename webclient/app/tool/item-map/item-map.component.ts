@@ -172,10 +172,12 @@ export class ItemMapComponent implements OnInit {
 
 		// create layyers
     this.mapEventsLayer = new ol.layer.Vector({
-      source: new ol.source.Vector()
+      source: new ol.source.Vector(),
+      renderOrder: undefined
     });
     this.mapGeofenceLayer = new ol.layer.Vector({
-      source: new ol.source.Vector()
+      source: new ol.source.Vector(),
+      renderOrder: undefined
     });
 
     // create a map

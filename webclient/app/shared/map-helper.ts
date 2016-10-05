@@ -677,7 +677,7 @@ export class MapHelper {
     // create a layer
     var workaroundLayer = map._imageWorkaroundLayer;
     if(!workaroundLayer){
-      workaroundLayer = new ol.layer.Vector({ source: new ol.source.Vector({})});
+      workaroundLayer = new ol.layer.Vector({ source: new ol.source.Vector({}), renderOrder: undefined});
       map._imageWorkaroundLayer = workaroundLayer;
       map.addLayer(workaroundLayer);
       workaroundLayer.setOpacity(0.5); //TODO workaround layer opacity
