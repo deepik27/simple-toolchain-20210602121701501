@@ -36,8 +36,11 @@ export class ItemToolComponent implements OnInit {
 
   ngOnInit() {
     this.eventService.getEventTypes().subscribe(data => {
-      this.eventTypes = data;
       if (data.length > 0) {
+        data.sort(function(a, b) {
+          return a.description && b.description && a.description.localeCompare(b.description);
+        });
+        this.eventTypes = data;
         this.selectedEventType = data[0];
       }
     });

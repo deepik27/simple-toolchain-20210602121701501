@@ -288,7 +288,7 @@ var driverInsightsAsset = {
 	 * Get list of assets
 	 */
 	_getAssetList: function(context, params){
-		return this._run("GET", "/" + context, params || {num_rec_in_page: 25, num_page: 1});
+		return this._run("GET", "/" + context, params || {num_rec_in_page: 50, num_page: 1});
 	},
 
 	/*
