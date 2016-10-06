@@ -118,9 +118,10 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 			return "Top simultors?";
 		};
 		
-		$scope.busy = false;
+		$scope.busy = true;
 		$scope.vehicleStatus = {};
 		$scope.requestIds = {};
+		$scope.vehiclesToBeInitialzed = [];
 
 		function _updateVehicleStatus(id, key, value) {
 			if (!$scope.vehicleStatus[id]) {
@@ -165,27 +166,52 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
         	}
         	var message = JSON.parse(e.data);
         	if (message.requestId) {
-        		var requestIds = $scope.requestIds[message.requestMessage];
-        		var index = requestIds.indexOf(message.requestId);
-        		if (index >= 0) {
-        			requestIds.splice(index, 1);
-        		}
-        		if (requestIds.length === 0) {
-        			if (message.requestMessage === "simulator-start-all") {
-            			$scope.requestingStarting = false;
-                		$scope.$apply();
-        			} else if (message.requestMessage === "simulator-stop-all") {
-            			$scope.requestingStopping = false;
-                		$scope.$apply();
+        		if (message.requestMessage === "simulator-set-message-target") {
+        			var index = $scope.vehiclesToBeInitialzed.indexOf(message.requestId);
+        			if (index >= 0) {
+        				$scope.vehiclesToBeInitialzed.splice(index, 1);
+        				$scope.busy = $scope.requestIds.length > 0;
         			}
-        		}
-        	}
+        		} else {
+            		var requestIds = $scope.requestIds[message.requestMessage];
+            		var index = requestIds.indexOf(message.requestId);
+            		if (index >= 0) {
+            			requestIds.splice(index, 1);
+            		}
+            		if (requestIds.length === 0) {
+            			if (message.requestMessage === "simulator-start-all") {
+                			$scope.requestingStarting = false;
+                    		$scope.$apply();
+            			} else if (message.requestMessage === "simulator-stop-all") {
+                			$scope.requestingStopping = false;
+                    		$scope.$apply();
+            			}
+            		}
+            	}
+       		}
         	if (message.message === "status") {
 				_updateVehicleStatus(message.mo_id, "busy", message.busy);
 				_updateVehicleStatus(message.mo_id, "driving", message.driving);
 	    		$scope.$apply();
        	}
         });
+		
+		function _checkStarted() {
+			if ($scope.vehiclesToBeInitialzed.length == 0) {
+				$scope.busy = $scope.requestIds.length > 0;
+				return;
+			}
+			$scope.busy = true;
+			$scope.vehiclesToBeInitialzed.forEach(function(id) {
+				var vehicle_node = document.getElementById(id);
+				if (vehicle_node && vehicle_node.contentWindow) {
+					var messageObj = {message: "simulator-set-message-target", requestId: id};
+					var messageStr = JSON.stringify(messageObj);
+					vehicle_node.contentWindow.postMessage(messageStr, "*");
+				}
+			});
+			setTimeout(_checkStarted, 1000);
+		}
 		
 		window.onFrameLoaded = function(id) {
 			if (this.initialMessageTimeout) {
@@ -195,7 +221,7 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 			var self = this;
 			this.initialMessageTimeout = setTimeout(function(){
 				self.initialMessageTimeout = null;
-				_postMessageToVehicles("simulator-set-message-target");
+				_checkStarted();
 			}, 1000);
 		};
 		
@@ -208,6 +234,9 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 			if(vehicles.length > 5){
 				vehicles = vehicles.slice(0, 5);
 			}
+			$scope.vehiclesToBeInitialzed = vehicles.map(function(vehicle) {
+				return vehicle.mo_id;
+			});
 			$http({
 				method: "GET",
 				url: "/user/simulatedDriver"
