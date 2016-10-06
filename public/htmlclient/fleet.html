@@ -109,6 +109,7 @@
     
     <script type="text/javascript">
         angular.element(document.getElementsByTagName('head')).append(angular.element('<base href="' + window.location.pathname + '" />'));
+        function onFrameLoaded() {}
     </script>
     
     <!--[if lt IE 9]>
@@ -145,15 +146,21 @@
         <aside class="sidebar">
             <ul class="sidebarItems">
                 <li ng-repeat="vehicle in vehicles track by $index" ui-sref-active="active">
-                    <a ui-sref="{{vehicle.mo_id}}" ng-click="selectItem($index)">{{vehicle.serial_number}}</a>
+                    <a ui-sref="{{vehicle.mo_id}}" ng-click="selectItem($index)"><span ng-class="{driving: vehicleStatus[vehicle.mo_id].driving}"></span>{{vehicle.serial_number}}</a>
                 </li>
             </ul>
         </aside>
-		<div class="container-50 noTopPadding container-30-right mainContent row">
+		<div class="container-50 noTopPadding mainContent row">
 			<div class="column-4-med" ui-view="vehicle"></div>
 			<div class="column-8-med" ng-repeat="vehicle in vehicles track by $index" style="display: {{vehicle.display}};">
                 {{vehicle.display}}
-				<iframe ng-src="{{vehicle.url}}" style="width: 100%; min-height: 600px;" width="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" ></iframe>
+				<iframe id="{{vehicle.mo_id}}" class="mapFrame" ng-src="{{vehicle.url}}" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" onload="onFrameLoaded()"></iframe>
+			</div>
+			<div class="column-12-med" ng-show="pageLoaded">
+				<div class="floatRight row">
+				<a class="btn" style="margin-left: 10px; margin-top: 5px;" ng-disabled="busy" ng-click="onStartAll()">{{requestingStarting ? "Starting..." : "Start All Vehicles"}}</a>
+				<a class="btn" style="margin-left: 10px; margin-top: 5px;" ng-disabled="busy" ng-click="onStopAll()">{{requestingStopping ? "Stopping..." : "Stop All Vehicles"}}</a>
+				</div>
 			</div>
 		</div>
 

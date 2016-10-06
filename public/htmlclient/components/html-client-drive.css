@@ -93,7 +93,7 @@
 
 .locationMap {
 	position: relative;
-    height: 250px;
+    height: 275px;
     width: 100%;
 }
 
@@ -174,6 +174,11 @@
     color: #2a506d;
 }
 
+@media (max-width: 520px) {
+	.html-client-drive .vehicleDataName {
+		max-width: 340px;		
+	}
+}
 
 #canvas .olControlAttribution {
     font-size:13px;

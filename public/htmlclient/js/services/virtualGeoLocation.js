@@ -102,6 +102,7 @@ angular.module('htmlClient')
     	tripRoute: null,
     	prevLoc: {lat:48.134994,lon:11.671026,speed:0,init:true},
     	destination: null,
+    	options: {avoid_events: true, route_loop: true},
     	
     	watchPosition: function(callback){
     		if(!this.tripRoute) {
@@ -117,6 +118,12 @@ angular.module('htmlClient')
 			$interval.cancel(watchId);
     		this.driving = false;
     	},
+    	setOption: function(key, value) {
+    		this.options[key] = value;
+    	},
+    	getOption: function(key) {
+    		return this.options[key];
+    	},
     	setCurrentPosition: function(loc /* lat, lon */, donotResetRoute){
     		if(this.driving){
     			// under driving
@@ -127,6 +134,22 @@ angular.module('htmlClient')
     			this.prevLoc.speed = 0;
     		}
     		return donotResetRoute ? null : this._resetRoute();
+    	},
+    	updateRoute: function(locs) {
+    		if (!locs) {
+    			return this._resetRoute();
+    		}
+			var deferred = $q.defer();
+			self = this;
+			this._createRoutes(locs, true).then(function(routeArray){
+				self.tripRouteIndex = 0;
+				self.tripRoute = routeArray;
+				self.prevLoc = routeArray[0];
+				deferred.resolve(routeArray);
+			})["catch"](function(error){
+				deferred.reject(error);
+			});
+    		return deferred.promise;
     	},
     	setDestinationPosition: function(loc){
     		if(this.driving){
@@ -165,7 +188,7 @@ angular.module('htmlClient')
     	},
     	
     	// find a random location in about 5km from the specified location
-    	_getDestLoc: function(slat, slng){
+    	_getDestLoc: function(slat, slng, heading){
 			var ddist = (Math.random()/2 + 0.5) * 0.025 / 2;
 			var dtheta = 2 * Math.PI * Math.random();
 			var dlat = 0;
@@ -177,7 +200,7 @@ angular.module('htmlClient')
 				dlat = +slat + ddist * Math.sin(dtheta);
 				dlng = +slng + ddist * Math.cos(dtheta);
 			}
-			return {lat: dlat, lng: dlng};
+			return {lat: dlat, lng: dlng, heading: (this.destination ? this.destination.heading : heading)};
 		},
 		
 		// reset trip route
@@ -185,43 +208,80 @@ angular.module('htmlClient')
 			var deferred = $q.defer();
 			var slat = this.prevLoc.lat;
 			var slng = this.prevLoc.lon;
-			var dest = this._getDestLoc(slat, slng);
-			var self = this;
-			this._findRoute(0, slat, slng, dest.lat, dest.lng).then(function(routeArray1){
-				var dest2 = self._getDestLoc(slat, slng);
-				if(this.destination){
-					// if the destination specified, just trip from source to the destination
-					self.tripRouteIndex = 0;
-					self.tripRoute = routeArray1;
-					self.prevLoc = routeArray1[0];
-					deferred.resolve(totalRoute1);
-				}else{
-					// find a trip route with 3 positions (source -> destination1 -> destination2 -> source)
-					self._findRoute(0, dest.lat, dest.lng, dest2.lat, dest2.lng).then(function(routeArray2){
-						self._findRoute(0, dest2.lat, dest2.lng, slat, slng).then(function(routeArray3){
-							var totalRoute = routeArray1.concat(routeArray2, routeArray3);
-							self.tripRouteIndex = 0;
-							self.tripRoute = totalRoute;
-							self.prevLoc = totalRoute[0];
-							deferred.resolve(totalRoute);
-						});
-					});
-				}
-    		})["catch"](function(error){
-    			deferred.reject(error);
-    		});
+			var sheading = this.prevLoc.heading;
+			
+			var loop = !this.destination || (this.options && this.options.route_loop);
+			var locs = [];
+			locs.push({lat: slat, lng: slng, heading: sheading});
+			locs.push(this._getDestLoc(slat, slng, sheading));
+			if (!this.destination) {
+				locs.push(this._getDestLoc(slat, slng, sheading));
+			}
+
+			self = this;
+			this._createRoutes(locs, loop).then(function(routeArray){
+				self.tripRouteIndex = 0;
+				self.tripRoute = routeArray;
+				self.prevLoc = routeArray[0];
+				deferred.resolve(routeArray);
+			})["catch"](function(error){
+				deferred.reject(error);
+			});
+    		return deferred.promise;
+    	},
+    	
+    	_createRoutes: function(locs, loop) {
+    		var promises = [];
+    		var routeArrays = {};
+    		for (var i = 0; i < locs.length - (loop ? 0 : 1); i++) {
+    			var deferred = $q.defer();
+    			var loc1 = locs[i];
+    			var loc2 = (i < locs.length - 1) ? locs[i+1] : locs[0];
+    			var index = "index" + i;
+    			promises.push($q.when(this._findRoute(0, loc1, loc2, index), function(result) {
+    				routeArrays[result.id] = result.route;
+					return result;
+				}, function(error) {
+					return null;
+				}));
+    		}
+    		
+			var deferred = $q.defer();
+			$q.all(promises).then(function(routes) {
+				var routeArray = [];
+	    		for (var i = 0; i < promises.length; i++) {
+	    			var r = routeArrays["index" + i];
+	    			if (r === null) {
+	    				return deferred.reject();
+	    			}
+	    			routeArray = routeArray.concat(r);
+	    		}
+	    		deferred.resolve(routeArray);
+			});
     		return deferred.promise;
     	},
     	
     	// find a route from a specific location to a specific location
-    	_findRoute:function(retryCount, slat, slng, dlat, dlng){
+    	_findRoute:function(retryCount, start, end, searchId){
     		var retryCount = retryCount || 0;
     		var deferred = $q.defer();
 			var self=this;
 
+			// make URL
+			var url = "/user/routesearch?orig_latitude=" + start.lat + "&orig_longitude=" + start.lng + "&target_latitude=" + end.lat + "&target_longitude=" + end.lng;
+			if (!isNaN(start.heading)) {
+				url += "&orig_heading=" + start.heading;
+			}
+			if (!isNaN(end.heading)) {
+				url += "&target_heading=" + end.heading;
+			}
+			if(this.options && this.options.avoid_events) {
+				url += "&option=avoid_event";
+			}
+			
 			$http(mobileClientService.makeRequestOption({
 				method: "GET",
-				url: "/user/routesearch?orig_latitude=" + slat + "&orig_longitude=" + slng + "&target_latitude=" + dlat + "&target_longitude=" + dlng + "&option=avoid_event"
+				url: url
 			})).success(function(data, status){
 				var routeArray = [];
 				data.link_shapes.forEach(function(shapes){
@@ -231,13 +291,13 @@ angular.module('htmlClient')
 					});
 				});
 				if(routeArray.length >= 2){
-					deferred.resolve(routeArray);
+					deferred.resolve(searchId ? {id: searchId, route: routeArray} : routeArray);
 					return;
 				}else if(retryCount++ < 5){
 					// retry 5 times
 					console.log("failed to search route. retry[" + retryCount + "]");
-					return self._findRoute(retryCount, slat, slng, dlat, dlng).then(function(result){
-						deferred.resolve(result);
+					return self._findRoute(retryCount, start, end, searchId).then(function(result){
+						deferred.resolve(searchId ? {id: searchId, route: result} : result);
 					});
 				}
 				console.error("Cannot get route for simulation");
@@ -279,7 +339,11 @@ angular.module('htmlClient')
 
 			this.tripRouteIndex++;
 			if(this.tripRouteIndex >= this.tripRoute.length){
-				this.tripRouteIndex = 0;
+				if (this.destination && !(this.options && this.options.route_loop)) {
+					this.tripRouteIndex--;
+				} else {
+					this.tripRouteIndex = 0;
+				}
 			}
 			return loc;
     	},

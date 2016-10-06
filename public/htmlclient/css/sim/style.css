@@ -283,6 +283,7 @@ i.iconBlock {
     display: table;
     background: #1b3649;
     color: #fff;
+    cursor: pointer;
     font-size: 14px;
     font-weight: 500;
     letter-spacing: 1px;
@@ -290,6 +291,14 @@ i.iconBlock {
     -webkit-transition: all .1s ease-in;
     -moz-transition: all .1s ease-in;
     transition: all .1s ease-in;
+}
+
+.btn[disabled] {
+  cursor: default;
+  opacity: 0.65;
+  filter: alpha(opacity=65);
+  -webkit-box-shadow: none;
+  box-shadow: none;
 }
 
 .btn:hover {
@@ -490,7 +499,6 @@ aside.sidebar ul.sidebarItems li a i {
 }
 
 input.vehicleDataValue {
-    margin-top: 10px;
     padding: 3px 4px;
     border-radius: 4px;
     border: 1px solid #d8d8d8;
@@ -1082,7 +1090,7 @@ div.loadingModal div.loadingSpinner-outter {
 }
 
 @media (max-width:767px) {
-    .column-2-med, .column-3-med, .column-4-med, .column-5-med, .column-6-med, .column-7-med, .column-9-med, .column-10-med {
+    .column-2-med, .column-3-med, .column-4-med, .column-5-med, .column-6-med, .column-7-med, .column-8-med, .column-9-med, .column-10-med {
         max-width: 100%;
         -ms-flex-preferred-size: 100%;
         -webkit-flex-basis: 100%;
@@ -1098,4 +1106,13 @@ div.loadingModal div.loadingSpinner-outter {
 
 .gridDemo .row div {
     border-right: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.mapFrame {
+	width: 100%;
+	min-height: 575px;
+}
+
+.driving:before {
+  content: "* ";
 }

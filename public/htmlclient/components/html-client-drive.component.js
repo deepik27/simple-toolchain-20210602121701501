@@ -101,6 +101,37 @@
 				assetService.activateAssets(false);
 			};
 			
+			// inter frame communication to recieve start/stop all and return status
+			function postStatusMessage(target, requestMessage, requestId, isError) {
+				target = target || $scope.messageTarget;
+				if (!target) {
+					return;
+				}
+				var vehicleId = assetService.getVehicleId();
+				var driving = carProbeService.hasTripId();
+				var busy = $scope.requestSending;
+				
+				var messageObj = {message: "status", mo_id: vehicleId, driving: driving, busy: busy, requestMessage: requestMessage, requestId: requestId, isError: isError};
+				target.postMessage(JSON.stringify(messageObj), "*");
+			}
+			
+	        $($window).on('message', function(e) {
+	        	if ($window.location.origin !== e.originalEvent.origin, 0) {
+	        		return;
+	        	}
+	        	var message = JSON.parse(e.originalEvent.data);
+	        	if (message.message === "simulator-start-all" || message.message === "simulator-stop-all") {
+	        		$q.when($scope.onDriving(true, message.message === "simulator-start-all"), function() {
+	        			postStatusMessage(e.originalEvent.source, message.message, message.requestId);
+	        		}, function(error) {
+	        			postStatusMessage(e.originalEvent.source, message.message, message.requestId, true);
+	        		});
+	        	} else if (message.message === "simulator-set-message-target") {
+	        		$scope.messageTarget = e.originalEvent.source;
+        			postStatusMessage(e.originalEvent.source, message.message, message.requestId);
+	        	}
+	        });
+	        
 			$scope.drivingButtonLabel = "Start Driving";
 			var updateUIHandle = null;
 			// start driving
@@ -162,34 +193,50 @@
 		    };
 		    
 		    // Start/Stop driving button
-		    $scope.onDriving = function() {
-		    	if (carProbeService.hasTripId()) {
+		    $scope.onDriving = function(force, drive) {
+		    	var deferred = $q.defer();
+		    	if ($scope.requestSending) {
+		    		deferred.reject("function is busy");
+		    	} else if (carProbeService.hasTripId() && (!force || !drive)) {
 					$scope.drivingButtonLabel = "Stopping Driving";
 					$scope.requestSending = true;
+					!force && postStatusMessage();
 					stopDriving().then(function() {
 						$scope.driveEvent.trip_id = null;
 						$scope.drivingButtonLabel = "Start Driving";
 						$scope.requestSending = false;
+						deferred.resolve(true);
+						!force && postStatusMessage();
 					}, function(err) {
 						alert((err.data && err.data.message) || err.responseText || err.message || err);
 						$scope.drivingButtonLabel = "Stop Driving";
 						$scope.requestSending = false;
+						deferred.reject(err);
+						!force && postStatusMessage();
 					});
-				} else {
+				} else if (!carProbeService.hasTripId() && (!force || drive)) {
 					// clean route dots
 					routeLayer.getSource().clear();
 					$scope.drivingButtonLabel = "Preparing Driving";
 					$scope.requestSending = true;
+					!force && postStatusMessage();
 					startDriving().then(function(tripId) {
 						$scope.drivingButtonLabel = "Stop Driving";
 						$scope.requestSending = false;
 						$scope.driveEvent.trip_id = tripId;
+						deferred.resolve(true);
+						!force && postStatusMessage();
 					}, function(err) {
 						alert((err.data && err.data.message) || err.responseText || err.message || err);
 						$scope.drivingButtonLabel = "Start Driving";
 						$scope.requestSending = false;
+						deferred.reject(err);
+						!force && postStatusMessage();
 					});
+				} else {
+					deferred.resolve(false);
 				}
+		    	return deferred.promise;
 		    };
 		    
 		    var vehicleData = {};
@@ -209,17 +256,34 @@
 		    		engineTemp: $scope.engineTemp
 		    	});
 		    };
+			
+		    $scope.onAvoidEventChange = function() {
+		    	virtualGeoLocation.setOption("avoid_events", $scope.opt_avoid_events);
+		    	virtualGeoLocation.updateRoute().then(function(tripRoute) {
+					_plotTripRoute(tripRoute);
+		    	});
+		    };
+		    
+		    $scope.onRouteLoop = function() {
+		    	virtualGeoLocation.setOption("route_loop", $scope.opt_route_loop);
+		    	virtualGeoLocation.updateRoute().then(function(tripRoute) {
+					_plotTripRoute(tripRoute);
+		    	});
+		    };
 		    
 	        // device ID
 		    $scope.connectOnStartup = carProbeService.getSettings().connectOnStartup;
 			$scope.simulation = carProbeService.settings.simulation;
 		    
 		    $scope.traceCurrentLocation = true;
-		    
+
         	$scope.isConnected = false;
         	$scope.connecting = false;
 	        $scope.deviceLocation = {};
 	        $scope.driveEvent = {};
+	        $scope.actionMode = "action-car-position";
+	        $scope.opt_avoid_events = virtualGeoLocation.getOption("avoid_events");
+	        $scope.opt_route_loop = virtualGeoLocation.getOption("route_loop");
 
 			// rules
 			// should be synced with rules defined in /driverinsights/fleetalert.js
@@ -311,6 +375,42 @@
 					console.log("notified message = " + message.message);
 				});
 			}
+	    	
+	    	function addStoppingPoint(location){
+	    		if(!destFeature){
+					destFeature = new ol.Feature({geometry:new ol.geom.Point(location)});	
+					var destStyle = new ol.style.Style({
+						image: new ol.style.Circle({
+							radius:8,
+							fill : new ol.style.Fill({
+								color: 'rgba(255, 0, 0, 0.7)'
+							})
+						})
+					});
+					destFeature.setStyle(destStyle);
+					carsLayer.getSource().addFeature(destFeature);
+				}
+				
+				destFeature.getGeometry().setCoordinates(location);
+	    	}
+	    	
+	    	function setDestination(location){
+	    		if(!destFeature){
+					destFeature = new ol.Feature({geometry:new ol.geom.Point(location)});	
+					var destStyle = new ol.style.Style({
+						image: new ol.style.Circle({
+							radius:8,
+							fill : new ol.style.Fill({
+								color: 'rgba(255, 0, 0, 0.7)'
+							})
+						})
+					});
+					destFeature.setStyle(destStyle);
+					carsLayer.getSource().addFeature(destFeature);
+				}
+				
+				destFeature.getGeometry().setCoordinates(location);
+	    	}
 			
 			function updateUI(force) {
 	        	var data = {
@@ -359,13 +459,19 @@
 					lockPosition = false;
 				});
 				map.on("click", function(e){
-					if(carProbeService.settings.simulation){
+					if(!carProbeService.hasTripId() && carProbeService.settings.simulation){
 						var loc = ol.proj.toLonLat(e.coordinate);
-						/* move-vehicle */
-						virtualGeoLocation.setCurrentPosition({lat: loc[1], lon: loc[0]}).then(function(tripRoute){
-							_plotTripRoute(tripRoute);
-						});
-						carFeature.getGeometry().setCoordinates(e.coordinate);
+						if ($scope.actionMode === "action-car-position") {
+							virtualGeoLocation.setCurrentPosition({lat: loc[1], lon: loc[0]}).then(function(tripRoute){
+								_plotTripRoute(tripRoute);
+							});
+							carFeature.getGeometry().setCoordinates(e.coordinate);
+						} else if ($scope.actionMode === "action-route") {
+							virtualGeoLocation.setDestinationPosition({lat: loc[1], lon: loc[0]}).then(function(tripRoute){
+								_plotTripRoute(tripRoute);
+							});
+							setDestination(e.coordinate);
+						}
 					}
 				});
 			}
@@ -630,7 +736,7 @@
 						virtualGeoLocation.setCurrentPosition({lat: data.deviceLocation.lat, lon: data.deviceLocation.lng}).then(function(tripRoute){
 							_plotTripRoute(tripRoute);
 						});
-						$timeout($scope.onDriving, 3000); // automatically start driving after 3 seconds
+//						$timeout($scope.onDriving, 3000); // automatically start driving after 3 seconds
 					}
 					
         		}, function(err) {
