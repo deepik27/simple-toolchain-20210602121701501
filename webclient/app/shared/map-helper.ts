@@ -156,6 +156,8 @@ export class MapHelper {
   _onPreComposeFunc: any;
   _onPostComposeFunc: any;
   nextRenderFrameTime = 0;
+  private _workaroundAnimationMonitorTimer: any;
+  private _workaroundAnimationMonitorTimerLastRendered: number;
   // move event handlers
   moveRefreshDelay = DEFAULT_MOVE_REFRESH_DELAY;
   postChangeViewHandlers = [];
@@ -184,6 +186,19 @@ export class MapHelper {
     this.map.on('precompose', this._onPreComposeFunc);
     this.map.on('postcompose', this._onPostComposeFunc);
     this.map.render();
+    // workaround for stopping animation unexpectedly
+    if(!this._workaroundAnimationMonitorTimer){
+      // - intialize values
+      this._workaroundAnimationMonitorTimerLastRendered = Date.now();
+      // - in case the rendering is not happen for more than INV_MAX_FPS*5, call render() to restart
+      this._workaroundAnimationMonitorTimer = setInterval(() => {
+        if(Date.now() - this._workaroundAnimationMonitorTimerLastRendered > Math.min(INV_MAX_FPS * 5, 500)){
+          console.log('WORKAROUND: Map animation looks to be stopped. Restarting...');
+          this.map.render();
+        }
+        this._workaroundAnimationMonitorTimerLastRendered = Date.now();
+      }, INV_MAX_FPS * 2.5);
+    }
   }
   /**
    * Stop animation
@@ -191,6 +206,12 @@ export class MapHelper {
   stopAnimation(doStop?: boolean){
     this.animating = false;
     this.nextRenderFrameTime = 0;
+    // workaround for stopping animation unexpectedly
+    if(this._workaroundAnimationMonitorTimer){
+      let timer = this._workaroundAnimationMonitorTimer;
+      this._workaroundAnimationMonitorTimer = null;
+      clearInterval(timer);
+    }
     this.map.un(['precompose'], this._onPreComposeFunc);
     this.map.un(['postcompose'], this._onPostComposeFunc);
   }
@@ -263,6 +284,8 @@ export class MapHelper {
             }).bind(this), nextRender);
           }
         }
+        // workaround for stopping animation unexpectedly
+        this._workaroundAnimationMonitorTimerLastRendered = Date.now();
       }
     }catch(e){
       console.error(e);
