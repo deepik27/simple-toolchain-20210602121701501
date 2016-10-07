@@ -494,7 +494,16 @@ _.extend(driverInsightsGeofence, {
 			if (doc.geofence && doc.geofence.geometry) {
 				var geofence = doc.geofence.geometry;
 				var geometry = {type: "Polygon", coordinates: []};
-				if (!isNaN(geofence.min_longitude)) {
+				if (geofence.target && geofence.target.area) {
+					var area = geofence.target.area;
+					geometry.coordinates.push([
+			   					    [parseFloat(area.min_longitude), parseFloat(area.min_latitude)],
+			   					    [parseFloat(area.max_longitude), parseFloat(area.min_latitude)],
+			   					    [parseFloat(area.max_longitude), parseFloat(area.max_latitude)],
+			   					    [parseFloat(area.min_longitude), parseFloat(area.max_latitude)],
+			   					    [parseFloat(area.min_longitude), parseFloat(area.min_latitude)]
+			   					  ]);
+				} else if (!isNaN(geofence.min_longitude)) {
 					geometry.coordinates.push([
 		   					    [parseFloat(geofence.min_longitude), parseFloat(geofence.min_latitude)],
 		   					    [parseFloat(geofence.max_longitude), parseFloat(geofence.min_latitude)],

@@ -169,102 +169,192 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
       });
       return {
         decorate: function(item: any, features: ol.Feature[]) {
-          if (item.geometry && item.geometry_type === "rectangle") {
+          if (item.geometry) {
             let areaFeature = null;
             _.each(features, function(feature) {
               if (feature.get("area")) {
                 areaFeature = feature;
               } else if (feature.get("item")) {
-                let geometry = item.geometry;
-                let points: ol.Coordinate[] = [];
-                points.push([geometry.min_longitude, geometry.min_latitude]);
-                points.push([geometry.min_longitude, geometry.max_latitude]);
-                points.push([geometry.max_longitude, geometry.max_latitude]);
-                points.push([geometry.max_longitude, geometry.min_latitude]);
 
                 let handles: ol.Feature[] = [];
+                let areaOffset = item.direction === "in" ? 0 : self.AREA_OFFSET;
+
+                // Constraint for rectangle geofence
+                let rectangleConstraint = function rectangleConstraint(handle, point, deltaX, deltaY) {
+
+                  let moveHandle = function moveHandle(coords, index, p) {
+                    if (index === 0) {
+                      coords[0][0] = p[0];
+                      coords[0][1] = p[1];
+                      coords[4][0] = p[0];
+                      coords[4][1] = p[1];
+                      coords[1][0] = p[0];
+                      coords[3][1] = p[1];
+                    } else if (index === 1) {
+                      coords[1][0] = p[0];
+                      coords[1][1] = p[1];
+                      coords[0][0] = p[0];
+                      coords[4][0] = p[0];
+                      coords[2][1] = p[1];
+                    } else if (index === 2) {
+                      coords[2][0] = p[0];
+                      coords[2][1] = p[1];
+                      coords[3][0] = p[0];
+                      coords[1][1] = p[1];
+                    } else if (index === 3) {
+                      coords[3][0] = p[0];
+                      coords[3][1] = p[1];
+                      coords[2][0] = p[0];
+                      coords[0][1] = p[1];
+                      coords[4][1] = p[1];
+                    }
+                  };
+
+                  // update geofence area
+                  let index = this.index;
+                  let geometry = feature.getGeometry();
+                  let coordinates = (<any>geometry).getCoordinates()[0];
+                  moveHandle(coordinates, index, point);
+                  (<any>geometry).setCoordinates([coordinates]);
+
+                  let area_dir;
+                  let handleIndex;
+                  let areaGeometry = areaFeature && areaFeature.getGeometry();
+                  let areaCoordinates = areaGeometry && (<any>areaGeometry).getCoordinates()[0];
+
+                  if (index === 0) {
+                    handleIndex = [1, 3];
+                    if (areaCoordinates) {
+                      area_dir = [270, 180];
+                    }
+                  } else if (index === 1) {
+                    handleIndex = [0, 2];
+                    if (areaCoordinates) {
+                      area_dir = [270, 0];
+                    }
+                  } else if (index === 2) {
+                    handleIndex = [3, 1];
+                    if (areaCoordinates) {
+                      area_dir = [90, 0];
+                    }
+                  } else if (index === 3) {
+                    handleIndex = [2, 0];
+                    if (areaCoordinates) {
+                      area_dir = [90, 180];
+                    }
+                  }
+
+                  // update related handles
+                  let h_geometry = handle.getGeometry();
+                  (<any>h_geometry).translate(deltaX, deltaY);
+                  h_geometry = handles[handleIndex[0]].getGeometry();
+                  (<any>h_geometry).translate(deltaX, 0);
+                  h_geometry = handles[handleIndex[1]].getGeometry();
+                  (<any>h_geometry).translate(0, deltaY);
+
+                  // update target area
+                  if (areaCoordinates) {
+                    let handleGeometry = handle.getGeometry();
+                    let handleCoordinates = (<any>handleGeometry).getCoordinates();
+                    let p = ol.proj.toLonLat(handleCoordinates, undefined);
+                    let p1 = self.calcPosition(p, areaOffset, area_dir[0]);
+                    let p2 = self.calcPosition(p, areaOffset, area_dir[1]);
+                    moveHandle(areaCoordinates, index, ol.proj.fromLonLat([p1[0], p2[1]], undefined));
+                    (<any>areaGeometry).setCoordinates([areaCoordinates]);
+                  }
+                };
+
+                // Constraint for circle geofence
+                let circleConstraint = function rectangleConstraint(handle, point, deltaX, deltaY) {
+                  let index = this.index;
+
+                  // update geofence area
+                  let geometry = feature.getGeometry();
+                  let center = (<any>geometry).getCenter();
+                  let radius = (<any>geometry).getRadius();
+
+                  let centerLonLat = ol.proj.toLonLat(center, undefined);
+                  let handleLonLat = ol.proj.toLonLat(point, undefined);
+
+                  let dx = self.calcDistance([handleLonLat[0], centerLonLat[1]], centerLonLat);
+                  let dy = self.calcDistance([centerLonLat[0], handleLonLat[1]], centerLonLat);
+
+                  // Update radius of curcle feature
+                  let new_radius = Math.min(dx, dy);
+                  (<any>geometry).setRadius(new_radius);
+
+                  // Update handless
+                  let min_x = self.calcPosition(centerLonLat, new_radius, 270)[0];
+                  let min_y = self.calcPosition(centerLonLat, new_radius, 180)[1];
+                  let max_x = self.calcPosition(centerLonLat, new_radius, 90)[0];
+                  let max_y = self.calcPosition(centerLonLat, new_radius, 0)[1];
+                  let p = [];
+                  p.push(ol.proj.fromLonLat([min_x, min_y], undefined));
+                  p.push(ol.proj.fromLonLat([min_x, max_y], undefined));
+                  p.push(ol.proj.fromLonLat([max_x, max_y], undefined));
+                  p.push(ol.proj.fromLonLat([max_x, min_y], undefined));
+
+                  _.each(handles, function(handle, i) {
+                    let h_geometory = handle.getGeometry();
+                    (<any>h_geometory).setCoordinates(p[i]);
+                    if (i === index) {
+                      point[0] = p[i][0];
+                      point[1] = p[i][1];
+                    }
+                  });
+
+                  // update target area
+                  let areaGeometry = areaFeature && areaFeature.getGeometry();
+                  let areaCoordinates = areaGeometry && (<any>areaGeometry).getCoordinates()[0];
+                  if (areaCoordinates) {
+                    min_x = self.calcPosition(centerLonLat, new_radius + areaOffset, 270)[0];
+                    min_y = self.calcPosition(centerLonLat, new_radius + areaOffset, 180)[1];
+                    max_x = self.calcPosition(centerLonLat, new_radius + areaOffset, 90)[0];
+                    max_y = self.calcPosition(centerLonLat, new_radius + areaOffset, 0)[1];
+                    p = [];
+                    p.push(ol.proj.fromLonLat([min_x, min_y], undefined));
+                    p.push(ol.proj.fromLonLat([min_x, max_y], undefined));
+                    p.push(ol.proj.fromLonLat([max_x, max_y], undefined));
+                    p.push(ol.proj.fromLonLat([max_x, min_y], undefined));
+                    p.push(p[0]);
+
+                    _.each(areaCoordinates, function(coords, i) {
+                      coords[0] = p[i][0];
+                      coords[1] = p[i][1];
+                      // coords[i + 1][0] = p[i + 1][0];
+                      // coords[i + 1][1] = p[i + 1][1];
+                    });
+                    (<any>areaGeometry).setCoordinates([areaCoordinates]);
+                  }
+                };
+
+                // Show handles on each corner
+                let geometry = item.geometry;
+                let points: ol.Coordinate[] = [];
+                let constraint = null;
+                if (item.geometry_type === "circle") {
+                  let top = self.calcPosition([geometry.longitude, geometry.latitude], geometry.radius, 0);
+                  let bottom = self.calcPosition([geometry.longitude, geometry.latitude], geometry.radius, 180);
+                  let left = self.calcPosition([geometry.longitude, geometry.latitude], geometry.radius, 270);
+                  let right = self.calcPosition([geometry.longitude, geometry.latitude], geometry.radius, 90);
+                  points.push([left[0], bottom[1]]);
+                  points.push([left[0], top[1]]);
+                  points.push([right[0], top[1]]);
+                  points.push([right[0], bottom[1]]);
+                  constraint = circleConstraint;
+                } else if (item.geometry_type === "rectangle") {
+                  points.push([geometry.min_longitude, geometry.min_latitude]);
+                  points.push([geometry.min_longitude, geometry.max_latitude]);
+                  points.push([geometry.max_longitude, geometry.max_latitude]);
+                  points.push([geometry.max_longitude, geometry.min_latitude]);
+                  constraint = rectangleConstraint;
+                } else {
+                  return;
+                }
+
                 _.each(points, function(coordinates: ol.Coordinate, index) {
                   let position = ol.proj.fromLonLat(coordinates, undefined);
-                  let handle = new ol.Feature({geometry: new ol.geom.Point(position), resizeHandle: {item: item, index: index, constraint: function(point) {
-                    let moveHandle = function moveHandle(coords, index, p) {
-                      if (index === 0) {
-                        coords[0][0] = p[0];
-                        coords[0][1] = p[1];
-                        coords[4][0] = p[0];
-                        coords[4][1] = p[1];
-                        coords[1][0] = p[0];
-                        coords[3][1] = p[1];
-                      } else if (index === 1) {
-                        coords[1][0] = p[0];
-                        coords[1][1] = p[1];
-                        coords[0][0] = p[0];
-                        coords[4][0] = p[0];
-                        coords[2][1] = p[1];
-                      } else if (index === 2) {
-                        coords[2][0] = p[0];
-                        coords[2][1] = p[1];
-                        coords[3][0] = p[0];
-                        coords[1][1] = p[1];
-                      } else if (index === 3) {
-                        coords[3][0] = p[0];
-                        coords[3][1] = p[1];
-                        coords[2][0] = p[0];
-                        coords[0][1] = p[1];
-                        coords[4][1] = p[1];
-                      }
-                    };
-
-                    // update managing feature
-                    let geometry = feature.getGeometry();
-                    let coordinates = (<any>geometry).getCoordinates()[0];
-                    let areaGeometry = areaFeature && areaFeature.getGeometry();
-                    let areaCoordinates = areaGeometry && (<any>areaGeometry).getCoordinates()[0];
-
-                    moveHandle(coordinates, index, point);
-                    let area_dir;
-                    let handleIndex;
-                    if (index === 0) {
-                      handleIndex = [1, 3];
-                      if (areaCoordinates) {
-                        area_dir = [270, 180];
-                      }
-                    } else if (index === 1) {
-                      handleIndex = [0, 2];
-                      if (areaCoordinates) {
-                        area_dir = [270, 0];
-                      }
-                    } else if (index === 2) {
-                      handleIndex = [3, 1];
-                      if (areaCoordinates) {
-                        area_dir = [90, 0];
-                      }
-                    } else if (index === 3) {
-                      handleIndex = [2, 0];
-                      if (areaCoordinates) {
-                        area_dir = [90, 180];
-                      }
-                    }
-                    // update geofence area
-                    (<any>geometry).setCoordinates([coordinates]);
-
-                    // update target area
-                    if (areaCoordinates) {
-                      let p = ol.proj.toLonLat(coordinates[index], undefined);
-                      let p1 = self.calcPosition(p, self.AREA_OFFSET, area_dir[0]);
-                      let p2 = self.calcPosition(p, self.AREA_OFFSET, area_dir[1]);
-                      moveHandle(areaCoordinates, index, ol.proj.fromLonLat([p1[0], p2[1]], undefined));
-                      (<any>areaGeometry).setCoordinates([areaCoordinates]);
-                    }
-
-                    // update related handles
-                    _.each(handleIndex, function(hi: number, index: number) {
-                      let h_geometry = handles[hi].getGeometry();
-                      let h_coordinates = (<any>h_geometry).getCoordinates();
-                      h_coordinates[index] = point[index];
-                      (<any>h_geometry).setCoordinates(h_coordinates);
-                    });
-                  }}});
-
+                  let handle = new ol.Feature({geometry: new ol.geom.Point(position), resizeHandle: {item: item, index: index, constraint: constraint}});
                   handle.setStyle(handleStyle);
                   handles.push(handle);
                   features.push(handle);
@@ -320,7 +410,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
   public createItemFeatures(geofence: Geofence) {
     let features = [];
     let target = null;
-    if (geofence.target && geofence.target.area) {
+    if (geofence.direction !== "in" && geofence.target && geofence.target.area) {
       let polygonCoordinates = this.createGeofenceCoordinate(geofence.target.area);
       let polygon = new ol.geom.Polygon([polygonCoordinates]);
       let feature = new ol.Feature({geometry: polygon, item: geofence, area: geofence.target.area});
@@ -337,7 +427,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
         target.set("decorates", feature);
       }
       features.push(feature);
-    } else {
+    } else if (geofence.geometry_type === "rectangle") {
       let polygonCoordinates = this.createGeofenceCoordinate(geometry);
       let polygon = new ol.geom.Polygon([polygonCoordinates]);
       let feature = new ol.Feature({geometry: polygon, item: geofence});
@@ -358,7 +448,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
       let circle = new (<any>ol.geom.Circle)(center, geometry.radius);
       let feature = new ol.Feature({geometry: circle});
       features.push(feature);
-    } else {
+    } else if (loc.geometry_type === "rectangle") {
       let polygonCoordinates = this.createGeofenceCoordinate(geometry);
       let polygon = new ol.geom.Polygon([polygonCoordinates]);
       let feature = new ol.Feature({geometry: polygon});
@@ -396,16 +486,23 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
   * Create a geometry of effective area for given geofence
   */
   public createTargetArea(geometry_type: string, geometry: any, direction: string) {
-    if (direction === "in") {
-      return;
-    }
+    let areaOffset = direction === "in" ? 0 : this.AREA_OFFSET;
     if (geometry_type === "circle") {
-
-    } else {
-      let area0 = this.calcPosition([geometry.min_longitude, geometry.max_latitude], this.AREA_OFFSET, 0);
-      let area1 = this.calcPosition([geometry.max_longitude, geometry.max_latitude], this.AREA_OFFSET, 90);
-      let area2 = this.calcPosition([geometry.max_longitude, geometry.min_latitude], this.AREA_OFFSET, 180);
-      let area3 = this.calcPosition([geometry.min_longitude, geometry.min_latitude], this.AREA_OFFSET, 270);
+      let top = this.calcPosition([geometry.longitude, geometry.latitude], geometry.radius + areaOffset, 0);
+      let bottom = this.calcPosition([geometry.longitude, geometry.latitude], geometry.radius + areaOffset, 180);
+      let left = this.calcPosition([geometry.longitude, geometry.latitude], geometry.radius + areaOffset, 270);
+      let right = this.calcPosition([geometry.longitude, geometry.latitude], geometry.radius + areaOffset, 90);
+      return {
+          min_longitude: left[0],
+          min_latitude: bottom[1],
+          max_longitude: right[0],
+          max_latitude: top[1]
+      };
+    } else if (geometry_type === "rectangle") {
+      let area0 = this.calcPosition([geometry.min_longitude, geometry.max_latitude], areaOffset, 0);
+      let area1 = this.calcPosition([geometry.max_longitude, geometry.max_latitude], areaOffset, 90);
+      let area2 = this.calcPosition([geometry.max_longitude, geometry.min_latitude], areaOffset, 180);
+      let area3 = this.calcPosition([geometry.min_longitude, geometry.min_latitude], areaOffset, 270);
       return {
           min_longitude: area3[0],
           min_latitude: area2[1],

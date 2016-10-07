@@ -172,12 +172,10 @@ export class ItemMapComponent implements OnInit {
 
 		// create layyers
     this.mapEventsLayer = new ol.layer.Vector({
-      source: new ol.source.Vector(),
-      renderOrder: undefined
+      source: new ol.source.Vector()
     });
     this.mapGeofenceLayer = new ol.layer.Vector({
-      source: new ol.source.Vector(),
-      renderOrder: undefined
+      source: new ol.source.Vector()
     });
 
     // create a map
@@ -209,7 +207,6 @@ export class ItemMapComponent implements OnInit {
     this.mapHelper = new MapHelper(this.map);
     this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
     this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, {itemLabel: "Boundary", editable: true});
-    this.mapItemHelpers["geofence"].setItemLabel("Boundary");
 
 		// setup view change event handler
     this.mapHelper.postChangeViewHandlers.push(extent => {
@@ -406,8 +403,16 @@ export class ItemMapComponent implements OnInit {
 
       let deltaX = e.coordinate[0] - this.dragFeatureCoordinate[0];
       let deltaY = e.coordinate[1] - this.dragFeatureCoordinate[1];
-      let geometry = (this.dragFeature.getGeometry());
-      geometry.translate(deltaX, deltaY);
+
+      let handle = this.dragFeature.get("resizeHandle");
+      if (handle) {
+        handle.constraint && handle.constraint(this.dragFeature, e.coordinate, deltaX, deltaY);
+        deltaX = e.coordinate[0] - this.dragFeatureCoordinate[0];
+        deltaY = e.coordinate[1] - this.dragFeatureCoordinate[1];
+      } else {
+        let geometry = (this.dragFeature.getGeometry());
+        geometry.translate(deltaX, deltaY);
+      }
 
       let start = ol.proj.toLonLat(this.dragStartCoordinate, undefined);
       let end = ol.proj.toLonLat(e.coordinate, undefined);
@@ -446,10 +451,11 @@ export class ItemMapComponent implements OnInit {
     this.dragFeatureCoordinate[0] = e.coordinate[0];
     this.dragFeatureCoordinate[1] = e.coordinate[1];
 
-    this._moveFeature(this.dragFeature, deltaX, deltaY);
     let handle = this.dragFeature.get("resizeHandle");
     if (handle) {
-      handle.constraint && handle.constraint(e.coordinate);
+      handle.constraint && handle.constraint(this.dragFeature, e.coordinate, deltaX, deltaY);
+    } else {
+      this._moveFeature(this.dragFeature, deltaX, deltaY);
     }
   }
 

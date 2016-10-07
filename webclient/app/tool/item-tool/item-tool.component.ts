@@ -55,18 +55,20 @@ export class ItemToolComponent implements OnInit {
   }
 
   onCreateGeofence() {
+    let helper = this.itemMap.mapItemHelpers["geofence"];
     let extent = this.itemMap.getMapExtent();
     let offset_x = (extent.max_longitude - extent.min_longitude) / 4;
     let offset_y = (extent.max_latitude - extent.min_latitude) / 4;
 
     let range = null;
     if (this.geofenceType === "circle") {
-      range = {
-        longitude: (extent.max_longitude + extent.min_longitude) / 2,
-        latitude: (extent.max_latitude + extent.min_latitude) / 2,
-        radius: 1000
-      };
-    } else {
+      let center_x = (extent.max_longitude + extent.min_longitude) / 2;
+      let center_y = (extent.max_latitude + extent.min_latitude) / 2;
+      let r1 = helper.calcDistance([center_x, center_y], [center_x + offset_x, center_y]);
+      let r2 = helper.calcDistance([center_x, center_y], [center_x, center_y + offset_y]);
+      let radius = Math.min(r1, r2);
+      range = {longitude: center_x, latitude: center_y, radius: radius};
+    } else if (this.geofenceType === "rectangle") {
       range = {
         min_latitude: extent.min_latitude + offset_y,
         min_longitude: extent.min_longitude + offset_x,
@@ -74,7 +76,6 @@ export class ItemToolComponent implements OnInit {
         max_longitude: extent.max_longitude - offset_x
       };
     }
-    let helper = this.itemMap.mapItemHelpers["geofence"];
     let commandId = helper.addTentativeItem({geometry_type: this.geofenceType, geometry: range});
 
     return new Promise((resolve, reject) => {
@@ -153,15 +154,14 @@ export class ItemToolComponent implements OnInit {
   getMoveCommand(item, delta): ToolCommand {
     if (item.getItemType() === "geofence") {
       let geometry = item.geometry;
-      if (!isNaN(geometry.min_longitude)) {
+      if (item.geometry_type === "circle") {
+        geometry.longitude += delta[0];
+        geometry.latitude += delta[1];
+      } else if (this.geofenceType === "rectangle") {
         geometry.min_longitude += delta[0];
         geometry.max_longitude += delta[0];
         geometry.min_latitude += delta[1];
         geometry.max_latitude += delta[1];
-      }
-      if (!isNaN(geometry.longitude)) {
-        geometry.longitude += delta[0];
-        geometry.latitude += delta[1];
       }
       let target = item.target;
       if (target && target.area) {
@@ -176,49 +176,42 @@ export class ItemToolComponent implements OnInit {
 
   getResizeCommand(item, delta, handleIndex) {
     if (item.getItemType() === "geofence") {
+      let helper = this.itemMap.mapItemHelpers["geofence"];
       let geometry = item.geometry;
       let target = item.target;
-      if (!isNaN(geometry.longitude)) {
-        return;
+      if (item.geometry_type === "circle") {
+        let radius = geometry.radius;
+        let center = [geometry.longitude, geometry.latitude];
+        let edgeLonLat = helper.calcPosition(center, radius, 90);
+        edgeLonLat[1] += Math.abs(delta[1]);
+        geometry.radius = helper.calcDistance(center, edgeLonLat);
+      } else if (item.geometry_type === "rectangle") {
+        if (handleIndex === 0) {
+          geometry.min_longitude += delta[0];
+          geometry.min_latitude += delta[1];
+        } else if (handleIndex === 1) {
+          geometry.min_longitude += delta[0];
+          geometry.max_latitude += delta[1];
+        } else if (handleIndex === 2) {
+          geometry.max_longitude += delta[0];
+          geometry.max_latitude += delta[1];
+        } else if (handleIndex === 3) {
+          geometry.max_longitude += delta[0];
+          geometry.min_latitude += delta[1];
+        }
+        if (geometry.min_longitude > geometry.max_longitude) {
+          let lon = geometry.min_longitude;
+          geometry.min_longitude = geometry.max_longitude;
+          geometry.max_longitude = lon;
+        }
+        if (geometry.min_latitude > geometry.max_latitude) {
+          let lat = geometry.min_latitude;
+          geometry.min_latitude = geometry.max_latitude;
+          geometry.max_latitude = lat;
+        }
       }
-      if (handleIndex === 0) {
-        geometry.min_longitude += delta[0];
-        geometry.min_latitude += delta[1];
-        if (target && target.area) {
-          target.area.min_longitude += delta[0];
-          target.area.min_latitude += delta[1];
-        }
-      } else if (handleIndex === 1) {
-        geometry.min_longitude += delta[0];
-        geometry.max_latitude += delta[1];
-        if (target && target.area) {
-          target.area.min_longitude += delta[0];
-          target.area.max_latitude += delta[1];
-        }
-      } else if (handleIndex === 2) {
-        geometry.max_longitude += delta[0];
-        geometry.max_latitude += delta[1];
-        if (target && target.area) {
-          target.area.max_longitude += delta[0];
-          target.area.max_latitude += delta[1];
-        }
-      } else if (handleIndex === 3) {
-        geometry.max_longitude += delta[0];
-        geometry.min_latitude += delta[1];
-        if (target && target.area) {
-          target.area.max_longitude += delta[0];
-          target.area.min_latitude += delta[1];
-        }
-      }
-      if (geometry.min_longitude > geometry.max_longitude) {
-        let lon = geometry.min_longitude;
-        geometry.min_longitude = geometry.max_longitude;
-        geometry.max_longitude = lon;
-      }
-      if (geometry.min_latitude > geometry.max_latitude) {
-        let lat = geometry.min_latitude;
-        geometry.min_latitude = geometry.max_latitude;
-        geometry.max_latitude = lat;
+      if (target && target.area) {
+        target.area = helper.createTargetArea(item.geometry_type, geometry, item.direction);
       }
       return new UpdateGeofenceCommand(this.geofenceService, item.getId(), geometry, item.direction, target);
     }
@@ -284,7 +277,7 @@ export class CreateGeofenceCommand extends ToolCommand {
     super("geofence");
   }
   public execute() {
-    let geometry_type = this.geometry.radius ? "circle" : "rectangle";
+    let geometry_type = (!isNaN(this.geometry.radius) && !isNaN(this.geometry.latitude) && !isNaN(this.geometry.longitude)) ? "circle" : "rectangle";
     let geofence = {
       direction: this.direction,
       geometry_type: geometry_type,
@@ -302,7 +295,7 @@ export class UpdateGeofenceCommand extends ToolCommand {
     super("geofence");
   }
   public execute() {
-    let geometry_type = this.geometry.radius ? "circle" : "rectangle";
+    let geometry_type = (!isNaN(this.geometry.radius) && !isNaN(this.geometry.latitude) && !isNaN(this.geometry.longitude)) ? "circle" : "rectangle";
     let geofence = {
       direction: this.direction,
       geometry_type: geometry_type,
