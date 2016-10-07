@@ -23,6 +23,7 @@
 	 </div>
   	 <div id="infopopup"></div>
 	</div>
+	<div id="console">{{console_message}}</div>
 	<div class="marginTop-15">
 		<div>
 			<span class="floatRight">
@@ -32,21 +33,16 @@
 		<div>
 		 	<div class="marginTop-15"><strong>Mouse Click Action:</strong></div>
 			 	<div style="margin-top: 5px; margin-left: 10px;">
-			 		<input type="radio" name="actionGroup" ng-disabled="driveEvent.trip_id" ng-model="actionMode" value="action-car-position">Set start position</span>
-			 	</div>	
-			 	<div style="margin-top: 5px; margin-left: 10px;">
-			 		<input type="radio" name="actionGroup" ng-disabled="driveEvent.trip_id" ng-model="actionMode" value="action-route">Set end position</span>
+			 		<span style="white-space: nowrap; margin-right: 10px;"><input type="radio" name="actionGroup" ng-disabled="driveEvent.trip_id" ng-model="actionMode" value="action-car-position" id="start"><label for="start">Set start position</label></span>
+			 		<span style="white-space: nowrap"><input type="radio" name="actionGroup" ng-disabled="driveEvent.trip_id" ng-model="actionMode" value="action-route" id="destination"><label for="destination">Set end position</label></span>
 			 	</div>	
 	 		</div>
 		 	<div class="marginTop-15"><strong>Route Option:</strong></div>
 			 	<div style="margin-top: 5px; margin-left: 10px;">
-			 		<input type="checkbox" ng-disabled="driveEvent.trip_id" ng-model="opt_avoid_events" ng-change="onAvoidEventChange()">Avoid events</span>
-			 	</div>	
-			 	<div style="margin-top: 5px; margin-left: 10px;">
-			 		<input type="checkbox" ng-disabled="driveEvent.trip_id" ng-model="opt_route_loop" ng-change="onRouteLoop()">Loop between start and end positions</span>
+			 		<span style="white-space: nowrap; margin-right: 10px;"><input type="checkbox" ng-disabled="driveEvent.trip_id" ng-model="opt_avoid_events" ng-change="onAvoidEventChange()" id="avoid"><label for="avoid">Avoid events</label></span>
+			 		<span style="white-space: nowrap"><input type="checkbox" ng-disabled="driveEvent.trip_id" ng-model="opt_route_loop" ng-change="onRouteLoop()" id="loop"><label for="loop">Loop between start and end positions</label></span>
 			 	</div>	
 	 		</div>
  		</div>
 	</div>
-	<div id="console">{{console_message}}</div>
 </div>
