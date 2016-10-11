@@ -2,10 +2,16 @@ LICENSE INFORMATION
 
 The Programs listed below are licensed under the following License Information terms and conditions in addition to the Program license terms previously agreed to by Client and IBM. If Client does not have previously agreed to license terms in effect for the Program, the International License Agreement for Non-Warranted Programs (Z125-5589-05) applies.
 
-Program Name: IBM IoT for Automotive - Mobility Starter Application
+Program Name: IBM IoT for Automotive-Mobility Starter Application (Android)
 Program Number: TOOL
 
-Program Name: IBM IoT for Automotive - Fleet Management Starter Application
+Program Name: IBM IoT for Automotive-Fleet Management Starter Application (Android)
+Program Number: TOOL
+
+Program Name: IBM IoT for Automotive-Mobility Server Starter App (Companion to Mobile Starter Apps iOS & Android)
+Program Number: TOOL
+
+Program Name: IBM IoT for Automotive-Fleet Management Server Starter App (Companion to Mobile Starter Apps iOS & Android)
 Program Number: TOOL
 
 Program-unique Terms
@@ -18,13 +24,7 @@ The components included in this Program may involve the processing of personal i
 
 Licensee is responsible for the ensuring Licensee's use of this Program and any deployed solution meets applicable legal and regulatory requirements. This may require the implementation of additional features and functions not included in the Program. 
 
-Apple License issue
-
-This Program is intended solely for use with an Apple iOS product and intended to be used in conjunction with officially licensed Apple development tools and further customized and distributed under the terms and conditions of Licensee's licensed Apple iOS Developer Program or Licensee's licensed Apple iOS Enterprise Program. 
-
-Licensee agrees to use the Program to customize and build the application for Licensee's own purpose and distribute in accordance with the terms of Licensee's Apple developer program 
-
-Risk Mitigation / Product Liability Issues
+Warning and Disclaimer
 
 The Program and any resulting application is not intended for design, construction, control, or maintenance of automotive control systems where failure of such sample code or resulting application could give rise to a material threat of death or serious personal injury. 
 
@@ -53,9 +53,9 @@ Feedback License
 In the event Licensee provides feedback to IBM regarding the Program, Licensee agrees to assign to IBM all right, title, and interest (including ownership of copyright) in any data, suggestions, or written materials that 1) are related to the Program and 2) that Licensee provides to IBM.
 
 
-L/N:  L-DDIN-ADRVKF
-D/N:  L-DDIN-ADRVKF
-P/N:  L-DDIN-ADRVKF
+L/N:  L-DDIN-AEGGZJ
+D/N:  L-DDIN-AEGGZJ
+P/N:  L-DDIN-AEGGZJ
 
 
 International License Agreement for Non-Warranted Programs
