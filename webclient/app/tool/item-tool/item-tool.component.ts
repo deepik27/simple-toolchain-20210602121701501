@@ -79,8 +79,7 @@ export class ItemToolComponent implements OnInit {
     let commandId = helper.addTentativeItem({geometry_type: this.geofenceType, geometry: range});
 
     return new Promise((resolve, reject) => {
-      let area = helper.createTargetArea(this.geofenceType, range, this.geofenceDirection);
-      let target = area ? {area: area} : null;
+      let target = {area: helper.createTargetArea(this.geofenceType, range, this.geofenceDirection)};
       return this.execute(new CreateGeofenceCommand(this.geofenceService, range, this.geofenceDirection, target)).then(function(result: any) {
         helper.setTentativeItemId(commandId, result.data.id, false);
         resolve(result);

@@ -371,8 +371,12 @@ export class ItemMapComponent implements OnInit {
 
     if (feature) {
       let decorates = feature.get("decorates");
-      if (decorates) {
+      while (decorates) {
+        if (feature.get("resizeHandle")) {
+          break;
+        }
         feature = decorates;
+        decorates = feature.get("decorates");
       }
       let item = feature.get("item");
       if (item) {
