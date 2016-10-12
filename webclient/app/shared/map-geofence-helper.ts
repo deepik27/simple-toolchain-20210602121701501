@@ -490,7 +490,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
   /*
   * Calculate a point[longitude, latitude] by distance meters toward bearing(0-359 degrees) far from start point[longitude, latitude]
   */
-  public calcPosition(start, distance, bearing) {
+  public calcPosition(start, distance, bearing): [number, number] {
     let R = 6378e3;
     let d = distance;
     let angular_distance = d / R;
