@@ -383,6 +383,9 @@ _.extend(driverInsightsAlert, {
 				setImmediate(function(){
 					alerts.forEach(function(alert){self._cacheAlert(alert);});
 				});
+				if(result.total_rows > (limit||10)){
+					console[limit === 200 ? "error" : "warn"]("getAlerts: Alerts retrieved by the conditions are existing more than limit. limit=" + limit + ", total=" + result.total_rows);
+				}
 				return {alerts: alerts};
 			});
 	},

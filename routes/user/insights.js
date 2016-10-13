@@ -311,7 +311,7 @@ function getCarProbe(qs, addAlerts){
 				return "mo_id:"+probe.mo_id;
 			}).join(" OR ") + ")";
 			conditions.push(mo_id_condition);
-			return driverInsightsAlert.getAlerts(conditions, /*includeClosed*/false).then(function(result){
+			return driverInsightsAlert.getAlerts(conditions, /*includeClosed*/false, 200).then(function(result){
 				// result: { alerts: [ { closed_ts: n, description: s, mo_id: s, severity: s, timestamp: s, ts: n, type: s }, ...] }
 				var alertsByMoId = _.groupBy(result.alerts || [], function(alert){ return alert.mo_id; });
 				probes.forEach(function(probe){
