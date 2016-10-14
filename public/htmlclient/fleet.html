@@ -152,8 +152,7 @@
         </aside>
 		<div class="container-50 noTopPadding mainContent row">
 			<div class="column-4-med" ui-view="vehicle"></div>
-			<div class="column-8-med" ng-repeat="vehicle in vehicles track by $index" style="display: {{vehicle.display}};">
-                {{vehicle.display}}
+			<div class="column-8-med" ng-repeat="vehicle in vehicles track by $index" ng-show="vehicle.display">
 				<iframe id="{{vehicle.mo_id}}" class="mapFrame" ng-src="{{vehicle.url}}" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" onload="onFrameLoaded()"></iframe>
 			</div>
 			<div class="column-12-med" ng-show="pageLoaded">

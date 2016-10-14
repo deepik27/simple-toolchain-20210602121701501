@@ -99,7 +99,7 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 	}])
  
 	/* === GENERAL CONTROLLERS === */
-	.controller('mainCtrl', ['$scope', '$state', '$http', '$sce', '$location', '$window', '$timeout', function($scope, $state, $http, $sce, $location, $window, $document, $timeout) {
+	.controller('mainCtrl', ['$scope', '$state', '$http', '$sce', '$location', '$window', '$timeout', function($scope, $state, $http, $sce, $location, $window, $timeout) {
 		$scope.pageLoaded = false;
 
 		$window.onbeforeunload = function (e) {
@@ -258,7 +258,7 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 						url += "&loc=" + loc;
 					}
 					vehicle.url = $sce.trustAsResourceUrl(url);
-					vehicle.display = i == 0 ? "" : "none";		
+					vehicle.display = i === 0;		
 				});
 
 				$scope.vehicles = vehicles;
@@ -292,7 +292,7 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 		$scope.selectItem = function(index) {
 			var vehicles = $scope.vehicles;	    	 
 			vehicles.forEach(function(vehicle, i){
-				vehicle.display = i == index ? "" : "none";		
+				vehicle.display = i == index;		
 			});
 			$scope.selectedIndex = index;
 		};

@@ -131,7 +131,7 @@
 	</style>
 </head>
 <body ng-app="htmlClient">
-    <header ng-controller="header" style="display: {{hideHeader}}">
+    <header ng-controller="header" ng-hide="hideHeader">
         <div class="productTitle">
 			<a ui-sref="overview"><span id="pageTitle"></span></a>
         </div>
@@ -139,7 +139,7 @@
     <div>
 		<div ui-view></div>
 	</div>
-	<footer ng-controller="footer" style="display: {{hideFooter}}">
+	<footer ng-controller="footer" ng-hide="hideFooter">
 		<div class="tabbutton-group btn-group col-xs-12">
 			<button class="col-xs-6 tabbutton btn btn-default" ui-sref="home" ui-sref-active="active">Home</button>
  			<button class="col-xs-6 tabbutton btn btn-default" ui-sref="settings" ui-sref-active="active">Settings</button>

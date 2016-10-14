@@ -132,9 +132,9 @@ htmlClient.config(['$stateProvider', '$urlRouterProvider', function($stateProvid
 	}])
 ;
 htmlClient.controller('header', ['$scope', function($scope){
-    $scope.hideHeader = "none";
+    $scope.hideHeader = true;
 }]);
 
 htmlClient.controller('footer', ['$scope', function($scope){
-    $scope.hideFooter = "none";
+    $scope.hideFooter = true;
 }]);
