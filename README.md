@@ -30,11 +30,14 @@ To deploy your own instance of the server component of the Mobility Starter Appl
 1. [Register][bluemix_signup_url] an account on Bluemix or use an existing valid account.
 2. Download and install the [Cloud-foundry CLI][cloud_foundry_url] tool. 
 3. Clone the Fleet Management Starter Application to your local environment by using the following Terminal command:  
-```  
-git clone https://github.com/ibm-watson-iot/iota-starter-server-fm.git  
-```  
+
+   ```  
+   git clone https://github.com/ibm-watson-iot/iota-starter-server-fm.git  
+   ```  
+   
 4. Change to the directory that you just created. 
-5. Edit the `manifest.yml` file and change the values of `<name>` and `<host>` to something unique.  
+5. Edit the `manifest.yml` file and change the values of `<name>` and `<host>` to something unique.
+
   ```
   applications:
          :
@@ -44,35 +47,44 @@ git clone https://github.com/ibm-watson-iot/iota-starter-server-fm.git
     path: .
     instances: 1
          :
-  ```
-  The host value is used to generate your application URL, which is in the following syntax:  
+   ```
+   The host value is used to generate your application URL, which is in the following syntax:  
    `<host>.mybluemix.net`.
+   
 6. Install packages in dependencies of package.json:
    ```
   $ cd ./webclient
   $ npm install 
    ```
 7. Convert TypeScript to JavaScript:
+
    ```
    $ npm run tsc
    $ npm run gulp
    $ cd ..
    ```
+   
 8. By using the command line tool, connect to Bluemix and log in when prompted:
 
   ```
   $ cf api https://api.ng.bluemix.net
   $ cf login
   ```
+  
 9. Create an instance of the IBM Watson IoT Platform service in Bluemix:
+
   ```
   $ cf create-service iotforautomotive free_shared FleetIoTForAuto
   ```
+  
 10. Create an instance of the Cloudant NoSQL DB service in Bluemix:
+
   ```
   $ cf create-service cloudantNoSQLDB Lite FleetCloudantDB
   ```
+  
 11. Push the starter app to Bluemix by using the following command. Because you will need to perform additional steps when the app is deployed, you must add the option --no-start argument when you run the `push` command.
+
   ```
   $ cf push --no-start
   ```
