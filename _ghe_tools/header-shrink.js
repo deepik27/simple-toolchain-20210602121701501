@@ -40,7 +40,7 @@ var GLOB_BASE = '/**/*';
 // GLOB_BASE = '/public/top/index'; 
 
 // JS
-var files = glob.sync(BASE + GLOB_BASE + '.{js,css}', {ignore: BASE + IGNORE});
+var files = glob.sync(BASE + GLOB_BASE + '.{js,css,ts}', {ignore: BASE + IGNORE});
 files.forEach(function(file){
 	shrinkJS(file);
 });
