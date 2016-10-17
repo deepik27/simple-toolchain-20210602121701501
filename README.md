@@ -6,8 +6,6 @@ The IBM IoT for Automotive - Fleet Management Starter Application demonstrates h
 
 Using the Fleet Management Starter Application, you can easily track and view the following information in real-time:
 
-_* MP Who are the users (the you here) for this app? How many different personas?  *_
-
 - Availability of a fleet of cars on a map
 - Location of vehicles
 - Overall health of the entire fleet
@@ -51,12 +49,12 @@ To deploy your own instance of the server component of the Mobility Starter Appl
    The host value is used to generate your application URL, which is in the following syntax:  
    `<host>.mybluemix.net`.
    
-6. Install packages in dependencies of package.json:
+6. Install the NPM package by using the following command. The installer observes the dependencies that are specified in your `package.json` file.
    ```
   $ cd ./webclient
   $ npm install 
    ```
-7. Convert TypeScript to JavaScript:
+7. Convert TypeScript to JavaScript: 
 
    ```
    $ npm run tsc
@@ -71,7 +69,7 @@ To deploy your own instance of the server component of the Mobility Starter Appl
   $ cf login
   ```
   
-9. Create an instance of the IBM Watson IoT Platform service in Bluemix:
+9. Create an instance of the IBM IoT for Automotive service in Bluemix:
 
   ```
   $ cf create-service iotforautomotive free_shared FleetIoTForAuto
@@ -92,7 +90,7 @@ Your very own instance of the IBM IoT for Automotive - Fleet Management Starter 
 
 ## Activating the Bluemix services
 
-Before you can use the IBM IoT for Automotive - Fleet Management Starter Application, you need to set up and activate the dependent Bluemix services, as outlined in the following procedure:
+Before you can use the IBM IoT for Automotive - Fleet Management Starter Application, you need to do the following tasks:
 
 - [Activate the **IBM IoT for Automotive** service](#activate)
 - [Configure authentication](#authent)
@@ -106,12 +104,12 @@ Before you can use the IBM IoT for Automotive - Fleet Management Starter Applica
 
 3. Open the IBM IoT for Automotive service and then wait for a few seconds until the user credentials show up.
 
-### Configure authentication
+### Configuring authentication
 {: #authent}
 
 To secure the app, users must authenticate to access the app.
 
-By default, the user credentials for the IoT for Automotive - Fleet Management Starter Application are as follows:
+By default, authentication is enabled for the IoT for Automotive - Fleet Management Starter Application and the user credentials are as follows:
 
 User name | Password
 ----- | -----
@@ -126,13 +124,9 @@ starter | Starter4Iot
 
 1. Open the [Bluemix dashboard][bluemix_dashboard_url].
 
-2. Start the app.
+2. Start the app. 
 
 Congratulations! You are now ready to use your own instance of the IBM IoT for Automotive - Fleet Management Starter Application. Open `http://<host>.mybluemix.net` in your browser.
-
-## Usage
-
-## Implementation
 
 ## Reporting defects
 To report a defect with the IoT for Automotive - Mobility Starter Application mobile app, go to the [Issues section](https://github.com/ibm-watson-iot/iota-starter-server-fm/issues) section.
@@ -165,12 +159,12 @@ The tracked data is collected from the `VCAP_APPLICATION` and `VCAP_SERVICES` en
 You can disable the Deployment Tracker service by removing `require("cf-deployment-tracker-client").track();` from the beginning of the `app.js` server file.
 
 ## Useful links
-[IBM Bluemix](https://bluemix.net/)
-[IBM Bluemix Documentation](https://www.ng.bluemix.net/docs/)
-[IBM Bluemix Developers Community](http://developer.ibm.com/bluemix)
-[IBM Watson Internet of Things](http://www.ibm.com/internet-of-things/)
-[IBM Watson IoT Platform](http://www.ibm.com/internet-of-things/iot-solutions/watson-iot-platform/)
-[IBM Watson IoT Platform Developers Community](https://developer.ibm.com/iotplatform/)
+- [IBM Bluemix](https://bluemix.net/)
+- [IBM Bluemix Documentation](https://www.ng.bluemix.net/docs/)
+- [IBM Bluemix Developers Community](http://developer.ibm.com/bluemix)
+- [IBM Watson Internet of Things](http://www.ibm.com/internet-of-things/)
+- [IBM Watson IoT Platform](http://www.ibm.com/internet-of-things/iot-solutions/watson-iot-platform/)
+- [IBM Watson IoT Platform Developers Community](https://developer.ibm.com/iotplatform/)
 
 [bluemix_dashboard_url]: https://console.ng.bluemix.net/dashboard/
 [bluemix_signup_url]: https://console.ng.bluemix.net/registration/
