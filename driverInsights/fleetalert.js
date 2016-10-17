@@ -71,12 +71,11 @@ _.extend(driverInsightsAlert, {
 			fireRule: function(probe, vehicle){
 				var alerts = [];
 				if(vehicle && vehicle.vehicleInfo && vehicle.vehicleInfo.properties && vehicle.vehicleInfo.properties.fuelTank
-				&& vehicle.prevProbe && vehicle.prevProbe.props && vehicle.prevProbe.props.fuel
 				&& probe && probe.props && probe.props.fuel){
 					var fuelTank = vehicle.vehicleInfo.properties.fuelTank;
-					var prevFuel = vehicle.prevProbe.props.fuel;
+					var prevFuel = vehicle.prevProbe && vehicle.prevProbe.props && vehicle.prevProbe.props.fuel;
 					var fuel = probe.props.fuel;
-					if(prevFuel/fuelTank >= 0.1 && fuel/fuelTank < 0.1){
+					if((!prevFuel || prevFuel/fuelTank >= 0.1) && fuel/fuelTank < 0.1){
 						var alert = {
 								source: {type: "script", id: "low_fuel"},
 								type: "low_fuel",
@@ -111,14 +110,13 @@ _.extend(driverInsightsAlert, {
 			fireRule: function(probe, vehicle){
 				var alerts = [];
 				if(vehicle && vehicle.vehicleInfo && vehicle.vehicleInfo.properties && vehicle.vehicleInfo.properties.fuelTank
-				&& vehicle.prevProbe && vehicle.prevProbe.props && vehicle.prevProbe.props.fuel
 				&& probe && probe.props && probe.props.fuel){
 					var fuelTank = vehicle.vehicleInfo.properties.fuelTank;
-					var prevFuel = vehicle.prevProbe.props.fuel;
+					var prevFuel = vehicle.prevProbe && vehicle.prevProbe.props && vehicle.prevProbe.props.fuel;
 					var fuel = probe.props.fuel;
 					var prevFuelRatio = prevFuel/fuelTank;
 					var fuelRatio = fuel/fuelTank;
-					if((prevFuelRatio < 0.1 || 0.5 <= prevFuelRatio) && (0.1 <= fuelRatio && fuelRatio < 0.5)){
+					if((!prevFuelRatio || prevFuelRatio < 0.1 || 0.5 <= prevFuelRatio) && (0.1 <= fuelRatio && fuelRatio < 0.5)){
 						var alert = {
 								source: {type: "script", id: "half_fuel"},
 								type: "half_fuel",
@@ -137,7 +135,6 @@ _.extend(driverInsightsAlert, {
 			},
 			closeRule: function(alert, probe, vehicle){
 				if(vehicle && vehicle.vehicleInfo && vehicle.vehicleInfo.properties && vehicle.vehicleInfo.properties.fuelTank
-				&& vehicle.prevProbe && vehicle.prevProbe.props && vehicle.prevProbe.props.fuel
 				&& probe && probe.props && probe.props.fuel){
 					var fuelTank = vehicle.vehicleInfo.properties.fuelTank;
 					var fuel = probe.props.fuel;
@@ -154,7 +151,7 @@ _.extend(driverInsightsAlert, {
 		this.registerAlertRule("high_engine_temp", {
 			fireRule: function(probe, vehicle){
 				var alerts = [];
-				if(vehicle && vehicle.prevProbe && vehicle.prevProbe.props && vehicle.prevProbe.props.engineTemp <= 120
+				if(vehicle && (!vehicle.prevProbe || (vehicle.prevProbe && vehicle.prevProbe.props && vehicle.prevProbe.props.engineTemp <= 120))
 				&& probe && probe.props && probe.props.engineTemp > 120){
 					var alert = {
 							source: {type: "script", id: "high_engine_temp"},

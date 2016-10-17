@@ -294,7 +294,7 @@ var initWebSocketServer = function(server, path){
 function getCarProbe(qs, addAlerts){
 	var probes = Q(driverInsightsProbe.getCarProbe(qs).then(function(probes){
 		// send normal response
-		[].concat(probes).forEach(function(p){
+		(probes||[]).forEach(function(p){
 			if(p.timestamp){
 				p.ts = Date.parse(p.timestamp);
 				p.deviceID = p.mo_id;
