@@ -83,7 +83,7 @@ export class MapHelper {
   // show popover
   showPinnedPopover: ((feature: any)=> any);
 
-  constructor(public map:ol.Map) {
+  constructor(public map:ol.Map, public hittest: Function = null) {
     // animation event handler
     this._onPreComposeFunc = this._onPreCompose.bind(this);
     this._onPostComposeFunc = this._onPostCompose.bind(this);
@@ -340,8 +340,11 @@ export class MapHelper {
       }
 
       var feature = this.map.forEachFeatureAtPixel(event.pixel, function(feature, layer){
+        if (this.hittest && !this.hittest(event.coordinate, feature, layer)) {
+          return;
+        }
         return feature;
-      });
+      }.bind(this));
       this.map.getTargetElement().style.cursor = (feature ? 'pointer' : ''); // cursor
 
       // guard by pin state
@@ -386,8 +389,11 @@ export class MapHelper {
 
       this.map.on('singleclick', (function(event){
         var feature = this.map.forEachFeatureAtPixel(event.pixel, function(feature, layer){
+          if (this.hittest && !this.hittest(event.coordinate, feature, layer)) {
+            return;
+          }
           return feature;
-        });
+        }.bind(this));
         if(!feature) return; // pin feature only works on clicking on a feature
         clickOnFeatureFunc(feature);
       }).bind(this));

@@ -182,7 +182,11 @@ export class ItemToolComponent implements OnInit {
         let radius = geometry.radius;
         let center = [geometry.longitude, geometry.latitude];
         let edgeLonLat = helper.calcPosition(center, radius, 90);
-        edgeLonLat[1] += Math.abs(delta[1]);
+        if (handleIndex === 0 || handleIndex === 1) {
+          edgeLonLat[0] -= delta[0];
+        } else {
+          edgeLonLat[0] += delta[0];
+        }
         geometry.radius = helper.calcDistance(center, edgeLonLat);
       } else if (item.geometry_type === "rectangle") {
         if (handleIndex === 0) {

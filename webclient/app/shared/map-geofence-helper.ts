@@ -387,6 +387,29 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
     }
   }
 
+  public hitTest(geofence, feature, position) {
+    let area = geofence.target && geofence.target.area;
+    if (!area) {
+      return false;
+    }
+    let longitude = position[0];
+    let latitude = position[1];
+    if (area.min_longitude > longitude || longitude > area.max_longitude || area.min_latitude > latitude || latitude > area.max_latitude) {
+      return false;
+    }
+
+    if (geofence.direction === "in") {
+      return true;
+    }
+
+    let geometry = geofence.geometry;
+    if (geofence.geometry_type === "circle") {
+      return this.calcDistance([geometry.longitude, geometry.latitude], position) >= geometry.radius;
+    } else {
+      return geometry.min_longitude > longitude || longitude > geometry.max_longitude || geometry.min_latitude > latitude || latitude > geometry.max_latitude;
+    }
+  }
+
   /*
   * Calculate a distance between point1[longitude, latitude] and point2[longitude, latitude]
   */

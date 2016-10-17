@@ -123,7 +123,16 @@ export class ItemMapComponent implements OnInit {
     }.bind(this));
 
     // add helpers
-    this.mapHelper = new MapHelper(this.map);
+    this.mapHelper = new MapHelper(this.map, function(coordinate, feature, layer) {
+      let item = feature.get("item");
+      if (item) {
+        let helper = this.mapItemHelpers[item.getItemType()];
+        if (helper && helper.hitTest) {
+          return helper.hitTest(item, feature, ol.proj.toLonLat(coordinate, undefined));
+        }
+      }
+      return true;
+    }.bind(this));
     this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
     this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, {itemLabel: "Boundary", editable: true});
 
@@ -299,15 +308,20 @@ export class ItemMapComponent implements OnInit {
       }
       let item = feature.get("item");
       if (item) {
+        let helper = this.mapItemHelpers[item.getItemType()];
+        if (helper && helper.hitTest) {
+          let position = ol.proj.toLonLat(e.coordinate, undefined);
+          if (!helper.hitTest(item, feature, position)) {
+            return false;
+          }
+        }
         if (!this.commandExecutor.getMoveCommand(item, [0, 0])) {
           return false;
         }
       } else {
         let handle = feature.get("resizeHandle");
-        if (handle) {
-          if (!this.commandExecutor.getResizeCommand(handle.item, [0, 0], handle.index)) {
-            return false;
-          }
+        if (!handle || !this.commandExecutor.getResizeCommand(handle.item, [0, 0], handle.index)) {
+          return false;
         }
       }
 

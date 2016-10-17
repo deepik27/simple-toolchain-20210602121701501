@@ -8,7 +8,7 @@
           <tr>
             <td style="white-space:nowrap"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="none">Select</td>
             <td style="white-space:nowrap"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="event">Create an event</td>
-            <td style="white-space:nowrap"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" value="geofence">Create a boundary</td>
+            <td style="white-space:nowrap"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="geofence">Create a boundary</td>
           </tr>
         </tbody>
       </table>
@@ -44,6 +44,7 @@
       <div class="toolPageDescription">Click the Add button to create a new boundary.</div>
       <table class="toolPage">
         <tbody>
+<!--
           <tr class="toolItemRow">
             <td class="toolItemLabel">Type: </td>
             <td class="toolItemValue">
@@ -53,6 +54,7 @@
             </td>
             <td></td>
           </tr>
+-->          
           <tr class="toolItemRow">
             <td class="toolItemLabel">Direction: </td>
             <td class="toolItemValue">

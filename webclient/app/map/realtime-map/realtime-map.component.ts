@@ -160,7 +160,17 @@ export class RealtimeMapComponent implements OnInit {
 				zoom: ((this.region && this.region.zoom) || DEFAULT_ZOOM)
 			}),
 		});
-		this.mapHelper = new MapHelper(this.map);
+    // add helpers
+    this.mapHelper = new MapHelper(this.map, function(coordinate, feature, layer) {
+      let item = feature.get("item");
+      if (item) {
+        let helper = this.mapItemHelpers[item.getItemType()];
+        if (helper && helper.hitTest) {
+          return helper.hitTest(item, feature, ol.proj.toLonLat(coordinate, undefined));
+        }
+      }
+      return true;
+    }.bind(this));
 		this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
     this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, {itemLabel: "Boundary"});
 
