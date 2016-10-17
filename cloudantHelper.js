@@ -22,6 +22,11 @@ var cloudantCreds = VCAP_SERVICES.cloudantNoSQLDB[0].credentials;
 var Cloudant = require('cloudant');
 
 /*
+ * Cloudant library initialization option
+ */
+var CLOUDANT_OPTS = {url: cloudantCreds.url, plugin: 'retry', retryAttempts: 5, retryTimeout: 500 };
+
+/*
  * Settings for the device and reservation database
  */
 var CLOUDANT_DB_NAME = 'mobilitystarterappdb';
@@ -53,7 +58,7 @@ function CloudantDeferred(dbname, db_promise){
 CloudantDeferred.prototype.ensureDB = function(dbName){
 	//connect to the database or create it if needed
 	var deferred = Q.defer();
-	Cloudant(cloudantCreds.url, function(err, cloudant){
+	Cloudant(CLOUDANT_OPTS, function(err, cloudant){
 		console.log('Connected to Cloudant');
 		
 		cloudant.db.list(function(err, all_dbs){
@@ -295,12 +300,12 @@ CloudantDeferred.prototype.view = function(designname, viewname, params){
 //
 
 //init cloudant DB connection
-var cloudant = Cloudant(cloudantCreds.url);
+var cloudant = Cloudant(CLOUDANT_OPTS);
 var db = null;
 
 cloudantHelper.getDBClient = function(){
 	var deferred = Q.defer();
-	Cloudant(cloudantCreds.url, function(err,cloudant) {
+	Cloudant(CLOUDANT_OPTS, function(err,cloudant) {
 		if(!err)
 			deferred.resolve(cloudant.db.use(CLOUDANT_DB_NAME));
 		else
