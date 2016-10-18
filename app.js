@@ -26,6 +26,9 @@ var express = require('express')
   , methodOverride = require('method-override');
 var appEnv = require("cfenv").getAppEnv();
 
+//Deployment tracker code snippet
+require("cf-deployment-tracker-client").track();
+
 var app = express();
 
 // all environments
