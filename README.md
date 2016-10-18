@@ -1,10 +1,10 @@
 # IBM IoT for Automotive - Fleet Management Starter Application
 
-The IBM IoT for Automotive - Fleet Management Starter Application demonstrates how quickly you can build an app on IBM Bluemix to manage and monitor a fleet of vehicles in real-time.
+The IBM IoT for Automotive - Fleet Management Starter Application demonstrates how quickly you can build an app on IBM Bluemix to manage and monitor a fleet of vehicles in real time.
 
 ## Overview
 
-The Fleet Management Starter Application uses services in IBM Bluemix to provide a sample solution for fleet operation management and personnel. By using the application, you can easily track and view the following information in real-time:
+The Fleet Management Starter Application uses services in IBM Bluemix to provide a sample solution for fleet operation management and personnel. By using the application, you can easily track and view the following information:
 
 - Availability of a fleet of cars on a map
 - Location of vehicles
@@ -21,19 +21,19 @@ The Fleet Management Starter Application uses the following services that are av
 
 ## Deploying the app on Bluemix
 
-You can automatically deploy an instance of the Fleet Management Starter Application in Bluemix by using the [![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm.git) button. You can also deploy the app manually. 
+You can automatically deploy an instance of the Fleet Management Starter Application in Bluemix by clicking [![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm.git). You can also deploy the app manually. 
 
 To manually deploy your own instance of the server component of the Mobility Starter Application on Bluemix, complete all of the following steps:
 
 1. [Register][bluemix_signup_url] an account on Bluemix or use an existing valid account.
 2. Download and install the [Cloud-foundry CLI][cloud_foundry_url] tool. 
-3. Clone the Fleet Management Starter Application to your local environment by using the following Terminal command:  
+3. Clone the Fleet Management Starter Application to your local environment by using the following console command:  
 
    ```  
    git clone https://github.com/ibm-watson-iot/iota-starter-server-fm.git  
    ```  
    
-4. Change to the directory that you just created. 
+4. Change to the directory that you created. 
 5. Edit the `manifest.yml` file and change the values of `<name>` and `<host>` to something unique.
 
   ```
@@ -81,7 +81,7 @@ To manually deploy your own instance of the server component of the Mobility Sta
   $ cf create-service cloudantNoSQLDB Lite FleetCloudantDB
   ```
   
-11. Push the starter app to Bluemix by using the following command. Because you will need to perform additional steps when the app is deployed, you must add the option --no-start argument when you run the `push` command.
+11. Push the starter app to Bluemix by using the following command. Because you will need to perform more steps when the app is deployed, you must add the option `--no-start` when you run the `push` command.
 
   ```
   $ cf push --no-start
@@ -101,19 +101,17 @@ Before you can use the IBM IoT for Automotive - Fleet Management Starter Applica
 
 2. Open the [Bluemix dashboard][bluemix_dashboard_url] in your browser.
 
-3. Open the IBM IoT for Automotive service and then wait for a few seconds until the user credentials show up.
+3. Open the IBM IoT for Automotive service and then wait for a few seconds until the user credentials display.
 
 ### <a name="authent"></a> Configuring authentication
 
-To secure the app, users must authenticate to access the app.
-
-By default, authentication is enabled for the IoT for Automotive - Fleet Management Starter Application and the user credentials are as follows:
+To secure the app, authentication is enabled by default for the IoT for Automotive - Fleet Management Starter Application. The default user credentials are as follows:
 
 User name | Password
 ----- | -----
 starter | Starter4Iot
 
-- To change the user name or password that is used by the app, edit the values specified for the `APP_USER` and `APP_PASSWORD` environment variables.
+- To change the user name or password that is used by the app, edit the values that are specified for the `APP_USER` and `APP_PASSWORD` environment variables.
 
 - To remove authentication, set both the `APP_USER` and `APP_PASSWORD` environment variables to 'none'.
 
@@ -132,7 +130,7 @@ To debug problems, check the Bluemix app logs. To view the logs, run the followi
   ```
   $ cf logs <application-name> --recent
   ```
-For more detailed information on troubleshooting your application, see the [Troubleshooting section](https://www.ng.bluemix.net/docs/troubleshoot/tr.html) in the Bluemix documentation.
+For more information about how to troubleshoot your application, see the [Troubleshooting section](https://www.ng.bluemix.net/docs/troubleshoot/tr.html) in the Bluemix documentation.
 
 ## Privacy Notice
 
@@ -147,7 +145,7 @@ For each instance that you deploy, the following information is sent to a [Deplo
 * Labels of bound services
 * Number of instances for each bound service
 
-The tracked data is collected from the `VCAP_APPLICATION` and `VCAP_SERVICES` environment variables in IBM Bluemix and other Cloud Foundry platforms. The data is used by IBM to track metrics around deployments of sample applications to IBM Bluemix to measure the usefulness of our examples, so that we can continuously improve the content that we offer to you. Only deployments of sample applications that include code to ping the Deployment Tracker service will be tracked.
+The tracked data is collected from the `VCAP_APPLICATION` and `VCAP_SERVICES` environment variables in IBM Bluemix and other Cloud Foundry platforms. We use the data to track metrics around deployments of sample applications to IBM Bluemix to measure the usefulness of our examples so that we can continuously improve the content that we offer to you. Only deployments of sample applications that include code to ping the Deployment Tracker service are tracked.
 
 ### Disabling deployment tracking
 
