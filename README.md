@@ -4,7 +4,7 @@ The IBM IoT for Automotive - Fleet Management Starter Application demonstrates h
 
 ## Overview
 
-Using the Fleet Management Starter Application, you can easily track and view the following information in real-time:
+The Fleet Management Starter Application uses services in IBM Bluemix to provide a sample solution for fleet operation management and personnel. By using the application, you can easily track and view the following information in real-time:
 
 - Availability of a fleet of cars on a map
 - Location of vehicles
@@ -21,9 +21,9 @@ The Fleet Management Starter Application uses the following services that are av
 
 ## Deploying the app on Bluemix
 
-You can deploy the Fleet Management Starter Application automatically in Bluemix by using the [![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm.git) button or you can deploy the app manually. 
+You can automatically deploy an instance of the Fleet Management Starter Application in Bluemix by using the [![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm.git) button. You can also deploy the app manually. 
 
-To deploy your own instance of the server component of the Mobility Starter Application on Bluemix, complete all of the following steps:
+To manually deploy your own instance of the server component of the Mobility Starter Application on Bluemix, complete all of the following steps:
 
 1. [Register][bluemix_signup_url] an account on Bluemix or use an existing valid account.
 2. Download and install the [Cloud-foundry CLI][cloud_foundry_url] tool. 
@@ -119,9 +119,7 @@ starter | Starter4Iot
 
 ## <a name="run"></a> Starting the app
 
-1. Open the [Bluemix dashboard][bluemix_dashboard_url].
-
-2. Start the app. 
+- To start the Fleet Management Starter Application, open the [Bluemix dashboard][bluemix_dashboard_url] and start the app.
 
 Congratulations! You are now ready to use your own instance of the IBM IoT for Automotive - Fleet Management Starter Application. Open `http://<host>.mybluemix.net` in your browser.
 
