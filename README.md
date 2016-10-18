@@ -95,8 +95,7 @@ Before you can use the IBM IoT for Automotive - Fleet Management Starter Applica
 - [Activate the **IBM IoT for Automotive** service](#activate)
 - [Configure authentication](#authent)
 
-### Activating the IBM IoT for Automotive service
-{: #activate}
+### <a name="activate"></a> Activating the IBM IoT for Automotive service
 
 1. If the app is already running on Bluemix, stop the app.
 
@@ -104,8 +103,7 @@ Before you can use the IBM IoT for Automotive - Fleet Management Starter Applica
 
 3. Open the IBM IoT for Automotive service and then wait for a few seconds until the user credentials show up.
 
-### Configuring authentication
-{: #authent}
+### <a name="authent"></a> Configuring authentication
 
 To secure the app, users must authenticate to access the app.
 
@@ -119,8 +117,7 @@ starter | Starter4Iot
 
 - To remove authentication, set both the `APP_USER` and `APP_PASSWORD` environment variables to 'none'.
 
-## Starting the app
-{: #run}
+## <a name="run"></a> Starting the app
 
 1. Open the [Bluemix dashboard][bluemix_dashboard_url].
 
