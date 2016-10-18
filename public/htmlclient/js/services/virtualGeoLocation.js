@@ -184,12 +184,12 @@ angular.module('htmlClient')
 			var self=this;
 
 			// make URL
-			var url = "/user/routesearch?orig_latitude=" + start.lat + "&orig_longitude=" + start.lng + "&target_latitude=" + end.lat + "&target_longitude=" + end.lng;
+			var url = "/user/routesearch?orig_latitude=" + start.lat + "&orig_longitude=" + start.lng + "&dest_latitude=" + end.lat + "&dest_longitude=" + end.lng;
 			if (!isNaN(start.heading)) {
 				url += "&orig_heading=" + start.heading;
 			}
 			if (!isNaN(end.heading)) {
-				url += "&target_heading=" + end.heading;
+				url += "&dest_heading=" + end.heading;
 			}
 			if(this.options && this.options.avoid_events) {
 				url += "&option=avoid_event";

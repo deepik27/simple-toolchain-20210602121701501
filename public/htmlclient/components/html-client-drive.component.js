@@ -94,7 +94,7 @@
 	            	$scope.connecting = false;
         		}
         	}
-			
+
 			//////////////////////////////////////////////////////////////////
 			// UI handlers
 			//////////////////////////////////////////////////////////////////
@@ -172,7 +172,29 @@
 		    		engineTemp: $scope.engineTemp
 		    	});
 		    };
+		
+		    $scope.onChangeSrcDirection = function() {
+				var loc = virtualGeoLocation.getCurrentPosition(function(loc) {
+					var coords = loc.coords;
+					if (!coords) {
+						return;
+					}
+					virtualGeoLocation.setCurrentPosition({lat: coords.latitude, lon: coords.longitude, heading: $scope.srcDirection}).then(function(tripRoute){
+						_plotTripRoute(tripRoute);
+					});
+				});
+		    };
 			
+		    $scope.onChangeDstDirection = function() {
+		    	var destination = virtualGeoLocation.getDestination();
+		    	if (!destination) {
+		    		return;
+		    	}
+				virtualGeoLocation.setDestinationPosition({lat: destination.lat, lon: destination.lon, heading: $scope.dstDirection}).then(function(tripRoute){
+					_plotTripRoute(tripRoute);
+				});
+		    };
+		    
 		    $scope.onAvoidEventChange = function() {
 		    	virtualGeoLocation.setOption("avoid_events", $scope.opt_avoid_events);
 		    	virtualGeoLocation.updateRoute().then(function(tripRoute) {
@@ -197,6 +219,10 @@
         	$scope.connecting = false;
 	        $scope.deviceLocation = {};
 	        $scope.driveEvent = {};
+			$scope.directions = [{label: "North", value: 0}, {label: "North East", value: 45}, {label: "East", value: 90}, {label: "South East", value: 135},
+				                      {label: "South", value: 180}, {label: "South West", value: 225}, {label: "West", value: 270}, {label: "North West", value: 315}];
+			$scope.srcDirection = 0;
+			$scope.dstDirection = 0;
 	        $scope.actionMode = "action-car-position";
 	        $scope.opt_avoid_events = virtualGeoLocation.getOption("avoid_events");
 	        $scope.opt_route_loop = virtualGeoLocation.getOption("route_loop");
@@ -378,12 +404,12 @@
 					if(!carProbeService.hasTripId() && carProbeService.settings.simulation){
 						var loc = ol.proj.toLonLat(e.coordinate);
 						if ($scope.actionMode === "action-car-position") {
-							virtualGeoLocation.setCurrentPosition({lat: loc[1], lon: loc[0]}).then(function(tripRoute){
+							virtualGeoLocation.setCurrentPosition({lat: loc[1], lon: loc[0], heading: $scope.srcDirection}).then(function(tripRoute){
 								_plotTripRoute(tripRoute);
 							});
 							carFeature.getGeometry().setCoordinates(e.coordinate);
 						} else if ($scope.actionMode === "action-route") {
-							virtualGeoLocation.setDestinationPosition({lat: loc[1], lon: loc[0]}).then(function(tripRoute){
+							virtualGeoLocation.setDestinationPosition({lat: loc[1], lon: loc[0], heading: $scope.dstDirection}).then(function(tripRoute){
 								_plotTripRoute(tripRoute);
 							});
 							setDestination(e.coordinate);

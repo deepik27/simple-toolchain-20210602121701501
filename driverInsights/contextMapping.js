@@ -63,17 +63,18 @@ var contextMapping = {
 	/**
 	 * Async get route from (orig_lat, orig_lon) to (dest lat, dest_lon).
 	 */
-	routeSearch: function(orig_lat, orig_lon, dest_lat, dest_lon, option){
+	routeSearch: function(orig_lat, orig_lon, orig_heading, dest_lat, dest_lon, dest_heading, option){
 		var deferred = Q.defer();
 
 		var tenant_id = this.contextMappingConfig.tenant_id;
 		var options = this._addAuthOption(this.contextMappingConfig, {
 				url: this.contextMappingConfig.baseURL + '/mapservice/routesearch' + 
-					'?orig_heading=0&dest_heading=0' +
+					'?orig_heading=' + orig_heading.toString() +
 					'&orig_latitude=' + orig_lat.toString() +
 					'&orig_longitude=' + orig_lon.toString() +
 					'&dest_latitude=' + dest_lat.toString() +
 					'&dest_longitude=' + dest_lon.toString() +
+					'&dest_heading=' + dest_heading.toString() +
 					(option ? ('&option=' + option) : '') +
 					(tenant_id ? ('&tenant_id=' + tenant_id) : '')
 		});
@@ -101,7 +102,7 @@ var contextMapping = {
 	 * Async get distance from (orig_lat, orig_lon) to (dest lat, dest_lon).
 	 */
 	routeDistance: function(orig_lat, orig_lon, dest_lat, dest_lon){
-		return this.routeSearch(orig_lat, orig_lon, dest_lat, dest_lon).then(function(route){
+		return this.routeSearch(orig_lat, orig_lon, 0, dest_lat, dest_lon, 0).then(function(route){
 			return route.route_length || -1;
 		})['catch'](function(er){
 			// fall-back error and return -1;

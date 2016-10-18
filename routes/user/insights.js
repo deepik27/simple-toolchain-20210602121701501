@@ -111,8 +111,10 @@ router.get("/routesearch", function(req, res){
 	driverInsightsContextMapping.routeSearch(
 		q.orig_latitude,
 		q.orig_longitude,
-		q.target_latitude,
-		q.target_longitude,
+		q.orig_heading || 0,
+		q.dest_latitude,
+		q.dest_longitude,
+		q.dest_heading || 0,
 		q.option
 	).then(function(msg){
 		res.send(msg);
