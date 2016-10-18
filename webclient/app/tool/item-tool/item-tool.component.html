@@ -1,14 +1,14 @@
 <div>
-  <div id="item-tool" class="item-tool">
+  <div id="item-tool" class="item-tool" [hidden]="!supportedItems || supportedItems.length === 0">
     <div class="itemTypeSelection">
       <table>
         <tbody>
           <tr>
             <td colspan="3" style="padding-bottom:10px;"><label for="creationGroup">Mouse click action: </label></td>
           <tr>
-            <td style="white-space:nowrap"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="none">Select</td>
-            <td style="white-space:nowrap"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="event">Create an event</td>
-            <td style="white-space:nowrap"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="geofence">Create a boundary</td>
+            <td style="white-space:nowrap"><span><input type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="none">Select</span></td>
+            <td style="white-space:nowrap"><span [hidden]="supportedItems.indexOf('event') < 0"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="event" [hidden]="supportedItems.indexOf('event') < 0">Create an event</span></td>
+            <td style="white-space:nowrap"><span [hidden]="supportedItems.indexOf('geofence') < 0"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="geofence">Create a boundary</span></td>
           </tr>
         </tbody>
       </table>

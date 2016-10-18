@@ -17,6 +17,7 @@ declare var $; // jQuery from <script> tag in the index.html
 })
 export class ItemToolComponent implements OnInit {
   itemMap = null;
+  supportedItems = ["event"/*, "geofence"*/];
   eventTypes = [];
   selectedEventType = null;
   eventDirections = [{label: "North", value: 0}, {label: "North East", value: 45}, {label: "East", value: 90}, {label: "South East", value: 135},
