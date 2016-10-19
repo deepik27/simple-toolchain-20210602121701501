@@ -8,7 +8,8 @@
  * You may not use this file except in compliance with the license.
  */
 import { Injectable, Inject } from '@angular/core';
-import { Http, Request, Response, URLSearchParams } from '@angular/http';
+import { HttpClient } from './http-client';
+import { Request, Response, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 
 import { RealtimeDeviceDataProvider } from './realtime-device';
@@ -39,7 +40,7 @@ export class RealtimeDeviceDataProviderService {
 	carStatusIntervalTimer: any;
 
   constructor(
-    private $http: Http,
+    private $http: HttpClient,
     @Inject(APP_CONFIG) appConfig: AppConfig
   ) {
     this.webApiHost = appConfig.webApiHost;

@@ -8,7 +8,8 @@
  * You may not use this file except in compliance with the license.
  */
 import { Component, Input, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { Http, Request, Response } from '@angular/http';
+import { HttpClient } from '../../shared/http-client';
+import { Request, Response } from '@angular/http';
 
 @Component({
   moduleId: module.id,
@@ -40,7 +41,7 @@ export class AlertListComponent{
   selected_row_index:string;
   @ViewChild("valueSelect") valueSelect:ElementRef;
 
-  constructor(private http: Http) {  }
+  constructor(private http: HttpClient) {  }
 
   ngOnInit(){
     if(!this.prop){

@@ -8,12 +8,13 @@
  * You may not use this file except in compliance with the license.
  */
 import { Injectable } from "@angular/core";
-import { Http, Response, Headers, RequestOptions } from "@angular/http";
+import { HttpClient } from "./http-client";
+import { Response, Headers, RequestOptions } from "@angular/http";
 import { Observable } from "rxjs/Observable";
 
 @Injectable()
 export class GeofenceService {
-  constructor (private http: Http) {
+  constructor (private http: HttpClient) {
   }
 
 	/*

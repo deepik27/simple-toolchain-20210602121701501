@@ -8,7 +8,8 @@
  * You may not use this file except in compliance with the license.
  */
 import { Component, Input } from '@angular/core';
-import { Http, Response, Headers, RequestOptions } from '@angular/http';
+import { HttpClient } from '../../shared/http-client';
+import { Response, Headers, RequestOptions } from '@angular/http';
 import { Observable }     from 'rxjs/Observable';
 
 @Component({
@@ -25,7 +26,7 @@ export class VendorListComponent {
   formVendor: Vendor;
   errorMessage: string;
 
-  constructor(private http: Http) {
+  constructor(private http: HttpClient) {
 //    this.selectedVendor = new Vendor({});
     this.formVendor = new Vendor({});
     this.errorMessage = "";

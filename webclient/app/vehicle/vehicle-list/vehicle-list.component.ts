@@ -8,7 +8,8 @@
  * You may not use this file except in compliance with the license.
  */
 import { Component, Input } from '@angular/core';
-import { Http, Response, Headers, RequestOptions } from '@angular/http';
+import { HttpClient } from '../../shared/http-client';
+import { Response, Headers, RequestOptions } from '@angular/http';
 import { Observable }     from 'rxjs/Observable';
 import { OrderByPipe } from '../../utils/order-by.pipe';
 import { MomentPipe } from '../../utils/moment.pipe';
@@ -34,7 +35,7 @@ export class VehicleListComponent {
   vendors: string[];
   selected_mo_id: string;
 
-  constructor(private http: Http) {
+  constructor(private http: HttpClient) {
     this.numRecInPage = 15;
     this.pageNumber = 1;
     this.hasNext = false;
