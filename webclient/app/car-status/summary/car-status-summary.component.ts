@@ -12,6 +12,8 @@ import { Component, OnInit } from '@angular/core';
 import { ChartItemComponent } from './chart-item.component'
 import { CarListComponent } from './car-list.component'
 import { CarStatusDataService } from './car-status-data.service';
+import { LocationService, MapArea } from '../../shared/location.service';
+import { RealtimeDeviceDataProviderService } from '../../shared/realtime-device-manager.service';
 
 @Component({
   moduleId: module.id,
@@ -22,13 +24,34 @@ import { CarStatusDataService } from './car-status-data.service';
 export class CarStatusSummaryComponent implements OnInit {
   private selectedGroupingProp: string;
   private selectedGroupingLabel: string;
+  private regions: MapArea[];
+  private selectedRegion: MapArea;
 
-  constructor() {  }
+  constructor(
+    private locationService: LocationService,
+    private realtimeDeviceDataProviderService: RealtimeDeviceDataProviderService
+  ) {
+    this.regions = this.locationService.getRegions().map(x=>x);
+  }
 
-  ngOnInit() {}
+  ngOnInit() {
+    if(this.locationService.getMapRegion()){
+      this.regions.push(this.locationService.getMapRegion());
+      this.selectedRegion = this.regions[this.regions.length - 1];
+    }else{
+      this.selectedRegion = this.regions[0];
+    }
+    // initialize tracking
+    this.realtimeDeviceDataProviderService.startTracking(this.selectedRegion.extent);
+  }
 
   chartSelectionChanged($event) {
     this.selectedGroupingProp = $event.key;
     this.selectedGroupingLabel = $event.value;
+  }
+  selectRegion(selValue){
+    var region = this.regions[parseInt(selValue)];
+    // update tracking extent
+    this.realtimeDeviceDataProviderService.startTracking(region.extent);
   }
 }
