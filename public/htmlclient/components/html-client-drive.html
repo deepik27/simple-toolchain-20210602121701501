@@ -35,11 +35,11 @@
 			 	<div style="margin-top: 5px; margin-left: 10px;">
 			 		<span  style="white-space: nowrap">
 				 		<span style="white-space: nowrap; margin-right: 5px;"><input type="radio" name="actionGroup" ng-disabled="driveEvent.trip_id" ng-model="actionMode" value="action-car-position" id="start"><label for="start">Set start position</label></span>
-			 		  	<select style="margin-right: 10px;" ng-model="srcDirection" ng-options="dir.value as dir.label for dir in directions" ng-change="onChangeSrcDirection()"></select>
+			 		  	<select style="margin-right: 10px;" ng-model="srcDirection" ng-options="dir.value as dir.label for dir in directions" ng-change="onChangeSrcDirection()" ng-disabled="driveEvent.trip_id"></select>
 			 		</span>
 			 		<span  style="white-space: nowrap">
 				 		<span style="white-space: nowrap; margin-right: 5px;"><input type="radio" name="actionGroup" ng-disabled="driveEvent.trip_id" ng-model="actionMode" value="action-route" id="destination"><label for="destination">Set end position</label></span>
-			 		  	<select style="margin-right: 10px;" ng-model="dstDirection" ng-options="dir.value as dir.label for dir in directions" ng-change="onChangeDstDirection()"></select>
+			 		  	<select style="margin-right: 10px;" ng-model="dstDirection" ng-options="dir.value as dir.label for dir in directions" ng-change="onChangeDstDirection()" ng-disabled="driveEvent.trip_id">></select>
 			 		</span>
 			 	</div>	
 	 		</div>
