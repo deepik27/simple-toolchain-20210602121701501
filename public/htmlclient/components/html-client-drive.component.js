@@ -157,12 +157,21 @@
 		    
 		    var vehicleData = {};
 		    $scope.updateVehicleDataName = function(){
-		    	$scope.vehicleDataValue = vehicleData[$scope.vehicleDataName];
+				var value = vehicleData[$scope.vehicleDataName];
+				if(value){
+					$scope.vehicleDataValue = $scope.vehicleDataName === "engineTemp" ? String(value*9/5 + 32) : value;
+				}else{
+					$scope.vehicleDataValue = "";
+				}
 		    };
 		    $scope.updateVehicleDataValue = function(){
 		    	if($scope.vehicleDataName){
-		    		var value = $scope.vehicleDataName === "engineTemp" ? String(($scope.vehicleDataValue-32)*5/9) : $scope.vehicleDataValue;
+					var value = $scope.vehicleDataValue;
+					if(value){
+						vehicleData[$scope.vehicleDataName] = $scope.vehicleDataName === "engineTemp" ? String((value-32)*5/9) : value;
+					}else{
 		    		vehicleData[$scope.vehicleDataName] = value;
+					}
 			    	carProbeService.setVehicleData(vehicleData);
 			    }
 		    };
@@ -230,7 +239,7 @@
 			// rules
 			// should be synced with rules defined in /driverinsights/fleetalert.js
 			$scope.rules = [
-				{propName: "engineTemp", label: "Engine Temprature (Critical if larger than 248)"},
+				{propName: "engineTemp", label: "Engine Temperature (Critical if larger than 248)"},
 				{propName: "fuel", label: "Fuel"}
 			];
 			assetService.getVehicle(assetService.getVehicleId()).then(function(vehicle){
