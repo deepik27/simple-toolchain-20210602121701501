@@ -1,3 +1,12 @@
+/**
+ * Copyright 2016 IBM Corp. All Rights Reserved.
+ *
+ * Licensed under the IBM License, a copy of which may be obtained at:
+ *
+ * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AEGGZJ&popup=y&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ *
+ * You may not use this file except in compliance with the license.
+ */
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
@@ -22,9 +31,9 @@ export class NumberOfCarsService {
       .map(x => {
         let devices = this.animatedDeviceManager.getDevices();
         var all = devices.length;
-        var all_troubled = devices.filter(device => (device.latestInfo && device.latestInfo.alerts && Object.keys(device.latestInfo.alerts).length > 0)).length;
-        var critical = devices.filter(device => (device.latestInfo && device.latestInfo.alerts && (device.latestInfo.alerts.Critical || device.latestInfo.alerts.High))).length;
-        return <Counts>{ _region: region, all: all, troubled: all_troubled - critical, critical: critical };
+        var troubled = devices.filter(device => (device.latestSample && device.latestSample.status === 'troubled')).length;
+        var critical = devices.filter(device => (device.latestSample && device.latestSample.status === 'critical')).length;
+        return <Counts>{ _region: region, all: all, troubled: troubled, critical: critical };
       })
       .startWith(loadingData)
       .do(counts => this.log('getNumberOfCars(%s) item: %s', debugKey, counts.all));

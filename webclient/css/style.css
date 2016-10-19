@@ -1,17 +1,11 @@
 /**
  * Copyright 2016 IBM Corp. All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the IBM License, a copy of which may be obtained at:
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AEGGZJ&popup=y&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You may not use this file except in compliance with the license.
  */
 /*
 Theme Name: System Monitoring Web UI
@@ -37,6 +31,7 @@ Author URI: http://www.ibm.com/internet-of-things/
 15. Real-Time Map Styles
 16. C3 Styles
 17. OpenLayers Styles
+18. Alert Popover Styles
 */
 
 @import url('reset.css');
@@ -234,6 +229,7 @@ i.iconBlock {
 }
 
 .card {
+    position: relative;
     display: table;
     width: 100%;
     background: #fff;
@@ -254,6 +250,85 @@ i.iconBlock {
     -webkit-transition: all .1s ease-in;
     transition:         all .1s ease-in;
 }
+
+.cardOverlay {
+    position: absolute;
+    display: block;
+    margin: -20px;
+    width: 100%;
+    height: 100%;
+    background: rgba(256, 256, 256, 0.85);
+    z-index: 5;
+    -moz-transition:    all .1s ease-in;
+    -webkit-transition: all .1s ease-in;
+    transition:         all .1s ease-in;
+}
+
+.cardOverlay p {
+    position: absolute;
+    font-size: 30px;
+    font-weight: 700;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.radarCircles {
+    position: relative;
+}
+
+.radarCircles,
+.statusCircle {
+    display: block;
+    width: 10px;
+    height: 10px;
+}
+
+.statusCircle {
+    position: absolute;
+    display: block;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 500px;
+}
+
+.greenStatus{
+    background: #00d500;
+}
+
+.greenStatusZoom {
+    -webkit-animation:    radarEffect 1s 5;
+    -moz-animation:       radarEffect 1s 5;
+    -o-animation:         radarEffect 1s 5;
+    animation:            radarEffect 1s 5;
+}
+
+@-webkit-keyframes radarEffect {
+  0%   { transform: scale(1); opacity: 0.75; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@-moz-keyframes radarEffect {
+  0%   { transform: scale(1); opacity: 0.75; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@-o-keyframes radarEffect {
+  0%   { transform: scale(1); opacity: 0.75; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes radarEffect {
+  0%   { transform: scale(1); opacity: 0.75; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+.redStatus{
+    background: #ff0000;
+}
+
 
 /* === 2. Header Styles === */
 
@@ -312,12 +387,41 @@ header .userImg img {
     transition: all .2s ease-in;
 }
 
+@media only screen 
+and (min-device-width : 768px) 
+and (max-device-width : 1024px) 
+and (orientation : portrait) {
+    header div.userImg {
+        display: none;
+    }
+
+    header p#userName {
+        display: none;
+    }
+
+    header p#hamburger {
+        display: table;
+    }
+}
+
 @media (max-width: 992px) {
     .content {
         padding-left: 0;
         -webkit-transition: all .2s ease-in;
         -moz-transition: all .2s ease-in;
         transition: all .2s ease-in;
+    }
+
+    header div.userImg {
+        display: none;
+    }
+
+    header p#userName {
+        display: none;
+    }
+
+    header p#hamburger {
+        display: table;
     }
 }
 
@@ -637,7 +741,7 @@ strong.carStatus-strong {
 }
 
 .speedometer-container .pointer {
-    background: #f05153;
+    background-color: #666666;
     bottom: 0px;
     width: 10px;
     height: 65%;
@@ -657,6 +761,22 @@ strong.carStatus-strong {
     margin-right: auto;
     left: 0;
     right: 0;
+}
+
+.speedometer-container .pointer.green {
+    background-color: #58a946;
+}
+
+.speedometer-container .pointer.blue {
+    background-color: #3774ba;
+}
+
+.speedometer-container .pointer.orange {
+    background-color: #f67734;
+}
+
+.speedometer-container .pointer.red {
+    background-color: #f05153;
 }
 
 @media (max-width: 440px) {
@@ -746,13 +866,29 @@ ul.thermometer li::before {
 }
 
 .thermometer-container .thermometer-range {
-    background: #f05153;
+    background: #666666;
     width: 2px;
     height: 10px;
     margin-top: -10px;
     -moz-transition:    all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
     -webkit-transition: all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
     transition:         all 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+}
+
+.thermometer-container .thermometer-range.green {
+  background-color: #58a946;
+}
+
+.thermometer-container .thermometer-range.blue {
+  background-color: #3774ba;
+}
+
+.thermometer-container .thermometer-range.orange {
+  background-color: #f67734;
+}
+
+.thermometer-container .thermometer-range.red {
+  background-color: #f05153;
 }
 
 /* === 10. Angular Styles === */
@@ -893,6 +1029,13 @@ ul.thermometer li::before {
     -ms-flex-preferred-size: 58.333333333%;
     -webkit-flex-basis: 58.333333333%;
     flex-basis: 58.333333333%;
+}
+
+.column-8-med {
+    max-width: 66.6666666%;
+    -ms-flex-preferred-size: 66.6666666%;
+    -webkit-flex-basis: 66.6666666%;
+    flex-basis: 66.6666666%;
 }
 
 .column-9-med {
@@ -1149,8 +1292,7 @@ div.em-Modal {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-    padding: 0 30px;
-    overflow: hidden;
+    overflow: scroll;
     color: #fff;
     opacity: 0;
     visibility: hidden;
@@ -1184,6 +1326,25 @@ div.em-Modal div.em-Modal-Content {
     transition: all .2s ease-in;
     -webkit-transition-delay: .1s;
     transition-delay: .1s;
+    overflow-y: scroll;
+}
+
+div.em-Modal div.em-Modal-Content::-webkit-scrollbar-track
+{
+	background-color: transparent;
+}
+
+div.em-Modal div.em-Modal-Content::-webkit-scrollbar
+{
+    margin-right: -10px;
+	width: 6px;
+	background-color: transparent;
+}
+
+div.em-Modal div.em-Modal-Content::-webkit-scrollbar-thumb
+{
+    margin-right: -10px;
+	background-color: #1d375b;
 }
 
 div.em-Modal div.em-Modal-Content-show {
@@ -1203,7 +1364,7 @@ div.em-Modal div.em-Modal-Close {
     opacity: 0;
     visibility: hidden;
     position: fixed;
-    right: 10px;
+    right: 30px;
     top: 30px;
     font-size: 50px;
     line-height: 0;
@@ -1570,6 +1731,14 @@ table th[class*="col-"] {
   overflow-x: auto;
   min-height: 0.01%;
 }
+.table-responsive thead th,
+.table thead tr th {
+  font-weight: 500;
+}
+.table-responsive tbody tr td {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
 @media screen and (max-width: 767px) {
   .table-responsive {
     width: 100%;
@@ -1909,6 +2078,10 @@ table th[class*="col-"] {
     bottom: 30px;
 }
 
+.carMonitorMap .ol-attribution.ol-uncollapsible {
+    height: 1.5em;
+}
+
 .carMonitorMap .popover {
     max-width: 414px;
 }
@@ -1940,6 +2113,18 @@ table th[class*="col-"] {
   padding: 0px 4px;
   line-height: 1.2;
   font-size: 12px;
+  border-radius: 3px;
+}
+
+.carMonitorMap .popover .popover-title .remove {
+  display: inline-block;
+  margin-top: -3px;
+  margin-bottom: 0;
+  margin-left: 4px;
+  margin-right: -10px;
+  padding: 0px 2px;
+  line-height: 1.2;
+  font-size: 16px;
   border-radius: 3px;
 }
 
@@ -2253,4 +2438,102 @@ table th[class*="col-"] {
   padding-top: 15px;
   padding-bottom: 5px;
 	text-align: center;
+}
+
+
+/* === 18. Alert Popover Styles === */
+
+
+.mapAlertPopover {
+  position: relative;
+  background-color: #fff; /* rgba(204, 204, 204, 1);*/
+
+  margin: 0px auto;
+  padding: 3px;
+
+  width: auto;
+  max-width: 500px;
+
+  transition: all 0.5s ease-in-out;
+  transform: scale(1); 
+
+  /* style from popover */
+  background-color: #ffffff;
+  -webkit-background-clip: padding-box;
+          background-clip: padding-box;
+  border: 1px solid #cccccc;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.mapAlertPopover .title {
+  padding-bottom: 3px;
+}
+
+.mapAlertPopover .title .close {
+  margin: 2px 5px 8px 5px;
+  transition: all 200ms;
+  font-size: 16px;
+  font-weight: normal;
+  text-decoration: none;
+  color: #000;
+}
+
+.mapAlertPopover .close::hover {
+  background-color: #EEE;
+}
+
+.mapAlertPopover .content {
+  font-size: 90%;
+  padding: 2px 2px;
+  max-height: 160px;
+  overflow: auto;
+}
+
+.mapAlertPopover.opening {
+  transform: scale(3);
+  opacity: 0;
+}
+
+.mapAlertPopover.closing {
+  transform: scale(0.2);
+  transform-origin: bottom right;  
+  opacity: 0;
+}
+
+
+.mapAlertPopover.red {
+  color: black;
+  /*background-color: #f05153;*/
+  background: rgba(240, 81, 83, 0.6);
+}
+
+.mapAlertPopover.orange {
+  color: black;
+  /*background-color: #f67734;*/
+  background: rgba(246, 119, 52, 0.6);
+}
+
+.mapAlertPopover.green {
+  color: black;
+  /*background-color: #58a946;*/
+  background: rgba(88, 169, 70, 0.6);
+}
+
+.mapAlertPopover.blue {
+  color: black;
+  /*background-color: #3774ba;*/
+  background: rgba(55, 116, 186, 0.6);
+}
+
+.mapAlertPopover .table {
+  margin-bottom: 0px !important;
+  margin-top: 0px !important;
+  background-color: #ffffff;
+}
+
+.mapAlertPopover .table > tbody > tr > td, .mapAlertPopover .table > thead > tr > th {
+  padding: 1px 5px;
 }

@@ -1,8 +1,19 @@
+/**
+ * Copyright 2016 IBM Corp. All Rights Reserved.
+ *
+ * Licensed under the IBM License, a copy of which may be obtained at:
+ *
+ * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AEGGZJ&popup=y&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ *
+ * You may not use this file except in compliance with the license.
+ */
 import { Injectable, Inject } from '@angular/core';
-import { Http, Request, Response, URLSearchParams } from '@angular/http';
-import { Observable, Subject } from 'rxjs/Rx.DOM';
+import { HttpClient } from './http-client';
+import { Request, Response, URLSearchParams } from '@angular/http';
+import { Observable } from 'rxjs/Observable';
 
 import { RealtimeDeviceDataProvider } from './realtime-device';
+import { APP_CONFIG, AppConfig } from '../app-config';
 
 
 var CAR_PROBE_URL = '/user/carProbe';
@@ -14,6 +25,8 @@ var CAR_STATUS_REFRESH_PERIOD = 0 // was 15000; now, setting 0 not to update via
 
 @Injectable()
 export class RealtimeDeviceDataProviderService {
+  private webApiHost: string;
+	private appConfig: AppConfig;
   //
 	// Devices management
 	//
@@ -27,9 +40,12 @@ export class RealtimeDeviceDataProviderService {
 	carStatusIntervalTimer: any;
 
   constructor(
-    private $http: Http,
-		@Inject('webApiHost') private webApiHost: string
-  ) {  }
+    private $http: HttpClient,
+    @Inject(APP_CONFIG) appConfig: AppConfig
+  ) {
+    this.webApiHost = appConfig.webApiHost;
+		this.appConfig = appConfig;
+   }
 
   private getQs(extent: any[], vehicleId: string){
     var xt = extent ? extent: [-180, -90, 180, 90];
@@ -103,20 +119,23 @@ export class RealtimeDeviceDataProviderService {
 					var ws = this.activeWsClient = Observable.webSocket(wssUrl);
 					this.activeWsSubscribe = ws.subscribe((data: any) => {
 						this.provider.addDeviceSamples(data.devices, true);
+						if(this.appConfig.DEBUG){
+							console.log('DEBUG-MAP: got devices data from WS: n=' + data.devices.length);
+						}
 					}, (e) => {
 						if (e.type === 'close'){
 							this.activeWsSubscribe = null;
 							ws.socket.close(); //closeObserver(); observer.dispose();
 							// handle close event
 							if(ws === this.activeWsClient){ // reconnect only when this ws is active ws
-								console.log('got wss socket close event. reopening...')
+								console.log('DEBUG-MAP: got wss socket close event. reopening...')
 								this.activeWsClient = null;
 								startWssClient(); // restart!
 								return;
 							}
 						}
 						// error
-						console.error('Error event from WebSock: ', e);
+						console.error('DEBUG-MAP: Unrecoverable event from WebSock: ', e);
 					});
 				};
 				startWssClient(); // start wss

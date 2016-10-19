@@ -1,4 +1,11 @@
-<div class="row noOffsetRow marginTop-15">
+<div class="noTopPadding">
+  <form class="alignRight">
+    <select [(ngModel)]="selectedRegion" #sel (change)="selectRegion(sel.value)" name="selectedRegion">
+      <option *ngFor="let region of regions" [ngValue]="region">{{region.name}}</option>
+    </select>
+  </form>
+</div>
+<div class="row noOffsetRow">
   <div class="column-6-med">
       <fmdash-chart-item
           title="Fuel"

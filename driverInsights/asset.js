@@ -1,19 +1,12 @@
 /**
  * Copyright 2016 IBM Corp. All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the IBM License, a copy of which may be obtained at:
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AEGGZJ&popup=y&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You may not use this file except in compliance with the license.
  */
-
 var _ = require("underscore");
 var Q = new require('q');
 var request = require("request");
@@ -37,6 +30,23 @@ var driverInsightsAsset = {
 		throw new Exception("!!! no provided credentials for Asset Data Management. using shared one !!!");
 	}(),
 
+	_mergeObject: function(obj1, obj2) {
+		for (var key in obj1) {
+			if (key in obj2) {
+				if (typeof(obj1[key]) === 'object') {
+					this._mergeObject(obj1[key], obj2[key]);
+				} else {
+					obj1[key] = obj2[key];
+				}
+			}
+		}
+		for (var key in obj2) {
+			if (!(key in obj1)) {
+				obj1[key] = obj2[key];
+			}
+		}
+		return obj1;
+	},
 	/*
 	 * Vehicle apis
 	 */
@@ -47,7 +57,7 @@ var driverInsightsAsset = {
 		return this._getAsset("vehicle", mo_id);
 	},
 	addVehicle: function(vehicle){
-		vehicle = _.extend({
+		vehicle = this._mergeObject({
 					status:"inactive",
 					properties: {
 						fuelTank: 60
@@ -127,24 +137,74 @@ var driverInsightsAsset = {
 	getRuleList: function(params){
 		return this._getAssetList("rule", params);
 	},
-	getRule: function(rule){
-		return this._getAsset("rule", rule);
+	getRule: function(id){
+		return this._getAsset("rule", id);
 	},
-	addRule: function(rule){
+	getRuleXML: function(id){
+		var api = "/rule/" + id + "/rule";
+		return this._run("GET", api, null, null, true);
+	},
+	addRule: function(rule, ruleXML){
+		var self = this;
 		var deferred = Q.defer();
-		deferred.reject("Not implemented yet");
-		return deferred.promose;
+		Q.when(this._runForm("POST", "/rule", rule, function(form) {
+			if (ruleXML) {
+				form.append("file", ruleXML);
+			}
+		}), function(response) {
+			Q.when(self._run("POST", "/rule/refresh"), function(refreshed){
+				deferred.resolve(response);
+			})["catch"](function(err){
+				deferred.reject(err);
+			}).done();
+		})["catch"](function(err){
+			deferred.reject(err);
+		}).done();
+		return deferred.promise;
 	},
-	
-	deleteRule: function(rule){
-		return this._getAsset("rule", rule);
+	updateRule: function(id, rule, ruleXML, overwrite) {
+		var deferred = Q.defer();
+		var self = this;
+		if (overwrite) {
+			var api = "/rule/" + id;
+			Q.when(this._runForm("PUT", api, rule, function(form) {
+				if (ruleXML) {
+					form.append("file", ruleXML);
+				}
+			}), function(response){
+				Q.when(self._run("POST", "/rule/refresh"), function(refreshed){
+					deferred.resolve(response);
+				})["catch"](function(err){
+					deferred.reject(err);
+				}).done();
+			})["catch"](function(err){
+				deferred.reject(err);
+			}).done();
+		} else {
+			Q.when(this.getRule(id), function(existingRule) {
+				rule = self._mergeObject(existingRule, rule);
+				Q.when(self.getRuleXML(id), function(existingXML) {
+					ruleXML = ruleXML || existingXML;
+					Q.when(self.updateRule(id, rule, ruleXML, true), function(response) {
+						deferred.resolve(response);
+					})["catch"](function(err){
+						deferred.reject(err);
+					}).done();
+				});
+			})["catch"](function(err){
+				deferred.reject(err);
+			}).done();
+		}
+		return deferred.promise;
 	},
-
+	deleteRule: function(id){
+		return this._deleteAsset("rule", id);
+	},
 	/*
 	 * Get list of assets
 	 */
 	_getAssetList: function(context, params){
-		return this._run("GET", "/" + context, params || {num_rec_in_page: 25, num_page: 1});
+		return this._run("GET", "/" + context, params || {num_rec_in_page: 50, num_page: 1});
 	},
 
 	/*
@@ -163,17 +223,8 @@ var driverInsightsAsset = {
 	 */
 	_addAsset: function(context, asset, refresh){
 		var deferred = Q.defer();
-		var self = this;
-		Q.when(this._run("POST", "/" + context, null, asset), function(response){
-			if (refresh) {
-				Q.when(self._run("POST", "/" + context + "/refresh"), function(refreshed){
-					deferred.resolve(response);
-				})["catch"](function(err){
-					deferred.reject(err);
-				}).done();
-			} else {
-				deferred.resolve(response);
-			}
+		Q.when(this._addOrUpdateAsset(context, null, asset, refresh), function(response) {
+			deferred.resolve(response);
 		})["catch"](function(err){
 			deferred.reject(err);
 		}).done();
@@ -190,24 +241,15 @@ var driverInsightsAsset = {
 		var deferred = Q.defer();
 		var self = this;
 		if (overwrite) {
-			var api = "/" + context + "/" + id;
-			Q.when(this._run("PUT", api, null, asset), function(response){
-				if (refresh) {
-					Q.when(self._run("POST", "/" + context + "/refresh"), function(refreshed){
-						deferred.resolve(response);
-					})["catch"](function(err){
-						deferred.reject(err);
-					}).done();
-				} else {
-					deferred.resolve(response);
-				}
+			Q.when(this._addOrUpdateAsset(context, id, asset, refresh), function(response) {
+				deferred.resolve(response);
 			})["catch"](function(err){
 				deferred.reject(err);
 			}).done();
 		} else {
 			Q.when(this._getAsset(context, id), function(existingAsset) {
-				asset = _.extend(existingAsset, asset);
-				Q.when(self._updateAsset(context, id, asset, true, refresh), function(response) {
+				asset = self._mergeObject(existingAsset, asset);
+				Q.when(self._addOrUpdateAsset(context, id, asset, refresh), function(response) {
 					deferred.resolve(response);
 				})["catch"](function(err){
 					deferred.reject(err);
@@ -219,6 +261,25 @@ var driverInsightsAsset = {
 		return deferred.promise;
 	},
 
+	_addOrUpdateAsset: function(context, id, asset, refresh) {
+		var self = this;
+		var deferred = Q.defer();
+		var api = "/" + context + (id?"/"+id:"");
+		Q.when(this._run(id?"PUT":"POST", api, null, asset), function(response){
+			if (refresh) {
+				Q.when(self._run("POST", "/" + context + "/refresh"), function(refreshed){
+					deferred.resolve(response);
+				})["catch"](function(err){
+					deferred.reject(err);
+				}).done();
+			} else {
+				deferred.resolve(response);
+			}
+		})["catch"](function(err){
+			deferred.reject(err);
+		}).done();
+		return deferred.promise;
+	},
 	/*
 	 * Delete an asset
 	 */
@@ -233,7 +294,7 @@ var driverInsightsAsset = {
 	/*
 	 * Internal methods
 	 */
-	_run: function(method, api, uriParam, body, headers){
+	_run: function(method, api, uriParam, body, isText){
 		if(!api){
 			errorback();
 			return;
@@ -250,7 +311,7 @@ var driverInsightsAsset = {
 		var options = {
 				method: method,
 				url: uri,
-				headers: headers || {
+				headers: {
 					"Content-Type": "application/json; charset=UTF-8"
 				},
 				rejectUnauthorized: false,
@@ -269,6 +330,37 @@ var driverInsightsAsset = {
 		var deferred = Q.defer();
 		request(options, function(error, response, body){
 			if (!error && response.statusCode >= 200 && response.statusCode < 300) {
+				deferred.resolve(isText ? body : JSON.parse(body));
+			} else {
+				var msg = 'asset: error(' + method + ":" + api + '): '+ body;
+				console.error(msg);
+				deferred.reject({message: msg, error: error, response: response});
+			}
+		});
+		return deferred.promise;
+	},
+	
+	_runForm: function(method, api, params, formCallback){
+		var config = this.assetConfig;
+		var uri = config.baseURL + api + "?tenant_id=" + config.tenant_id;
+		var options = {
+				method: method,
+				url: uri,
+				headers: {
+					"Content-Type": "multipart/form-data"
+				},
+				rejectUnauthorized: false,
+				auth: {
+					user: config.username,
+					pass: config.password,
+					sendImmediately: true
+				}
+		};
+
+		debug("Request: " + JSON.stringify(options));
+		var deferred = Q.defer();
+		var req = request(options, function(error, response, body){
+			if (!error && response.statusCode >= 200 && response.statusCode < 300) {
 				deferred.resolve(JSON.parse(body));
 			} else {
 				var msg = 'asset: error(' + method + ":" + api + '): '+ body;
@@ -276,6 +368,11 @@ var driverInsightsAsset = {
 				deferred.reject({message: msg, error: error, response: response});
 			}
 		});
+		var form = req.form();
+		for (var key in params) {
+			form.append(key, params[key]);
+		}
+		formCallback(form);
 		return deferred.promise;
 	}
 };

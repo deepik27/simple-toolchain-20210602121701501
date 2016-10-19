@@ -22,7 +22,7 @@
 	<table class="table table-hover table-striped table-condensed table-responsive">
 		<thead>
 			<tr>
-				<th>#</th>
+				<th class="firstRow">#</th>
 				<th>
 					<span class="sortable" (click)="onOrderBy('__id')">ID</span>
 					<span [ngClass]="orderByKey==='__id'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
@@ -39,24 +39,27 @@
 					<span class="sortable" (click)="onOrderBy('status')">Status</span>
 					<span [ngClass]="orderByKey==='status'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 				</th>
-				<th>Action</th>
+				<th></th>
 			</tr>
 		</thead>
 		<tbody>
 			<tr *ngFor="let vehicle of (vehicles|orderBy:orderByKey:!ascendingOrder); let i = index">
-				<td class="alignCenter"><span title="mo_id:{{vehicle.mo_id}}">{{numRecInPage * (pageNumber - 1) + i + 1}}</span></td>
+				<td class="firstRow">
+					<span title="mo_id:{{vehicle.mo_id}}">{{numRecInPage * (pageNumber - 1) + i + 1}}</span>
+				</td>
 				<td>{{vehicle.__id||'-'}}</td>
 				<td>{{vehicle.vendor||'-'}}</td>
 				<td>{{vehicle.model||'-'}}</td>
-				<td>{{vehicle.status||'-'}}</td>
-				<td class="alignCenter">
-					<a class="dropdown_base" (click)="selected_mo_id=selected_mo_id!==vehicle.mo_id?vehicle.mo_id:null" href="javascript:void(0)" title="Open menu"></a>
-					<div [ngClass]="selected_mo_id===vehicle.mo_id?'dropdown':'hidden'" [hidden]="selected_mo_id!==vehicle.mo_id" style="right:10px">
-							<a class="dropdown_menu" (click)="selected_mo_id=null;onUpdate(vehicle.mo_id)" href="javascript:void(0)">Update</a>
-							<a [ngClass]="vehicle.status!=='active'?'dropdown_menu':'hidden'" (click)="selected_mo_id=null;onDelete(vehicle.mo_id)" href="javascript:void(0)">Delete</a>
-							<a class="dropdown_menu_separator" (click)="selected_mo_id=null;onDelete(vehicle.mo_id)"></a>
-							<a class="dropdown_menu" [routerLink]="['/carStatus', '/'+vehicle.mo_id]">Show Car Status</a>
+				<td>
+					<div class="radarCircles">
+						<span [attr.aria-label]="vehicle.status === 'active' ? 'active' : 'inactive'" class="statusCircle" [ngClass]="vehicle.status === 'active' ? 'greenStatus' : 'redStatus'"></span>
+						<span [attr.aria-label]="vehicle.status === 'active' ? 'active' : 'inactive'" class="statusCircle" [ngClass]="vehicle.status === 'active' ? 'greenStatus greenStatusZoom' : ''"></span>
 					</div>
+				</td>
+				<td class="alignCenter actionTD">
+					<a class="icon-edit" (click)="selected_mo_id=null;onUpdate(vehicle.mo_id)" href="javascript:void(0)" title="Update"></a>
+					<a class="icon-delete" [ngClass]="vehicle.status != 'active' ? '' : 'hidden'" (click)="selected_mo_id=null;onDelete(vehicle.mo_id)" title="Delete"></a>
+					<a class="icon-status" [routerLink]="['/carStatus', ''+vehicle.mo_id]" title="Show Status"></a>
 				</td>
 			</tr>
 		</tbody>

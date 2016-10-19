@@ -1,12 +1,18 @@
+/**
+ * Copyright 2016 IBM Corp. All Rights Reserved.
+ *
+ * Licensed under the IBM License, a copy of which may be obtained at:
+ *
+ * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AEGGZJ&popup=y&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ *
+ * You may not use this file except in compliance with the license.
+ */
+VCAP_SERVICES = JSON.parse(process.env.VCAP_SERVICES || '{}')
 
 /**
  * Module dependencies.
  */
-
-VCAP_SERVICES = JSON.parse(process.env.VCAP_SERVICES || '{}')
-
 var express = require('express')
-  , tripRoutes = require('./driverInsights/tripRoutes.js')
   , auth = require('./routes/user/auth.js')
   , user = require('./routes/user')
   , http = require('http')
@@ -19,6 +25,9 @@ var express = require('express')
   , bodyParser = require('body-parser')
   , methodOverride = require('method-override');
 var appEnv = require("cfenv").getAppEnv();
+
+//Deployment tracker code snippet
+require("cf-deployment-tracker-client").track();
 
 var app = express();
 
@@ -46,35 +55,31 @@ app.use(function (req, res, next) {
 
 //basic authentication to all routes
 app.use(auth.authenticate);
+//mandate eula acceptance
+app.use(auth.eula);
 
 //access to server contents
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/user', user);
 
-var webClientModulePath = 'node_modules/iota-starter-server-fleetmanagement-webclient';
+var webClientModulePath = 'webclient';
+var webClientTop = path.join(__dirname, webClientModulePath + '/index.html');
 if ('development' === app.get('env')){
-	console.log('Settig up the webclient for DEVELOPMENT mode...');
+	console.log('Settig up the webclient for DEVELOPMENT mode..., which uses all the resources under webclient');
 	// add the base path
 	app.use('/webclient', express.static(path.join(__dirname, 'webclient')));
-	
-	// add node_moduples for webclient
-	var nmPath = path.join(__dirname, 'webclient/node_modules');
-	try{
-		fs.accessSync(nmPath, fs.F_OK);
-	}catch(e){
-		console.log('The node_modules under ./webclient is not accessble. So, use one under the Web client module path.');
-		nmPath = path.join(__dirname, webClientModulePath + '/node_modules');
-	}
-	app.use('/webclient/node_modules', express.static(nmPath));
 }else{
 	console.log('Settig up the webclient for NON-DEVELOPMENT mode...');
+	webClientTop = path.join(__dirname, webClientModulePath + '/dist/index.html');
+	app.use('/webclient', express.static(path.join(__dirname, webClientModulePath + '/dist')));
 	app.use('/webclient', express.static(path.join(__dirname, webClientModulePath)));
 }
-app.get('/webclient/map*', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
-app.get('/webclient/carStatus*', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
-app.get('/webclient/alert*', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
-app.get('/webclient/users*', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
-app.get('/webclient/vehicle*', function (req, res) { res.status(200).sendFile(path.join(__dirname, webClientModulePath + '/index.html')); });
+app.get('/webclient/map*', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/carStatus*', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/alert*', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/users*', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/vehicle*', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/tool*', function (req, res) { res.status(200).sendFile(webClientTop); });
 
 // development only
 if ('development' === app.get('env')) {

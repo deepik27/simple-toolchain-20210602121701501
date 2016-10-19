@@ -26,10 +26,7 @@ stages:
         npm install
         echo "-- Compiling typescript..."
         npm run tsc
-        if [ "$NPM_ENV" = "production" ]; then
-          echo "-- Building bundle for production..."
-          npm run bundle:prod
-        fi
+        npm run gulp
         # Cleaning up node_modules
         rm -Rf ./node_modules
         popd
@@ -70,6 +67,8 @@ stages:
       if [[ $CF_TARGET_URL == *".stage1."* ]]; then
         echo "*** Patching manifest.yml to remove IoT4A service in stage1 ***"
         sed -i.bak '/- FleetIoTForAuto/d' ./manifest.yml
+        echo "*** Patching manifest.yml to increase memory to 2G ***"
+        sed -i 's/memory:.*$/memory: 2G/' ./manifest.yml
         cat manifest.yml
         echo "--"
       fi

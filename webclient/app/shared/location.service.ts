@@ -1,3 +1,12 @@
+/**
+ * Copyright 2016 IBM Corp. All Rights Reserved.
+ *
+ * Licensed under the IBM License, a copy of which may be obtained at:
+ *
+ * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AEGGZJ&popup=y&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ *
+ * You may not use this file except in compliance with the license.
+ */
 import { Injectable } from '@angular/core';
 
 @Injectable()
@@ -10,11 +19,11 @@ export class LocationService {
   //   - the default zoom value is 15
   //
   areas: MapArea[] = [
-    {id: 'vegas1'  , name: 'MGM Grand, Las Vegas', center:  [-115.165571,36.102118]},
-    {id: 'vegas2' ,name: 'Mandalay Bay, Las Vegas', center:  [-115.176670,36.090754]},
-    {id: 'munch1'  ,name: 'Hellabrunn Zoo, Munich', center:  [11.55848,48.0993]},
-    {id: 'munch2'  ,name: 'Nymphenburg Palace, Munich', center:  [11.553583,48.176656]},
-    {id: 'tokyo1' ,name: 'Tokyo, Japan', center:  [139.731992,35.709026]},
+    {id: 'vegas1'  , name: 'MGM Grand, Las Vegas', center:  [-115.1664377,36.102894]},
+    {id: 'vegas2' ,name: 'Mandalay Bay, Las Vegas', center:  [-115.177541,36.093703]},
+    {id: 'munch1'  ,name: 'Hellabrunn Zoo, Munich', center:  [11.558721,48.100317]},
+    {id: 'munch2'  ,name: 'Nymphenburg Palace, Munich', center:  [11.555974,48.176261]},
+    {id: 'tokyo1', name: 'Tokyo, Japan', center: [139.731992, 35.709026] },
   ];
 
   //

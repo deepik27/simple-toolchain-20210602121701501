@@ -23,7 +23,7 @@
 	<table class="table table-hover table-striped table-condensed table-responsive marginTop">
 		<thead>
 			<tr>
-				<th>#</th>
+				<th class="firstRow">#</th>
 				<th>
 					<span class="sortable" (click)="onOrderBy('ts')">From</span>
 					<span [ngClass]="orderByKey==='ts'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
@@ -45,26 +45,23 @@
 					<span [ngClass]="orderByKey==='description'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 				</th>
 				<th>
-					<span class="sortable" (click)="onOrderBy('simulated')">Simulated Car</span>
+					<span class="sortable" (click)="onOrderBy('simulated')">Simulated</span>
 					<span [ngClass]="orderByKey==='simulated'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 				</th>
-				<th>Action</th>
+				<th></th>
 			</tr>
 		</thead>
 		<tbody>
 			<tr *ngFor="let alert of (fleetalerts|orderBy:orderByKey:ascendingOrder);let i=index">
-				<td>{{i+1}}</td>
-				<td>{{alert.ts|moment:"YYYY/MM/DD HH:mm:ss"}}</td>
-				<td *ngIf="includeClosed">{{alert.closed_ts>0?(alert.closed_ts|moment:"YYYY/MM/DD HH:mm:ss"):"-"}}</td>
-				<td>{{alert.severity}}</td>
+				<td class="firstRow">{{i+1}}</td>
+				<td>{{alert.ts|moment:"MMM DD/YY, HH:mm:ss"}}</td>
+				<td *ngIf="includeClosed">{{alert.closed_ts>0?(alert.closed_ts|moment:"MMM DD/YY, HH:mm:ss"):"-"}}</td>
+				<td [ngClass]="alert.severity === 'Info' ? 'blue' : alert.severity === 'Medium' ? 'green' : 'red'" >{{alert.severity}}</td>
 				<td><a href="javascript:void(0)" (click)="onMoIdClicked($event, alert.mo_id)">{{alert.serial_number || alert.mo_id}}</a></td>
 				<td>{{alert.description}}</td>
-				<td>{{alert.simulated ? "Simulated" : ""}}</td>
-				<td class="alignCenter">
-					<a class="dropdown_base" (click)="selected_row_index=selected_row_index!==i?i:null" href="javascript:void(0)" title="Open menu"></a>
-					<div [ngClass]="selected_row_index===i?'dropdown':'hidden'" [hidden]="selected_row_index!==i" style="right:10px">
-							<a class="dropdown_menu" [routerLink]="['/carStatus', '/'+alert.mo_id]">Show Car Status</a>
-					</div>
+				<td>{{alert.simulated ? "Yes" : "No"}}</td>
+				<td class="alignCenter actionTD">
+					<a class="dropdown_base icon-status" [routerLink]="['/carStatus', ''+alert.mo_id]" title="Show Car Status"></a>
 				</td>
 			</tr>
 		</tbody>

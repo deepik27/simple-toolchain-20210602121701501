@@ -1,19 +1,12 @@
 /**
  * Copyright 2016 IBM Corp. All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the IBM License, a copy of which may be obtained at:
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AEGGZJ&popup=y&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You may not use this file except in compliance with the license.
  */
-
 /*
  * REST APIs using Driver Behavior service as backend
  */
@@ -25,14 +18,20 @@ var appEnv = require("cfenv").getAppEnv();
 var router = module.exports = require('express').Router();
 var authenticate = require('./auth.js').authenticate;
 var driverInsightsProbe = require('../../driverInsights/probe');
-var driverInsightsAnalyze = require('../../driverInsights/analyze');
-var driverInsightsTripRoutes = require('../../driverInsights/tripRoutes.js');
 var driverInsightsContextMapping = require('../../driverInsights/contextMapping');
 var driverInsightsAlert = require('../../driverInsights/fleetalert.js');
 var dbClient = require('../../cloudantHelper.js');
 
 var debug = require('debug')('monitoring:cars');
 debug.log = console.log.bind(console);
+
+function handleAssetError(res, err) {
+	//{message: msg, error: error, response: response}
+	console.error('error: ' + JSON.stringify(err));
+	var status = (err && (err.status||err.statusCode)) || 500;
+	var message = err.message || (err.data && err.data.message) || err;
+	return res.status(status).send(message);
+}
 
 router.post('/probeData',  authenticate, function(req, res) {
 	try{
@@ -44,7 +43,7 @@ router.post('/probeData',  authenticate, function(req, res) {
 			}
 		});
 	}catch(error){
-		res.send(error);
+		handleAssetError(res, error);
 	}
 });
 
@@ -52,11 +51,7 @@ router.get('/probeData',  authenticate, function(req, res) {
 	driverInsightsProbe.getCarProbeDataListAsDate().then(function(msg){
 		res.send(msg);
 	})["catch"](function(error){
-		if (error.statusCode) {
-			res.status(error.statusCode).send(error);
-		} else {
-			res.send(error);
-		}
+		handleAssetError(res, error);
 	});
 });
 
@@ -111,87 +106,20 @@ router.get('/carProbeMonitor', authenticate, function(req, res) {
 	res.render('carProbeMonitor', { appName: appEnv.name, qs: qs });
 });
 
-router.get('/driverInsights', authenticate, function(req, res) {
-	getUserTrips(req).then(function(tripIdList){
-		driverInsightsAnalyze.getList(tripIdList).then(function(msg){
-			res.send(msg);
-		});
-	})["catch"](function(error){
-		res.send(error);
-	});
-});
-
-router.get('/driverInsights/statistics', authenticate, function(req, res) {
-	getUserTrips(req).then(function(tripIdList){
-		driverInsightsAnalyze.getStatistics(tripIdList).then(function(msg){
-			res.send(msg);
-		});
-	})["catch"](function(error){
-		res.send(error);
-	});
-});
-
-router.get('/driverInsights/behaviors', authenticate, function(req, res) {
-	getUserTrips(req).then(function(tripIdList){
-		driverInsightsAnalyze.getTripList(tripIdList, req.query.all).then(function(msg){
-			res.send(msg);
-		});
-	})["catch"](function(error){
-		res.send(error);
-	});
-});
-
-router.get('/driverInsights/:trip_uuid', authenticate, function(req, res) {
-	driverInsightsAnalyze.getDetail(req.params.trip_uuid).then(function(msg){
-		res.send(msg);
-	})["catch"](function(error){
-		res.send(error);
-	});
-});
-
-router.get('/driverInsights/behaviors/latest', authenticate, function(req, res) {
-	driverInsightsAnalyze.getLatestBehavior().then(function(msg){
-		res.send(msg);
-	})["catch"](function(error){
-		res.send(error);
-	});
-});
-
-router.get('/driverInsights/behaviors/:trip_uuid', authenticate, function(req, res) {
-	driverInsightsAnalyze.getBehavior(req.params.trip_uuid).then(function(msg){
-		res.send(msg);
-	})["catch"](function(error){
-		res.send(error);
-	});
-});
-
-router.get("/driverInsights/triproutes/:trip_uuid", function(req, res){
-	driverInsightsTripRoutes.getTripRoute(req.params.trip_uuid).then(function(msg){
-		res.send(msg);
-	})["catch"](function(error){
-		res.send(error);
-	})
-});
-
-router.get("/triproutes/:trip_id", function(req, res){
-	driverInsightsTripRoutes.getTripRouteById(req.params.trip_id).then(function(msg){
-		res.send(msg);
-	})["catch"](function(error){
-		res.send(error);
-	});
-});
-
 router.get("/routesearch", function(req, res){
 	var q = req.query;
 	driverInsightsContextMapping.routeSearch(
 		q.orig_latitude,
 		q.orig_longitude,
-		q.target_latitude,
-		q.target_longitude
+		q.orig_heading || 0,
+		q.dest_latitude,
+		q.dest_longitude,
+		q.dest_heading || 0,
+		q.option
 	).then(function(msg){
 		res.send(msg);
 	})["catch"](function(error){
-		res.send(error);
+		handleAssetError(res, error);
 	});
 });
 
@@ -231,27 +159,46 @@ router.get("/alert", function(req, res){
 	}
 });
 
-function getUserTrips(req){
-	var userid = req.user && req.user.id;
-	var mo_id = req.query.mo_id;
-	if(!mo_id){
-		return Q([]);
-	}
-	var deferred = Q.defer();
-	driverInsightsTripRoutes.getTripsByDevice(mo_id, 100).then(
-		function(tripRoutes){
-			var trip_ids = tripRoutes.map(function(item) {
-				return item.trip_id;
-			}).filter(function(trip_id){
-				return trip_id;
-			});
-			deferred.resolve(trip_ids);
-		}
-	)["catch"](function(error){
-		deferred.reject(error);
+router.get("/event/query", function(req, res){
+	var q = req.query;
+	driverInsightsContextMapping.queryEvent(
+		q.min_latitude,
+		q.min_longitude,
+		q.max_latitude,
+		q.max_longitude,
+		q.event_type,
+		q.status
+	).then(function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
 	});
-	return deferred.promise;
-}
+});
+
+router.get("/event", function(req, res){
+	var q = req.params.event_id;
+	driverInsightsContextMapping.getEvent(req.query.event_id).then(function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
+
+router.post("/event", function(req, res){
+	driverInsightsProbe.createEvent(req.body, "sync").then(function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
+
+router["delete"]("/event", function(req, res){
+	driverInsightsContextMapping.deleteEvent(req.query.event_id).then(function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
 
 /*
  * Shared WebSocket server instance
@@ -296,6 +243,8 @@ var initWebSocketServer = function(server, path){
 				} catch (e) {
 					console.error('Failed to send wss message: ', e);
 				}
+			})['catch'](function(err){
+				console.error('Failed to get car probe', err);
 			});
 		})).done(function(){
 			// re-schedule once all the wss.send has been completed
@@ -347,7 +296,7 @@ var initWebSocketServer = function(server, path){
 function getCarProbe(qs, addAlerts){
 	var probes = Q(driverInsightsProbe.getCarProbe(qs).then(function(probes){
 		// send normal response
-		[].concat(probes).forEach(function(p){
+		(probes||[]).forEach(function(p){
 			if(p.timestamp){
 				p.ts = Date.parse(p.timestamp);
 				p.deviceID = p.mo_id;
@@ -364,7 +313,7 @@ function getCarProbe(qs, addAlerts){
 				return "mo_id:"+probe.mo_id;
 			}).join(" OR ") + ")";
 			conditions.push(mo_id_condition);
-			return driverInsightsAlert.getAlerts(conditions, /*includeClosed*/false, probes.length).then(function(result){
+			return driverInsightsAlert.getAlerts(conditions, /*includeClosed*/false, 200).then(function(result){
 				// result: { alerts: [ { closed_ts: n, description: s, mo_id: s, severity: s, timestamp: s, ts: n, type: s }, ...] }
 				var alertsByMoId = _.groupBy(result.alerts || [], function(alert){ return alert.mo_id; });
 				probes.forEach(function(probe){
@@ -373,7 +322,20 @@ function getCarProbe(qs, addAlerts){
 						var alertCounts = _.countBy(alertsForMo, function(alert){
 							return alert.severity;
 						});
-						// alertCounts.items = alertsForMo; // details if needed
+						alertCounts.items = alertsForMo; // details if needed
+						
+						// calculate summary
+						var alertsByType = _.groupBy(alertsForMo, function(alert) { return alert.type; });
+						// severity: High: 100, Medium: 10, Low: 1, None: 0 for now
+						var severityByType = _.mapObject(alertsByType, function(alerts, type){
+							if(alerts && alerts.length === 0) return undefined;
+							return _.max(alerts, function(alert){
+								var s = alerts.severity && alerts.severity.toLowerCase();
+								return s === 'high' ? 100 : (s === 'medium' ? 10 : (s === 'low' ? 1 : 0));
+							}).severity;
+						});
+						alertCounts.byType = severityByType;
+						//
 						probe.info = _.extend(probe.info || {}, { alerts: alertCounts }); // inject alert counts
 					}
 				})

@@ -1,17 +1,30 @@
+/**
+ * Copyright 2016 IBM Corp. All Rights Reserved.
+ *
+ * Licensed under the IBM License, a copy of which may be obtained at:
+ *
+ * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AEGGZJ&popup=y&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ *
+ * You may not use this file except in compliance with the license.
+ */
 import { Component, Input, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { Http, Request, Response } from '@angular/http';
-import { ROUTER_DIRECTIVES } from '@angular/router';
-import { OrderByPipe } from '../../utils/order-by.pipe';
-import { MomentPipe } from '../../utils/moment.pipe';
-import { AreaSelectComponent } from '../../shared/area-select.component';
+import { HttpClient } from '../../shared/http-client';
+import { Request, Response } from '@angular/http';
 
 @Component({
   moduleId: module.id,
   selector: 'alert-list',
   templateUrl: 'alert-list.component.html',
   styleUrls: ['../../../css/table.css'],
-  pipes: [OrderByPipe, MomentPipe],
-  directives: [AreaSelectComponent, ROUTER_DIRECTIVES]
+  styles: [`
+    .firstRow {
+      padding-left: 20px;
+    }
+
+    .actionTD {
+      padding: 0 20px;
+    }
+  `],
 })
 
 export class AlertListComponent{
@@ -28,7 +41,7 @@ export class AlertListComponent{
   selected_row_index:string;
   @ViewChild("valueSelect") valueSelect:ElementRef;
 
-  constructor(private http: Http) {  }
+  constructor(private http: HttpClient) {  }
 
   ngOnInit(){
     if(!this.prop){
@@ -216,6 +229,7 @@ export class AlertProp {
     new PropValue("High", "High"),
     new PropValue("Medium", "Medium"),
     new PropValue("Low", "Low"),
+    new PropValue("Info", "Info")
   ]);
   static MoId = new AlertProp("mo_id", "Vehicle ID", []);
 

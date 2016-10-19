@@ -1,31 +1,30 @@
 /**
  * Copyright 2016 IBM Corp. All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the IBM License, a copy of which may be obtained at:
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AEGGZJ&popup=y&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You may not use this file except in compliance with the license.
  */
-
 /*
  * Service to simulate geolocation
  */
 angular.module('htmlClient')
 .factory('virtualGeoLocation', function($q, $interval, $http, mobileClientService) {
     var service = {
+    	driving: false,
     	tripRouteIndex: 0,
     	tripRoute: null,
     	prevLoc: {lat:48.134994,lon:11.671026,speed:0,init:true},
+    	destination: null,
+    	options: {avoid_events: true, route_loop: true},
     	
     	watchPosition: function(callback){
-    		this._resetRoute();
+    		if(!this.tripRoute) {
+    			this._resetRoute();
+    		}
+    		this.driving = true;
     		var self = this;
     		return $interval(function(){
     			self.getCurrentPosition(callback);
@@ -33,10 +32,16 @@ angular.module('htmlClient')
     	},
     	clearWatch: function(watchId){
 			$interval.cancel(watchId);
-			this.tripRoute = null;
+    		this.driving = false;
     	},
-    	setCurrentPosition: function(loc){
-    		if(this.tripRoute){
+    	setOption: function(key, value) {
+    		this.options[key] = value;
+    	},
+    	getOption: function(key) {
+    		return this.options[key];
+    	},
+    	setCurrentPosition: function(loc /* lat, lon */, donotResetRoute){
+    		if(this.driving){
     			// under driving
     			return;
     		}
@@ -44,6 +49,34 @@ angular.module('htmlClient')
     		if(isNaN(this.prevLoc.speed)){
     			this.prevLoc.speed = 0;
     		}
+    		return donotResetRoute ? null : this._resetRoute();
+    	},
+    	updateRoute: function(locs) {
+    		if (!locs) {
+    			return this._resetRoute();
+    		}
+			var deferred = $q.defer();
+			self = this;
+			this._createRoutes(locs, true).then(function(routeArray){
+				self.tripRouteIndex = 0;
+				self.tripRoute = routeArray;
+				self.prevLoc = routeArray[0];
+				deferred.resolve(routeArray);
+			})["catch"](function(error){
+				deferred.reject(error);
+			});
+    		return deferred.promise;
+    	},
+    	setDestinationPosition: function(loc){
+    		if(this.driving){
+    			// under driving
+    			return;
+    		}
+    		this.destination = loc;
+    		return this._resetRoute();
+    	},
+    	getDestination: function() {
+    		return this.destination;
     	},
     	getCurrentPosition: function(callback){
     		var p = this._getCurrentPosition();
@@ -61,7 +94,7 @@ angular.module('htmlClient')
 	    		if(navigator.geolocation){
 		    		navigator.geolocation.getCurrentPosition(function(position){
 		    			var c = position.coords;
-		    			self.setCurrentPosition({lat:c.latitude, lon:c.longitude, speed: c.speed});
+		    			self.setCurrentPosition({lat:c.latitude, lon:c.longitude, speed: c.speed}, true);
 		    			callback(position);
 		    		});
 		    	}else{
@@ -69,19 +102,102 @@ angular.module('htmlClient')
 		    	}
     		}
     	},
-    	_resetRoute:function(){
-			var self=this;
-			// select random location in about 10km from the current location
-			var ddist = (Math.random()/2 + 0.5) * 0.15 / 2;
+    	
+    	// find a random location in about 5km from the specified location
+    	_getDestLoc: function(slat, slng, heading){
+			var ddist = (Math.random()/2 + 0.5) * 0.025 / 2;
 			var dtheta = 2 * Math.PI * Math.random();
+			var dlat = 0;
+			var dlng = 0;
+			if(this.destination){
+				dlat = this.destination.lat;
+				dlng = this.destination.lon;
+			}else{
+				dlat = +slat + ddist * Math.sin(dtheta);
+				dlng = +slng + ddist * Math.cos(dtheta);
+			}
+			return {lat: dlat, lng: dlng, heading: (this.destination ? this.destination.heading : heading)};
+		},
+		
+		// reset trip route
+		_resetRoute:function(){
+			var deferred = $q.defer();
 			var slat = this.prevLoc.lat;
 			var slng = this.prevLoc.lon;
-			var dlat = +slat + ddist * Math.sin(dtheta);
-			var dlng = +slng + ddist * Math.cos(dtheta);
+			var sheading = this.prevLoc.heading;
+			
+			var loop = !this.destination || (this.options && this.options.route_loop);
+			var locs = [];
+			locs.push({lat: slat, lng: slng, heading: sheading});
+			locs.push(this._getDestLoc(slat, slng, sheading));
+			if (!this.destination) {
+				locs.push(this._getDestLoc(slat, slng, sheading));
+			}
 
+			self = this;
+			this._createRoutes(locs, loop).then(function(routeArray){
+				self.tripRouteIndex = 0;
+				self.tripRoute = routeArray;
+				self.prevLoc = routeArray[0];
+				deferred.resolve(routeArray);
+			})["catch"](function(error){
+				deferred.reject(error);
+			});
+    		return deferred.promise;
+    	},
+    	
+    	_createRoutes: function(locs, loop) {
+    		var promises = [];
+    		var routeArrays = {};
+    		for (var i = 0; i < locs.length - (loop ? 0 : 1); i++) {
+    			var deferred = $q.defer();
+    			var loc1 = locs[i];
+    			var loc2 = (i < locs.length - 1) ? locs[i+1] : locs[0];
+    			var index = "index" + i;
+    			promises.push($q.when(this._findRoute(0, loc1, loc2, index), function(result) {
+    				routeArrays[result.id] = result.route;
+					return result;
+				}, function(error) {
+					return null;
+				}));
+    		}
+    		
+			var deferred = $q.defer();
+			$q.all(promises).then(function(routes) {
+				var routeArray = [];
+	    		for (var i = 0; i < promises.length; i++) {
+	    			var r = routeArrays["index" + i];
+	    			if (r === null) {
+	    				return deferred.reject();
+	    			}
+	    			routeArray = routeArray.concat(r);
+	    		}
+	    		deferred.resolve(routeArray);
+			});
+    		return deferred.promise;
+    	},
+    	
+    	// find a route from a specific location to a specific location
+    	_findRoute:function(retryCount, start, end, searchId){
+    		var retryCount = retryCount || 0;
+    		var deferred = $q.defer();
+			var self=this;
+
+			// make URL
+			var url = "/user/routesearch?orig_latitude=" + start.lat + "&orig_longitude=" + start.lng + "&dest_latitude=" + end.lat + "&dest_longitude=" + end.lng;
+			if (!isNaN(start.heading)) {
+				url += "&orig_heading=" + start.heading;
+			}
+			if (!isNaN(end.heading)) {
+				url += "&dest_heading=" + end.heading;
+			}
+			if(this.options && this.options.avoid_events) {
+				url += "&option=avoid_event";
+			}
+			
 			$http(mobileClientService.makeRequestOption({
 				method: "GET",
-				url: "/user/routesearch?orig_latitude=" + slat + "&orig_longitude=" + slng + "&target_latitude=" + dlat + "&target_longitude=" + dlng
+				url: url
 			})).success(function(data, status){
 				var routeArray = [];
 				data.link_shapes.forEach(function(shapes){
@@ -91,15 +207,25 @@ angular.module('htmlClient')
 					});
 				});
 				if(routeArray.length >= 2){
-					self.tripRouteIndex = 0;
-					self.tripRoute = routeArray;
-					self.prevLoc = routeArray[0];
+					deferred.resolve(searchId ? {id: searchId, route: routeArray} : routeArray);
+					return;
+				}else if(retryCount++ < 5){
+					// retry 5 times
+					console.log("failed to search route. retry[" + retryCount + "]");
+					return self._findRoute(retryCount, start, end, searchId).then(function(result){
+						deferred.resolve(searchId ? {id: searchId, route: result} : result);
+					});
 				}
-			}).error(function(error, status){
 				console.error("Cannot get route for simulation");
+				deferred.reject();
+			}).error(function(error, status){
+				console.error("Error[" + status + "] in route search: " + error);
+				deferred.reject();
 			});
+			return deferred.promise;
     	},
-    	_getCurrentPosition(){
+    	
+    	_getCurrentPosition: function(){
 			if(!this.tripRoute || this.tripRoute.length < 2){
 				return this.prevLoc;
 			}
@@ -127,8 +253,13 @@ angular.module('htmlClient')
 			// keep the previous info
 			this.prevLoc = loc;
 
-			if(this.tripRouteIndex < this.tripRoute.length-1){
-    			this.tripRouteIndex++;
+			this.tripRouteIndex++;
+			if(this.tripRouteIndex >= this.tripRoute.length){
+				if (this.destination && !(this.options && this.options.route_loop)) {
+					this.tripRouteIndex--;
+				} else {
+					this.tripRouteIndex = 0;
+				}
 			}
 			return loc;
     	},

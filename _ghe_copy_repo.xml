@@ -136,6 +136,8 @@
 				<exclude name="**/_ghe*"/>
 				<exclude name="**/_ghe*/**/*"/>
 				<exclude name="**/.project"/>
+				<exclude name="**/.vscode"/>
+				<exclude name="**/.vscode/**/*"/>
 				<exclude name="**/_generate_deploy_files.sh"/>
 				<exclude name="**/_deploy_create_services.sh.template"/>
 				<exclude name="**/manifest.yml.template"/>

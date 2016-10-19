@@ -1,5 +1,14 @@
+/**
+ * Copyright 2016 IBM Corp. All Rights Reserved.
+ *
+ * Licensed under the IBM License, a copy of which may be obtained at:
+ *
+ * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AEGGZJ&popup=y&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ *
+ * You may not use this file except in compliance with the license.
+ */
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, RouteSegment, OnActivate, ROUTER_DIRECTIVES } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
@@ -14,9 +23,8 @@ import * as _ from 'underscore';
   moduleId: module.id,
   selector: 'fmdash-car-status',
   templateUrl: 'car-status.component.html',
-  directives: [ROUTER_DIRECTIVES],
 })
-export class CarStatusComponent implements OnInit, OnActivate {
+export class CarStatusComponent implements OnInit {
   private mo_id: string;
   private moIdSubject = new Subject<string>();
   private proveDataSubscription;
@@ -25,13 +33,14 @@ export class CarStatusComponent implements OnInit, OnActivate {
   private probeData: any; // probe data to show
 
   constructor(
-    private router: Router,
+    private route: ActivatedRoute,
     private carStatusDataService: CarStatusDataService,
     private realtimeDataProviderService: RealtimeDeviceDataProviderService
   ){
   }
 
   ngOnInit() {
+    var self = this;
     this.proveDataSubscription = this.moIdSubject.switchMap(mo_id => {
         // in case the mo_id is not tracked, configure the service to track it
         if(!this.realtimeDataProviderService.getProvider().getDevice(mo_id)){
@@ -39,48 +48,33 @@ export class CarStatusComponent implements OnInit, OnActivate {
         }
         return mo_id ? this.carStatusDataService.getProbe(mo_id) : Observable.of([]);
       }).subscribe(probe => {
+        // update data
         this.device = probe && this.realtimeDataProviderService.getProvider().getDevice(probe.mo_id);
         this.probeData = probe;
 
-        // updat meter
-        updateMeterStyle(probe);
+        // update overlay
+        var cardOverlay = document.getElementById('cardOverlay');
+        if (probe == null && cardOverlay.style.opacity != '1') {
+            cardOverlay.style.opacity = '1';
+            cardOverlay.style.display = 'block';
+        } else if (probe != null && cardOverlay.style.opacity != '0') {
+            cardOverlay.style.opacity = '0';
+            cardOverlay.style.display = 'none';
+        }
       });
-    this.moIdSubject.next(this.mo_id);
 
-    var style;
-    function updateMeterStyle(probe) {
-      var createStyle = !style;
-      if(createStyle){
-        style = document.createElement('style');
-        style.type = 'text/css';
-      }
-
-      //
-      // Update style content
-      //
-      var fuel = (probe && probe.props.fuel) || 0;
-      var engineTemp = (probe && probe.props.engineTemp) || 0;
-
-      // set dynamic fuel level
-      style.innerHTML = '.pointerTriggered { transform: rotate(' + ((fuel / 60) * 180 - 90) + 'deg) !important; }'
-
-      // set dynamic engine oil temperature
-      // - note that the "28" is 30 (the minimal gauge) - 2 (adjustment), and
-      //   "152" is 150 (the maximum) + 2 (adjustment);
-                      + '.thermometerTriggered { width: ' + (((engineTemp - 28) / (152 - 28)) * 100) + '% !important; }';
-
-      if(createStyle){
-        document.getElementsByTagName('head')[0].appendChild(style);
-        setTimeout(function () {
-            document.getElementById('speedometer-pointer').classList.add('pointerTriggered');
-            document.getElementById('thermometer-range').classList.add('thermometerTriggered');
-        }, 5);
-      }
-    }
+    var mo_id: any;
+    this.route.params.forEach((params: Params) => {
+        mo_id = mo_id || params['mo_id'];
+     });
+    this.mo_id = <string>mo_id;
+    this.moIdSubject.next(mo_id);
 
     var modalCallsArray = Array.prototype.slice.call(document.querySelectorAll('.numCounter'), 0);
 
     modalCallsArray.forEach(function(el) {
+            console.log(el.innerHTML);
+
             var number = parseInt(el.innerHTML);
             var delay = number;
 
@@ -108,11 +102,5 @@ export class CarStatusComponent implements OnInit, OnActivate {
       this.proveDataSubscription.unsubscribe();
       this.proveDataSubscription = null;
     }
-  }
-
-  routerOnActivate(current: RouteSegment){
-    var mo_id: any = current.getParam('mo_id');
-    this.mo_id = <string>mo_id;
-    this.moIdSubject.next(mo_id);
   }
 }
