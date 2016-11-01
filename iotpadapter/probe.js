@@ -39,8 +39,16 @@ _.extend(probe, {
 				if (payload.ts) {
 					probe.ts = payload.ts;
 				}
+				// append driver
 				if (assetInfo.driverId) {
 					probe.driver_id = assetInfo.driverId;
+				}
+				// append status
+				if (payload.props) {
+					probe.props = {};
+					_.each(payload.props, function(value, key) {
+						probe.props[key] = value;
+					});
 				}
 				driverInsightsProbe.sendRawData(probe, function(data) {
 				});
