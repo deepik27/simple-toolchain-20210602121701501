@@ -129,6 +129,25 @@ export class VehicleListComponent {
     this._deleteVehilce(mo_id);
   }
 
+  onSyncWithIoTPlatform() {
+    let isRequestOwner = !this.requestSending;
+    this.requestSending = true;
+    this.errorMessage = null;
+    this.http.post("/user/device/sync", null, null)
+    .subscribe((response: Response) => {
+      // Update vehicle list when succeeded
+      this._updateVehicleList(1);
+      if (isRequestOwner) {
+        this.requestSending = false;
+      }
+    }, (error: any) => {
+      this.errorMessage = error.message || error._body || error;
+      if (isRequestOwner) {
+        this.requestSending = false;
+      }
+    });
+  }
+
   private _updateVehicleList(pageNumber: number) {
     let isRequestRoot = !this.requestSending;
     this.requestSending = true;
