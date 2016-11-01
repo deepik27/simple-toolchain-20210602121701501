@@ -39,11 +39,12 @@ _.extend(probe, {
 				if (payload.ts) {
 					probe.ts = payload.ts;
 				}
-				// append driver
+				if (payload.altitude) {
+					probe.altitude = payload.altitude;
+				}
 				if (assetInfo.driverId) {
 					probe.driver_id = assetInfo.driverId;
 				}
-				// append status
 				if (payload.props) {
 					probe.props = {};
 					_.each(payload.props, function(value, key) {
