@@ -178,7 +178,35 @@ _.extend(iotpPdapterAsset, {
 	 * Read all devices associated with given deviceType and create or update all asset in IoT for Automotive
 	 */
 	synchronizeAllAsset: function(deviceType) {
-		return this._updateAllAsset(deviceType, null, null, {}, {}, []);
+		var self = this;
+		var deferred = Q.defer();
+		Q.when(self._updateAllAsset(deviceType, null, null, {}, {}, []), function(result) {
+			Q.when(self.getAllAssetInfo(), function(assetInfos) {
+				// remove all assets that have been removed from Iot Platform
+				var removed = _.filter(assetInfos, function(assetInfo) {
+					return !_.find(result, function(r) {
+						return r.deviceId === assetInfo.deviceId && r.deviceType === assetInfo.deviceType;
+					});
+				});
+				if (removed.length > 0) {
+					Q.when(self.deleteAssetInfos(removed), function() {
+						deferred.resolve(result);
+					})["catch"](function(error) {
+						console.error(error);
+						deferred.reject(error);
+					});
+				} else {
+					deferred.resolve(result);
+				}
+			})["catch"](function(error) {
+				console.error(error);
+				deferred.reject(error);
+			});
+		})["catch"](function(error) {
+			console.error(error);
+			deferred.reject(error);
+		});
+		return deferred.promise;
 	},
 	/*
 	 * Delete IoT for Automotive asset information corresponding to given IoT Platform deviceId
@@ -219,6 +247,45 @@ _.extend(iotpPdapterAsset, {
 	},
 	
 	/*
+	 * Delete IoT for Automotive assets corresponding to given IoT Platform devicees
+	 */
+	deleteAssetInfos: function(assetInfos) {
+		var self = this;
+		var deferred = Q.defer();
+			var promises = [];
+		_.each(assetInfos, function(info) {
+			promises.push(driverInsightsAsset.deleteVehicle(info.vehicleId));
+		});
+		var deferred2 = Q.defer();
+		Q.when(this.db, function(db) {
+			var docs = {keys: _.map(assetInfos, function(info) {return self._documentName(info.deviceId, info.deviceType);})};
+			db.fetch(docs, function(err, body) {
+				if (err) {
+					console.error(err);
+					return deferred2.reject(err);
+				}
+				var docs = _.map(body.rows, function(row) { return {_id:row.doc._id, _rev:row.doc._rev, _deleted:true}; });
+				db.bulk({docs: docs}, function(err, body) {
+					if (err) {
+						console.error(err);
+						return deferred2.reject(err);
+					}
+					deferred2.resolve();
+				});
+			});
+		})["catch"](function(error) {
+			console.error(error);
+			deferred.reject(error);
+		});
+		promises.push(deferred2.promise);
+		Q.all(promises).then(function() {
+			deferred.resolve(_.map(assetInfos, function(info) {info.remove = true; return info;}));
+		}, function(error) {
+			deferred.reject(error);
+		});
+		return deferred.promise;
+	},
+	/*
 	 * Internal methods
 	 */
 	/*
@@ -229,7 +296,7 @@ _.extend(iotpPdapterAsset, {
 		var deferred = Q.defer();
 		Q.when(IOTF.iotfAppClient.callApi('GET', 200, true, ['device', 'types', deviceType, 'devices', deviceId]), function(response) {
 			// Create vehicle object
-			var vehicle = isNew ? {status: "active"} : {};
+			var vehicle = {};
 			var deviceInfo = response.deviceInfo;
 			if (deviceInfo) {
 				if (deviceInfo.serialNumber) {
@@ -311,7 +378,7 @@ _.extend(iotpPdapterAsset, {
 				});
 				if (assetInfoDocs.length > 0) {
 					Q.when(self.db, function(db) {
-						db.bulk({docs: assetInfoDocs}, "insert", function(err, body) {
+						db.bulk({docs: assetInfoDocs}, function(err, body) {
 							if (err) {
 								console.error(err);
 								return deferred.reject(err);

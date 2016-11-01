@@ -129,6 +129,16 @@ export class VehicleListComponent {
     this._deleteVehilce(mo_id);
   }
 
+  onToggleStatus(mo_id: string) {
+      let vehicle = new Vehicle(this._getVehicle(mo_id));
+      if (vehicle.status === "active") {
+        vehicle.status = "inactive";
+      } else {
+        vehicle.status = "active";
+      }
+      this._updateVehicle(mo_id, vehicle);
+  }
+
   onSyncWithIoTPlatform() {
     let isRequestOwner = !this.requestSending;
     this.requestSending = true;
