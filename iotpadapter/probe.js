@@ -22,18 +22,17 @@ _.extend(probe, {
 			if (deviceType !== asset.deviceType || isNaN(payload.lng) || isNaN(payload.lat)) {
 				return;
 			}
+			if (!payload.trip_id) {
+				return;
+			}
+
 			
 			return Q.when(asset.getAssetInfo(deviceId, deviceType), function(assetInfo) {
-				if (!payload.trip_id) {
-					// TODO when and who create trip_id?
-					payload.trip_id = deviceId + "-trip";
-				}
-
 				var probe = {
 					trip_id: payload.trip_id,
 					mo_id: assetInfo.vehicleId,
-					longitude: payload.lng,
-					latitude: payload.lat,
+					lng: payload.lng,
+					lat: payload.lat,
 					speed: payload.speed,
 					heading: payload.heading || 0
 				};
@@ -43,7 +42,8 @@ _.extend(probe, {
 				if (assetInfo.driverId) {
 					probe.driver_id = assetInfo.driverId;
 				}
-				driverInsightsProbe.sendRawData(probe);
+				driverInsightsProbe.sendRawData(probe, function(data) {
+				});
 			})["catch"](function(err) {
 				console.error(err);
 			}).done();

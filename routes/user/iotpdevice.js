@@ -17,6 +17,7 @@ var debug = require('debug')('device');
 debug.log = console.log.bind(console);
 
 var iotpPdapterAsset = require('../../iotpadapter/asset.js');
+var iotpPdapterProbe = require('../../iotpadapter/probe.js');
 
 var authenticate = require('./auth.js').authenticate;
 

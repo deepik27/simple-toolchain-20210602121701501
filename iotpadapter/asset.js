@@ -18,7 +18,7 @@ var IOTF = require('../iotfclient');
 var driverInsightsAsset = require("../driverInsights/asset.js");
 
 var ASSET_DB_NAME = "iotp_asset_map";
-var DEFAULT_DRIVER_NAME = "IoT Platform";
+var DEFAULT_DRIVER_NAME = "OBDII Driver";
 var DEFAULT_DEVICE_TYPE = "OBDII";
 
 /*
@@ -120,25 +120,29 @@ _.extend(iotpPdapterAsset, {
 	createAssetInfo: function(deviceId, deviceType, driverName) {
 		var self = this;
 		deviceType = deviceType || this.deviceType || DEFAULT_DEVICE_TYPE;
-		var docName = this._documentName(deviceId, deviceType);
-		var deferred = Q.defer();
-		Q.when(this._addVehicleToIoTAAsset(deviceId, deviceType, driverName), function(vehicle) {
-			// add vehicle information to cloudant DB
-			Q.when(self.db, function(db) {
-				var doc = {
-						assetInfo: {
-							vehicleId: vehicle.mo_id, 
-							driverId: vehicle.driver_id, 
-							deviceId: deviceId, 
-							deviceType: deviceType
+		Q.when(this._addVehicleToIoTAAsset(deviceId, deviceType), function(vehicle) {
+			Q.when(self._createDriverIfNotExist(driverName)).then(function(driverId) {
+				// add vehicle information to cloudant DB
+				Q.when(self.db, function(db) {
+					var doc = {
+							assetInfo: {
+								vehicleId: vehicle.mo_id, 
+								driverId: driverId, 
+								deviceId: deviceId, 
+								deviceType: deviceType
+							}
+					};
+					var docName = this._documentName(deviceId, deviceType);
+					db.insert(doc, docName, function(err, body){
+						if(err){
+							console.error(err);
+							return deferred.reject(err);
 						}
-				};
-				db.insert(doc, docName, function(err, body){
-					if(err){
-						console.error(err);
-						return deferred.reject(err);
-					}
-					deferred.resolve(data);
+						deferred.resolve(data);
+					});
+				})["catch"](function(error) {
+					console.error(error);
+					deferred.reject(error);
 				});
 			})["catch"](function(error) {
 				console.error(error);
@@ -153,9 +157,9 @@ _.extend(iotpPdapterAsset, {
 	/*
 	 * Update IoT for Automotive asset information corresponding to given IoT Platform deviceId
 	 */
-	updateAssetInfo: function(deviceId, deviceType, driverName) {
+	updateAssetInfo: function(deviceId, deviceType) {
 		var deferred = Q.defer();
-		Q.when(this._createVehicleFromDevice(deviceId, deviceType, driverName, false), function(vehicle) {
+		Q.when(this._createVehicleFromDevice(deviceId, deviceType, false), function(vehicle) {
 			Q.when(self.getAssetInfo(deviceId, deviceType), function(assetInfo) {
 				Q.when(driverInsightsAsset.updateVehicle(assetInfo.vehicleId, vehicle), function(response) {
 					vehicle.mo_id = response.id;
@@ -180,7 +184,7 @@ _.extend(iotpPdapterAsset, {
 	synchronizeAllAsset: function(deviceType) {
 		var self = this;
 		var deferred = Q.defer();
-		Q.when(self._updateAllAsset(deviceType, null, null, {}, {}, []), function(result) {
+		Q.when(self._updateAllAsset(deviceType, null, null, DEFAULT_DRIVER_NAME, {}, {}, []), function(result) {
 			Q.when(self.getAllAssetInfo(), function(assetInfos) {
 				// remove all assets that have been removed from Iot Platform
 				var removed = _.filter(assetInfos, function(assetInfo) {
@@ -291,7 +295,7 @@ _.extend(iotpPdapterAsset, {
 	/*
 	 * Create vehicle object from IoT Platform device data
 	 */
-	_createVehicleFromDevice: function(deviceId, deviceType, driverName, isNew, vendors, drivers) {
+	_createVehicleFromDevice: function(deviceId, deviceType, isNew, vendors) {
 		var self = this;
 		var deferred = Q.defer();
 		Q.when(IOTF.iotfAppClient.callApi('GET', 200, true, ['device', 'types', deviceType, 'devices', deviceId]), function(response) {
@@ -322,16 +326,7 @@ _.extend(iotpPdapterAsset, {
 			
 			// Create a vendor if not exist
 			Q.when(self._createVendorIfNotExist(vehicle.vendor, vendors), function() {
-				// Create a driver if not exist
-				Q.when(self._createDriverIfNotExist(driverName, drivers), function(driverId) {
-					if (driverId) {
-						vehicle.driver_id = driverId;
-					}
-					deferred.resolve(vehicle);
-				})["catch"](function(error) {
-					console.log("driver cannot be added");
-					deferred.resolve(vehicle);
-				});
+				deferred.resolve(vehicle);
 			})["catch"](function(error) {
 				console.log("vendor cannot be added");
 				delete vehicle.vendor;
@@ -346,7 +341,7 @@ _.extend(iotpPdapterAsset, {
 	/*
 	 * Add vehicles corresponding to given devices or update vehicles if they exist already
 	 */
-	_addOrUpdateAllAsset: function(devices, vendors, drivers) {
+	_addOrUpdateAllAsset: function(devices, driverName, vendors, drivers) {
 		var self = this;
 		var deferred = Q.defer();
 
@@ -357,43 +352,48 @@ _.extend(iotpPdapterAsset, {
 			var existingAssetInfos = _.map(docs, function(doc) {return doc.doc.assetInfo;});
 			_.each(devices, function(device) {
 				promises.push(self._addOrUpdateAsset(device, existingIds, existingAssetInfos, vendors, drivers));
-			});					
-			Q.all(promises).then(function(result) {
-				// Add assetInfo documents to cloudant DB when new assets are added to IoT for Automotive
-				var assetInfoDocs = [];
-				_.each(result, function(doc, index) {
-					if (!doc.update) {
-						var docName = self._documentName(doc.assetInfo.deviceId, doc.assetInfo.deviceType);
-						var existingDoc = _.find(docs, function(doc) {
-							return doc.id === docName;
-						});
-
-						// Change vehicleId and driverId in existing document 
-						if (existingDoc) {
-							doc._id = existingDoc.doc._id;
-							doc._rev = existingDoc.doc._rev;
+			});
+			
+			// Create a driver if not exist
+			Q.when(self._createDriverIfNotExist(driverName, drivers)).then(function(driverId) {
+				Q.all(promises).then(function(result) {
+					// Add assetInfo documents to cloudant DB when new assets are added to IoT for Automotive
+					var assetInfoDocs = [];
+					_.each(result, function(doc, index) {
+						if (!doc.update) {
+							// Change vehicleId and driverId in existing document 
+							var docName = self._documentName(doc.assetInfo.deviceId, doc.assetInfo.deviceType);
+							var existingDoc = _.find(docs, function(doc) { return doc.id === docName; });
+							if (existingDoc) {
+								doc._id = existingDoc.doc._id;
+								doc._rev = existingDoc.doc._rev;
+							}
+							doc.assetInfo.driverId = driverId;
+							return assetInfoDocs.push(doc);
 						}
-						return assetInfoDocs.push(doc);
+					});
+					if (assetInfoDocs.length > 0) {
+						Q.when(self.db, function(db) {
+							db.bulk({docs: assetInfoDocs}, function(err, body) {
+								if (err) {
+									console.error(err);
+									return deferred.reject(err);
+								}
+								var results = _.pluck(assetInfoDocs, "assetInfo");
+								existingAssetInfos = _.filter(existingAssetInfos, function(info) {
+									return !_.find(results, function(r) {return info.deviceId === r.deviceId && info.deviceType === r.deviceType;});
+								});
+								results = results.concat(existingAssetInfos);
+								deferred.resolve(results);
+							});
+						});
+					} else {
+						deferred.resolve(existingAssetInfos);
 					}
 				});
-				if (assetInfoDocs.length > 0) {
-					Q.when(self.db, function(db) {
-						db.bulk({docs: assetInfoDocs}, function(err, body) {
-							if (err) {
-								console.error(err);
-								return deferred.reject(err);
-							}
-							var results = _.pluck(assetInfoDocs, "assetInfo");
-							existingAssetInfos = _.filter(existingAssetInfos, function(info) {
-								return !_.find(results, function(r) {return info.deviceId === r.deviceId && info.deviceType === r.deviceType;});
-							});
-							results = results.concat(existingAssetInfos);
-							deferred.resolve(results);
-						});
-					});
-				} else {
-					deferred.resolve(existingAssetInfos);
-				}
+			})["catch"](function(error) {
+				console.error(error);
+				deferred.reject(error);
 			});
 		})["catch"](function(error) {
 			console.error(error);
@@ -410,7 +410,7 @@ _.extend(iotpPdapterAsset, {
 		Q.when(this._isAssetRegistered(device, existingIds, existingAssetInfos), function(found) {
 			if (!found) {
 				// Add new asset to IoT for Automotive when there is no document corresponding to the device in cloudant DB
-				Q.when(self._addVehicleToIoTAAsset(device.deviceId, device.typeId, DEFAULT_DRIVER_NAME, vendors, drivers), function(vehicle) {
+				Q.when(self._addVehicleToIoTAAsset(device.deviceId, device.typeId, vendors), function(vehicle) {
 					// If the asset is successfully added, prepare new assetInfo doc that will be created in cloudant DB later
 					var docName = self._documentName(device.deviceId, device.typeId);
 					var assetInfo = {
@@ -418,11 +418,6 @@ _.extend(iotpPdapterAsset, {
 						deviceType: device.typeId,
 						vehicleId: vehicle.mo_id
 					};
-					if (vehicle.driver_id) {
-						assetInfo.driverId = vehicle.driver_id;
-					} else {
-						assetInfo.driverId = DEFAULT_DRIVER_NAME;
-					}
 					deferred.resolve({_id: docName, assetInfo: assetInfo});
 				})["catch"](function(error) {
 					console.error(error);
@@ -431,7 +426,7 @@ _.extend(iotpPdapterAsset, {
 			} else {
 				// Update existing asset in IoT for Automotive when there is a document corresponding to the device in cloudant DB
 				var info = _.find(existingAssetInfos, function(assetInfo) {return assetInfo.deviceId === device.deviceId && assetInfo.deviceType === device.typeId;});
-				Q.when(self._updateVehicleInIoTAAsset(info.deviceId, info.deviceType, info.vehicleId, info.driverId, vendors, drivers), function() {
+				Q.when(self._updateVehicleInIoTAAsset(info.deviceId, info.deviceType, info.vehicleId, vendors, drivers), function() {
 					info.update = true;
 					deferred.resolve(info);
 				})["catch"](function(error) {
@@ -494,9 +489,9 @@ _.extend(iotpPdapterAsset, {
 	/*
 	 * Add a vehicle to IoT for Automotive Asset
 	 */
-	_addVehicleToIoTAAsset: function(deviceId, deviceType, driverName, vendors, drivers) {
+	_addVehicleToIoTAAsset: function(deviceId, deviceType, vendors) {
 		var deferred = Q.defer();
-		Q.when(this._createVehicleFromDevice(deviceId, deviceType, driverName, true, vendors, drivers), function(vehicle) {
+		Q.when(this._createVehicleFromDevice(deviceId, deviceType, true, vendors), function(vehicle) {
 			Q.when(driverInsightsAsset.addVehicle(vehicle), function(response) {
 				vehicle.mo_id = response.id;
 				deferred.resolve(vehicle);
@@ -513,19 +508,19 @@ _.extend(iotpPdapterAsset, {
 	/*
 	 * Update all asset
 	 */
-	_updateAllAsset: function(deviceType, bookmark, deferred, vendors, drivers, results) {
+	_updateAllAsset: function(deviceType, bookmark, deferred, driverName, vendors, drivers, results) {
 		var self = this;
 		deviceType = deviceType || this.deviceType || DEFAULT_DEVICE_TYPE;
 		deferred = deferred || Q.defer();
 		var opts = bookmark ? {_bookmark: bookmark} : null;
 		Q.when(IOTF.iotfAppClient.callApi('GET', 200, true, ['device', 'types', deviceType, 'devices'], opts), function(response) {
 			bookmark = response.bookmark;
-			Q.when(self._addOrUpdateAllAsset(response.results, vendors, drivers), function(result) {
+			Q.when(self._addOrUpdateAllAsset(response.results, driverName, vendors, drivers), function(result) {
 				if (results) {
 					results = results.concat(result);
 				}
 				if (bookmark) {
-					self._updateAllAsset(deviceType, bookmark, deferred, vendors, drivers, results);
+					self._updateAllAsset(deviceType, bookmark, deferred, driverName, vendors, drivers, results);
 				} else {
 					deferred.resolve(results);
 				}
@@ -539,9 +534,9 @@ _.extend(iotpPdapterAsset, {
 	/*
 	 * Update a vehicle to IoT for Automotive Asset
 	 */
-	_updateVehicleInIoTAAsset: function(deviceId, deviceType, vehicleId, driverName, vendors, drivers) {
+	_updateVehicleInIoTAAsset: function(deviceId, deviceType, vehicleId, vendors) {
 		var deferred = Q.defer();
-		Q.when(this._createVehicleFromDevice(deviceId, deviceType, driverName, false, vendors, drivers), function(vehicle) {
+		Q.when(this._createVehicleFromDevice(deviceId, deviceType, false, vendors), function(vehicle) {
 			Q.when(driverInsightsAsset.updateVehicle(vehicleId, vehicle), function(response) {
 				vehicle.mo_id = response.id;
 				deferred.resolve(vehicle);
@@ -603,11 +598,11 @@ _.extend(iotpPdapterAsset, {
 			deferred.resolve(drivers[driverName]);
 		} else {
 			Q.when(driverInsightsAsset.getDriverList({name: driverName}), function(response) {
-				var driverId = response && response.data && response.data.driver_id;
+				var driverId = response.data && response.data.length > 0 && response.data[0].driver_id;
 				if (drivers) {
 					drivers[driverName] = driverId;
 				} 
-				return deferred.resolve(response && response.data && response.data.driver_id);
+				return deferred.resolve(driverId);
 			})["catch"](function(error) {
 				if (error.response.statusCode === 404 /* NOT FOUND */) {
 					// Create new driver if not found
@@ -616,7 +611,7 @@ _.extend(iotpPdapterAsset, {
 						if (drivers) {
 							drivers[driverName] = driverId;
 						} 
-						return deferred.resolve(response.id);
+						return deferred.resolve(driverId);
 					})["catch"](function(error) {
 						console.error(error);
 						deferred.reject(error);
