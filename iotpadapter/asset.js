@@ -542,7 +542,7 @@ _.extend(iotpPdapterAsset, {
 		deviceType = deviceType || this.deviceType || DEFAULT_DEVICE_TYPE;
 		deferred = deferred || Q.defer();
 		var opts = bookmark ? {_bookmark: bookmark} : null;
-		Q.when(IOTF.iotfAppClient.callApi('GET', 200, true, ['device', 'types', deviceType, 'devices'], opts), function(response) {
+		Q.when(IOTF.iotfAppClient.callApi('GET', 200, true, ['device', 'types', deviceType, 'devices'], null, opts), function(response) {
 			bookmark = response.bookmark;
 			Q.when(self._addOrUpdateAllAsset(response.results, vendors), function(result) {
 				if (results) {
