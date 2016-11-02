@@ -12,7 +12,6 @@ var iotpPdapterAsset = module.exports = {};
 var _ = require("underscore");
 var Q = new require('q');
 var dbClient = require('./../cloudantHelper.js');
-var chance = require("chance")();
 
 var IOTF = require('../iotfclient');
 var driverInsightsAsset = require("../driverInsights/asset.js");
@@ -29,22 +28,10 @@ _.extend(iotpPdapterAsset, {
 	db: null,
 	isAnonymouse: false,
 	deviceType: DEFAULT_DEVICE_TYPE,
-	assetInfoCache: {},
 	defaultDriverId: null,
 
 	_init: function(){
 		this.db = dbClient.getDB(ASSET_DB_NAME, this._getDesignDoc());
-		
-		// Watch device status. activate the device when it is connected and deactivate when disconnected
-		var self = this;
-		IOTF.on("+_DeviceStatus", function(deviceType, deviceId, payload) {
-			console.log(deviceType + ":" + deviceId + "=" + payload.Action);
-			if (payload.Action === "Connect") {
-				self._setAssetState(deviceId, deviceType, true);
-			} else if (payload.Action === "Disconnect") {
-				self._setAssetState(deviceId, deviceType, false);
-			}
-		});
 	},
 	/*
 	 * Get name of document that have asset information
@@ -52,37 +39,18 @@ _.extend(iotpPdapterAsset, {
 	_documentName: function(deviceId, deviceType) {
 		return deviceId + '-' + deviceType;
 	},
-	/*
-	 * Add or delete assetInfo cache
-	 */
-	_setDeviceInfoCache: function(deviceId, deviceType, assetInfo) {
-		var docName = this._documentName(deviceId, deviceType);
-		if (assetInfo) {
-			this.assetInfoCache[docName] = assetInfo;
-		} else {
-			delete this.assetInfoCache[docName];
-		}
-	},
-	/*
-	 * Get assetInfo cache
-	 */
-	_getAssetInfoCache: function(deviceId, deviceType) {
-		var docName = this._documentName(deviceId, deviceType);
-		return this.assetInfoCache[docName];
-	},
 	isIoTPlatformAvailable: function() {
 		return !!IOTF.iotfAppClient;
 	},
 	/*
 	 * Activate or Deactivate asset
 	 */
-	_setAssetState: function(deviceId, deviceType, activate) {
+	setAssetState: function(deviceId, deviceType, activate) {
 		var self = this;
 		var deferred = Q.defer();
 		Q.when(this.getAssetInfo(deviceId, deviceType), function(assetInfo) {
-			self._setDeviceInfoCache(deviceId, deviceType, activate ? assetInfo : null);
 			Q.when(driverInsightsAsset.updateVehicle(assetInfo.vehicleId, {status: activate ? "active" : "inactive"}, false), function(result) {
-				deferred.resolve(result);
+				deferred.resolve(assetInfo);
 			})["catch"](function(error) {
 				console.error(error);
 				deferred.reject(error);
@@ -123,24 +91,19 @@ _.extend(iotpPdapterAsset, {
 		deviceType = deviceType || this.deviceType || DEFAULT_DEVICE_TYPE;
 		var docName = this._documentName(deviceId, deviceType);
 		var deferred = Q.defer();
-		var assetInfo = this._getAssetInfoCache(deviceId, deviceType);
-		if (assetInfo) {
-			deferred.resolve(assetInfo);
-		} else {
-			Q.when(this.db, function(db) {
-				db.get(docName, function(err, body) {
-					if(err){
-						console.error(err);
-						return deferred.reject(err);
-					}
-					var assetInfo = body && body.assetInfo;
-					deferred.resolve(assetInfo);
-				});
-			})["catch"](function(error) {
-				console.error(error);
-				deferred.reject(error);
+		Q.when(this.db, function(db) {
+			db.get(docName, function(err, body) {
+				if(err){
+					console.error(err);
+					return deferred.reject(err);
+				}
+				var assetInfo = body && body.assetInfo;
+				deferred.resolve(assetInfo);
 			});
-		}
+		})["catch"](function(error) {
+			console.error(error);
+			deferred.reject(error);
+		});
 		return deferred.promise;
 	},
 	/*

@@ -24,6 +24,10 @@ function iotfClient(options) {
 	options = (options) ? options : {};
 	EventEmitter.call(this);
 	var iotfConfig = getCredentials();
+	if (!iotfConfig) {
+		console.log("IoT Platform service is not available");
+		return;
+	}
 	this.iotfAppClient = new iotfAppClient(iotfConfig);
 	if(process.env.STAGE1){
 		this.iotfAppClient.staging = true;
@@ -109,13 +113,11 @@ iotfClient.prototype.createCommandsMethods = function createCommandsMethonds(){
 };
 
 getCredentials = function (){
-	var iotFcreds = null;
-	try{
-		iotFcreds = VCAP_SERVICES["iotf-service"][0].credentials;
-
-	}catch (e) {
-		throw "Cannot get IoT-Foundation credentials - for local debug update _debug.js";
+	var iotfservices = VCAP_SERVICES["iotf-service"];
+	if (!iotfservices || iotfservices.length === 0) {
+		return null;
 	}
+	var iotFcreds = iotfservices[0].credentials;
 	var config = {
 			"org" : iotFcreds.org,
 			"id" : BM_APPLICATION_ID,
