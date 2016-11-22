@@ -90,6 +90,10 @@ export class VehicleListComponent {
       this.isWorkingWithVehicle = true;
     }, (error: any) => {
         this.requestSending = false;
+        if (error.status === 404) { // No vendor is registered
+          this.workingVehicle = new Vehicle({});
+          this.isWorkingWithVehicle = true;
+        }
     });
   }
 
@@ -106,6 +110,10 @@ export class VehicleListComponent {
       this.isWorkingWithVehicle = true;
     }, (error: any) => {
         this.requestSending = false;
+        if (error.status === 404) { // No vendor is registered
+          this.workingVehicle = new Vehicle(this._getVehicle(mo_id));
+          this.isWorkingWithVehicle = true;
+        }
     });
   }
 
