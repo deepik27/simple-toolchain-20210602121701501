@@ -37,6 +37,7 @@ router.get("/capability/device", authenticate, function(req, res){
 });
 router.post("/device/sync", authenticate, function(req, res){
 	Q.when(iotpPdapterAsset.synchronizeAllAsset(), function(response){
+		iotpPdapterProbe.resetAssetInfoCache();
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);

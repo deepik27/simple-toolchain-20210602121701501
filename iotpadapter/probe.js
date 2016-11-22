@@ -53,6 +53,12 @@ _.extend(probe, {
 		}
 	},
 	/*
+	 * Reset assetInfo cache. Call this when asset is regenerated
+	 */
+	resetAssetInfoCache: function() {
+		this.assetInfoCache = {};
+	},
+	/*
 	 * Get assetInfo. return cache if exists
 	 */
 	_getAssetInfo: function(deviceId, deviceType) {

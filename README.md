@@ -161,7 +161,9 @@ Refer [IBM IoT for Automotive - OBDII Fleet Management App for Android](https://
 
 ### Connect the device to the IoT for Automotive service
 
-When you start the mobile app for the first time, a device is registered automatically to the IoT Platform service that you have specified in the mobile app. The last step is to bind the device to a vehicle in the IBM IoT for Automotive service.
+When you start the mobile app for the first time, a device is registered automatically to the IoT Platform service that you have specified in the mobile app, and corresponding vehicle is created automatically when you connect your device to the IoT Platform. Now, your device is connected to the Fleet Management Starter Application. Go to **Map** or **Car Status** page in the app and see the status.
+
+If you no longer need a device, go to IoT Platform dashboard and delete your device manually. Then, after you delete it, update vehicles in the IBM IoT for Automotive service as follows.
 
 1. Open the Fleet Management Starter Application on your browser.
 
@@ -169,7 +171,7 @@ When you start the mobile app for the first time, a device is registered automat
 
 1. Click **Sync with IoT Platform** at top right of the page.
 
-A vehicle corresponding to your device must be listed in a table. Close and restart the mobile app. Now, your device is connected to the Fleet Management Starter Application. Go to **Map** or **Car Status** page in the app and see the status.
+A vehicle corresponding to deleted device must be removed from a table. Also, if you have added new device to IoT Platform manually, new vehicle is added to the table. 
 
 ## Reporting defects
 To report a defect with the IoT for Automotive - Mobility Starter Application mobile app, go to the [Issues section](https://github.com/ibm-watson-iot/iota-starter-server-fm/issues) section.
