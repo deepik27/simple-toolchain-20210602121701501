@@ -518,11 +518,20 @@ _.extend(iotpPdapterAsset, {
 		var deferred = Q.defer();
 		// Update existing asset in IoT for Automotive when there is a document corresponding to the device in cloudant DB
 		var info = _.find(existingAssetInfos, function(assetInfo) {return assetInfo.deviceId === device.deviceId && assetInfo.deviceType === device.typeId;});
-		Q.when(self._updateVehicleInIoTAAsset(info.deviceId, info.deviceType, info.vehicleId, vendors, noRefresh), function() {
-			info.update = true;
-			deferred.resolve(info);
+		var isNew = !info;
+		Q.when(isNew || self._updateVehicleInIoTAAsset(info.deviceId, info.deviceType, info.vehicleId, vendors, noRefresh), function() {
+			if (!isNew) {
+				info.update = true;
+				deferred.resolve(info);
+			}
 		})["catch"](function(error) {
 			if (error && error.response && error.response.statusCode === 404) {
+				isNew = true;
+			} else {
+				deferred.reject(error);
+			}
+		}).done(function() {
+			if (isNew) {
 				// Add new asset to IoT for Automotive when there is no document corresponding to the device in cloudant DB
 				Q.when(self._addVehicleToIoTAAsset(device.deviceId, device.typeId, false, vendors, noRefresh), function(vehicle) {
 					// If the asset is successfully added, prepare new assetInfo doc that will be created in cloudant DB later
@@ -536,8 +545,6 @@ _.extend(iotpPdapterAsset, {
 				})["catch"](function(error) {
 					deferred.reject(error);
 				});
-			} else {
-				deferred.reject(error);
 			}
 		});
 		return deferred.promise;
