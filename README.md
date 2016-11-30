@@ -157,7 +157,7 @@ When you start a mobile app for the first time, your device is registered to the
 
 ### Set up the OBDII Fleet Management App
 
-Refer [IBM IoT for Automotive - OBDII Fleet Management App for Android](https://github.ibm.com/Watson-IoT/IoT-Automotive-OBD2-android) to build and install a mobile app to your Android phone. Once you get ready to use it, start the mobile app on your phone.
+Refer [IBM IoT for Automotive - OBDII Fleet Management App for Android](https://github.com/ibm-watson-iot/iota-starter-obd-android) to build and install a mobile app to your Android phone. Once you get ready to use it, start the mobile app on your phone.
 
 ### Connect the device to the IoT for Automotive service
 
