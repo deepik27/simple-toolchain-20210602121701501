@@ -26,7 +26,7 @@ function handleAssetError(res, err) {
 	//{message: msg, error: error, response: response}
 	console.error('error: ' + JSON.stringify(err));
 	var response = err.response;
-	var status = (response && (response.status||response.statusCode)) || 500;
+	var status = err.statusCode || (response && (response.status||response.statusCode)) || 500;
 	var message = err.message || (err.data && err.data.message) || err;
 	return res.status(status).send(message);
 }
