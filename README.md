@@ -21,7 +21,7 @@ The Fleet Management Starter Application uses the following services that are av
 
 ## Deploying the app on Bluemix
 
-You can automatically deploy an instance of the Fleet Management Starter Application on Bluemix by clicking [![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm.git). You can also deploy the app manually.
+You can automatically deploy an instance of the Fleet Management Starter Application on Bluemix by clicking [![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm.git). You can also deploy the app manually. Note that you have to do the service activation step mentioned below after the automatic or manual deployment.
 
 To manually deploy your own instance of the Fleet Management Starter Application on Bluemix, complete all of the following steps:
 
