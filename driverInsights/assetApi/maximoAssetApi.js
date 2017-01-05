@@ -21,21 +21,28 @@ var maximoAssetApi = {
 		if (vcapSvc && vcapSvc.length > 0) {
 			var iot4a_cred = vcapSvc[0].credentials;
 			if (iot4a_cred.maximo) {
-				var assetCreds = _.clone(iot4a_cred.maximo);
-		        return {
-		        	tenant_id: iot4a_cred.tenant_id,
-		        	api: assetCreds.api,
-		            user: assetCreds.username,
-		            password: assetCreds.password,
+				var vdh = iot4a_cred.vehicle_data_hub && iot4a_cred.vehicle_data_hub.length > 0 && iot4a_cred.vehicle_data_hub[0];
+				var vdhCreds = {
+					baseURL: vdh ? ("https://" + vdh) : (iot4a_cred.api + "vehicle"),
+					username : iot4a_cred.username,
+					password : iot4a_cred.password
+				};
+				var assetCreds = iot4a_cred.maximo;
+		        var maximoCreds = {
+		        	baseURL: assetCreds.api,
+		            username: assetCreds.username,
+		            password: assetCreds.password
 		          };
+				var creds = {tenant_id: iot4a_cred.tenant_id, vdh: vdhCreds, maximo: maximoCreds};
+				return creds;
 			}
 		}
 	}(),
 	
 	_getUrl: function(context, islean) {
-		var cred = this.assetConfig;
+		var cred = this.assetConfig.maximo;
 		var objectName = this._getResourceObjectName(context).toLowerCase();
-		var api = cred.api || (cred.protocol + '://' + cred.hostname + ':' + cred.port + cred.auth_schema);
+		var api = cred.baseURL || (cred.protocol + '://' + cred.hostname + ':' + cred.port + cred.auth_schema);
 		var url =  api + '/oslc/os/' + objectName;
 		if (islean) {
 			url += '?lean=1';
@@ -138,7 +145,19 @@ var maximoAssetApi = {
 	 */
 	refreshAsset: function(context) {
 		var deferred = Q.defer();
-		deferred.resolve();
+		var config = this.assetConfig.vdh;
+		var url = config.baseURL;
+		var assettype = context == "eventtype" ? "event_type" : context;
+		url += "?asset=" + assettype;
+		if (this.assetConfig.tenant_id) {
+			url += '&tenant_id=' + this.assetConfig.tenant_id;
+		}
+
+		Q.when(this._request(url, 'GET', null, null, config), function(result) {
+			deferred.resolve(result);
+		})["catch"](function(err){
+			deferred.reject(err);
+		}).done();
 		return deferred.promise;
 	},
 	/*
@@ -202,8 +221,8 @@ var maximoAssetApi = {
 		return deferred.promise;
 	},
 
-	_createOptions: function(url, method, method_override, body) {
-		var config = this.assetConfig;
+	_createOptions: function(url, method, method_override, body, creds) {
+		var config = creds || this.assetConfig.maximo;
 		var options = {
 				method: method,
 				url: url,
@@ -212,7 +231,7 @@ var maximoAssetApi = {
 				},
 				rejectUnauthorized: false,
 				auth: {
-					user: config.user,
+					user: config.username,
 					pass: config.password,
 					sendImmediately: true
 				}
@@ -233,10 +252,10 @@ var maximoAssetApi = {
 	},
 	
 	_query: function(context, attributes, id, pagesize, pageno) {
-		var config = this.assetConfig;
+		var config = this.assetConfig.maximo;
 		var where = [];
-		if (config.tenant_id) {
-			where.push('siteid=' + config.tenant_id);
+		if (this.assetConfig.tenant_id) {
+			where.push('siteid=' + this.assetConfig.tenant_id);
 		}
 		if (id) {
 			where.push('mo_id=' + id);
@@ -280,8 +299,8 @@ var maximoAssetApi = {
 		return deferred.promise;
 	},
 
-	_request: function(url, method, method_override, body) {
-		var options = this._createOptions(url, method, method_override, body);
+	_request: function(url, method, method_override, body, config) {
+		var options = this._createOptions(url, method, method_override, body, config);
 
 		var deferred = Q.defer();
 		request(options, function(error, response, body){
