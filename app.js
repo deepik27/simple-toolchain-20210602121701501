@@ -10,8 +10,10 @@
 
 // Check if VCAP_SERVICES.json is present (used for running the server locally for development purposes)
 var fs = require('fs');
-if (fs.existsSync('./VCAP_SERVICES.json')) {
-	VCAP_SERVICES = require('./VCAP_SERVICES.json');
+var VCAP_SERVICES_PATH = './VCAP_SERVICES.json';
+
+if (fs.existsSync(VCAP_SERVICES_PATH)) {
+	VCAP_SERVICES = require(VCAP_SERVICES_PATH);
 } else {
 	VCAP_SERVICES = JSON.parse(process.env.VCAP_SERVICES || '{}');
 }
