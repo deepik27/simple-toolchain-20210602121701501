@@ -47,11 +47,13 @@ export class AppComponent {
       e.preventDefault();
 
       if (!this.menuOpened) {
+        menuButton.classList.add('hamburgerClicked');
         sidebar.classList.add('menu-open');
         mainContent.classList.add('menu-open');
 
         this.menuOpened = true;
       } else {
+        menuButton.classList.remove('hamburgerClicked');
         sidebar.classList.remove('menu-open');
         mainContent.classList.remove('menu-open');
 

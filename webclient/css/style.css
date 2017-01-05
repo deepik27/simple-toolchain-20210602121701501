@@ -548,12 +548,68 @@ header .floatRight p
     padding: 20px 0;
 }
 
-header .floatRight a#menuButton i {
-    font-size: 15px;
-    margin: 0;
-    margin-right: 15px;
-    padding: 0;
-    color: #fff;
+header .floatRight a#menuButton {
+    display: table;
+    position: relative;
+    width: 30px;
+    height: 15px;
+    margin-top: 1px;
+    z-index: 9998 !important;
+}
+
+header .floatRight a#menuButton span {
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background: #fff;
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+    -webkit-transition: all .2s ease-in;
+    -moz-transition: all .2s ease-in;
+    -o-transition: all .2s ease-in;
+    transition: all .2s ease-in;
+}
+
+header .floatRight a#menuButton span.first {
+    top: 0;
+}
+
+header .floatRight a#menuButton span.second {
+    top: 6px;
+}
+
+header .floatRight a#menuButton span.third {
+    top: 12px;
+}
+
+header .floatRight a#menuButton span.third {
+    margin-bottom: 0;
+}
+
+header .floatRight a.hamburgerClicked span {
+    -webkit-transition: all .2s ease-in;
+    -moz-transition: all .2s ease-in;
+    -o-transition: all .2s ease-in;
+    transition: all .2s ease-in;
+}
+
+header .floatRight a.hamburgerClicked span.first {
+    transform: rotate(45deg) !important;
+    top: 7px !important;
+}
+
+header .floatRight a.hamburgerClicked span.second {
+    transform: translateX(30px) !important;
+    opacity: 0;
+    top: 7px;
+}
+
+header .floatRight a.hamburgerClicked span.third {
+    transform: rotate(-45deg) !important;
+    top: 7px !important;
 }
 
 header .productTitle a
