@@ -7,7 +7,14 @@
  *
  * You may not use this file except in compliance with the license.
  */
-VCAP_SERVICES = JSON.parse(process.env.VCAP_SERVICES || '{}')
+
+// Check if VCAP_SERVICES.json is present (used for running the server locally for development purposes)
+var fs = require('fs');
+if (fs.existsSync('./VCAP_SERVICES.json')) {
+	VCAP_SERVICES = require('./VCAP_SERVICES.json');
+} else {
+	VCAP_SERVICES = JSON.parse(process.env.VCAP_SERVICES || '{}');
+}
 
 /**
  * Module dependencies.
