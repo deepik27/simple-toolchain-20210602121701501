@@ -34,10 +34,31 @@ export class AppComponent {
        ];
 
   constructor(){
+    this.menuOpened = false;
   }
 
   ngOnInit() {
     /*   ===   Navigation on smaller screens   ===   */
+    var menuButton = document.getElementById('menuButton');
+    var sidebar = document.getElementById('sidebar');
+    var mainContent = document.getElementById('mainContent');
+
+    menuButton.onclick = function(e){
+      e.preventDefault();
+
+      if (!this.menuOpened) {
+        sidebar.classList.add('menu-open');
+        mainContent.classList.add('menu-open');
+
+        this.menuOpened = true;
+      } else {
+        sidebar.classList.remove('menu-open');
+        mainContent.classList.remove('menu-open');
+
+        this.menuOpened = false;
+      }
+    };
+
     var modalCalls = document.querySelectorAll('.em-Modal-Call');
     var modalCallsArray = Array.prototype.slice.call(modalCalls, 0);
 
@@ -62,9 +83,6 @@ export class AppComponent {
                     document.getElementById(el.rel).querySelector('.em-Modal-Close').classList.remove('em-Modal-Close-show');
                     document.getElementById(el.rel).classList.remove('em-Modal-show');
                     document.getElementById(el.rel).querySelector('.em-Modal-Content').classList.remove('em-Modal-Content-show');
-
-                    document.querySelector('header').classList.remove('blur');
-                    document.querySelector('.content').classList.remove('blur');
                 };
 
                 document.onkeydown = function(event: any) {
@@ -79,9 +97,6 @@ export class AppComponent {
                 Array.prototype.slice.call(document.querySelectorAll('.em-Modal-Content ul.modalMenu a'), 0).forEach(function(modalLink) {
                     modalLink.addEventListener("click", close);
                 });
-
-                document.querySelector('header').classList.add('blur');
-                document.querySelector('.content').classList.add('blur');
             };
         }
     });

@@ -243,35 +243,6 @@ i.iconBlock
     background: #fff;
 }
 
-.blur
-{
-    -webkit-animation: blur .5s forwards;
-       -moz-animation: blur .5s forwards;
-         -o-animation: blur .5s forwards;
-            animation: blur .5s forwards;
-}
-
-@-webkit-keyframes blur
-{
-    0%
-    {
-        -webkit-filter: blur(0px);
-           -moz-filter: blur(0px);
-             -o-filter: blur(0px);
-            -ms-filter: blur(0px);
-                filter: blur(0px);
-    }
-
-    100%
-    {
-        -webkit-filter: blur(4px);
-           -moz-filter: blur(4px);
-             -o-filter: blur(4px);
-            -ms-filter: blur(4px);
-                filter: blur(4px);
-    }
-}
-
 .card
 {
     position: relative;
@@ -577,6 +548,14 @@ header .floatRight p
     padding: 20px 0;
 }
 
+header .floatRight a#menuButton i {
+    font-size: 15px;
+    margin: 0;
+    margin-right: 15px;
+    padding: 0;
+    color: #fff;
+}
+
 header .productTitle a
 {
     color: #fff;
@@ -715,6 +694,11 @@ aside.sidebar
            -moz-transition: all .2s ease-in;
                 transition: all .2s ease-in;
     }
+
+    aside.sidebar.menu-open
+    {
+        margin-left: 0;
+    }
 }
 
 aside.sidebar ul.sidebarItems li a,
@@ -770,6 +754,36 @@ aside.sidebar ul.sidebarItems li a i
 .content .mainContent
 {
     position: relative;
+    -webkit-transition: all .2s ease-in;
+       -moz-transition: all .2s ease-in;
+            transition: all .2s ease-in;
+}
+
+@media (max-width: 992px) {
+    .content .mainContent div.overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        opacity: 0;
+        z-index: 11;
+        -webkit-transition: all .2s ease-in;
+           -moz-transition: all .2s ease-in;
+                transition: all .2s ease-in;
+    }
+
+    .content .mainContent.menu-open {
+        transform: translateX(200px);
+        -webkit-transition: all .2s ease-in;
+           -moz-transition: all .2s ease-in;
+                transition: all .2s ease-in;
+    }
+
+    .content .mainContent.menu-open div.overlay {
+        opacity: 0.75;
+    }
 }
 
 .content .mainContent h4
