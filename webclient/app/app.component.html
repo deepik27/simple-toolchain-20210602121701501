@@ -41,22 +41,3 @@
         <router-outlet></router-outlet>
     </div>
 </div>
-
-<div class="em-Modal" id="loginModal" ng-controller="sidebar">
-    <div class="em-Modal-Content">
-        <div class="em-Modal-Close">
-            <a href="#">
-                <i class="icon-close"></i>
-            </a>
-        </div>
-
-        <ul class="modalMenu">
-            <li *ngFor="let sidebarItem of sidebarItems" routerLinkActive="active">
-                <a [routerLink]="[sidebarItem.route]">
-                    <i class="{{sidebarItem.icon}} iconBlock"></i>
-                    {{sidebarItem.title}}
-                </a>
-            </li>
-        </ul>
-    </div>
-</div>
