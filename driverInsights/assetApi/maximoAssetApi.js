@@ -14,6 +14,67 @@ var cfenv = require("cfenv");
 var debug = require('debug')('iot4AAssetApi');
 debug.log = console.log.bind(console);
 
+var attributesMap = {
+		"vehicle": {
+			"assetnum": "mo_id",
+			"assetuid": "internal_mo_id",
+			"iotcvmodel": "model",
+			"serialnum": "serial_number",
+			"OPERATING": {"name": "status", "value": "active"},
+			"NOT READY": {"name": "status", "value": "inactive"},
+			"vendor": "vendor",
+			"iotcvwidth": "width",
+			"iotcvheight": "height",
+			"iotcvtype": "type",
+			"iotcvusage": "usage",
+			"personid": "driver_id",
+			"description": "description",
+			"assetspec": {"name": "properties", "value": function(val) {
+				var props = [];
+				_.each(val, function(obj) {
+					if (obj.assetattrid && obj.alnvalue) {
+						props[obj.assetattrid] = obj.alnvalue;
+					}
+				});
+				return props;
+			}}
+		},
+		"driver": {
+			"personid": "driver_id",
+			"personuid": "internal_driver_id",
+			"displayname": "name",
+			"iotcvcontract": "contract_id",
+			"status": {"name": "status", "value": function(val) {
+				return val ? "active": "inactive";
+			}}
+		},
+		"vendor": {
+			"name": "vendor",
+			"homepage": "website",
+			"type": "type",
+			"description": "description"
+		},
+		"eventtype": {
+			"assetattrid": "event_type",
+			"assetattributeid": "internal_event_type_id",
+			"iotcvaffecttype": "affected_type",
+			"iotcvcategory": "category",
+			"status": {"name": "status", "value": function(val) {
+				return val ? "active": "inactive";
+			}},
+			"description": "description"
+		},
+		"rule": {
+			"rulenum": "rule_id",
+			"iotcvruleid": "internal_rule_id",
+			"type": "type",
+			"status": {"name": "status", "value": function(val) {
+				return val ? "active": "inactive";
+			}},
+			"description": "description"
+		}
+};
+
 var maximoAssetApi = {
 	assetConfig: function(){
 		var userVcapSvc = JSON.parse(process.env.USER_PROVIDED_VCAP_SERVICES || '{}');
@@ -53,11 +114,11 @@ var maximoAssetApi = {
 	_getResourceObjectName: function(context) {
 		var object = null;
 		if (context === "vehicle") {
-			object = "OTCVASSET";
+			object = "IOTCVASSET";
 		} else if (context === "driver") {
 			object = "IOTCVDRIVER";
 		} else if (context === "vendor") {
-			object = "IOTCVVENDOR";
+			object = "MXVENDOR";
 		} else if (context === "eventtype") {
 			object = "IOTCVEVENTTYPE";
 		} else if (context === "rule") {
@@ -66,21 +127,27 @@ var maximoAssetApi = {
 		return object;
 	},
 	_getResourceObjectAttributes: function(context) {
-		var attrs = [];
-		if (context === "vehicle") {
-			attrs = ["mo_id", "internal_mo_id", "model", "serial_number", "status", "vendor", "width", "height", "type", "usage", "driver_id", "description", "properties"];
-		} else if (context === "driver") {
-			attrs = ["driver_id", "internal_driver_id", "name", "contract_id", "status"];
-		} else if (context === "vendor") {
-			attrs = ["vendor", "website", "type", "status", "description"];
-		} else if (context === "eventtype") {
-			attrs = ["event_type", "internal_event_type_id", "affected_type", "category", "status", "description"];
-		} else if (context === "rule") {
-			attrs = ["rule_id", "internal_rule_id", "type", "status", "description"];
-		}
-		return null;
+		var map = attributesMap[context];
+		return map ? _.keys(map) : null;
 	},
-	
+	_getAssetObject: function(context, maximoAsset) {
+		var map = attributesMap[context];
+		var asset = {};
+		_.each(maximoAsset, function(value, key) {
+			var assetElement = map[key];
+			if (assetElement) {
+				if (_.isObject(assetElement)) {
+					if (assetElement.name) {
+						asset[assetElement.name] = 
+							_.isFunction(assetElement.value) ? assetElement.value(value) : assetElement.value;
+					}
+				} else {
+					asset[assetElement] = value;
+				}
+			}
+		});
+		return asset;
+	},
 	/*
 	 * Get list of assets
 	 */
@@ -88,9 +155,7 @@ var maximoAssetApi = {
 		var deferred = Q.defer();
 		var attributes = this._getResourceObjectAttributes(context);
 		Q.when(this._query(context, attributes), function(result) {
-			var assets = _.map(result, _.filter(function(attr) {
-				_.contains(attributes, attr);
-			}));
+			deferred.resolve({data: result});
 		})["catch"](function(err){
 			deferred.reject(err);
 		}).done();
@@ -105,7 +170,7 @@ var maximoAssetApi = {
 		var self = this;
 		Q.when(this._query(context, null, id), function(result) {
 			Q.when(self._request(result.href + '?lean=1', 'GET'), function(result) {
-				deferred.resolve(JSON.parse(result));
+				deferred.resolve(result);
 			})["catch"](function(err){
 				deferred.reject(err);
 			}).done();
@@ -221,21 +286,26 @@ var maximoAssetApi = {
 		return deferred.promise;
 	},
 
-	_createOptions: function(url, method, method_override, body, creds) {
-		var config = creds || this.assetConfig.maximo;
+	_createOptions: function(url, method, method_override, body, basicauth) {
 		var options = {
 				method: method,
 				url: url,
 				headers: {
 					"Content-Type": "application/json"
-				},
-				rejectUnauthorized: false,
-				auth: {
-					user: config.username,
-					pass: config.password,
-					sendImmediately: true
 				}
 		};
+		if (basicauth) {
+			options.rejectUnauthorized = false;
+			options.auth = {
+				user: config.username,
+				pass: config.password,
+				sendImmediately: true
+			};
+		} else {
+			var creds = this.assetConfig.maximo;
+			var maxauth = creds.username + ':' + creds.password;
+			options.headers.maxauth = new Buffer(maxauth).toString('base64');
+		}
 		if (method_override) {
 			if (method_override === 'MERGE') {
 				options.headers.patchtype = 'MERGE';
@@ -255,17 +325,17 @@ var maximoAssetApi = {
 		var config = this.assetConfig.maximo;
 		var where = [];
 		if (this.assetConfig.tenant_id) {
-			where.push('siteid=' + this.assetConfig.tenant_id);
+			where.push('siteid="' + this.assetConfig.tenant_id + '"');
 		}
 		if (id) {
-			where.push('mo_id=' + id);
+			where.push('mo_id="' + id + '"');
 		}
 		
 		var url = this._getUrl(context, true);
 		if (attributes && attributes.length > 0) {
 			url += '&oslc.select=' + attributes.join(',');
 		}
-		if (where) {
+		if (where && where.length > 0) {
 			url += '&oslc.where=' + where.join(' and ');
 		}
 		if (pagesize) {
@@ -277,6 +347,7 @@ var maximoAssetApi = {
 
 		var options = this._createOptions(url, 'GET');
 
+		var self = this;
 		var deferred = Q.defer();
 		request(options, function(error, response, body){
 			if (!error && response.statusCode >= 200 && response.statusCode < 300) {
@@ -284,12 +355,12 @@ var maximoAssetApi = {
 				var member = result.member;
 				if (id) {
 					if (member && member.length > 0) {
-						deferred.resolve(result[0]);
+						deferred.resolve(self._getAssetObject(context, member[0]));
 			        } else {
 						deferred.reject({errorStatus: 404, message: "Not found"});
 			        }
 				} else {
-					deferred.resolve(member);
+					deferred.resolve(_.map(member, function(m) {return self._getAssetObject(context, m);}));
 				}
 			} else {
 				var msg = 'asset: error(' + url + '): '+ body;
