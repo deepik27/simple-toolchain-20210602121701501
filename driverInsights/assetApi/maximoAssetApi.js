@@ -229,7 +229,7 @@ var maximoAssetApi = {
 	/*
 	 * Delete an asset
 	 */
-	deleteAsset: function(context, id){
+	deleteAsset: function(context, id, refresh){
 		var deferred = Q.defer();
 		var self = this;
 		Q.when(this._query(context, null, id), function(result) {
@@ -359,7 +359,7 @@ var maximoAssetApi = {
 					if (member && member.length > 0) {
 						deferred.resolve(attributes ? self._getAssetObject(context, member[0]) : member[0]);
 			        } else {
-						deferred.reject({errorStatus: 404, message: "Not found"});
+						deferred.reject({statusCode: 404, message: "Not found"});
 			        }
 				} else {
 					deferred.resolve(attributes ? _.map(member, function(m) {return self._getAssetObject(context, m);}) : member);
