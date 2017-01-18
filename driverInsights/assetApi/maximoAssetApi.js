@@ -15,7 +15,7 @@ var debug = require('debug')('iot4AAssetApi');
 debug.log = console.log.bind(console);
 
 var attributesMap = {
-		"vehicle": {
+		"vehicle": {id: "assetnum", map: {
 			"assetnum": "mo_id",
 			"assetuid": "internal_mo_id",
 			"iotcvmodel": "model",
@@ -38,8 +38,8 @@ var attributesMap = {
 				});
 				return props;
 			}}
-		},
-		"driver": {
+		}},
+		"driver": {id: "personid", map: {
 			"personid": "driver_id",
 			"personuid": "internal_driver_id",
 			"displayname": "name",
@@ -47,14 +47,14 @@ var attributesMap = {
 			"status": {"name": "status", "value": function(val) {
 				return val ? "active": "inactive";
 			}}
-		},
-		"vendor": {
+		}},
+		"vendor": {id: "name", map: {
 			"name": "vendor",
 			"homepage": "website",
 			"type": "type",
 			"description": "description"
-		},
-		"eventtype": {
+		}},
+		"eventtype": {id: "assetattrid", map: {
 			"assetattrid": "event_type",
 			"assetattributeid": "internal_event_type_id",
 			"iotcvaffecttype": "affected_type",
@@ -63,8 +63,8 @@ var attributesMap = {
 				return val ? "active": "inactive";
 			}},
 			"description": "description"
-		},
-		"rule": {
+		}},
+		"rule": {id: "rulenum", map: {
 			"rulenum": "rule_id",
 			"iotcvruleid": "internal_rule_id",
 			"type": "type",
@@ -72,7 +72,7 @@ var attributesMap = {
 				return val ? "active": "inactive";
 			}},
 			"description": "description"
-		}
+		}}
 };
 
 var maximoAssetApi = {
@@ -127,11 +127,11 @@ var maximoAssetApi = {
 		return object;
 	},
 	_getResourceObjectAttributes: function(context) {
-		var map = attributesMap[context];
+		var map = attributesMap[context] ? attributesMap[context].map : null;
 		return map ? _.keys(map) : null;
 	},
 	_getAssetObject: function(context, maximoAsset) {
-		var map = attributesMap[context];
+		var map = attributesMap[context] ? attributesMap[context].map : null;
 		var asset = {};
 		_.each(maximoAsset, function(value, key) {
 			var assetElement = map[key];
@@ -170,7 +170,7 @@ var maximoAssetApi = {
 		var self = this;
 		Q.when(this._query(context, null, id), function(result) {
 			Q.when(self._request(result.href + '?lean=1', 'GET'), function(result) {
-				deferred.resolve(result);
+				deferred.resolve(self._getAssetObject(context, result));
 			})["catch"](function(err){
 				deferred.reject(err);
 			}).done();
@@ -184,8 +184,9 @@ var maximoAssetApi = {
 		var deferred = Q.defer();
 		var self = this;
 		Q.when(!id || this._query(context, null, id), function(result) {
-			var url = result ? result.href + '?lean=1' : self._getUrl(context, true);
-			var method_override = result ? 'PATCH' : null;
+			var existing = id && result;
+			var url = existing ? result.href + '?lean=1' : self._getUrl(context, true);
+			var method_override = existing ? 'PATCH' : null;
 			Q.when(self._request(url, 'POST', method_override, asset), function(result) {
 				if (refresh) {
 					Q.when(self.refreshAsset(context), function(refreshed){
@@ -297,8 +298,8 @@ var maximoAssetApi = {
 		if (basicauth) {
 			options.rejectUnauthorized = false;
 			options.auth = {
-				user: config.username,
-				pass: config.password,
+				user: basicauth.username,
+				pass: basicauth.password,
 				sendImmediately: true
 			};
 		} else {
@@ -328,7 +329,8 @@ var maximoAssetApi = {
 			where.push('siteid="' + this.assetConfig.tenant_id + '"');
 		}
 		if (id) {
-			where.push('mo_id="' + id + '"');
+			var idname = attributesMap[context] ? attributesMap[context].id : null;
+			where.push(idname + '="' + id + '"');
 		}
 		
 		var url = this._getUrl(context, true);
@@ -355,12 +357,12 @@ var maximoAssetApi = {
 				var member = result.member;
 				if (id) {
 					if (member && member.length > 0) {
-						deferred.resolve(self._getAssetObject(context, member[0]));
+						deferred.resolve(attributes ? self._getAssetObject(context, member[0]) : member[0]);
 			        } else {
 						deferred.reject({errorStatus: 404, message: "Not found"});
 			        }
 				} else {
-					deferred.resolve(_.map(member, function(m) {return self._getAssetObject(context, m);}));
+					deferred.resolve(attributes ? _.map(member, function(m) {return self._getAssetObject(context, m);}) : member);
 				}
 			} else {
 				var msg = 'asset: error(' + url + '): '+ body;
@@ -376,9 +378,9 @@ var maximoAssetApi = {
 		var deferred = Q.defer();
 		request(options, function(error, response, body){
 			if (!error && response.statusCode >= 200 && response.statusCode < 300) {
-				deferred.resolve(JSON.parse(body));
+				deferred.resolve(body && JSON.parse(body));
 			} else {
-				var msg = 'asset: error(' + method + ":" + api + '): '+ body;
+				var msg = 'asset: error(' + method + ":" + url + '): '+ body;
 				deferred.reject({message: msg, error: error, response: response});
 			}
 		});

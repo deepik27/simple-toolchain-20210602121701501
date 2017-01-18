@@ -164,6 +164,14 @@ router["delete"]("/vendor/:vendor", authenticate, function(req, res){
 		return handleAssetError(res, err);
 	});
 });
+router.post("/eventtype", authenticate, function(req, res){
+	var eventtype = req.body && req.body.eventtype;
+	Q.when(driverInsightsAsset.addEventType(eventtype), function(response){
+		res.send(response);
+	})["catch"](function(err){
+		return handleAssetError(res, err);
+	}).done();
+});
 router.get("/eventtype", authenticate, function(req, res){
 	var params = null;
 	if (req.query.num_rec_in_page || req.query.num_page) {
