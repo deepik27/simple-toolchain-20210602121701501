@@ -20,8 +20,11 @@ var attributesMap = {
 			"assetuid": "internal_mo_id",
 			"iotcvmodel": "model",
 			"serialnum": "serial_number",
-			"OPERATING": {"name": "status", "value": "active"},
-			"NOT READY": {"name": "status", "value": "inactive"},
+			"status": {"name": "status", "value": function(val) {
+				return val === "OPERATING" ? "active" : "inactive";
+			}, "rvalue": function(val) {
+				return val === "active" ? "OPERATING" : "NOT READY";
+			}},
 			"vendor": "vendor",
 			"iotcvwidth": "width",
 			"iotcvheight": "height",
@@ -29,14 +32,20 @@ var attributesMap = {
 			"iotcvusage": "usage",
 			"personid": "driver_id",
 			"description": "description",
-			"assetspec": {"name": "properties", "value": function(val) {
-				var props = [];
+			"assetspec": {"name": "props", "value": function(val) {
+				var props = {};
 				_.each(val, function(obj) {
 					if (obj.assetattrid && obj.alnvalue) {
 						props[obj.assetattrid] = obj.alnvalue;
 					}
 				});
 				return props;
+			}, "rvalue": function(val) {
+				var assetspec = [];
+				_.each(val, function(value, key) {
+					assetspec.push({assetattrid: key, alnvalue: value});
+				});
+				return assetspec;
 			}}
 		}},
 		"driver": {id: "personid", map: {
@@ -46,6 +55,8 @@ var attributesMap = {
 			"iotcvcontract": "contract_id",
 			"status": {"name": "status", "value": function(val) {
 				return val ? "active": "inactive";
+			}, "rvalue": function(val) {
+				return val === "active";
 			}}
 		}},
 		"vendor": {id: "name", map: {
@@ -59,17 +70,23 @@ var attributesMap = {
 			"assetattributeid": "internal_event_type_id",
 			"iotcvaffecttype": "affected_type",
 			"iotcvcategory": "category",
-			"status": {"name": "status", "value": function(val) {
+			"iotcvactive": {"name": "status", "value": function(val) {
 				return val ? "active": "inactive";
+			}, "rvalue": function(val) {
+				return val === "active";
 			}},
 			"description": "description"
+		}, "rextend": function(asset) {
+			asset.datatype = "ALN";
 		}},
 		"rule": {id: "rulenum", map: {
 			"rulenum": "rule_id",
 			"iotcvruleid": "internal_rule_id",
 			"type": "type",
-			"status": {"name": "status", "value": function(val) {
+			"active": {"name": "status", "value": function(val) {
 				return val ? "active": "inactive";
+			}, "rvalue": function(val) {
+				return val === "active";
 			}},
 			"description": "description"
 		}}
@@ -131,9 +148,28 @@ var maximoAssetApi = {
 		return map ? _.keys(map) : null;
 	},
 	_getAssetObject: function(context, maximoAsset) {
-		var map = attributesMap[context] ? attributesMap[context].map : null;
+		if (!attributesMap[context]) {
+			return maximoAsset;
+		}
+		return this._convert(maximoAsset, attributesMap[context].map, attributesMap[context].extend);
+	},
+	_getMaximoObject: function(context, asset) {
+		if (!attributesMap[context]) {
+			return asset;
+		}
+		var map = {};
+		_.each(attributesMap[context].map, function(value, key) {
+			if (_.isObject(value)) {
+				map[value.name] = {name: key, value: value.rvalue};
+			} else {
+				map[value] = key;
+			}
+		});
+		return this._convert(asset, map, attributesMap[context].rextend);
+	},
+	_convert: function(org, map, extend) {
 		var asset = {};
-		_.each(maximoAsset, function(value, key) {
+		_.each(org, function(value, key) {
 			var assetElement = map[key];
 			if (assetElement) {
 				if (_.isObject(assetElement)) {
@@ -146,6 +182,9 @@ var maximoAssetApi = {
 				}
 			}
 		});
+		if (_.isFunction(extend)) {
+			extend(asset);
+		}
 		return asset;
 	},
 	/*
@@ -187,7 +226,8 @@ var maximoAssetApi = {
 			var existing = id && result;
 			var url = existing ? result.href + '?lean=1' : self._getUrl(context, true);
 			var method_override = existing ? 'PATCH' : null;
-			Q.when(self._request(url, 'POST', method_override, asset), function(result) {
+			var maximoAsset = self._getMaximoObject(context, asset);
+			Q.when(self._request(url, 'POST', method_override, maximoAsset), function(result) {
 				if (refresh) {
 					Q.when(self.refreshAsset(context), function(refreshed){
 						deferred.resolve(result);
@@ -214,12 +254,12 @@ var maximoAssetApi = {
 		var config = this.assetConfig.vdh;
 		var url = config.baseURL;
 		var assettype = context == "eventtype" ? "event_type" : context;
-		url += "?asset=" + assettype;
+		url += "/refresh?asset=" + assettype;
 		if (this.assetConfig.tenant_id) {
 			url += '&tenant_id=' + this.assetConfig.tenant_id;
 		}
 
-		Q.when(this._request(url, 'GET', null, null, config), function(result) {
+		Q.when(this._request(url, 'POST', null, null, config), function(result) {
 			deferred.resolve(result);
 		})["catch"](function(err){
 			deferred.reject(err);
