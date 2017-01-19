@@ -306,7 +306,9 @@ var maximoAssetApi = {
 	addRule: function(rule, ruleXML){
 		var deferred = Q.defer();
 		var context = 'rule';
-		rule.rule = ruleXML.replace(/\n|\r/g, '');
+		if (ruleXML) {
+			rule.rule = ruleXML.replace(/\n|\r/g, '');
+		}
 		Q.when(this.addOrUpdateAsset(context, null, rule, true), function(result) {
 			deferred.resolve(result);
 		})["catch"](function(err){
@@ -318,7 +320,9 @@ var maximoAssetApi = {
 	updateRule: function(id, rule, ruleXML, overwrite) {
 		var deferred = Q.defer();
 		var context = 'rule';
-		rule.rule = ruleXML.replace(/\n|\r/g, '');
+		if (ruleXML) {
+			rule.rule = ruleXML.replace(/\n|\r/g, '');
+		}
 		Q.when(this.addOrUpdateAsset(context, id, rule, true), function(result) {
 			deferred.resolve(result);
 		})["catch"](function(err){
