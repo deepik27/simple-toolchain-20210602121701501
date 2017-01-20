@@ -32,9 +32,9 @@ export class AppComponent {
            { title: "Vehicle", route: "vehicle", icon: 'icon-car', active: false },
            { title: "Events", route: "tool", icon: 'icon-location', active: false }
        ];
+  menuOpened = false;
 
   constructor(){
-    this.menuOpened = false;
   }
 
   ngOnInit() {
@@ -43,21 +43,22 @@ export class AppComponent {
     var sidebar = document.getElementById('sidebar');
     var mainContent = document.getElementById('mainContent');
 
+    var self = this;
     menuButton.onclick = function(e){
       e.preventDefault();
 
-      if (!this.menuOpened) {
+      if (!self.menuOpened) {
         menuButton.classList.add('hamburgerClicked');
         sidebar.classList.add('menu-open');
         mainContent.classList.add('menu-open');
 
-        this.menuOpened = true;
+        self.menuOpened = true;
       } else {
         menuButton.classList.remove('hamburgerClicked');
         sidebar.classList.remove('menu-open');
         mainContent.classList.remove('menu-open');
 
-        this.menuOpened = false;
+        self.menuOpened = false;
       }
     };
 
