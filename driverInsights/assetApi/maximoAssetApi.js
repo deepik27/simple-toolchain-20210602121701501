@@ -15,7 +15,7 @@ var debug = require('debug')('iot4AAssetApi');
 debug.log = console.log.bind(console);
 
 var attributesMap = {
-		"vehicle": {id: "assetnum", map: {
+		"vehicle": {id: "assetnum", tenant: "pluspcustomer", map: {
 			"assetnum": "mo_id",
 			"assetuid": "internal_mo_id",
 			"iotcvmodel": "model",
@@ -47,25 +47,27 @@ var attributesMap = {
 				});
 				return assetspec;
 			}}
+		}, "rextend": function(asset) {
+			asset.assettype = "!CV!";
 		}},
-		"driver": {id: "personid", map: {
+		"driver": {id: "personid", tenant: "pluspcustvendor", map: {
 			"personid": "driver_id",
 			"personuid": "internal_driver_id",
 			"displayname": "name",
 			"iotcvcontract": "contract_id",
 			"status": {"name": "status", "value": function(val) {
-				return val ? "active": "inactive";
+				return val.toLowerCase();
 			}, "rvalue": function(val) {
-				return val === "active";
+				return val && val.toUpperCase();
 			}}
 		}},
-		"vendor": {id: "name", map: {
+		"vendor": {id: "name", tenant: "pluspcustomer", map: {
 			"name": "vendor",
 			"homepage": "website",
 			"type": "type",
 			"description": "description"
 		}},
-		"eventtype": {id: "assetattrid", map: {
+		"eventtype": {id: "assetattrid", tenant: "siteid", map: {
 			"assetattrid": "event_type",
 			"assetattributeid": "internal_event_type_id",
 			"iotcvaffecttype": "affected_type",
@@ -79,7 +81,7 @@ var attributesMap = {
 		}, "rextend": function(asset) {
 			asset.datatype = "ALN";
 		}},
-		"rule": {id: "rulenum", map: {
+		"rule": {id: "rulenum", tenant: "pluspcustomer", map: {
 			"rulenum": "rule_id",
 			"iotcvruleid": "internal_rule_id",
 			"type": "type",
@@ -112,7 +114,7 @@ var maximoAssetApi = {
 		            username: assetCreds.username,
 		            password: assetCreds.password
 		          };
-				var creds = {tenant_id: iot4a_cred.tenant_id, vdh: vdhCreds, maximo: maximoCreds};
+				var creds = {tenant_id: null/*iot4a_cred.tenant_id*/, vdh: vdhCreds, maximo: maximoCreds};
 				return creds;
 			}
 		}
@@ -166,7 +168,11 @@ var maximoAssetApi = {
 				map[value] = key;
 			}
 		});
-		return this._convert(asset, map, attributesMap[context].rextend);
+		var maximoAsset = this._convert(asset, map, attributesMap[context].rextend);
+		if (this.assetConfig.tenant_id && attributesMap[context].tenant) {
+			maximoAsset[attributesMap[context].tenant] = this.assetConfig.tenant_id;
+		}
+		return maximoAsset;
 	},
 	_convert: function(org, map, extend) {
 		var asset = {};
@@ -277,7 +283,7 @@ var maximoAssetApi = {
 			Q.when(self._request(result.href + '?lean=1', 'POST', 'DELETE'), function(result) {
 				if (refresh) {
 					Q.when(self.refreshAsset(context), function(refreshed){
-						deferred.resolve(result);
+						deferred.resolve({id: id});
 					})["catch"](function(err){
 						deferred.reject(err);
 					}).done();
@@ -370,8 +376,8 @@ var maximoAssetApi = {
 	_query: function(context, attributes, id, pagesize, pageno) {
 		var config = this.assetConfig.maximo;
 		var where = [];
-		if (this.assetConfig.tenant_id) {
-			where.push('siteid="' + this.assetConfig.tenant_id + '"');
+		if (this.assetConfig.tenant_id && attributesMap[context].tenant) {
+			where.push(attributesMap[context].tenant + '="' + this.assetConfig.tenant_id + '"');
 		}
 		if (id) {
 			var idname = attributesMap[context] ? attributesMap[context].id : null;
