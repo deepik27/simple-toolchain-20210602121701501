@@ -13,8 +13,8 @@ var _ = require("underscore");
 var debug = require('debug')('rule');
 debug.log = console.log.bind(console);
 
-var XML_GENERAL_SECTION = "<RuleType>{rule_id}</RuleType>" +
-						  	"<RuleID>{rule_type}</RuleID>" +
+var XML_GENERAL_SECTION = "<RuleType>{rule_type}</RuleType>" +
+						  	"<RuleID>{rule_id}</RuleID>" +
 							"<Name>{name}</Name>" +
 							"<Description>{description}</Description>";
 

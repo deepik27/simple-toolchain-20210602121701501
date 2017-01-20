@@ -88,7 +88,8 @@ var attributesMap = {
 			}, "rvalue": function(val) {
 				return val === "active";
 			}},
-			"description": "description"
+			"description": "description",
+			"rule": "rule"
 		}}
 };
 
@@ -310,7 +311,7 @@ var maximoAssetApi = {
 			rule.rule = ruleXML.replace(/\n|\r/g, '');
 		}
 		Q.when(this.addOrUpdateAsset(context, null, rule, true), function(result) {
-			deferred.resolve(result);
+			deferred.resolve({id: rule.rule_id});
 		})["catch"](function(err){
 			deferred.reject(err);
 		}).done();
