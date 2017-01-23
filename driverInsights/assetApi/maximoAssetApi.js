@@ -15,7 +15,7 @@ var debug = require('debug')('iot4AAssetApi');
 debug.log = console.log.bind(console);
 
 var attributesMap = {
-		"vehicle": {id: "assetnum", tenant: "pluspcustomer", map: {
+		"vehicle": {id: "assetnum", objectstructure: "IOTCVASSET", tenant: "pluspcustomer", map: {
 			"assetnum": "mo_id",
 			"assetuid": "internal_mo_id",
 			"iotcvmodel": "model",
@@ -50,7 +50,7 @@ var attributesMap = {
 		}, "rextend": function(asset) {
 			asset.assettype = "!CV!";
 		}},
-		"driver": {id: "personid", tenant: "pluspcustvendor", map: {
+		"driver": {id: "personid", objectstructure: "IOTCVDRIVER", tenant: "pluspcustomer", map: {
 			"personid": "driver_id",
 			"personuid": "internal_driver_id",
 			"displayname": "name",
@@ -61,13 +61,21 @@ var attributesMap = {
 				return val && val.toUpperCase();
 			}}
 		}},
-		"vendor": {id: "name", tenant: "pluspcustomer", map: {
-			"name": "vendor",
+		"vendor": {id: "name", objectstructure: "MXVENDOR", tenant: "pluspcustomer", map: {
+			"company": "vendor",
+			"name": "name",
 			"homepage": "website",
 			"type": "type",
-			"description": "description"
+			"description": "description",
+			"disabled": {"name": "status", "value": function(val) {
+				return val ? "active": "inactive";
+			}, "rvalue": function(val) {
+				return val !== "active";
+			}},
+		}, "rextend": function(asset) {
+			asset.currencycode = "USD";
 		}},
-		"eventtype": {id: "assetattrid", tenant: "siteid", map: {
+		"eventtype": {id: "assetattrid", objectstructure: "IOTCVEVENTTYPE", tenant: "siteid", map: {
 			"assetattrid": "event_type",
 			"assetattributeid": "internal_event_type_id",
 			"iotcvaffecttype": "affected_type",
@@ -81,7 +89,7 @@ var attributesMap = {
 		}, "rextend": function(asset) {
 			asset.datatype = "ALN";
 		}},
-		"rule": {id: "rulenum", tenant: "pluspcustomer", map: {
+		"rule": {id: "rulenum", objectstructure: "IOTCVRULE", tenant: "pluspcustomer", map: {
 			"rulenum": "rule_id",
 			"iotcvruleid": "internal_rule_id",
 			"type": "type",
@@ -114,7 +122,7 @@ var maximoAssetApi = {
 		            username: assetCreds.username,
 		            password: assetCreds.password
 		          };
-				var creds = {tenant_id: null/*iot4a_cred.tenant_id*/, vdh: vdhCreds, maximo: maximoCreds};
+				var creds = {tenant_id: iot4a_cred.tenant_id, vdh: vdhCreds, maximo: maximoCreds};
 				return creds;
 			}
 		}
@@ -131,20 +139,11 @@ var maximoAssetApi = {
 		return url;
 	},
 	
+	_getTenantId: function(context) {
+		return /*this.assetConfig.tenant_id | "public"|*/ null;
+	},
 	_getResourceObjectName: function(context) {
-		var object = null;
-		if (context === "vehicle") {
-			object = "IOTCVASSET";
-		} else if (context === "driver") {
-			object = "IOTCVDRIVER";
-		} else if (context === "vendor") {
-			object = "MXVENDOR";
-		} else if (context === "eventtype") {
-			object = "IOTCVEVENTTYPE";
-		} else if (context === "rule") {
-			object = "IOTCVRULE";
-		}
-		return object;
+		return attributesMap[context] ? attributesMap[context].objectstructure : null;
 	},
 	_getResourceObjectAttributes: function(context) {
 		var map = attributesMap[context] ? attributesMap[context].map : null;
@@ -169,8 +168,9 @@ var maximoAssetApi = {
 			}
 		});
 		var maximoAsset = this._convert(asset, map, attributesMap[context].rextend);
-		if (this.assetConfig.tenant_id && attributesMap[context].tenant) {
-			maximoAsset[attributesMap[context].tenant] = this.assetConfig.tenant_id;
+		var tenant_id = this._getTenantId(context);
+		if (tenant_id && attributesMap[context].tenant) {
+			maximoAsset[attributesMap[context].tenant] = tenant_id;
 		}
 		return maximoAsset;
 	},
@@ -376,8 +376,9 @@ var maximoAssetApi = {
 	_query: function(context, attributes, id, pagesize, pageno) {
 		var config = this.assetConfig.maximo;
 		var where = [];
-		if (this.assetConfig.tenant_id && attributesMap[context].tenant) {
-			where.push(attributesMap[context].tenant + '="' + this.assetConfig.tenant_id + '"');
+		var tenant_id = this._getTenantId(context);
+		if (tenant_id && attributesMap[context].tenant) {
+			where.push(attributesMap[context].tenant + '="' + tenant_id + '"');
 		}
 		if (id) {
 			var idname = attributesMap[context] ? attributesMap[context].id : null;
