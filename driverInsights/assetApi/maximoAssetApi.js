@@ -14,6 +14,95 @@ var cfenv = require("cfenv");
 var debug = require('debug')('iot4AAssetApi');
 debug.log = console.log.bind(console);
 
+var attributesMap = {
+		"vehicle": {id: "assetnum", objectstructure: "IOTCVASSET", tenant: "pluspcustomer", map: {
+			"assetnum": "mo_id",
+			"assetuid": "internal_mo_id",
+			"iotcvmodel": "model",
+			"serialnum": "serial_number",
+			"status": {"name": "status", "value": function(val) {
+				return val === "OPERATING" ? "active" : "inactive";
+			}, "rvalue": function(val) {
+				return val === "active" ? "OPERATING" : "NOT READY";
+			}},
+			"vendor": "vendor",
+			"iotcvwidth": "width",
+			"iotcvheight": "height",
+			"iotcvtype": "type",
+			"iotcvusage": "usage",
+			"personid": "driver_id",
+			"description": "description",
+			"assetspec": {"name": "props", "value": function(val) {
+				var props = {};
+				_.each(val, function(obj) {
+					if (obj.assetattrid && obj.alnvalue) {
+						props[obj.assetattrid] = obj.alnvalue;
+					}
+				});
+				return props;
+			}, "rvalue": function(val) {
+				var assetspec = [];
+				_.each(val, function(value, key) {
+					assetspec.push({assetattrid: key, alnvalue: value});
+				});
+				return assetspec;
+			}}
+		}, "rextend": function(asset) {
+			asset.assettype = "!CV!";
+		}},
+		"driver": {id: "personid", objectstructure: "IOTCVDRIVER", tenant: "pluspcustomer", map: {
+			"personid": "driver_id",
+			"personuid": "internal_driver_id",
+			"displayname": "name",
+			"iotcvcontract": "contract_id",
+			"status": {"name": "status", "value": function(val) {
+				return val.toLowerCase();
+			}, "rvalue": function(val) {
+				return val && val.toUpperCase();
+			}}
+		}},
+		"vendor": {id: "name", objectstructure: "MXVENDOR", tenant: "pluspcustomer", map: {
+			"company": "vendor",
+			"name": "name",
+			"homepage": "website",
+			"type": "type",
+			"description": "description",
+			"disabled": {"name": "status", "value": function(val) {
+				return val ? "active": "inactive";
+			}, "rvalue": function(val) {
+				return val !== "active";
+			}},
+		}, "rextend": function(asset) {
+			asset.currencycode = "USD";
+		}},
+		"eventtype": {id: "assetattrid", objectstructure: "IOTCVEVENTTYPE", tenant: "siteid", map: {
+			"assetattrid": "event_type",
+			"assetattributeid": "internal_event_type_id",
+			"iotcvaffecttype": "affected_type",
+			"iotcvcategory": "category",
+			"iotcvactive": {"name": "status", "value": function(val) {
+				return val ? "active": "inactive";
+			}, "rvalue": function(val) {
+				return val === "active";
+			}},
+			"description": "description"
+		}, "rextend": function(asset) {
+			asset.datatype = "ALN";
+		}},
+		"rule": {id: "rulenum", objectstructure: "IOTCVRULE", tenant: "pluspcustomer", map: {
+			"rulenum": "rule_id",
+			"iotcvruleid": "internal_rule_id",
+			"type": "type",
+			"active": {"name": "status", "value": function(val) {
+				return val ? "active": "inactive";
+			}, "rvalue": function(val) {
+				return val === "active";
+			}},
+			"description": "description",
+			"rule": "rule"
+		}}
+};
+
 var maximoAssetApi = {
 	assetConfig: function(){
 		var userVcapSvc = JSON.parse(process.env.USER_PROVIDED_VCAP_SERVICES || '{}');
@@ -50,37 +139,61 @@ var maximoAssetApi = {
 		return url;
 	},
 	
+	_getTenantId: function(context) {
+		return /*this.assetConfig.tenant_id | "public"|*/ null;
+	},
 	_getResourceObjectName: function(context) {
-		var object = null;
-		if (context === "vehicle") {
-			object = "OTCVASSET";
-		} else if (context === "driver") {
-			object = "IOTCVDRIVER";
-		} else if (context === "vendor") {
-			object = "IOTCVVENDOR";
-		} else if (context === "eventtype") {
-			object = "IOTCVEVENTTYPE";
-		} else if (context === "rule") {
-			object = "IOTCVRULE";
-		}
-		return object;
+		return attributesMap[context] ? attributesMap[context].objectstructure : null;
 	},
 	_getResourceObjectAttributes: function(context) {
-		var attrs = [];
-		if (context === "vehicle") {
-			attrs = ["mo_id", "internal_mo_id", "model", "serial_number", "status", "vendor", "width", "height", "type", "usage", "driver_id", "description", "properties"];
-		} else if (context === "driver") {
-			attrs = ["driver_id", "internal_driver_id", "name", "contract_id", "status"];
-		} else if (context === "vendor") {
-			attrs = ["vendor", "website", "type", "status", "description"];
-		} else if (context === "eventtype") {
-			attrs = ["event_type", "internal_event_type_id", "affected_type", "category", "status", "description"];
-		} else if (context === "rule") {
-			attrs = ["rule_id", "internal_rule_id", "type", "status", "description"];
-		}
-		return null;
+		var map = attributesMap[context] ? attributesMap[context].map : null;
+		return map ? _.keys(map) : null;
 	},
-	
+	_getAssetObject: function(context, maximoAsset) {
+		if (!attributesMap[context]) {
+			return maximoAsset;
+		}
+		return this._convert(maximoAsset, attributesMap[context].map, attributesMap[context].extend);
+	},
+	_getMaximoObject: function(context, asset) {
+		if (!attributesMap[context]) {
+			return asset;
+		}
+		var map = {};
+		_.each(attributesMap[context].map, function(value, key) {
+			if (_.isObject(value)) {
+				map[value.name] = {name: key, value: value.rvalue};
+			} else {
+				map[value] = key;
+			}
+		});
+		var maximoAsset = this._convert(asset, map, attributesMap[context].rextend);
+		var tenant_id = this._getTenantId(context);
+		if (tenant_id && attributesMap[context].tenant) {
+			maximoAsset[attributesMap[context].tenant] = tenant_id;
+		}
+		return maximoAsset;
+	},
+	_convert: function(org, map, extend) {
+		var asset = {};
+		_.each(org, function(value, key) {
+			var assetElement = map[key];
+			if (assetElement) {
+				if (_.isObject(assetElement)) {
+					if (assetElement.name) {
+						asset[assetElement.name] = 
+							_.isFunction(assetElement.value) ? assetElement.value(value) : assetElement.value;
+					}
+				} else {
+					asset[assetElement] = value;
+				}
+			}
+		});
+		if (_.isFunction(extend)) {
+			extend(asset);
+		}
+		return asset;
+	},
 	/*
 	 * Get list of assets
 	 */
@@ -88,9 +201,7 @@ var maximoAssetApi = {
 		var deferred = Q.defer();
 		var attributes = this._getResourceObjectAttributes(context);
 		Q.when(this._query(context, attributes), function(result) {
-			var assets = _.map(result, _.filter(function(attr) {
-				_.contains(attributes, attr);
-			}));
+			deferred.resolve({data: result});
 		})["catch"](function(err){
 			deferred.reject(err);
 		}).done();
@@ -105,7 +216,7 @@ var maximoAssetApi = {
 		var self = this;
 		Q.when(this._query(context, null, id), function(result) {
 			Q.when(self._request(result.href + '?lean=1', 'GET'), function(result) {
-				deferred.resolve(JSON.parse(result));
+				deferred.resolve(self._getAssetObject(context, result));
 			})["catch"](function(err){
 				deferred.reject(err);
 			}).done();
@@ -119,9 +230,11 @@ var maximoAssetApi = {
 		var deferred = Q.defer();
 		var self = this;
 		Q.when(!id || this._query(context, null, id), function(result) {
-			var url = result ? result.href + '?lean=1' : self._getUrl(context, true);
-			var method_override = result ? 'PATCH' : null;
-			Q.when(self._request(url, 'POST', method_override, asset), function(result) {
+			var existing = id && result;
+			var url = existing ? result.href + '?lean=1' : self._getUrl(context, true);
+			var method_override = existing ? 'PATCH' : null;
+			var maximoAsset = self._getMaximoObject(context, asset);
+			Q.when(self._request(url, 'POST', method_override, maximoAsset), function(result) {
 				if (refresh) {
 					Q.when(self.refreshAsset(context), function(refreshed){
 						deferred.resolve(result);
@@ -148,12 +261,12 @@ var maximoAssetApi = {
 		var config = this.assetConfig.vdh;
 		var url = config.baseURL;
 		var assettype = context == "eventtype" ? "event_type" : context;
-		url += "?asset=" + assettype;
+		url += "/refresh?asset=" + assettype;
 		if (this.assetConfig.tenant_id) {
 			url += '&tenant_id=' + this.assetConfig.tenant_id;
 		}
 
-		Q.when(this._request(url, 'GET', null, null, config), function(result) {
+		Q.when(this._request(url, 'POST', null, null, config), function(result) {
 			deferred.resolve(result);
 		})["catch"](function(err){
 			deferred.reject(err);
@@ -163,14 +276,14 @@ var maximoAssetApi = {
 	/*
 	 * Delete an asset
 	 */
-	deleteAsset: function(context, id){
+	deleteAsset: function(context, id, refresh){
 		var deferred = Q.defer();
 		var self = this;
 		Q.when(this._query(context, null, id), function(result) {
 			Q.when(self._request(result.href + '?lean=1', 'POST', 'DELETE'), function(result) {
 				if (refresh) {
 					Q.when(self.refreshAsset(context), function(refreshed){
-						deferred.resolve(result);
+						deferred.resolve({id: id});
 					})["catch"](function(err){
 						deferred.reject(err);
 					}).done();
@@ -200,9 +313,11 @@ var maximoAssetApi = {
 	addRule: function(rule, ruleXML){
 		var deferred = Q.defer();
 		var context = 'rule';
-		rule.rule = ruleXML.replace(/\n|\r/g, '');
+		if (ruleXML) {
+			rule.rule = ruleXML.replace(/\n|\r/g, '');
+		}
 		Q.when(this.addOrUpdateAsset(context, null, rule, true), function(result) {
-			deferred.resolve(result);
+			deferred.resolve({id: rule.rule_id});
 		})["catch"](function(err){
 			deferred.reject(err);
 		}).done();
@@ -212,7 +327,9 @@ var maximoAssetApi = {
 	updateRule: function(id, rule, ruleXML, overwrite) {
 		var deferred = Q.defer();
 		var context = 'rule';
-		rule.rule = ruleXML.replace(/\n|\r/g, '');
+		if (ruleXML) {
+			rule.rule = ruleXML.replace(/\n|\r/g, '');
+		}
 		Q.when(this.addOrUpdateAsset(context, id, rule, true), function(result) {
 			deferred.resolve(result);
 		})["catch"](function(err){
@@ -221,21 +338,26 @@ var maximoAssetApi = {
 		return deferred.promise;
 	},
 
-	_createOptions: function(url, method, method_override, body, creds) {
-		var config = creds || this.assetConfig.maximo;
+	_createOptions: function(url, method, method_override, body, basicauth) {
 		var options = {
 				method: method,
 				url: url,
 				headers: {
 					"Content-Type": "application/json"
-				},
-				rejectUnauthorized: false,
-				auth: {
-					user: config.username,
-					pass: config.password,
-					sendImmediately: true
 				}
 		};
+		if (basicauth) {
+			options.rejectUnauthorized = false;
+			options.auth = {
+				user: basicauth.username,
+				pass: basicauth.password,
+				sendImmediately: true
+			};
+		} else {
+			var creds = this.assetConfig.maximo;
+			var maxauth = creds.username + ':' + creds.password;
+			options.headers.maxauth = new Buffer(maxauth).toString('base64');
+		}
 		if (method_override) {
 			if (method_override === 'MERGE') {
 				options.headers.patchtype = 'MERGE';
@@ -254,18 +376,20 @@ var maximoAssetApi = {
 	_query: function(context, attributes, id, pagesize, pageno) {
 		var config = this.assetConfig.maximo;
 		var where = [];
-		if (this.assetConfig.tenant_id) {
-			where.push('siteid=' + this.assetConfig.tenant_id);
+		var tenant_id = this._getTenantId(context);
+		if (tenant_id && attributesMap[context].tenant) {
+			where.push(attributesMap[context].tenant + '="' + tenant_id + '"');
 		}
 		if (id) {
-			where.push('mo_id=' + id);
+			var idname = attributesMap[context] ? attributesMap[context].id : null;
+			where.push(idname + '="' + id + '"');
 		}
 		
 		var url = this._getUrl(context, true);
 		if (attributes && attributes.length > 0) {
 			url += '&oslc.select=' + attributes.join(',');
 		}
-		if (where) {
+		if (where && where.length > 0) {
 			url += '&oslc.where=' + where.join(' and ');
 		}
 		if (pagesize) {
@@ -277,6 +401,7 @@ var maximoAssetApi = {
 
 		var options = this._createOptions(url, 'GET');
 
+		var self = this;
 		var deferred = Q.defer();
 		request(options, function(error, response, body){
 			if (!error && response.statusCode >= 200 && response.statusCode < 300) {
@@ -284,12 +409,12 @@ var maximoAssetApi = {
 				var member = result.member;
 				if (id) {
 					if (member && member.length > 0) {
-						deferred.resolve(result[0]);
+						deferred.resolve(attributes ? self._getAssetObject(context, member[0]) : member[0]);
 			        } else {
-						deferred.reject({errorStatus: 404, message: "Not found"});
+						deferred.reject({statusCode: 404, message: "Not found"});
 			        }
 				} else {
-					deferred.resolve(member);
+					deferred.resolve(attributes ? _.map(member, function(m) {return self._getAssetObject(context, m);}) : member);
 				}
 			} else {
 				var msg = 'asset: error(' + url + '): '+ body;
@@ -305,9 +430,9 @@ var maximoAssetApi = {
 		var deferred = Q.defer();
 		request(options, function(error, response, body){
 			if (!error && response.statusCode >= 200 && response.statusCode < 300) {
-				deferred.resolve(JSON.parse(body));
+				deferred.resolve(body && JSON.parse(body));
 			} else {
-				var msg = 'asset: error(' + method + ":" + api + '): '+ body;
+				var msg = 'asset: error(' + method + ":" + url + '): '+ body;
 				deferred.reject({message: msg, error: error, response: response});
 			}
 		});
