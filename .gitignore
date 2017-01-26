@@ -5,3 +5,5 @@
 /node_modules
 /npm-debug.log*
 /_ghe_copy_repo.properties
+/public/stylesheets/minified
+VCAP_SERVICES.json
