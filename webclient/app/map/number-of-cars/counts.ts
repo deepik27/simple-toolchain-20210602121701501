@@ -11,6 +11,7 @@ export interface Counts {
   _region: any;
 
   all?: number;
+  all_anbiguous: boolean;
   in_use?: number;
   available?: number;
   unavailable?: number;

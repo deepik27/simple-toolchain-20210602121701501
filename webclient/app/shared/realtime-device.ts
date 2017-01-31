@@ -29,11 +29,26 @@ export class RealtimeDeviceDataProvider {
           if (!sample)
               return;
           // fixup samples
-          if(!sample.t) sample.t = sample.ts;
-          if(!sample.deviceID) sample.deviceID = sample.mo_id;
-          if(!sample.lat) sample.lat = sample.latitude || sample.matched_latitude;
-          if(!sample.lng) sample.lng = sample.longitude || sample.matched_longitude;
-
+          if (sample.aggregated) {
+            if(!sample.deviceID) sample.deviceID = sample.group_id;
+            var center = sample.center;
+            if (center) {
+                sample.lng = center.lon;
+                sample.lat = center.lat;
+            } else {
+                var geo = sample.validGeometry || sample.geometry;
+                if (geo) {
+                    sample.lat = (geo.max_lat + geo.min_lat) / 2;
+                    sample.lng = (geo.max_lon + geo.min_lon) / 2;
+                }
+            }
+          } else {
+	          if(!sample.t) sample.t = sample.ts;
+	          if(!sample.deviceID) sample.deviceID = sample.mo_id;
+	          if(!sample.lat) sample.lat = sample.latitude || sample.matched_latitude;
+	          if(!sample.lng) sample.lng = sample.longitude || sample.matched_longitude;
+          }
+         
           // fixup alerts
           if(sample.info && sample.info.alerts && !sample.status){
             // translate alerts to troubled, critical, normal
@@ -64,7 +79,7 @@ export class RealtimeDeviceDataProvider {
               device.addSample(sample);
           }
           else {
-              device = this.devices[sample.deviceID] = new RealtimeDeviceData(sample);
+              device = this.devices[sample.deviceID] = sample.aggregated ? new RealtimeDeviceGroupData(sample) : new RealtimeDeviceData(sample);
           }
       });
       if(syncAllDevices){
@@ -184,4 +199,17 @@ export class RealtimeDeviceData {
     if (deleteCount > 1)
         this.samples.splice(0, deleteCount);
   };
+}
+
+export class RealtimeDeviceGroupData extends RealtimeDeviceData {
+  getAt(animationProgress) {
+      return this.latestSample;
+  }
+
+  public addSample(sample, animationProgress?) {
+      this.latestSample = sample;
+  }
+
+  removeOldSamples(animationProgress) {
+  }
 }
