@@ -74,7 +74,6 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
         decorate: function(item: any, features: ol.Feature[]) {
           if (item.geometry) {
             let areaFeature = null;
-            let _this = this;
             _.each(features, function(feature) {
               if (feature.get("border")) {
 

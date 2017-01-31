@@ -328,7 +328,7 @@ class Vehicle {
   }
 
   getData() {
-    let data = {};
+    let data:any = {};
     for (let key in this) {
       if (key.lastIndexOf("__", 0) !== 0) {
         data[key] = this[key];

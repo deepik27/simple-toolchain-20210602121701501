@@ -199,7 +199,7 @@ class Vendor {
   }
 
   getData() {
-    let data = {};
+    let data:any = {};
     for (let key in this) {
       data[key] = this[key];
     }
