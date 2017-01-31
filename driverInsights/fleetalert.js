@@ -343,21 +343,39 @@ _.extend(driverInsightsAlert, {
 			return Q.reject();
 		}
 		var deferred = Q.defer();
-		var self = this;
 		Q.when(driverInsightsProbe.getCarProbe(area), function(probes){
 			if(probes.length > 0){
-				var mo_id_condition = "(" + probes.map(function(probe){
-					return "mo_id:"+probe.mo_id;
-				}).join(" OR ") + ")";
-				conditions.push(mo_id_condition);
-				Q.when(self.getAlerts(conditions, includeClosed, limit), function(result){
-					deferred.resolve(result);
+				var mo_ids = probes.map(function(probe){return probe.mo_id;});
+				getAlertsForVehicles(mo_ids, include_docs, limit).then(function(results){
+					return results;
 				});
 			}else{
 				deferred.resolve({alerts: []});
 			}
 		});
 		return deferred.promise;
+	},
+	getAlertsForVehicles: function(mo_ids, includeClosed, limit){
+		var self = this;
+		var _getAlerts100 = function(mo_ids){
+			var mo_id_condition = "(" + mo_ids.map(function(mo_id){
+				return "mo_id:\""+mo_id+"\"";
+			}).join(" OR ") + ")";
+			return self.getAlerts([mo_id_condition], includeClosed, limit);
+		};
+		var results = [];
+		for(var i=0; i<mo_ids.length/100; i++){
+			results.push(_getAlerts100(mo_ids.slice(i*100, (i+1)*100)));
+		}
+		return Q.allSettled(results).then(function(fulfilled){
+			var alerts = [];
+			fulfilled.forEach(function(f){
+				if(f.value && f.value.alerts){
+					alerts = alerts.concat(f.value.alerts);
+				}
+			});
+			return {alerts: alerts};
+		});
 	},
 	getAlerts: function(conditions, includeClosed, limit){
 		var opt = {sort: "-ts", include_docs:true};
