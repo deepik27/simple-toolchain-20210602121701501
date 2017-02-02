@@ -1,10 +1,10 @@
-# IBM IoT for Automotive - Fleet Management Starter Application
+# IBM IoT for Automotive (SaaS) - Fleet Management Starter Application
 
-The IBM IoT for Automotive - Fleet Management Starter Application demonstrates how quickly you can build an app on IBM Bluemix to manage and monitor a fleet of vehicles in real time.
+The Fleet Management Starter Application for the IBM IoT for Automotive SaaS offering demonstrates how quickly you can build an app to manage and monitor a fleet of vehicles in real time.
 
 ## Overview
 
-The Fleet Management Starter Application uses IoT for Automotive on SaaS environment along with BLuemix services to provide a sample solution for fleet operation management and personnel. By using the application, you can easily track and view the following information:
+The Fleet Management Starter Application uses the IoT for Automotive SaaS offering on IBM Softlayer to provide a sample solution for fleet operation management and personnel. By using the application,  fleet managers can easily track and view the following information:
 
 - Availability of a fleet of cars on a map
 - Location of vehicles
@@ -14,14 +14,8 @@ The Fleet Management Starter Application uses IoT for Automotive on SaaS environ
 - Event history for the entire fleet
 - Event history for a specific vehicle in the fleet
 
-The Fleet Management Starter Application uses the following services that are available on IBM Bluemix:
-
-- [Cloudant NoSQL DB](https://console.ng.bluemix.net/catalog/services/cloudant-nosql-db/)
-- [Secure Gateway(Optional)](https://console.ng.bluemix.net/catalog/services/secure-gateway/)
-- [Internet of Things Platform (Optional)](https://console.ng.bluemix.net/catalog/services/internet-of-things-platform/)
-
 ## Prerequisites
-In order to use this app, you need to have an instance of IoT for Automotive on SaaS environment. If you want to use the Fleet Management Starter Application with IoT for Automotive on Bluemix environment, visit [IBM for Automotive - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fm).
+In order to use this app, you need to order an instance of IBM IoT for Automotive on SaaS. If you want to use the Fleet Management Starter Application with IoT for Automotive on Bluemix environment, see [IBM for Automotive - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fm).
 
 ## Deploying the app on Bluemix automatically
 
