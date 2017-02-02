@@ -21,7 +21,7 @@ The Fleet Management Starter Application uses the following services that are av
 - [Internet of Things Platform (Optional)](https://console.ng.bluemix.net/catalog/services/internet-of-things-platform/)
 
 ## Prerequisites
-It is assumed that you have an instance of IoT for Automotive on SaaS environment to use this app. If you want to use the Fleet Management Starter Application with IoT for Automotive on Bluemix environment, visit [IBM for Automotive - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fm).
+In order to use this app, you need to have an instance of IoT for Automotive on SaaS environment. If you want to use the Fleet Management Starter Application with IoT for Automotive on Bluemix environment, visit [IBM for Automotive - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fm).
 
 ## Deploying the app on Bluemix automatically
 
@@ -95,10 +95,10 @@ You can also deploy the app manually. To manually deploy your own instance of th
   ```
 Your very own instance of the IBM IoT for Automotive - Fleet Management Starter Application is now deployed on Bluemix.
 
-## <a name="connect2iot4a"></a>Connecting to IoT for Automotive service
+## <a id="connect2iot4a"></a> Connecting to IoT for Automotive service
 
 ### Configuring IoT for Automotive endpoints and credentials
-The app reads REST API endpoints of IoT for Automotive from an environment variable specified for an instance of the app and connects to the service thru the endpoints. Set the endpoints as follows.
+The app reads REST API endpoints and credentials of IoT for Automotive from an environment variable on Bluemix to connect to the service. Set the environment valuable as follows.
 
 1. Open the [Bluemix dashboard][bluemix_dashboard_url] in your browser.
 1. Open the IBM IoT for Automotive service.
@@ -110,49 +110,46 @@ The app reads REST API endpoints of IoT for Automotive from an environment varia
 USER_SPECIFIED_VCAPSERVIES = <endpoint definition in JSON format>
 ```
 
-The endpoint definition should be written in the following JSON format. Note that you must eliminate a line break on each line to set to the environment value.
+The endpoint definition should be written in the following JSON format. Note that you must eliminate a line break at the end of each line to set to the environment value on Bluemix.
 ```
 {
     "iotforautomotive": [
         {
             "credentials": {
-                "vehicle_data_hub": [
-                    <Host name of Vehicle data hub>
-                ],
                 "tenant_id": <tenant id>,
                 "api": <IoT for Automotive endpoint>,
                 "username": <user name>,
                 "password": <passsword>,
                 "maximo": {
                   "api": <Asset API endpoint>,
-                  "username": <user name>,
-                  "password": <passsword>
+                  "username": <user name for asset API >,
+                  "password": <passsword for asset API >
                 }
             }
         }
     ]
 }
 ```
-Key | Description of value
+Contact system administrator for each value.
+
+Key | Description of Value
 ----- | -----
-vehicle_data_hub | Host name or IP address of vehicle data hub. If this is not specified, the api is used as ndpoint to vehicle data hub.
 tenant id | tenant id
 api | URL that ends with / to call REST API of IoT for Automotive
 username | User name to access vehicle data hub and the other IoT for Automotive endpoint
- password | Password to access vehicle data hub and the other IoT for Automotive endpoint
+password | Password to access vehicle data hub and the other IoT for Automotive endpoint
 maximo/api | URL that ends with / to call Asset API of IoT for Automotive
 maximo/username | User name to access Asset API
 maximo/password | Password to access Asset API
 
-Contact system administrator for each value.
 
 ### (Optional) A secure way to connect to the IoT for Automotive service
-The IBM Secure Gateway service provides secure connectivity and establishes a tunnel between your Bluemix organization and the remote location that you want to connect to. Consult with a system administrator of IoT for Automotive to use the Secure Gateway service. See [Secure Gateway](https://console.ng.bluemix.net/catalog/services/secure-gateway/) for more details.
+The IBM Secure Gateway service provides secure connectivity and establishes a tunnel between your Bluemix organization and the remote location that you want to connect to. Consult with a system administrator of IoT for Automotive beforehand to use the Secure Gateway service. See [Secure Gateway](https://console.ng.bluemix.net/catalog/services/secure-gateway/) for more details.
 
 #### Setting up a Secure Gateway service
-Firstly, bind the Secure Gateway service on Bluemix to your app and configure the service as follows.
 
-##### Bind the Secure Gateway service to the app
+##### Binding the Secure Gateway service to the app
+Firstly, bind the Secure Gateway service on Bluemix to your app as follows.
 
 1. Open the [Bluemix dashboard][bluemix_dashboard_url] in your browser.
 1. Open the IBM IoT for Automotive service.
@@ -166,15 +163,15 @@ You can also bind the service to the app using command line interface.
   $ cf create-service SecureGateway securegatewayplan FleetSecureGateway
   ```
 
-##### Configure the Secure Gateway service on Bluemix
+##### Configuring the Secure Gateway service on Bluemix
+
+Then, set up a destination for the app to connect to.
 
 1. Open the Secure Gateway service on Bluemix.
 1. Click ADD GATEWAY.
 1. Input a gateway name, uncheck **Token Expiration**, and click **ADD GATEWAY**
 1. Click the gateway rectangle created above
 1. Click **Add Destination**
-
-Steps to add a destination
 1. Check **On-Premises**
 1. Enter a host address and port number of IoT for Automotive gateway
 1. Select **HTTPS** for protocol
@@ -182,14 +179,15 @@ Steps to add a destination
 1. Keep empty at IP table rules
 1. Input a label of the destination and click **Finish**
 
-Steps to update a destination
+Now, an endpoint URL of a gateway is created. Then, update the destination so that the destination can be accessed from the app only.
+
 1. Click the destination created above
 1. Exapand **Advanced** section
 1. Check the **Restrict network access to cloud destination**
 1. Click **UPDATE DESTINATION**
 
 #### Setting up a client within IoT for Automotive environment
-In order to create a gateway, you need to have a Secure Gateway client to connect to. Consult with a system administrator of IoT for Automotive environment to set up the client.
+In order to create a gateway, you need to have a Secure Gateway client to connect to. Contact a system administrator of IoT for Automotive environment to set up the client.
 
 #### Configuring the app for the Secure Gateway
 
