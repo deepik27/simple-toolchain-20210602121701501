@@ -47,9 +47,9 @@ To manually deploy the Fleet Management Starter Application on IBM Bluemix, comp
 2. Download and install the [Cloud-foundry CLI][cloud_foundry_url] tool.
 3. Clone the Fleet Management Starter Application to your local environment by using the following console command:  
 
-   ```  
-   git clone https://github.com/ibm-watson-iot/iota-starter-server-fm.git  
-   ```  
+  ```  
+  git clone https://github.com/ibm-watson-iot/iota-starter-server-fm.git  
+  ```  
 4. Change to the directory that you created.
 5. Edit the `manifest.yml` file and change the values of `<name>` and `<host>` to something unique.
 
@@ -67,17 +67,17 @@ To manually deploy the Fleet Management Starter Application on IBM Bluemix, comp
    `<host>.mybluemix.net`.
 
 6. Install the NPM package by using the following command. The installer observes the dependencies that are specified in your `package.json` file.
-   ```
+  ```
   $ cd ./webclient
   $ npm install
-   ```
+  ```
 7. Convert TypeScript to JavaScript:
 
-   ```
-   $ npm run tsc
-   $ npm run gulp
-   $ cd ..
-   ```
+  ```
+  $ npm run tsc
+  $ npm run gulp
+  $ cd ..
+  ```
 
 8. By using the command line tool, connect to Bluemix and log in when prompted:
 
@@ -242,7 +242,7 @@ The starter app also provides a mobile app to connect to an OBDII dongle plugged
 
 ### Create a device type for your device
 
-When you start a mobile app for the first time, your device is automatically registered to the Watson IoT Platform service with the default device type, which is __OBDII__. Create a device type for your device by completing the following steps:   
+When you start the OBDII Fleet Management App for the first time, your device is automatically registered to the Watson IoT Platform service with the default device type, which is __OBDII__. Create a device type for your device by completing the following steps:   
 
 1. Open the Watson IoT Platform dashboard on Bluemix.
 1. Click **Device**.
@@ -254,11 +254,15 @@ When you start a mobile app for the first time, your device is automatically reg
 
 ### Set up the OBDII Fleet Management App
 
-To build and install the OBDII Fleet Management App on an Android phone, see [IBM IoT for Automotive - OBDII Fleet Management App for Android](https://github.com/ibm-watson-iot/iota-starter-obd-android). after deploying the app, start the mobile app on your phone.
+To build and install the OBDII Fleet Management App on an Android phone, see the following repository.
+ - For Android phone : [IBM IoT for Automotive - OBDII Fleet Management App for Android](https://github.com/ibm-watson-iot/iota-starter-obd-android). 
+ - For iOS phone :  [IBM IoT for Automotive - OBDII Fleet Management App for iOS](https://github.com/ibm-watson-iot/iota-starter-obd-ios). 
+ 
+ After deploying the Fleet Management Starter Application, start OBDII Fleet Management App on your phone.
 
 ### Connect the device to the IoT for Automotive service
 
-When you start the mobile app for the first time, your device is registered automatically to the IoT Platform service that you have specified in the mobile app, and a corresponding vehicle is created automatically when you connect your device to the IoT Platform. 
+When you start the OBDII Fleet Management App for the first time, your device is registered automatically to the IoT Platform service that you have specified in the mobile app, and a corresponding vehicle is created automatically when you connect your device to the IoT Platform. 
 
 Now that your device is connected to the Watson IoT Platform, go to the  **Map** or **Car Status** page in the app and see the status.
 
@@ -271,7 +275,7 @@ If you no longer need a device, go to the Watson IoT Platform dashboard and dele
 A vehicle corresponding to deleted device must be removed from a table. Also, if you have added a device to the Watson IoT Platform manually, the vehicle is added to the table.
 
 ## Reporting defects
-To report a defect with the IoT for Automotive - Mobility Starter Application mobile app, go to the [Issues section](https://github.com/ibm-watson-iot/iota-starter-server-fm/issues) section.
+To report a defect with the IoT for Automotive - Fleet Management Starter Application, go to the [Issues section](https://github.com/ibm-watson-iot/iota-starter-server-fm/issues) section.
 
 ## Troubleshooting
 To debug problems, check the Bluemix app logs. To view the logs, run the following command from the Cloud Foundry CLI:
