@@ -16,6 +16,7 @@ var moment = require("moment");
 var dbClient = require('./../cloudantHelper.js');
 var driverInsightsAsset = require('./asset.js');
 var ruleGenerator = require('./ruleGenerator.js');
+var assetApiFactory = require("./assetApi/assetApiFactory.js");
 
 var debug = require('debug')('geofence');
 debug.log = console.log.bind(console);
@@ -60,9 +61,16 @@ _.extend(driverInsightsGeofence, {
 	db: null,
 
 	_init: function(){
-		this.db = dbClient.getDB(DB_NAME, this._getDesignDoc());
+		if (this.isAvailable()) {
+			this.db = dbClient.getDB(DB_NAME, this._getDesignDoc());
+		}
 	},
 
+	isAvailable: function() {
+		var api = assetApiFactory.getAssetApi();
+		return api && api.isNative && api.isNative();
+	},
+	
 	queryGeofence: function(min_latitude, min_longitude, max_latitude, max_longitude) {
 		var deferred = Q.defer();
 		Q.when(this._queryGeofenceDoc(min_longitude, min_latitude, max_longitude, max_latitude), function(response) {

@@ -42,6 +42,13 @@ export class GeofenceService {
 	 * }
 	 */
 
+   public isAvailable() {
+    return this.http.get("/user/capability/geofence").map(data => {
+        let resJson = data.json();
+        return resJson.available;
+    });
+   }
+
    public queryGeofences(params): Observable<any> {
      let url = "/user/geofence";
      let prefix = "?";

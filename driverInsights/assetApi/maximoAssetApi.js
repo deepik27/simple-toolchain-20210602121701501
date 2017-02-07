@@ -11,7 +11,7 @@ var _ = require("underscore");
 var Q = new require('q');
 var request = require("request");
 var cfenv = require("cfenv");
-var debug = require('debug')('iot4AAssetApi');
+var debug = require('debug')('maximoAssetApi');
 debug.log = console.log.bind(console);
 
 var attributesMap = {
@@ -127,6 +127,10 @@ var maximoAssetApi = {
 			}
 		}
 	}(),
+	
+	isNative: function() {
+		return true;
+	},
 	
 	_getUrl: function(context, islean) {
 		var cred = this.assetConfig.maximo;

@@ -29,6 +29,10 @@ function handleAssetError(res, err) {
 	return res.status(status).send(message);
 }
 
+router.get("/capability/geofence", authenticate, function(req, res) {
+	res.send({available: driverInsightsGeofence.isAvailable()});
+});
+
 router.post("/geofence", authenticate, function(req, res){
 	Q.when(driverInsightsGeofence.createGeofence(req.body), function(response){
 		res.send(response);
