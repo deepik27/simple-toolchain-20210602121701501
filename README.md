@@ -1,4 +1,4 @@
-# IBM IoT for Automotive - Fleet Management Starter Application
+# IBM IoT for Automotive (Bluemix) - Fleet Management Starter Application
 
 The IBM IoT for Automotive - Fleet Management Starter Application demonstrates how quickly you can build an app on IBM Bluemix to manage and monitor a fleet of vehicles in real time.
 
@@ -19,6 +19,8 @@ The Fleet Management Starter Application uses the following services that are av
 - [IoT for Automotive (Experimental)](https://console.ng.bluemix.net/catalog/services/iot-for-automotive/)
 - [Cloudant NoSQL DB](https://console.ng.bluemix.net/catalog/services/cloudant-nosql-db/)
 
+You can also use the Fleet Management Starter Application together with an instance of the IBM IoT for Automotive SaaS offering on IBM SoftLayer. For more information, see [IBM for Automotive (SaaS) - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fleetmanagement/README_For_SaaS.md ).
+ 
 ## Deploying the app on Bluemix
 
 You can automatically deploy an instance of the Fleet Management Starter Application on Bluemix by clicking [![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm.git). You can also deploy the app manually. Note that you have to do the service activation step mentioned below after the automatic or manual deployment.
