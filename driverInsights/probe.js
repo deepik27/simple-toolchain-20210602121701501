@@ -11,7 +11,7 @@ var driverInsightsProbe = module.exports = {};
 
 var _ = require("underscore");
 var Q = new require('q');
-var request = require("request");
+var request = require('./requestSecureGw.js'); 
 var cfenv = require("cfenv");
 var fs = require("fs-extra");
 var moment = require("moment");

@@ -9,7 +9,7 @@
  */
 var Q = new require('q');
 var _ = new require('underscore');
-var request = require("request");
+var request = require('./requestSecureGw.js'); 
 var debug = require('debug')('contextMapping');
 debug.log = console.log.bind(console);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2017 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -9,7 +9,7 @@
  */
 var _ = require("underscore");
 var Q = new require('q');
-var request = require("request");
+var request = require('../requestSecureGw.js'); 
 var cfenv = require("cfenv");
 var debug = require('debug')('iot4AAssetApi');
 debug.log = console.log.bind(console);

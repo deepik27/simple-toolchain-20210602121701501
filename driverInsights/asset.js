@@ -9,8 +9,6 @@
  */
 var _ = require("underscore");
 var Q = new require('q');
-var request = require("request");
-var cfenv = require("cfenv");
 var debug = require('debug')('asset');
 debug.log = console.log.bind(console);
 

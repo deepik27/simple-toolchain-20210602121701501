@@ -11,7 +11,7 @@ var driverInsightsAlert = module.exports = {};
 
 var _ = require("underscore");
 var Q = require("q");
-var request = require("request");
+var request = require('./requestSecureGw.js'); 
 var cfenv = require("cfenv");
 var moment = require("moment");
 var dbClient = require('./../cloudantHelper.js');
