@@ -128,9 +128,8 @@ Define the endpoints in the following JSON format. Note that you must remove any
                 "username": <user name>,
                 "password": <passsword>,
                 "maximo": {
-                  "api": <Asset API endpoint>,
-                  "username": <user name for asset API >,
-                  "password": <passsword for asset API >
+                  "username": <user name for Maximo API >,
+                  "password": <passsword for Maximo API >
                 }
             }
         }
@@ -145,9 +144,8 @@ tenant id | Your tenant ID
 api | A URL to call the REST API for IoT for Automotive, which must end with a forward slash character (/) 
 username | User name for accessing the Vehicle Data Hub (VDH) and other IoT for Automotive endpoints
 password | Password for accessing the VDH and other IoT for Automotive endpoints
-maximo/api | A URL to call the IoT for Automotive Asset API, which must end with a forward slash character (/) 
-maximo/username | User name for accessing the Asset API
-maximo/password | Password for accessing the Asset API
+maximo/username | User name for accessing the Maximo API
+maximo/password | Password for accessing the Maximo API
 
 ### (Optional) Securing the connection to the IBM IoT for Automotive service
 The IBM Secure Gateway service provides secure connectivity and establishes a tunnel between your Bluemix organization and the remote location that you want to connect to. Before you use the Secure Gateway service, contact your IBM IoT for Automotive system administrator. For more information, see [Secure Gateway](https://console.ng.bluemix.net/catalog/services/secure-gateway/).

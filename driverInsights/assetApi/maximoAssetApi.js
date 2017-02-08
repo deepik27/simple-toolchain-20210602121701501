@@ -118,7 +118,7 @@ var maximoAssetApi = {
 				};
 				var assetCreds = iot4a_cred.maximo;
 		        var maximoCreds = {
-		        	baseURL: assetCreds.api,
+		        	baseURL: assetCreds.api ? assetCreds.api : (iot4a_cred.api + "maximo"),
 		            username: assetCreds.username,
 		            password: assetCreds.password
 		          };

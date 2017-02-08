@@ -31,9 +31,9 @@ To manually deploy your own instance of the Fleet Management Starter Application
 2. Download and install the [Cloud-foundry CLI][cloud_foundry_url] tool.
 3. Clone the Fleet Management Starter Application to your local environment by using the following console command:  
 
-   ```  
-   git clone https://github.com/ibm-watson-iot/iota-starter-server-fm.git  
-   ```  
+  ```  
+  git clone https://github.com/ibm-watson-iot/iota-starter-server-fm.git  
+  ```  
 
 4. Change to the directory that you created.
 5. Edit the `manifest.yml` file and change the values of `<name>` and `<host>` to something unique.
@@ -47,22 +47,22 @@ To manually deploy your own instance of the Fleet Management Starter Application
     path: .
     instances: 1
          :
-   ```
+  ```
    The host value is used to generate your application URL, which is in the following syntax:  
    `<host>.mybluemix.net`.
 
 6. Install the NPM package by using the following command. The installer observes the dependencies that are specified in your `package.json` file.
-   ```
+  ```
   $ cd ./webclient
   $ npm install
-   ```
+  ```
 7. Convert TypeScript to JavaScript:
 
-   ```
-   $ npm run tsc
-   $ npm run gulp
-   $ cd ..
-   ```
+  ```
+  $ npm run tsc
+  $ npm run gulp
+  $ cd ..
+  ```
 
 8. By using the command line tool, connect to Bluemix and log in when prompted:
 
