@@ -23,7 +23,7 @@ var attributesMap = {
 			"status": {"name": "status", "value": function(val) {
 				return val === "OPERATING" ? "active" : "inactive";
 			}, "rvalue": function(val) {
-				return val === "active" ? "OPERATING" : "NOT READY";
+				return (val && val.toLowerCase()) === "active" ? "OPERATING" : "NOT READY";
 			}},
 			"vendor": "vendor",
 			"iotcvwidth": "width",
@@ -32,6 +32,7 @@ var attributesMap = {
 			"iotcvusage": "usage",
 			"personid": "driver_id",
 			"description": "description",
+			"siteid": "siteid",
 			"assetspec": {"name": "props", "value": function(val) {
 				var props = {};
 				_.each(val, function(obj) {
@@ -61,19 +62,35 @@ var attributesMap = {
 				return val && val.toUpperCase();
 			}}
 		}},
-		"vendor": {id: "name", objectstructure: "MXVENDOR", tenant: "pluspcustomer", map: {
+		"vendor": {id: "company", objectstructure: "MXVENDOR", tenant: "pluspcustomer", map: {
 			"company": "vendor",
 			"name": "name",
 			"homepage": "website",
-			"type": "type",
+			"type": {"name": "type", "value": function(val) {
+				if (!val) return val;
+				val = val.toUpperCase();
+				if (val === "V") {
+					return "Vendor";
+				} else if (val === "M") {
+					return "Manufacturer";
+				} else if (val === "C") {
+					return "Courier";
+				} else if (val === "I") {
+					return "Internal";
+				}
+			}, "rvalue": function(val) {
+				if (!val) return val;
+				return val.charAt(0).toUpperCase();
+			}},
 			"description": "description",
 			"disabled": {"name": "status", "value": function(val) {
 				return val ? "active": "inactive";
 			}, "rvalue": function(val) {
-				return val !== "active";
+				return (val && val.toLowerCase()) !== "active";
 			}},
 		}, "rextend": function(asset) {
 			asset.currencycode = "USD";
+			asset.orgid = maximoAssetApi.assetConfig.maximo.orgid;
 		}},
 		"eventtype": {id: "assetattrid", objectstructure: "IOTCVEVENTTYPE", tenant: "siteid", map: {
 			"assetattrid": "event_type",
@@ -83,7 +100,7 @@ var attributesMap = {
 			"iotcvactive": {"name": "status", "value": function(val) {
 				return val ? "active": "inactive";
 			}, "rvalue": function(val) {
-				return val === "active";
+				return (val && val.toLowerCase()) === "active";
 			}},
 			"description": "description"
 		}, "rextend": function(asset) {
@@ -96,7 +113,7 @@ var attributesMap = {
 			"active": {"name": "status", "value": function(val) {
 				return val ? "active": "inactive";
 			}, "rvalue": function(val) {
-				return val === "active";
+				return (val && val.toLowerCase()) === "active";
 			}},
 			"description": "description",
 			"rule": "rule"
@@ -119,6 +136,7 @@ var maximoAssetApi = {
 				var assetCreds = iot4a_cred.maximo;
 		        var maximoCreds = {
 		        	baseURL: assetCreds.api ? assetCreds.api : (iot4a_cred.api + "maximo"),
+		        	orgid: assetCreds.orgid,		
 		            username: assetCreds.username,
 		            password: assetCreds.password
 		          };
@@ -415,7 +433,7 @@ var maximoAssetApi = {
 					if (member && member.length > 0) {
 						deferred.resolve(attributes ? self._getAssetObject(context, member[0]) : member[0]);
 			        } else {
-						deferred.reject({statusCode: 404, message: "Not found"});
+						deferred.reject({statusCode: 404, message: "Not found", response: {statusCode: 404, message: "Not found"}});
 			        }
 				} else {
 					deferred.resolve(attributes ? _.map(member, function(m) {return self._getAssetObject(context, m);}) : member);
