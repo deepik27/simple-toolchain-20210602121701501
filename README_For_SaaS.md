@@ -128,6 +128,8 @@ Define the endpoints in the following JSON format. Note that you must remove any
                 "username": <user name>,
                 "password": <passsword>,
                 "maximo": {
+                  "orgid": <organization for IoT for Automotive>
+                  "classificationid": <classification for Vehicle Data>
                   "username": <user name for Maximo API >,
                   "password": <passsword for Maximo API >
                 }
@@ -144,6 +146,8 @@ tenant id | Your tenant ID
 api | A URL to call the REST API for IoT for Automotive, which must end with a forward slash character (/) 
 username | User name for accessing the Vehicle Data Hub (VDH) and other IoT for Automotive endpoints
 password | Password for accessing the VDH and other IoT for Automotive endpoints
+maximo/orgid | IBM IoT for Automotive Organization specified in Maximo
+maximo/classificationid | Classification for vehicle data defined in Maximo
 maximo/username | User name for accessing the Maximo API
 maximo/password | Password for accessing the Maximo API
 
