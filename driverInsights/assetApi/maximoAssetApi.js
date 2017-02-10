@@ -15,7 +15,7 @@ var debug = require('debug')('maximoAssetApi');
 debug.log = console.log.bind(console);
 
 var attributesMap = {
-		"vehicle": {id: "assetnum", objectstructure: "IOTCVASSET", tenant: "pluspcustomer", map: {
+		"vehicle": {id: "assetnum", objectstructure: "IOTCVASSET", map: {
 			"assetnum": "mo_id",
 			"assetuid": "internal_mo_id",
 			"iotcvmodel": "model",
@@ -39,10 +39,7 @@ var attributesMap = {
 				_.each(val, function(obj) {
 					if (obj.assetattrid) {
 						var key = obj.assetattrid.toLowerCase();
-						if (obj.alnvalue !== undefined)
-							props[key] = obj.alnvalue;
-						else if (obj.numvalue !== undefined)
-							props[key] = obj.numvalue;
+						props[key] = obj.alnvalue;
 					}
 				});
 				return props;
@@ -50,13 +47,10 @@ var attributesMap = {
 				var assetspec = [];
 				_.each(val, function(value, key) {
 					var spec = {assetattrid: key, section: "IOTCVCV", linearassetspecid: 0};
-					if (_.isString(value)) {
-						spec.alnvalue = value;
-					} else if (_.isNumber(value)) {
-						spec.numvalue = value;
-					} else {
+					if (value === undefined) {
 						return;
 					}
+					spec.alnvalue = value.toString();
 					assetspec.push(spec);
 				});
 				return assetspec;
@@ -64,7 +58,7 @@ var attributesMap = {
 		}, "rextend": function(asset) {
 			asset.assettype = "!CV!";
 		}},
-		"driver": {id: "personid", objectstructure: "IOTCVDRIVER", tenant: "pluspcustomer", map: {
+		"driver": {id: "personid", objectstructure: "IOTCVDRIVER", map: {
 			"personid": "driver_id",
 			"personuid": "internal_driver_id",
 			"displayname": "name",
@@ -75,7 +69,7 @@ var attributesMap = {
 				return val && val.toUpperCase();
 			}}
 		}},
-		"vendor": {id: "company", objectstructure: "MXVENDOR", tenant: "pluspcustomer", map: {
+		"vendor": {id: "company", objectstructure: "MXVENDOR", map: {
 			"company": "vendor",
 			"name": "name",
 			"homepage": "website",
@@ -105,7 +99,7 @@ var attributesMap = {
 			asset.currencycode = "USD";
 			asset.orgid = maximoAssetApi.assetConfig.maximo.orgid;
 		}},
-		"eventtype": {id: "assetattrid", objectstructure: "IOTCVEVENTTYPE", tenant: "siteid", map: {
+		"eventtype": {id: "assetattrid", objectstructure: "IOTCVEVENTTYPE", map: {
 			"assetattrid": "event_type",
 			"assetattributeid": "internal_event_type_id",
 			"iotcvaffecttype": "affected_type",
@@ -119,7 +113,7 @@ var attributesMap = {
 		}, "rextend": function(asset) {
 			asset.datatype = "ALN";
 		}},
-		"rule": {id: "rulenum", objectstructure: "IOTCVRULE", tenant: "pluspcustomer", map: {
+		"rule": {id: "rulenum", objectstructure: "IOTCVRULE", map: {
 			"rulenum": "rule_id",
 			"iotcvruleid": "internal_rule_id",
 			"type": "type",
@@ -192,10 +186,6 @@ var maximoAssetApi = {
 		}
 		return url;
 	},
-	
-	_getTenantId: function(context) {
-		return /*this.assetConfig.tenant_id | "public"|*/ null;
-	},
 	_getResourceObjectName: function(context) {
 		return attributesMap[context] ? attributesMap[context].objectstructure : context;
 	},
@@ -222,11 +212,17 @@ var maximoAssetApi = {
 			}
 		});
 		var maximoAsset = this._convert(asset, map, attributesMap[context].rextend);
-		var tenant_id = this._getTenantId(context);
-		if (tenant_id && attributesMap[context].tenant) {
-			maximoAsset[attributesMap[context].tenant] = tenant_id;
-		}
 		return maximoAsset;
+	},
+	_extractId: function(context, id) {
+		// vehicle id might contain siteId. remove it.
+		if (context === "vehicle" && id.indexOf(":") > 0) {
+			var strs = id.split(":");
+			if (strs.length > 1) {
+				return strs[1];
+			}
+		}
+		return id;
 	},
 	_convert: function(org, map, extend) {
 		var asset = {};
@@ -266,6 +262,7 @@ var maximoAssetApi = {
 	 * Get an asset
 	 */
 	getAsset: function(context, id){
+		id = this._extractId(context, id);
 		var deferred = Q.defer();
 		var self = this;
 		Q.when(this._query(context, null, id), function(result) {
@@ -281,6 +278,7 @@ var maximoAssetApi = {
 	},
 
 	addOrUpdateAsset: function(context, id, asset, refresh) {
+		id = this._extractId(context, id);
 		var deferred = Q.defer();
 		var self = this;
 		Q.when(!id || this._query(context, null, id), function(result) {
@@ -336,6 +334,7 @@ var maximoAssetApi = {
 	 * Delete an asset
 	 */
 	deleteAsset: function(context, id, refresh){
+		id = this._extractId(context, id);
 		var deferred = Q.defer();
 		var self = this;
 		Q.when(this._query(context, null, id), function(result) {
@@ -404,7 +403,7 @@ var maximoAssetApi = {
 			var lat = asset && asset.defaultLocation && asset.defaultLocation.latitude;
 
 			var defs = [];
-			defs.push(this._setAssetId(context, 12, asset));
+			defs.push(this._setAssetId(context, 6, asset));
 			defs.push(this._setSiteId(lon, lat, asset));
 			defs.push(this._setClassificationId(asset));
 			Q.all(defs).then(function(){
@@ -535,10 +534,6 @@ var maximoAssetApi = {
 	_query: function(context, attributes, id, pagesize, pageno) {
 		var config = this.assetConfig.maximo;
 		var where = [];
-		var tenant_id = this._getTenantId(context);
-		if (tenant_id && attributesMap[context].tenant) {
-			where.push(attributesMap[context].tenant + '="' + tenant_id + '"');
-		}
 		if (id) {
 			var idname = attributesMap[context] ? attributesMap[context].id : null;
 			where.push(idname + '="' + id + '"');

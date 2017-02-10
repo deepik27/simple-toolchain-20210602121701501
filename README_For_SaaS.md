@@ -115,7 +115,7 @@ To connect to your IBM IoT for Automotive service instance, the starter app read
 1. Add the following environment variable:
 
 ```
-USER_SPECIFIED_VCAPSERVIES = <endpoint definition in JSON format>
+USER_PROVIDED_VCAP_SERVICES = <endpoint definition in JSON format>
 ```
 Define the endpoints in the following JSON format. Note that you must remove any line breaks at the end of each line to set to the environment value on Bluemix.
 ```
