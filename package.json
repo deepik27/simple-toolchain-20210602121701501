@@ -3,8 +3,7 @@
   "description": "IBM IoT for Automotive - Fleet Management Starter Application",
   "version": "1.0.0-M1",
   "scripts": {
-    "start": "gulp default && gulp watch && node app.js",
-    "gulp": "gulp default && gulp watch"
+    "start": "node app.js"
   },
   "dependencies": {
     "basic-auth": "1.0.3",
@@ -38,10 +37,5 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/ibm-watson-iot/iota-starter-server-fm.git"
-  },
-  "devDependencies": {
-    "gulp": "^3.9.1",
-    "gulp-clean-css": "^2.3.2",
-    "gulp-concat-css": "^2.3.0"
   }
 }
