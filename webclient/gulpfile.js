@@ -97,5 +97,5 @@ gulp.task('cssBundler:watch', function () {
   gulp.watch('css/*.css', ['cssBundler']);
 });
 
-gulp.task('default', gulpSequence('clean', ['vendor', 'app-bundler', 'app-index', 'cssBundler', 'cssBundler:watch']));
+gulp.task('default', gulpSequence('clean', ['vendor', 'app-bundler', 'app-index', 'cssBundler'/*, 'cssBundler:watch'*/]));
 gulp.task('dist', gulpSequence('default', 'app-res'));
