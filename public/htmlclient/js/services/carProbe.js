@@ -19,6 +19,7 @@ angular.module('htmlClient')
     	driveEvent: null,
     	deviceId: null,	// set by setting UI (IoTP)
     	vehicleId: null,// get from service (IoT4A)
+    	siteId: null,// get from service (IoT4A)
     	driverId: null,	// get from service (IoT4A) 
     	
     	vehicleData: {}, // for simulation
@@ -184,6 +185,7 @@ angular.module('htmlClient')
     		}
 
 			if (assets) {
+	    		this.siteId = assets.siteId;
 	    		this.vehicleId = assets.vehicleId;
 	    		this.driverId = assets.driverId;
 			}
@@ -259,12 +261,13 @@ angular.module('htmlClient')
 			}
 
 			try {
+				var vehicleId = (this.siteId ? (this.siteId + ":" + this.vehicleId) : this.vehicleId);
 				var data = {
 					ts: Date.now(),
 					lat: this.deviceLocation.lat,
 					lng: this.deviceLocation.lng,
 					altitude: this.deviceLocation.altitude,
-					mo_id: this.vehicleId,
+					mo_id: vehicleId,
 					driver_id: this.driverId,
 					props: {}
 				};

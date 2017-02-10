@@ -255,17 +255,21 @@ var maximoAssetApi = {
 			var existing = id && result;
 			var url = existing ? result.href + '?lean=1' : self._getUrl(context, true);
 			var method_override = existing ? 'PATCH' : null;
-			var maximoAsset = self._getMaximoObject(context, asset);
-			Q.when(self._request(url, 'POST', method_override, maximoAsset), function(result) {
-				if (refresh) {
-					Q.when(self.refreshAsset(context), function(refreshed){
+			Q.when(self._addAditionalInfo(context, asset, existing), function(asset) {
+				var maximoAsset = self._getMaximoObject(context, asset);
+				Q.when(self._request(url, 'POST', method_override, maximoAsset), function(result) {
+					if (refresh) {
+						Q.when(self.refreshAsset(context), function(refreshed){
+							deferred.resolve(result);
+						})["catch"](function(err){
+							deferred.reject(err);
+						}).done();
+					} else {
 						deferred.resolve(result);
-					})["catch"](function(err){
-						deferred.reject(err);
-					}).done();
-				} else {
-					deferred.resolve(result);
-				}
+					}
+				})["catch"](function(err){
+					deferred.reject(err);
+				}).done();
 			})["catch"](function(err){
 				deferred.reject(err);
 			}).done();
@@ -357,6 +361,83 @@ var maximoAssetApi = {
 		})["catch"](function(err){
 			deferred.reject(err);
 		}).done();
+		return deferred.promise;
+	},
+	
+	_addAditionalInfo: function(context, asset, existing) {
+    	var deferred = Q.defer();
+		if (!existing && context === "vehicle") {
+			var lon = asset && asset.location && asset.location.lon;
+			var lat = asset && asset.location && asset.location.lat;
+
+			var defs = [];
+			defs.push(this._setAssetId(context, 12, asset));
+			defs.push(this._setSiteId(lon, lat, asset));
+			Q.all(defs).then(function(){
+				deferred.resolve(asset);
+			})["catch"](function(err){
+				deferred.reject(err);
+			}).done();
+		} else {
+			deferred.resolve(asset);
+		}
+		return deferred.promise;
+	},
+	
+	_setAssetId: function(context, length, asset, deferred) {
+	    var id = "", i, random;
+	    for (i = 0; i < length; i++) {
+	        random = Math.random() * 16 | 0;
+	        id += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random))
+	                .toString(16);
+	    }
+
+	    var self = this;
+	    if (!deferred)
+	    	deferred = Q.defer();
+	    Q.when(this.getAsset(context, id), function(result) {
+	    	self._setAssetId(context, length, asset, deferred);
+		})["catch"](function(err){
+			var status = (err.response && (err.response.status||err.response.statusCode)) || 500;
+			if(status === 404) {
+				asset.mo_id = id;
+				deferred.resolve(asset);
+			} else {
+				deferred.reject(err);
+			}
+	    });
+		return deferred.promise;
+	},
+	
+	_setSiteId: function(lon, lat, asset) {
+		var deferred = Q.defer();
+		var self = this;
+		Q.when(this.sites || this._querySites(lon, lat), function(result) {
+			if (!self.sites) {
+				self.sites = _.map(_.filter(result.member, function(m) { return m.active; }), function(m) {
+					return {id: m.id, slon: m.startlongitude, slat: m.startlatitude, elon: m.endlongitude, elat: m.endlatitude};
+				});
+			}
+			var siteid = "DEFREG"; // default site id 
+			if (lon && lat) {
+				_.each(self.sites, function(s) {
+					if (s.slon <= lon && lon <= s.elon && s.slat <= lat && lat <= s.elat) {
+						siteid = s.id;
+					}
+				});
+			}
+			asset.siteid = siteid;
+			deferred.resolve(asset);
+		})["catch"](function(err){
+			deferred.reject(err);
+		}).done();
+		return deferred.promise;
+	},
+	
+	_querySites: function(lon, lat) {
+		var deferred = Q.defer();
+		// TODO get site list from organization
+		deferred.resolve({member: [{id: "DEFREG", slon: -180, slat: -90, elon: 180, elat: 90}]});
 		return deferred.promise;
 	},
 

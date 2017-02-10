@@ -172,6 +172,9 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 					var url = "../htmlclient/#/home" 
 						+ "?vehicleId=" + vehicle.mo_id 
 						+ "&driverId=" + drivers.data[0].driver_id; 
+					if (vehicle.siteid) {
+						url += "&siteId=" + vehicle.siteid;
+					}
 					if(vehicle.vendor){
 						url += "&vendor=" + vehicle.vendor;
 					}
