@@ -46,7 +46,7 @@ var attributesMap = {
 			}, "rvalue": function(val) {
 				var assetspec = [];
 				_.each(val, function(value, key) {
-					var spec = {assetattrid: key, section: "IOTCVCV", linearassetspecid: 0};
+					var spec = {assetattrid: key.toUpperCase(), section: "IOTCVCV", linearassetspecid: 0};
 					if (value === undefined) {
 						return;
 					}
@@ -229,7 +229,7 @@ var maximoAssetApi = {
 	},
 	_extractId: function(context, id) {
 		// vehicle id might contain siteId. remove it.
-		if (context === "vehicle" && id.indexOf(":") > 0) {
+		if (id && context === "vehicle" && id.indexOf(":") > 0) {
 			var strs = id.split(":");
 			if (strs.length > 1) {
 				return strs[1];

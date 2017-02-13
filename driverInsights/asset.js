@@ -54,7 +54,7 @@ var driverInsightsAsset = {
 		vehicle = this._mergeObject({
 					status:"inactive",
 					properties: {
-						fuelTank: 60
+						fueltank: 60
 					}
 				}, vehicle||{});
 		return this._addAsset("vehicle", vehicle, !noRefresh);

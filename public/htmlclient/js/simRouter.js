@@ -185,7 +185,14 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 						url += "&loc=" + loc;
 					}
 					vehicle.url = $sce.trustAsResourceUrl(url);
-					vehicle.display = i === 0;		
+					vehicle.display = i === 0;
+					if (vehicle.properties) {
+						var props = {};
+						for (var key in vehicle.properties) {
+							props[key.toLowerCase()] = vehicle.properties[key];
+						}
+						vehicle.properties = props;
+					}
 				});
 
 				$scope.vehicles = vehicles;

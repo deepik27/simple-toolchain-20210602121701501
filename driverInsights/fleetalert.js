@@ -28,7 +28,7 @@ var BULK_INSERT_INTERVAL = "1000";
 _.extend(driverInsightsAlert, {
 	/*
 	 * {mo_id: {
-	 * 	vehicleInfo: {status: "Active", properties: {fuelTank: 60}},
+	 * 	vehicleInfo: {status: "Active", properties: {fueltank: 60}},
 	 * 	prevProbe: {ts: xxxxxxxxx, ...., props: {fuel: 49.1, engineTemp: 298.2}}
 	 * }}
 	 */
@@ -167,8 +167,8 @@ _.extend(driverInsightsAlert, {
 		if (probe.props.fuelLevel) {
 			return probe.props.fuelLevel / 100;
 		}
-		if (vehicle && vehicle.vehicleInfo && vehicle.vehicleInfo.properties && vehicle.vehicleInfo.properties.fuelTank	&& probe.props.fuel) {
-			return probe.props.fuel / vehicle.vehicleInfo.properties.fuelTank;
+		if (vehicle && vehicle.vehicleInfo && vehicle.vehicleInfo.properties && vehicle.vehicleInfo.properties.fueltank	&& probe.props.fuel) {
+			return probe.props.fuel / vehicle.vehicleInfo.properties.fueltank;
 		}
 		return;
 	},
