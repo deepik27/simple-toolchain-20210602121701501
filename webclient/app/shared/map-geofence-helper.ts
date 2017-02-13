@@ -34,7 +34,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
       });
       self.geometryBorderStyle = new ol.style.Style({
           stroke: new ol.style.Stroke({
-            color: [255, 0, 128, 0.3],
+            color: [255, 0, 128, 0.7],
             width: 2
           })
       });
@@ -269,7 +269,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
       return new ol.geom.Polygon([polygonCoordinates]);
     } else if (direction === "out") {
       // create target area
-      let polygonCoordinates = this.createGeofenceCoordinate(area, "rectangle");
+      let polygonCoordinates = this.createGeofenceCoordinate(geometry, "rectangle");
       let polygon = new ol.geom.Polygon([polygonCoordinates]);
 
       // create clip area
