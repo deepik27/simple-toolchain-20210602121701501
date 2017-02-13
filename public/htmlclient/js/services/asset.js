@@ -45,7 +45,7 @@ angular.module('htmlClient')
 		},
 
 		getSiteId: function() {
-			this.iotaStarterSiteId;
+			return this.iotaStarterSiteId;
 		},
 		
 		setSiteId: function(siteId) {

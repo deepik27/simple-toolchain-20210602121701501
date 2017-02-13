@@ -243,7 +243,7 @@
 				{propName: "fuel", label: "Fuel"}
 			];
 			assetService.getVehicle(assetService.getVehicleId()).then(function(vehicle){
-				var tank = vehicle.properties.fueltank;
+				var tank = vehicle.properties && vehicle.properties.fueltank;
 				if(tank){
 					$scope.rules[1].label = "Fuel (Troubled if smaller than " + tank/2 + ", Critical if smaller than " + tank/10 + ")";
 				}
