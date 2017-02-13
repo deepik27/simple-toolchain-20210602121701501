@@ -112,6 +112,10 @@ var attributesMap = {
 			"description": "description"
 		}, "rextend": function(asset) {
 			asset.datatype = "ALN";
+		}, "filter": function(assets) {
+			return _.filter(assets, function(asset) {
+				return asset.iotcvactive;
+			});
 		}},
 		"rule": {id: "rulenum", objectstructure: "IOTCVRULE", map: {
 			"rulenum": "rule_id",
@@ -193,6 +197,15 @@ var maximoAssetApi = {
 		var map = attributesMap[context] ? attributesMap[context].map : null;
 		return map ? _.keys(map) : null;
 	},
+	_getSearchCondition: function(context) {
+		var conditions = (attributesMap[context] && attributesMap[context].searchCondition) ? attributesMap[context].searchCondition() : null;
+		return _.map(conditions, function(value, key) {
+			return key + '=' + '"' + value + '"';
+		});
+	},
+	_filterAssets: function(context, assets) {
+		return (attributesMap[context] && attributesMap[context].filter) ? attributesMap[context].filter(assets) : assets;
+	},
 	_getAssetObject: function(context, maximoAsset) {
 		if (!attributesMap[context]) {
 			return maximoAsset;
@@ -250,7 +263,8 @@ var maximoAssetApi = {
 	getAssetList: function(context, params){
 		var deferred = Q.defer();
 		var attributes = this._getResourceObjectAttributes(context);
-		Q.when(this._query(context, attributes), function(result) {
+		var conditions = this._getSearchCondition(context);
+		Q.when(this._query(context, attributes, conditions), function(result) {
 			deferred.resolve({data: result});
 		})["catch"](function(err){
 			deferred.reject(err);
@@ -265,7 +279,7 @@ var maximoAssetApi = {
 		id = this._extractId(context, id);
 		var deferred = Q.defer();
 		var self = this;
-		Q.when(this._query(context, null, id), function(result) {
+		Q.when(this._query(context, null, null, id), function(result) {
 			Q.when(self._request(result.href + '?lean=1', 'GET'), function(result) {
 				deferred.resolve(self._getAssetObject(context, result));
 			})["catch"](function(err){
@@ -281,7 +295,7 @@ var maximoAssetApi = {
 		id = this._extractId(context, id);
 		var deferred = Q.defer();
 		var self = this;
-		Q.when(!id || this._query(context, null, id), function(result) {
+		Q.when(!id || this._query(context, null, null, id), function(result) {
 			var existing = id && result;
 			var url = existing ? result.href + '?lean=1' : self._getUrl(context, true);
 			var method_override = existing ? 'PATCH' : null;
@@ -337,7 +351,7 @@ var maximoAssetApi = {
 		id = this._extractId(context, id);
 		var deferred = Q.defer();
 		var self = this;
-		Q.when(this._query(context, null, id), function(result) {
+		Q.when(this._query(context, null, null, id), function(result) {
 			Q.when(self._request(result.href + '?lean=1', 'POST', 'DELETE'), function(result) {
 				if (refresh) {
 					Q.when(self.refreshAsset(context), function(refreshed){
@@ -360,7 +374,7 @@ var maximoAssetApi = {
 	getRuleXML: function(id){
 		var deferred = Q.defer();
 		var self = this;
-		Q.when(this._query('rule', ['rule'], id), function(result) {
+		Q.when(this._query('rule', ['rule'], null, id), function(result) {
 			deferred.resolve(result.rule);
 		})["catch"](function(err){
 			deferred.reject(err);
@@ -531,9 +545,9 @@ var maximoAssetApi = {
 		return options;
 	},
 	
-	_query: function(context, attributes, id, pagesize, pageno) {
+	_query: function(context, attributes, conditions, id, pagesize, pageno) {
 		var config = this.assetConfig.maximo;
-		var where = [];
+		var where = conditions || [];
 		if (id) {
 			var idname = attributesMap[context] ? attributesMap[context].id : null;
 			where.push(idname + '="' + id + '"');
@@ -568,7 +582,7 @@ var maximoAssetApi = {
 						deferred.reject({statusCode: 404, message: "Not found", response: {statusCode: 404, message: "Not found"}});
 			        }
 				} else {
-					deferred.resolve(attributes ? _.map(member, function(m) {return self._getAssetObject(context, m);}) : member);
+					deferred.resolve(attributes ? _.map(self._filterAssets(context, member), function(m) {return self._getAssetObject(context, m);}) : member);
 				}
 			} else {
 				var msg = 'asset: error(' + url + '): '+ body;
