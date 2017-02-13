@@ -39,7 +39,8 @@ var attributesMap = {
 				_.each(val, function(obj) {
 					if (obj.assetattrid) {
 						var key = obj.assetattrid.toLowerCase();
-						props[key] = obj.alnvalue;
+						if (obj.alnvalue !== undefined)
+							props[key] = obj.alnvalue;
 					}
 				});
 				return props;
