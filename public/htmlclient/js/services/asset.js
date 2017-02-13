@@ -45,17 +45,11 @@ angular.module('htmlClient')
 		},
 
 		getSiteId: function() {
-			var settings = this.getSettings();
-			return settings.iotaStarterSiteId;
+			this.iotaStarterSiteId;
 		},
 		
 		setSiteId: function(siteId) {
-			var settings = this.getSettings();
-			if (siteId)
-				settings.iotaStarterSiteId = siteId;
-			else
-				delete settings.iotaStarterSiteId;
-			this.updateSettings(settings);
+			this.iotaStarterSiteId = siteId;
 		},
 		
 		getDriverId: function(){

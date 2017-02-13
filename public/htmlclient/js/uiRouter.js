@@ -29,10 +29,7 @@ htmlClient.config(['$stateProvider', '$urlRouterProvider', function($stateProvid
 						assetService.setDriverId($stateParams.driverId);
 						assetService.shared_driver = true;
 					}
-					if($stateParams.siteId){
-						assetService.setSiteId($stateParams.siteId);
-						assetService.setAutoManagedAsset(true);
-					}
+					assetService.setSiteId($stateParams.siteId);
 					assetService.serial_number = $stateParams.serial_number; 
 					assetService.vendor = $stateParams.vendor; 
 				}
