@@ -113,10 +113,8 @@ var attributesMap = {
 			"description": "description"
 		}, "rextend": function(asset) {
 			asset.datatype = "ALN";
-		}, "filter": function(assets) {
-			return _.filter(assets, function(asset) {
-				return asset.iotcvactive;
-			});
+		}, "searchCondition": function() {
+			return {iotcvactive: true};
 		}},
 		"rule": {id: "rulenum", objectstructure: "IOTCVRULE", map: {
 			"rulenum": "rule_id",
@@ -201,7 +199,11 @@ var maximoAssetApi = {
 	_getSearchCondition: function(context) {
 		var conditions = (attributesMap[context] && attributesMap[context].searchCondition) ? attributesMap[context].searchCondition() : null;
 		return _.map(conditions, function(value, key) {
-			return key + '=' + '"' + value + '"';
+			if (_.isString(value)) {
+				return key + '=' + '"' + value + '"';
+			} else {
+				return key + '=' + value;
+			}
 		});
 	},
 	_filterAssets: function(context, assets) {
