@@ -342,11 +342,12 @@ _.extend(driverInsightsAlert, {
 		if(!area){
 			return Q.reject();
 		}
+		var self = this;
 		var deferred = Q.defer();
 		Q.when(driverInsightsProbe.getCarProbe(area), function(probes){
 			if(probes.length > 0){
 				var mo_ids = probes.map(function(probe){return probe.mo_id;});
-				getAlertsForVehicles(mo_ids, include_docs, limit).then(function(results){
+				self.getAlertsForVehicles(mo_ids, includeClosed, limit).then(function(results){
 					return results;
 				});
 			}else{
