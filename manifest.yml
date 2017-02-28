@@ -2,14 +2,18 @@ declared-services:
   FleetCloudantDB: 
     label: cloudantNoSQLDB 
     plan: Lite
-  FleetIoTForAuto:
-    label: iotforautomotive
-    plan: free_shared
+#  FleetSecureGateway  
+#    label: SecureGateway 
+#    plan: securegatewayplan
+#  FleetIoTPlatform:
+#    label: iotforautomotive
+#    plan: free_shared
 
 applications:
   - services:
       - FleetCloudantDB
-      - FleetIoTForAuto
+#      - FleetSecureGateway
+#      - FleetIoTPlatform
     name: iota-starter-server-fleetmanagement
     memory: 512M
 #    host: iota-starter-server-fleetmanagement
