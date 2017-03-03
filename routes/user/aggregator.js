@@ -105,10 +105,18 @@ _.extend(probeAggregator, {
 		var n_grid = GRID_NUM > 1 ? GRID_NUM : 8;
 		var lat_d, lon_d;
 		if (distance_lon > distance_lat) {
-			lon_d = (max_lon - min_lon) / n_grid;
+			if (max_lon > min_lon) {
+				lon_d = (max_lon - min_lon) / n_grid;
+			} else {
+				lon_d = (max_lon + 360 - min_lon) / n_grid;
+			}
 			lat_d = Math.abs(this.calcPosition(min_lon, min_lat, distance / n_grid, 180)[1] - min_lat);
 		} else {
-			lat_d = (max_lat - min_lat) / n_grid;
+			if (max_lat > min_lat) {
+				lat_d = (max_lat - min_lat) / n_grid;
+			} else {
+				lon_d = (max_lat + 180 - min_lat) / n_grid;
+			}
 			lon_d = Math.abs(this.calcPosition(min_lon, min_lat, distance / n_grid, 90)[0] - min_lon);
 		}
 
@@ -123,19 +131,32 @@ _.extend(probeAggregator, {
 		// Create regions
 		var self = this;
 		var regions = {};
-		var lat_index = 0;
+		
+		var lon2 = (max_lon > min_lon) ? max_lon : (max_lon + 360); 
+		var n_lon = Math.ceil((lon2 - min_lon) / lon_d); 
+
+		var lat2 = (max_lat > min_lat) ? max_lat : (max_lat + 180); 
+		var n_lat = Math.ceil((lat2 - min_lat) / lat_d); 
+
+		var geo_min_lat = start_lat;
 //		console.log("=== min_lon=" + min_lon + ", min_lat=" + min_lat + ", max_lon=" + max_lon + ", max_lat=" + max_lat + ", lon_d=" + lon_d + ", lat_d=" + lat_d + " ===");
-		for (var geo_min_lat = start_lat; geo_min_lat < max_lat; geo_min_lat+=lat_d) {
-			var lon_index = 0;
-			for (var geo_min_lon = start_lon; geo_min_lon < max_lon; geo_min_lon+=lon_d) {
+		for (var lat_index = 0; lat_index < n_lat; lat_index++) {
+			var geo_min_lon = start_lon;
+			for (var lon_index = 0; lon_index < n_lon; lon_index++) {
 				var regionId = self._regionId(geo_min_lon, geo_min_lat, lon_d, lat_d, lon_index, lat_index);
 				var region = {id: regionId, lon_index: lon_index, lat_index: lat_index, 
 					geometry: {min_lon: geo_min_lon, min_lat: geo_min_lat, max_lon: geo_min_lon + lon_d, max_lat: geo_min_lat + lat_d}};
 //				console.log("id=" + region.id + ", lon1=" + region.geometry.min_lon + ", lat1=" + region.geometry.min_lat + ", lon2=" + region.geometry.max_lon + ", lat2=" + region.geometry.max_lat);
 				regions[regionId] = region;
-				lon_index++;
+				geo_min_lon += lon_d;
+				if (geo_min_lon >= 180) {
+					geo_min_lon -= 360;
+				}
 			}
-			lat_index++;
+			geo_min_lat += lat_d;
+			if (geo_min_lat >= 90) {
+				geo_min_lat -= 180;
+			}
 		}
 		return {start_lon: start_lon, start_lat: start_lat, 
 				min_lon: min_lon, min_lat: min_lat,
@@ -219,11 +240,27 @@ _.extend(probeAggregator, {
 		return {count: summary.count, devices: devices};
 	},
 	
+	convertToDeviceInfo2: function(summary) {
+		var devices = _.map(summary.groups, function(g) {
+			return {aggregated: true, 
+				group_id: g.groupId, 
+				geometry: {min_lon: g.region.min_lon, min_lat: g.region.min_lat, max_lon: g.region.max_lon, max_lat: g.region.max_lat},
+				validGeometry: {min_lon: g.valid_min_lon, min_lat: g.valid_min_lat, max_lon: g.valid_max_lon, max_lat: g.valid_max_lat},
+				center: {lon: g.center_lon, lat: g.center_lat}, 
+				count: g.count,
+				alerts: g.alerts  // {troubled: <number>, critical: <number>}
+			};
+		});
+		return {count: summary.count, devices: devices};
+	},
+	
 	_getRegion: function(regions, probe) {
 		var lon = probe.matched_longitude || probe.longitude;
 		var lat = probe.matched_latitude || probe.latitude;
-		var lon_index = Math.floor((lon - regions.start_lon) / regions.lon_d);
-		var lat_index = Math.floor((lat - regions.start_lat) / regions.lat_d);
+		var lon2 = (lon < regions.start_lon) ? (lon + 360) : lon;  
+		var lat2 = (lat < regions.start_lat) ? (lat + 180) : lat;  
+		var lon_index = Math.floor((lon2 - regions.start_lon) / regions.lon_d);
+		var lat_index = Math.floor((lat2 - regions.start_lat) / regions.lat_d);
 		return regions.regions[this._regionId(regions.min_lon, regions.min_lat, regions.lon_d, regions.lat_d, lon_index, lat_index)];
 	},
 	
