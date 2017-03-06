@@ -15,6 +15,7 @@ import{ Item } from "./map-item-helper";
 
 @Injectable()
 export class MapGeofenceHelper extends MapItemHelper<Geofence> {
+  isAvailable: boolean = false;
   targetStyle: ol.style.Style;
   geometryBorderStyle: ol.style.Style;
   tentativeStyle: ol.style.Style;
@@ -22,6 +23,11 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
   constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public geofenceService: GeofenceService, options: any = {}) {
     super(map, itemLayer);
 
+    this.geofenceService.isAvailable().subscribe(data => {
+      if (data) {
+        this.isAvailable = true;
+      }
+    });
     options = options || {};
     this.setItemLabel(options.itemLabel || "Geofence");
 
@@ -229,7 +235,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
 
   // query items within given area
   public queryItems(min_longitude: number, min_latitude: number, max_longitude: number, max_latitude: number) {
-    return this.geofenceService.queryGeofences({
+    return this.isAvailable && this.geofenceService.queryGeofences({
         min_latitude: min_latitude,
         min_longitude: min_longitude,
         max_latitude: max_latitude,
@@ -243,7 +249,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
 
   // get item with id
   public getItem(id: string) {
-    return this.geofenceService.getGeofence(id).map(data => {
+    return this.isAvailable && this.geofenceService.getGeofence(id).map(data => {
       return new Geofence(data);
     });
   }
