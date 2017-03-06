@@ -151,6 +151,11 @@ export class RealtimeDeviceDataProviderService {
 			// start animation
 			mapHelper && mapHelper.startAnimation();
 
+			var events = data && data.devices;
+			if (events){
+        updateEvents && updateEvents(events);
+      }
+
 			// schedule status timer
 			var carStatusTimerFunc = () => {
 				this.refreshCarStatus(qs);
@@ -163,7 +168,7 @@ export class RealtimeDeviceDataProviderService {
 		})
 
 		// handle driver events
-		this.refreshDriverEvents(qs, updateEvents);
+//		this.refreshDriverEvents(qs, updateEvents);
 	};
 	// Add/update cars with DB info
 	refreshCarStatus(qs) {
