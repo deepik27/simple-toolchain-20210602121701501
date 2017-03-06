@@ -15,7 +15,6 @@ import { Request, Response } from '@angular/http';
   moduleId: module.id,
   selector: 'alert-list',
   templateUrl: 'alert-list.component.html',
-  styleUrls: ['../../../css/table.css'],
   styles: [`
     .firstRow {
       padding-left: 20px;

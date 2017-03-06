@@ -18,7 +18,7 @@ import { MomentPipe } from '../../utils/moment.pipe';
   moduleId: module.id,
   selector: 'vehicle-list',
   templateUrl: 'vehicle-list.component.html',
-  styleUrls: ['../../../css/table.css', 'vehicle-list.component.css'],
+  styleUrls: ['vehicle-list.component.css'],
 })
 
 export class VehicleListComponent {

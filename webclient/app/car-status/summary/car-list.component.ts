@@ -19,7 +19,6 @@ import * as _ from 'underscore';
   moduleId: module.id,
   selector: 'fmdash-car-list',
   templateUrl: 'car-list.component.html',
-  styleUrls: ['../../../css/table.css'],
 })
 export class CarListComponent implements OnInit, OnDestroy, OnChanges {
   @Input() groupProp: string;
