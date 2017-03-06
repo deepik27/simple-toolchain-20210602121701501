@@ -83,14 +83,14 @@ gulp.task('app-bundler', function(cb) {
 });
 
 gulp.task('cssBundler', function () {
-  return gulp.src('css/*.css')
+  return gulp.src(['css/style.css', '!css/font--*.css'])
     .pipe(concatCss("bundle.css"))
     .pipe(gulp.dest('css/bundle'))
     .pipe(cleanCSS({debug: true}, function(details) {
         console.log(details.name + ': ' + details.stats.originalSize);
         console.log(details.name + ': ' + details.stats.minifiedSize);
     }))
-    .pipe(gulp.dest('css/bundle/minified'));
+    .pipe(gulp.dest('dist/css'));
 });
 
 gulp.task('cssBundler:watch', function () {

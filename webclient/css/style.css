@@ -34,6 +34,10 @@ Author URI: http://www.ibm.com/internet-of-things/
 18. Alert Popover Styles
 */
 
+@import url('reset.css');
+@import url('icons.css');
+@import url('table.css');
+
 /* === 1. General + Commonly Used Styles === */
 *
 {
