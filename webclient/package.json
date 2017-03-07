@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"private": true,
 	"engines": {
-		"npm": "2.x"
+		"npm": "4.x"
 	},
 	"scripts": {
 		"start": "tsc && gulp && concurrently \"npm run tsc:w\" \"npm run lite\"",
