@@ -22,7 +22,7 @@ The Fleet Management Starter Application uses the following IBM Bluemix services
 
 ## Prerequisites
 To deploy and use the Fleet Management Starter Application, you need an instance of IBM IoT for Automotive that is deployed and running on either IBM SaaS or IBM Bluemix. To use the app with an instance of IBM IoT for Automotive on IBM Bluemix, see the following instructions: 
-[IBM for Automotive (Bluemix) - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fm).
+[IBM for Automotive (Bluemix) - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fm-saas).
 
 ## Deploying the app
 
@@ -30,7 +30,7 @@ Deploy the Fleet Management Starter Application on IBM Bluemix either automatica
 
 ### Automatically deploy the starter app on Bluemix
 
-To automatically deploy the Fleet Management Starter Application on Bluemix, click [![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm.git). 
+To automatically deploy the Fleet Management Starter Application on Bluemix, click [![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git). 
 
 The automatic deployment option creates an instance of the app and the required Bluemix services, and also binds the services to the starter app automatically. After the automated deployment, complete the following steps to configure the app to manually to connect to your IBM IoT for Automotive SaaS service.
 
@@ -48,7 +48,7 @@ To manually deploy the Fleet Management Starter Application on IBM Bluemix, comp
 3. Clone the Fleet Management Starter Application to your local environment by using the following console command:  
 
   ```  
-  git clone https://github.com/ibm-watson-iot/iota-starter-server-fm.git  
+  git clone https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git  
   ```  
 4. Change to the directory that you created.
 5. Edit the `manifest.yml` file and change the values of `<name>` and `<host>` to something unique.
@@ -277,7 +277,7 @@ If you no longer need a device, go to the Watson IoT Platform dashboard and dele
 A vehicle corresponding to deleted device must be removed from a table. Also, if you have added a device to the Watson IoT Platform manually, the vehicle is added to the table.
 
 ## Reporting defects
-To report a defect with the IoT for Automotive - Fleet Management Starter Application, go to the [Issues section](https://github.com/ibm-watson-iot/iota-starter-server-fm/issues) section.
+To report a defect with the IoT for Automotive - Fleet Management Starter Application, go to the [Issues section](https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/issues) section.
 
 ## Troubleshooting
 To debug problems, check the Bluemix app logs. To view the logs, run the following command from the Cloud Foundry CLI:
