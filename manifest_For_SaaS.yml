@@ -2,12 +2,12 @@ declared-services:
   FleetCloudantDB: 
     label: cloudantNoSQLDB 
     plan: Lite
-#  FleetSecureGateway  
+#  FleetSecureGateway:  
 #    label: SecureGateway 
 #    plan: securegatewayplan
 #  FleetIoTPlatform:
 #    label: iotforautomotive
-#    plan: free_shared
+#    plan: iotf-service-free
 
 applications:
   - services:
