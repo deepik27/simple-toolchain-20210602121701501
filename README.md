@@ -152,62 +152,6 @@ maximo/password | Password for accessing the Maximo API
 ### (Optional) Securing the connection to the IBM IoT for Automotive service
 The IBM Secure Gateway service provides secure connectivity and establishes a tunnel between your Bluemix organization and the remote location that you want to connect to. Before you use the Secure Gateway service, contact your IBM IoT for Automotive system administrator. For more information, see [Secure Gateway](https://console.ng.bluemix.net/catalog/services/secure-gateway/).
 
-#### Setting up a Secure Gateway service
-
-##### Binding the Secure Gateway service to the app
-Firstly, bind the Secure Gateway service on Bluemix to your app as follows.
-
-1. Open the [Bluemix dashboard][bluemix_dashboard_url] in your browser.
-1. Open the IBM IoT for Automotive service.
-1. On the left navigation bar, click **Connections**.
-1. Click **Connect New**.
-1. Select *Secure Gateway* service, and then click *Create* to bind the service.
-
-You can also bind the service to the app by using the command line interface, as follows:
-
-  ```
-  $ cf create-service SecureGateway securegatewayplan FleetSecureGateway
-  ```
-
-##### Configuring the Secure Gateway service on Bluemix
-
-Complete the following steps to set up a gateway destination for the app to connect to:
-
-1. Open the Secure Gateway service on Bluemix.
-1. Click **ADD GATEWAY**.
-1. Enter a gateway name, deselect **Token Expiration**, and then click **ADD GATEWAY**.
-1. Click the gateway rectangle.
-1. Click **Add Destination**.
-1. Check **On-Premises**.
-1. Enter a host address and a port number for the IoT for Automotive gateway.
-1. For protocol, select **HTTPS**.
-1. For authentication, select **Destination-Side**.
-1. Do not modify **IP table rules.**. Leave this section as is.
-1. Enter a label for the destination, and then click **Finish**.
-
-Result: An endpoint URL for a gateway is created. 
-
-Next: Update the destination so that the destination can be accessed only by the app.
-
-1. Click the destination that you created earlier in the previous step.
-1. Expand the **Advanced** section.
-1. Select **Restrict network access to cloud destination**.
-1. Click **UPDATE DESTINATION**.
-
-#### Setting up a client within the IoT for Automotive environment
-In order to create a gateway, you need to have a Secure Gateway client to connect to. To set up the client, contact the system administrator for your IoT for Automotive environment. 
-
-#### Configuring the app for the Secure Gateway
-
-Finally, replace the endpoint values of the environment variables that you created earlier in [Configuring IBM IoT for Automotive endpoints and credential](#config_endpoints) to the endpoints and credentials of the Secure Gateway.
-
-You must also set the values for the following Secure Gateway environment variables:
-
-```
-SECURE_GW_IPTABLE_CFG_GW_ID = <Gateway ID>
-SECURE_GW_IPTABLE_CFG_GW_TOKEN = <Security Token>
-SECURE_GW_IPTABLE_CFG_DEST_IDS = <Destination ID>
-```
 
 ## Configuring authentication
 
