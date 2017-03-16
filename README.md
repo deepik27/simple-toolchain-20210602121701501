@@ -123,7 +123,6 @@ Define the endpoints in the following JSON format. Note that you must remove any
     "iotforautomotive": [
         {
             "credentials": {
-                "tenant_id": <tenant id>,
                 "api": <IoT for Automotive endpoint>,
                 "username": <user name>,
                 "password": <passsword>,
@@ -142,7 +141,6 @@ To obtain the correct values, contact your system administrator.
 
 Key | Description of Value
 ----- | -----
-tenant id | Your tenant ID
 api | A URL to call the REST API for IoT for Automotive, which must end with a forward slash character (/) 
 username | User name for accessing the Vehicle Data Hub (VDH) and other IoT for Automotive endpoints
 password | Password for accessing the VDH and other IoT for Automotive endpoints
