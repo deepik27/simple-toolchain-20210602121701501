@@ -22,7 +22,7 @@ The Fleet Management Starter Application uses the following IBM Bluemix services
 
 ## Prerequisites
 To deploy and use the Fleet Management Starter Application, you need an instance of IBM IoT for Automotive that is deployed and running on either IBM SaaS or IBM Bluemix. To use the app with an instance of IBM IoT for Automotive on IBM Bluemix, see the following instructions: 
-[IBM for Automotive (Bluemix) - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fm-saas).
+[IBM for Automotive (Bluemix) - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fm).
 
 ## Deploying the app
 
