@@ -22,8 +22,6 @@ debug.log = console.log.bind(console);
 var lastProbeTimeByMoId = {};
 
 _.extend(driverInsightsProbe, {
-	last_prob_ts: moment().valueOf(),
-
 	driverInsightsConfig: function(){
 		var userVcapSvc = JSON.parse(process.env.USER_PROVIDED_VCAP_SERVICES || '{}');
 		var vcapSvc = userVcapSvc.iotforautomotive || VCAP_SERVICES.iotforautomotive;
@@ -190,7 +188,6 @@ _.extend(driverInsightsProbe, {
 			request(options, function(error, response, body){
 				if (!error && response.statusCode === 200) {
 					debug('sendProbData response: '+ body);
-					self.last_prob_ts = moment().valueOf(); //TODO Need to care in the case that payload.ts is older than last_prob_ts
 					try {
 						deferred.resolve(JSON.parse(body || "{}"));
 					} catch (e) {
@@ -469,19 +466,5 @@ _.extend(driverInsightsProbe, {
 	
 	getLastProbeTime: function(mo_id){
 		return lastProbeTimeByMoId[mo_id];
-	}
-});
-
-// Update last_prob_ts
-driverInsightsProbe.getCarProbeDataListAsDate(function(body){
-	try{
-		var parsed = JSON.parse(body);
-		var probeDateList = parsed && parsed.return_code === 0 && parsed.date;
-		if(Array.isArray(probeDateList) && probeDateList.length > 0){
-			driverInsightsProbe.last_prob_ts = probeDateList.map(function(probeDate){return moment(probeDate).valueOf();}).sort(function(a, b){return b - a;})[0];
-		}
-	}catch(ex){
-		debug(ex);
-		// Don't update last_prob_ts
 	}
 });
