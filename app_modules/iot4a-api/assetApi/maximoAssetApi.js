@@ -268,7 +268,8 @@ var maximoAssetApi = {
 		var deferred = Q.defer();
 		var attributes = this._getResourceObjectAttributes(context);
 		var conditions = this._getSearchCondition(context);
-		Q.when(this._query(context, attributes, conditions), function(result) {
+		params = params || {};
+		Q.when(this._query(context, attributes, conditions, /*id*/null, params.num_rec_in_page, params.num_page), function(result) {
 			deferred.resolve({data: result});
 		})["catch"](function(err){
 			deferred.reject(err);

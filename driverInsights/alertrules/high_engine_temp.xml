@@ -1,0 +1,26 @@
+<Rules>
+	<VehicleActionRule>
+		<RuleType>{alert_rule_id}</RuleType>
+		<RuleID>{alert_rule_id}</RuleID>
+		<Name>High Engine Temperature</Name>
+		<Description>Engine temperature is too high</Description>
+		<Target></Target>
+		<Condition>
+			<ValueCondition>
+				<Attribute>EngineTemp</Attribute>
+				<Operator>GT</Operator>
+				<Value>120</Value>
+			</ValueCondition>
+		</Condition>
+		<Action>
+			<VehicleAction>
+				<Message>Engine temperature is too high</Message>
+				<Parameter><Key>message_type</Key><Value>high_engine_temp</Value></Parameter>
+				<Parameter><Key>source_id</Key><Value>high_engine_temp</Value></Parameter>
+				<Parameter><Key>longitude</Key><Value>CarProbe.Longitude</Value></Parameter>
+				<Parameter><Key>latitude</Key><Value>CarProbe.Latitude</Value></Parameter>
+				<Parameter><Key>severity</Key><Value>High</Value></Parameter>
+			</VehicleAction>
+		</Action>
+	</VehicleActionRule>
+</Rules>

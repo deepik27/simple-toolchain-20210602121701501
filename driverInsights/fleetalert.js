@@ -13,6 +13,7 @@ var _ = require("underscore");
 var Q = require("q");
 var cfenv = require("cfenv");
 var moment = require("moment");
+var fs = require("fs-extra");
 var dbClient = require('./../cloudantHelper.js');
 var iot4aAsset = app_module_require('iot4a-api/asset.js');
 var iot4aVehicleDataHub = app_module_require('iot4a-api/vehicleDataHub.js');
@@ -22,7 +23,12 @@ debug.log = console.log.bind(console);
 
 var FLEETALERT_DB_NAME = "fleet_alert";
 var VEHICLE_VENDOR_IBM = "IBM";
-var BULK_INSERT_INTERVAL = "1000";
+var BULK_INSERT_INTERVAL = Number(process.env.BULK_INSERT_INTERVAL || 1000);
+var ALERT_RULE_TEMPLATE_DIR = process.env.ALERT_RULE_TEMPLATE_DIR || "./driverInsights/alertrules/";
+var ALERT_RULE_DESCRIPTION = "ALERT RULE: ";
+var ALERT_RULE_ID_RANGE_MAX = 21000;
+var ALERT_RULE_ID_RANGE_MIN = 20000;
+var MAX_NUM_REC_IN_PAGE = 50;
 
 _.extend(driverInsightsAlert, {
 	/*
@@ -64,6 +70,8 @@ _.extend(driverInsightsAlert, {
 		var self = this;
 		this.db = dbClient.getDB(FLEETALERT_DB_NAME, this._getDesignDoc());
 		this.getAlerts([], false, 200); // Get and cache all alerts
+
+		this.importAlertRules();
 
 		// Low Fuel
 		this.registerAlertRule("low_fuel", {
@@ -159,6 +167,65 @@ _.extend(driverInsightsAlert, {
 			}
 		});
 	},
+
+	/*
+	 * Remove all existing alert rules in iot4a and import alert rules defined as xml in ALERT_RULE_TEMPLATE_DIR again
+	 */
+	importAlertRules: function(){
+		var self = this;
+		Q.when(this._findAlertRulesRecursive(1), function(rules){
+			if(rules && rules.length > 0){
+				Q.all(rules.map(function(rule){
+					rule.status = "inactive";
+					return Q.when(iot4aAsset.updateRule(rule.rule_id, rule, null, true), function(rule){
+						return iot4aAsset.deleteRule(rule.rule_id);
+					});
+				}), function(aaa){
+					self._addRules();
+				});
+			}else{
+				self._addRules();
+			}
+		});
+	},
+	_addRules: function(){
+		var alert_rule_id_offset = 0;
+		fs.readdir(ALERT_RULE_TEMPLATE_DIR, function(err, files){
+			if(err){
+				console.error("Error: Reading alert rules is failed. " + err);
+				return;
+			}
+			files.filter(function(file){return file.endsWith(".xml")}).forEach(function(file){
+				fs.readFile(ALERT_RULE_TEMPLATE_DIR + file, {encoding: "UTF-8"}, function(err, data){
+					if(err){
+						console.error("Error: Reading an alert rule(" + file + ") is failed. " + err);
+					}
+					var alert_rule_id = ALERT_RULE_ID_RANGE_MIN + alert_rule_id_offset++;
+					if(alert_rule_id > ALERT_RULE_ID_RANGE_MAX){
+						console.error("Alert rule id cannot be assigned.");
+					}
+					var rule = {description: ALERT_RULE_DESCRIPTION + alert_rule_id, type: "Action", status: "active"};
+					data = data.replace("{alert_rule_id}", alert_rule_id);
+					iot4aAsset.addRule(rule, data);
+				})
+			});
+		});
+	},
+	_findAlertRulesRecursive: function(num_page){
+		var self = this;
+		return Q.when(iot4aAsset.getRuleList({num_rec_in_page: MAX_NUM_REC_IN_PAGE, num_page: num_page}), function(result){
+			var rules_in_page = (result && result.data) || [];
+			var alert_rules_in_page = rules_in_page.filter(function(rule){return rule.description.startsWith(ALERT_RULE_DESCRIPTION);});
+			if(rules_in_page.length >= MAX_NUM_REC_IN_PAGE){
+				return Q.when(self._findAlertRulesRecursive(num_page + 1), function(alert_rules){
+					return alert_rules.concat(alert_rules_in_page);
+				});
+			}else{
+				return Q(alert_rules_in_page);
+			}
+		});
+	},
+
 	_getFuelLevel: function(probe, vehicle) {
 		if (!probe || !probe.props) {
 			return;

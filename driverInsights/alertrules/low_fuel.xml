@@ -1,0 +1,26 @@
+<Rules>
+	<VehicleActionRule>
+		<RuleType>{alert_rule_id}</RuleType>
+		<RuleID>{alert_rule_id}</RuleID>
+		<Name>Low Fuel</Name>
+		<Description>Fuel less than 1/10 tank</Description>
+		<Target></Target>
+		<Condition>
+			<ValueCondition>
+				<Attribute>FuelRate</Attribute>
+				<Operator>LT</Operator>
+				<Value>0.1</Value>
+			</ValueCondition>
+		</Condition>
+		<Action>
+			<VehicleAction>
+				<Message>Fuel less than 1/10 tank</Message>
+				<Parameter><Key>message_type</Key><Value>low_fuel</Value></Parameter>
+				<Parameter><Key>source_id</Key><Value>low_fuel</Value></Parameter>
+				<Parameter><Key>longitude</Key><Value>CarProbe.Longitude</Value></Parameter>
+				<Parameter><Key>latitude</Key><Value>CarProbe.Latitude</Value></Parameter>
+				<Parameter><Key>severity</Key><Value>High</Value></Parameter>
+			</VehicleAction>
+		</Action>
+	</VehicleActionRule>
+</Rules>
