@@ -13,7 +13,7 @@ var _ = require("underscore");
 var Q = new require('q');
 var chance = require('chance')();
 var asset = require("./asset.js");
-var IOTF = require('../iotfclient');
+var IOTF = app_module_require('iotfclient');
 var driverInsightsProbe = require("../driverInsights/probe.js");
 
 _.extend(probe, {

@@ -18,8 +18,9 @@ var appEnv = require("cfenv").getAppEnv();
 var router = module.exports = require('express').Router();
 var authenticate = require('./auth.js').authenticate;
 var driverInsightsProbe = require('../../driverInsights/probe');
-var driverInsightsContextMapping = require('../../driverInsights/contextMapping');
 var driverInsightsAlert = require('../../driverInsights/fleetalert.js');
+var iot4aContextMapping = app_module_require('iot4a-api/contextMapping');
+var iot4aVehicleDataHub = app_module_require('iot4a-api/vehicleDataHub');
 var dbClient = require('../../cloudantHelper.js');
 var probeAggregator = require('./aggregator.js');
 
@@ -48,14 +49,6 @@ router.post('/probeData',  authenticate, function(req, res) {
 	}catch(error){
 		handleAssetError(res, error);
 	}
-});
-
-router.get('/probeData',  authenticate, function(req, res) {
-	driverInsightsProbe.getCarProbeDataListAsDate().then(function(msg){
-		res.send(msg);
-	})["catch"](function(error){
-		handleAssetError(res, error);
-	});
 });
 
 /**
@@ -125,7 +118,7 @@ router.get('/carProbeMonitor', authenticate, function(req, res) {
 
 router.get("/routesearch", function(req, res){
 	var q = req.query;
-	driverInsightsContextMapping.routeSearch(
+	iot4aContextMapping.routeSearch(
 		q.orig_latitude,
 		q.orig_longitude,
 		q.orig_heading || 0,
@@ -178,7 +171,7 @@ router.get("/alert", function(req, res){
 
 router.get("/event/query", function(req, res){
 	var q = req.query;
-	driverInsightsContextMapping.queryEvent(
+	iot4aContextMapping.queryEvent(
 		q.min_latitude,
 		q.min_longitude,
 		q.max_latitude,
@@ -194,7 +187,7 @@ router.get("/event/query", function(req, res){
 
 router.get("/event", function(req, res){
 	var q = req.params.event_id;
-	driverInsightsContextMapping.getEvent(req.query.event_id).then(function(msg){
+	iot4aContextMapping.getEvent(req.query.event_id).then(function(msg){
 		res.send(msg);
 	})["catch"](function(error){
 		handleAssetError(res, error);
@@ -202,7 +195,7 @@ router.get("/event", function(req, res){
 });
 
 router.post("/event", function(req, res){
-	driverInsightsProbe.createEvent(req.body, "sync").then(function(msg){
+	iot4aVehicleDataHub.createEvent(req.body, "sync").then(function(msg){
 		res.send(msg);
 	})["catch"](function(error){
 		handleAssetError(res, error);
@@ -210,7 +203,7 @@ router.post("/event", function(req, res){
 });
 
 router["delete"]("/event", function(req, res){
-	driverInsightsContextMapping.deleteEvent(req.query.event_id).then(function(msg){
+	iot4aContextMapping.deleteEvent(req.query.event_id).then(function(msg){
 		res.send(msg);
 	})["catch"](function(error){
 		handleAssetError(res, error);
@@ -335,7 +328,7 @@ var initWebSocketServer = function(server, path){
 
 function getCarProbe(qs, addAlerts){
 	var regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude, qs.max_latitude);
-	var probes = Q(driverInsightsProbe.getCarProbe(qs).then(function(probes){
+	var probes = Q(iot4aVehicleDataHub.getCarProbe(qs).then(function(probes){
 		// send normal response
 		(probes||[]).forEach(function(p){
 			if(p.timestamp){

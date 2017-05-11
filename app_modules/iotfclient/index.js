@@ -7,4 +7,4 @@
  *
  * You may not use this file except in compliance with the license.
  */
-module.exports = require('./iotfClient.js')({configFile: "iotfclient/ioTFConfig.json"});
+module.exports = require('./iotfClient.js')({configFile: "app_modules/iotfclient/ioTFConfig.json"});

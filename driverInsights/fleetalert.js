@@ -11,12 +11,11 @@ var driverInsightsAlert = module.exports = {};
 
 var _ = require("underscore");
 var Q = require("q");
-var request = require('./requestSecureGw.js'); 
 var cfenv = require("cfenv");
 var moment = require("moment");
 var dbClient = require('./../cloudantHelper.js');
-var driverInsightsAsset = require('./asset.js');
-var driverInsightsProbe = require('./probe.js');
+var iot4aAsset = app_module_require('iot4a-api/asset.js');
+var iot4aVehicleDataHub = app_module_require('iot4a-api/vehicleDataHub.js');
 
 var debug = require('debug')('alert');
 debug.log = console.log.bind(console);
@@ -259,7 +258,7 @@ _.extend(driverInsightsAlert, {
 		if(vehicle){
 			deferred.resolve(vehicle);
 		}else{
-			Q.when(driverInsightsAsset.getVehicle(mo_id), function(vehicleInfo){
+			Q.when(iot4aAsset.getVehicle(mo_id), function(vehicleInfo){
 				self._vehicles[mo_id] = vehicle = {
 					vehicleInfo: vehicleInfo
 				};
@@ -344,7 +343,7 @@ _.extend(driverInsightsAlert, {
 		}
 		var self = this;
 		var deferred = Q.defer();
-		Q.when(driverInsightsProbe.getCarProbe(area), function(probes){
+		Q.when(iot4aVehicleDataHub.getCarProbe(area), function(probes){
 			if(probes.length > 0){
 				var mo_ids = probes.map(function(probe){return probe.mo_id;});
 				self.getAlertsForVehicles(mo_ids, includeClosed, limit).then(function(results){

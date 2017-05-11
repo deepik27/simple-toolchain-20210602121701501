@@ -7,6 +7,8 @@
  *
  * You may not use this file except in compliance with the license.
  */
+var asset = module.exports = {};
+
 var _ = require("underscore");
 var Q = new require('q');
 var debug = require('debug')('asset');
@@ -14,7 +16,7 @@ debug.log = console.log.bind(console);
 
 var assetApiFactory = require("./assetApi/assetApiFactory.js");
 
-var driverInsightsAsset = {
+_.extend(asset, {
 	_assetApi: null,
 	
 	_init: function(){
@@ -34,12 +36,15 @@ var driverInsightsAsset = {
 				}
 			}
 		}
-		for (var key in obj2) {
-			if (!(key in obj1)) {
-				obj1[key] = obj2[key];
+		for (var key2 in obj2) {
+			if (!(key2 in obj1)) {
+				obj1[key2] = obj2[key2];
 			}
 		}
 		return obj1;
+	},
+	isSaaS: function() {
+		return this._assetApi && this._assetApi.isNative && this._assetApi.isNative();
 	},
 	/*
 	 * Vehicle apis
@@ -256,7 +261,6 @@ var driverInsightsAsset = {
 		}
 		return this._assetApi.deleteAsset(context, id, refresh);
 	}
-};
-driverInsightsAsset._init();
+});
 
-module.exports = driverInsightsAsset;
+asset._init();

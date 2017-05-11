@@ -19,7 +19,7 @@ var chance = require("chance")();
 var debug = require('debug')('simulator');
 debug.log = console.log.bind(console);
 
-var driverInsightsAsset = require('../../driverInsights/asset.js');
+var iot4aAsset = app_module_require('iot4a-api/asset.js');
 var driverInsightsProbe = require('../../driverInsights/probe.js');
 
 var authenticate = require('./auth.js').authenticate;
@@ -63,7 +63,7 @@ var _getDeviceModelInfo = function(){
 var _deactivateFleeSimulatedVehicles = function(num){
 	var deferred = Q.defer();
 	debug("Try to find free active simulated cars [" + num + "]");
-	Q.when(driverInsightsAsset.getVehicleList({"vendor": VENDOR_NAME, "status": "active"}), function(response){
+	Q.when(iot4aAsset.getVehicleList({"vendor": VENDOR_NAME, "status": "active"}), function(response){
 		var vehicles = response.data;
 		debug("Active vehicles: " + JSON.stringify(vehicles));
 		var defList = [];
@@ -84,7 +84,7 @@ var _deactivateFleeSimulatedVehicles = function(num){
 			if(deactivate){
 				num--;
 				debug("try to inactivate: " + mo_id );
-				defList.push(driverInsightsAsset.updateVehicle(mo_id, {"status": "inactive"}));
+				defList.push(iot4aAsset.updateVehicle(mo_id, {"status": "inactive"}));
 			}
 		}
 		Q.all(defList).then(function(){
@@ -108,7 +108,7 @@ var _createNewSimulatedVehicles = function(num){
 		};
 		vehicle.properties = _getDeviceModelInfo();
 		vehicle.model = vehicle.properties.makeModel;
-		defList.push(driverInsightsAsset.addVehicle(vehicle));
+		defList.push(iot4aAsset.addVehicle(vehicle));
 	}
 	Q.all(defList).then(function(){
 		debug("created " + num + " vehicles");
@@ -135,7 +135,7 @@ var _getAvailableVehicles = function(res, exsiting_vehicles){
 	Q.when(_createSimulatedVehicles(res, exsiting_vehicles))
 	.then(function(){
 		debug("get inactive cars again");
-		return driverInsightsAsset.getVehicleList({"vendor": VENDOR_NAME, "status": "inactive"});
+		return iot4aAsset.getVehicleList({"vendor": VENDOR_NAME, "status": "inactive"});
 	}).then(function(response){
 		debug("_getAvailableVehicles: " + response);
 		res.send(response);
@@ -146,9 +146,9 @@ var _getAvailableVehicles = function(res, exsiting_vehicles){
 };
 
 router.get("/simulatedVehicles", authenticate, function(req, res){
-	Q.when(driverInsightsAsset.getVendor(VENDOR_NAME), function(response){
+	Q.when(iot4aAsset.getVendor(VENDOR_NAME), function(response){
 		debug("There is vendor: " + VENDOR_NAME);
-		Q.when(driverInsightsAsset.getVehicleList({"vendor": VENDOR_NAME, "status": "inactive"}), function(response){
+		Q.when(iot4aAsset.getVehicleList({"vendor": VENDOR_NAME, "status": "inactive"}), function(response){
 			if(response && response.data && response.data.length < NUM_OF_SIMULATOR){
 				// create additional vehicles
 				_getAvailableVehicles(res, response.data);
@@ -163,7 +163,7 @@ router.get("/simulatedVehicles", authenticate, function(req, res){
 		var status = (err.response && (err.response.status||err.response.statusCode)) || 500;
 		if(status === 404){
 			debug("Create a vendor for simulator");
-			Q.when(driverInsightsAsset.addVendor({"vendor": VENDOR_NAME, "type": "Vendor", "status":"Active"}), function(response){
+			Q.when(iot4aAsset.addVendor({"vendor": VENDOR_NAME, "type": "Vendor", "status":"Active"}), function(response){
 				debug("A vendor for simulator is created");
 				_getAvailableVehicles(res);
 			})["catch"](function(err){
@@ -177,7 +177,7 @@ router.get("/simulatedVehicles", authenticate, function(req, res){
 
 var DRIVER_NAME = "simulated_driver";
 var _createSimulatedDriver = function(res){
-	var promise = driverInsightsAsset.addDriver({"name": DRIVER_NAME, "status":"Active"});
+	var promise = iot4aAsset.addDriver({"name": DRIVER_NAME, "status":"Active"});
 	Q.when(promise, function(response){
 		var data = {data: [ {driver_id: response.id, name: DRIVER_NAME} ]};
 		debug("Simulated driver was created");
@@ -188,7 +188,7 @@ var _createSimulatedDriver = function(res){
 }
 ;
 router.get("/simulatedDriver", authenticate, function(req, res){
-	Q.when(driverInsightsAsset.getDriverList({"name": DRIVER_NAME}), function(response){
+	Q.when(iot4aAsset.getDriverList({"name": DRIVER_NAME}), function(response){
 			res.send(response);
 	})["catch"](function(err){
 		// assume driver is not available 

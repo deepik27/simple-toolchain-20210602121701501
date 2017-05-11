@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016, 2017 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -7,13 +7,15 @@
  *
  * You may not use this file except in compliance with the license.
  */
+var contextMapping = module.exports = {};
+
 var Q = new require('q');
 var _ = new require('underscore');
 var request = require('./requestSecureGw.js'); 
 var debug = require('debug')('contextMapping');
 debug.log = console.log.bind(console);
 
-var contextMapping = {
+_.extend(contextMapping, {
 
 	contextMappingConfig: function(){
 		var userVcapSvc = JSON.parse(process.env.USER_PROVIDED_VCAP_SERVICES || '{}');
@@ -31,7 +33,14 @@ var contextMapping = {
 		throw new Exception("!!! no provided credentials for DriverInsights. using shared one !!!");
 	}(),
 	
-	_addAuthOption: function(config, options) {
+	_makeRequestOptions: function(config, options) {
+		// Add query parameters to options.url if tenant id exists
+		if (config.tenant_id) {
+			if (!options.qs) options.qs = {};
+			options.qs.tenant_id = config.tenant_id;
+		}
+		
+		// Add basic authentication if username and password are specified
 		if (config.username && config.password) {
 			return _.extend(options, {
 				rejectUnauthorized: false,
@@ -44,53 +53,42 @@ var contextMapping = {
 		}
 		return options;
 	},
-	
-	/*
-	 * Get options for an HTTP request
-	 */
-	_getRequestOptions: function(path, queries, base){
-		var qps = queries ? _.clone(queries) : {};
-		if (this.contextMappingConfig.tenant_id) {
-			qps.tenant_id = this.contextMappingConfig.tenant_id;
-		}
-		var qs = Object.keys(qps).map(function(k){
-			return k + '=' + encodeURIComponent(qps[k].toString());
-		}).join('&');
-		return this._addAuthOption(this.contextMappingConfig, _.extend(base || {}, {
-				url: this.contextMappingConfig.baseURL + path + (qs ? ('?' + qs) : '')
-		}));
-	},
 
 	/**
 	 * Async get route from (orig_lat, orig_lon) to (dest lat, dest_lon).
 	 */
-	routeSearch: function(orig_lat, orig_lon, orig_heading, dest_lat, dest_lon, dest_heading, option){
-		var deferred = Q.defer();
-
-		var tenant_id = this.contextMappingConfig.tenant_id;
-		var options = this._addAuthOption(this.contextMappingConfig, {
-				url: this.contextMappingConfig.baseURL + '/mapservice/routesearch' + 
-					'?orig_heading=' + orig_heading.toString() +
-					'&orig_latitude=' + orig_lat.toString() +
-					'&orig_longitude=' + orig_lon.toString() +
-					'&dest_latitude=' + dest_lat.toString() +
-					'&dest_longitude=' + dest_lon.toString() +
-					'&dest_heading=' + dest_heading.toString() +
-					(option ? ('&option=' + option) : '') +
-					(tenant_id ? ('&tenant_id=' + tenant_id) : '')
+	routeSearch: function(orig_lat, orig_lon, orig_heading, dest_lat, dest_lon, dest_heading, option) {
+		var qs = {
+			orig_heading: orig_heading,
+			orig_latitude: orig_lat,
+			orig_longitude: orig_lon,
+			dest_latitude: dest_lat,
+			dest_longitude: dest_lon,
+			dest_heading: dest_heading
+		};
+		if (option) qs.option = option;
+		
+		var node = this.contextMappingConfig;
+		var options = this._makeRequestOptions(node, {
+			method: 'GET',
+			url: node.baseURL + '/mapservice/routesearch',
+			qs: qs,
+			json: true
 		});
+		
+		var deferred = Q.defer();
 		debug("calling routesearch URL: " + options.url);
-		request(options, function (error, response, body) {
+		request(options, function (error, response, result) {
 			if(error){
 				console.error("error on routesearch\n url: " +  options.url + "\n error: " + error);
 				return deferred.reject(error);
 			}else if(response.statusCode > 299){
-				console.error("error on routesearch\n url: " +  options.url + "\n body: " + body);
+				console.error("error on routesearch\n url: " +  options.url + "\n body: " + result);
 				return deferred.reject(response.toJSON());
 			}
 			
 			try{
-				deferred.resolve(JSON.parse(body));
+				deferred.resolve(result);
 			}catch(e){
 				console.error("error on routesearch\n url: " +  options.url + "\n bad_content: " + e);
 				deferred.reject(e);
@@ -117,36 +115,32 @@ var contextMapping = {
 	 *   * note that it may not have matched results.
 	 */
 	matchMapRaw: function(lat, lon, errorOnErrorResponse){
-		var deferred = Q.defer();
-
-		var tenant_id = this.contextMappingConfig.tenant_id;
-		var options = this._addAuthOption(this.contextMappingConfig, {
-				url: this.contextMappingConfig.baseURL + '/mapservice/map/matching' +
-						'?latitude=' + lat.toString() + 
-						'&longitude=' + lon.toString() +
-						(tenant_id ? ('&tenant_id=' + tenant_id) : ''),
-				pool: contextMapping._matchMapPool,
-				agentOptions: contextMapping._matchMapAgentOptions,
+		var node = this.contextMappingConfig;
+		var options = this._makeRequestOptions(node, {
+			method: 'GET',
+			url: node.baseURL + '/mapservice/map/matching',
+			qs: {
+				latitude: lat,
+				longitude: lon
+			},
+			json: true,
+			pool: this._matchMapPool,
+			agentOptions: this._matchMapAgentOptions,
 		});
+
+		var deferred = Q.defer();
 		debug("calling map matching URL: " + options.url);
-		request(options, function (error, response, body) {
+		request(options, function (error, response, result) {
 			if (!error && (!errorOnErrorResponse || response.statusCode == 200)) {
-				try{
-					var responseJson = JSON.parse(body);
-					if (responseJson.length == 0){
-						console.error("no match found\n url: " +  options.url + "\n body: " + body);
-					} else {
-						debug('matching done\n: url: ' + options.url + '\n body: ' + body);
-					}
-					deferred.resolve(responseJson);
+				if (result.length === 0) {
+					console.error("no match found\n url: " +  options.url + "\n body: " + result);
+				} else {
+					debug('matching done\n: url: ' + options.url + '\n body: ' + JSON.stringify(result));
 				}
-				catch(e){
-					console.error("error on map matching\n url: " +  options.url + "\n body: " + body);
-					deferred.resolve([]);
-				};
+				deferred.resolve(result);
+			} else {
+				return deferred.reject(error || {statusCode: response.statusCode, body: result});
 			}
-			else
-				return deferred.reject(error || {statusCode: response.statusCode, body: body});
 		});
 		return deferred.promise;
 	},
@@ -157,27 +151,27 @@ var contextMapping = {
 	matchMap: function(lat, lon, errorOnErrorResponse){
 		return contextMapping.matchMapRaw(lat, lon, errorOnErrorResponse)
 			.then(function(results){ // results is parsed JSON of array of matches
-				if (results.length == 0)
+				if (results.length === 0)
 					return {lat: lat, lng: lon}; // fallback for not-matched
 				var latlng = results[0];
 				return  {
-					lat: latlng["matched_latitude"],
-					lng: latlng["matched_longitude"]
+					lat: latlng.matched_latitude,
+					lng: latlng.matched_longitude
 				};
 			});
 	},
 	matchMapFirst: function(lat, lon){ // no fallback, explicit error
 		return contextMapping.matchMapRaw(lat, lon, true)
 		.then(function(results){ // results is parsed JSON of array of matches
-			if (results.length == 0)
+			if (results.length === 0)
 				return null;
 			var latlng = results[0];
 			return  {
-				lat: latlng["matched_latitude"],
-				lng: latlng["matched_longitude"]
+				lat: latlng.matched_latitude,
+				lng: latlng.matched_longitude
 			};
 		});
-},
+	},
 	getLinkInformation: function(link_id, ignoreCache){
 		// Cache the link information to reduce the number of Context Mapping API call
 		if(!ignoreCache){
@@ -210,35 +204,31 @@ var contextMapping = {
 			}
 		}
 		
-		var deferred = Q.defer();
-		var tenant_id = this.contextMappingConfig.tenant_id;
-		var options = this._addAuthOption(this.contextMappingConfig, {
-			url: this.contextMappingConfig.baseURL + "/mapservice/link" +
-				"?link_id=" + link_id +
-				(tenant_id ? ('&tenant_id=' + tenant_id) : '')
+		var node = this.contextMappingConfig;
+		var options = this._makeRequestOptions(node, {
+			method: 'GET',
+			url: node.baseURL + '/mapservice/link',
+			qs: {link_id: link_id},
+			json: true
 		});
+
+		var deferred = Q.defer();
 		var this_ = this;
-		request(options, function(error, response, body){
+		request(options, function(error, response, result){
 			if(!error){
-				try{
-					var responseJson = JSON.parse(body);
-					if(responseJson.links && responseJson.links.length > 0){
-						debug("link information retrieved url: " + options.url + "\n body: " + body);
-						if(!ignoreCache && this_._linkInformationCache){
-							debug('[CACHE] Caching link id data %s!', link_id);
-							this_._linkInformationCache[link_id] = {
-									data: responseJson.links[0],
-									lastAccess: Date.now(),
-							};
-						}
-						deferred.resolve(responseJson.links[0]);
-					}else{
-						console.error("link information not found\n url: : " + options.url + "\n body: " + body);
-						deferred.reject(responseJson);
+				if(result.links && result.links.length > 0){
+					debug("link information retrieved url: " + options.url + "\n body: " + JSON.stringify(result));
+					if(!ignoreCache && this_._linkInformationCache){
+						debug('[CACHE] Caching link id data %s!', link_id);
+						this_._linkInformationCache[link_id] = {
+								data: responseJson.links[0],
+								lastAccess: Date.now(),
+						};
 					}
-				}catch(e){
-					console.error("error on get link information\n url: " + options.url + "\n body: " + body);
-					deferred.reject(e);
+					deferred.resolve(result.links[0]);
+				}else{
+					console.error("link information not found\n url: : " + options.url + "\n body: " + JSON.stringify(result));
+					deferred.reject(responseJson);
 				}
 			}else{
 				return deferred.reject(error);
@@ -253,13 +243,15 @@ var contextMapping = {
 	 * @returns deferred. successful result returns the event ID (integer).
 	 */
 	createEvent: function(event){
-		var deferred = Q.defer();
-		var options = contextMapping._getRequestOptions('/eventservice/event', null, {
+		var node = this.contextMappingConfig;
+		var options = this._makeRequestOptions(node, {
 			method: 'POST',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify(event),
-			//json: true
+			url: node.baseURL + '/eventservice/event',
+			body: event,
+			json: true
 		});
+
+		var deferred = Q.defer();
 		debug('Creating a new event: ', options);
 		request(options, function(error, response, body){
 			if(response && response.statusCode < 300) {
@@ -281,10 +273,14 @@ var contextMapping = {
 	 * @param event_id: event id
 	 */
 	deleteEvent: function(event_id){
-		var deferred = Q.defer();
-		var options = contextMapping._getRequestOptions('/eventservice/events', {event_id: event_id}, {
+		var node = this.contextMappingConfig;
+		var options = this._makeRequestOptions(node, {
 			method: 'DELETE',
+			url: node.baseURL + '/eventservice/events',
+			qs: {event_id: event_id}
 		});
+
+		var deferred = Q.defer();
 		debug('Deleting an event: ', event_id);
 		request(options, function(error, response, body){
 			if(response && response.statusCode < 300) {
@@ -305,25 +301,27 @@ var contextMapping = {
 	 * @returns deferred.
 	 */
 	queryEvent: function(min_lat, min_lng, max_lat, max_lng, event_type, status){
-		var deferred = Q.defer();
-		var params = {
+		var qs = {
 				min_latitude: min_lat,
 				min_longitude: min_lng,
 				max_latitude: max_lat,
-				max_longitude: max_lng,
-			};
-		if (event_type) params.event_type = event_type;
-		if (status) params.status = status;
+				max_longitude: max_lng
+		};
+		if (event_type) qs.event_type = event_type;
+		if (status) qs.status = status;
 		
-		var options = contextMapping._getRequestOptions('/eventservice/event/query', params);
-		request(options, function(error, response, body){
+		var node = this.contextMappingConfig;
+		var options = this._makeRequestOptions(node, {
+			method: 'GET',
+			url: node.baseURL + '/eventservice/event/query',
+			qs: qs,
+			json: true
+		});
+
+		var deferred = Q.defer();
+		request(options, function(error, response, result){
 			if(response && response.statusCode < 300) {
-				try{
-					var responseJson = JSON.parse(body);
-					deferred.resolve(responseJson);
-				}catch(e){
-					deferred.reject(e);
-				}
+				deferred.resolve(result);
 			}else{
 				return deferred.reject(error || response.toJSON());
 			}
@@ -339,16 +337,18 @@ var contextMapping = {
 	 * @returns deferred.
 	 */
 	getEvent: function(event_id){
+		var node = this.contextMappingConfig;
+		var options = this._makeRequestOptions(node, {
+			method: 'GET',
+			url: node.baseURL + '/eventservice/event',
+			qs: {event_id: event_id},
+			json: true
+		});
+		
 		var deferred = Q.defer();
-		var options = contextMapping._getRequestOptions('/eventservice/event', {event_id: event_id});
-		request(options, function(error, response, body){
+		request(options, function(error, response, result){
 			if(response && response.statusCode < 300) {
-				try{
-					var responseJson = JSON.parse(body);
-					deferred.resolve(responseJson);
-				}catch(e){
-					deferred.reject(e);
-				}
+				deferred.resolve(result);
 			}else{
 				return deferred.reject(error || response.toJSON());
 			}
@@ -386,26 +386,27 @@ var contextMapping = {
 	 * @return promise: a page of the all events
 	 */
 	getAllEventsRaw: function(page, num_rec_in_page){
-		var deferred = Q.defer();
 		var params = {};
 		if (page) params.num_page = page;
 		if (num_rec_in_page) params.num_rec_in_page = num_rec_in_page;
-		var options = contextMapping._getRequestOptions('/eventservice/event/allevents', params);
-		request(options, function(error, response, body){
+
+		var node = this.contextMappingConfig;
+		var options = this._makeRequestOptions(node, {
+			method: 'GET',
+			url: node.baseURL + '/eventservice/event/allevents',
+			qs: params,
+			json: true
+		});
+
+		var deferred = Q.defer();
+		request(options, function(error, response, result){
 			if(response && response.statusCode < 300) {
-				try{
-					var responseJson = JSON.parse(body);
-					debug('  result getAllEventsRaw: # of events is ' + responseJson.events.length);
-					deferred.resolve(responseJson);
-				}catch(e){
-					deferred.reject(e);
-				}
+				debug('  result getAllEventsRaw: # of events is ' + result.events.length);
+				deferred.resolve(result);
 			}else{
 				return deferred.reject(error || response.toJSON());
 			}
 		});
 		return deferred.promise;
-	},
-}
-
-module.exports = contextMapping;
+	}
+});

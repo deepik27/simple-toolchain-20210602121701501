@@ -19,6 +19,13 @@ if (fs.existsSync(VCAP_SERVICES_PATH)) {
 }
 
 /**
+ * Utility method to load application specific modules
+ */
+global.app_module_require = function(name) {
+    return require(__dirname + '/app_modules/' + name);
+};
+
+/**
  * Module dependencies.
  */
 var express = require('express')
