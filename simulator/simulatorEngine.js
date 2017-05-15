@@ -33,7 +33,7 @@ function simulatorEngine(clientId, timeout/*hour*/) {
 	this.simulatedVehicles = {};
 	this.simulatedVehicleIdArray = [];
 	if (timeout > 0)
-		this.timeout = timeout * 5 * 60 * 1000;
+		this.timeout = timeout * 60 * 60 * 1000;
 	else
 		this.timeout = -1;
 }
