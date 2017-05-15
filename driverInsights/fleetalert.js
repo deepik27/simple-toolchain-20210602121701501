@@ -175,18 +175,42 @@ _.extend(driverInsightsAlert, {
 		var self = this;
 		Q.when(this._findAlertRulesRecursive(1), function(rules){
 			if(rules && rules.length > 0){
-				Q.all(rules.map(function(rule){
+				Q.allSettled(rules.map(function(rule){
+					var deferred = Q.defer();
 					rule.status = "inactive";
-					return Q.when(iot4aAsset.updateRule(rule.rule_id, rule, null, true), function(rule){
-						return iot4aAsset.deleteRule(rule.rule_id);
-					});
-				}), function(aaa){
+					Q.when(iot4aAsset.updateRule(rule.rule_id, rule, null, true), function(updated){
+						Q.when(iot4aAsset.deleteRule(rule.rule_id), function(deleted){
+							deferred.resolve(deleted);
+						})["catch"](function(err){
+							deferred.reject(err);
+						}).done();
+					})["catch"](function(err){
+						deferred.reject(err);
+					}).done();
+					return deferred.promise;
+				})).then(function(deletedRules){
+					if(Array.isArray(deletedRules)){
+						deletedRules.forEach(function(deleted){
+							if(deleted.state === "rejected"){
+								console.error("Deleting existing alert rules failed.");
+								console.error(deleted.reason.message);
+							}else{
+								debug("Alert rule (" + deleted.value.id + ") is deleted.");
+							}
+						})
+					}
 					self._addRules();
-				});
+				}, function(err){
+					console.error("Deleting existing alert rules failed.");
+					console.error(err.message);
+				}).done();
 			}else{
 				self._addRules();
 			}
-		});
+		})["catch"](function(err){
+			console.error("Importing alert rules failed.");
+			console.error(err.message);
+		}).done();
 	},
 	_addRules: function(){
 		var alert_rule_id_offset = 0;
@@ -213,17 +237,23 @@ _.extend(driverInsightsAlert, {
 	},
 	_findAlertRulesRecursive: function(num_page){
 		var self = this;
-		return Q.when(iot4aAsset.getRuleList({num_rec_in_page: MAX_NUM_REC_IN_PAGE, num_page: num_page}), function(result){
+		var deferred = Q.defer();
+		Q.when(iot4aAsset.getRuleList({num_rec_in_page: MAX_NUM_REC_IN_PAGE, num_page: num_page}), function(result){
 			var rules_in_page = (result && result.data) || [];
 			var alert_rules_in_page = rules_in_page.filter(function(rule){return rule.description.startsWith(ALERT_RULE_DESCRIPTION);});
 			if(rules_in_page.length >= MAX_NUM_REC_IN_PAGE){
-				return Q.when(self._findAlertRulesRecursive(num_page + 1), function(alert_rules){
-					return alert_rules.concat(alert_rules_in_page);
-				});
+				Q.when(self._findAlertRulesRecursive(num_page + 1), function(alert_rules){
+					deferred.resolve(alert_rules.concat(alert_rules_in_page));
+				})["catch"](function(err){
+					deferred.reject(err);
+				}).done();
 			}else{
-				return Q(alert_rules_in_page);
+				deferred.resolve(alert_rules_in_page);
 			}
-		});
+		})["catch"](function(err){
+			deferred.reject(err);
+		}).done();
+		return deferred.promise;
 	},
 
 	_getFuelLevel: function(probe, vehicle) {
