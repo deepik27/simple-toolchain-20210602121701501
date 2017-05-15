@@ -21,34 +21,33 @@ var lastProbeTimeByMoId = {};
 
 _.extend(driverInsightsProbe, {
 
-	sendRawData: function(carProbeData, callback) {
-		var deviceId = carProbeData.mo_id;
-		
+	sendCarProbe: function(probe) {
 		// check mandatory field
-		if(!carProbeData.trip_id || carProbeData.trip_id.length === 0 || !carProbeData.lng || !carProbeData.lat || isNaN(carProbeData.lng) || isNaN(carProbeData.lat) || isNaN(carProbeData.speed)){
-			callback("error");
-			return;
+		if(!probe.trip_id || probe.trip_id.length === 0 || !probe.lng || !probe.lat || isNaN(probe.lng) || isNaN(probe.lat) || isNaN(probe.speed)){
+			return Q.resolve({statusCode: 400, message: "mandatory parameters are not specified."});
 		}
-		var ts = carProbeData.ts || Date.now();
+		
+		var ts = probe.ts || Date.now();
 		// keep the last probe for each mo_id
-		lastProbeTimeByMoId[deviceId] = ts;
+		lastProbeTimeByMoId[probe.mo_id] = ts;
 
 		var payload = {
 				// assign ts if missing
 				ts: ts,
 				timestamp: moment(ts).format('YYYY-MM-DDTHH:mm:ss.SSSZ'), // ISO8601
-				trip_id: carProbeData.trip_id,
-				speed: carProbeData.speed,
-				mo_id: carProbeData.mo_id,
-				driver_id: carProbeData.driver_id, //FIXME Get car probe requires driver_id as of 20160731
-				longitude: carProbeData.lng,
-				latitude: carProbeData.lat,
-				heading: carProbeData.heading || 0
+				trip_id: probe.trip_id,
+				speed: probe.speed,
+				mo_id: probe.mo_id,
+				driver_id: probe.driver_id, //FIXME Get car probe requires driver_id as of 20160731
+				longitude: probe.lng,
+				latitude: probe.lat,
+				heading: probe.heading || 0
 			};
-		if(carProbeData.props){
-			payload.props = carProbeData.props;
+		if(probe.props){
+			payload.props = probe.props;
 		}
 
+		var deferred = Q.defer();
 		Q.when(iot4aVehicleDataHub.sendCarProbe(payload, "sync"), function(result){
 			debug("events: " + result);
 			var affected_events = null;
@@ -59,7 +58,7 @@ _.extend(driverInsightsProbe, {
 				affected_events = _.isArray(result) ? result : result.affectedEvents;
 				notified_messages = result.notifiedMessages;
 			}
-			driverInsightsAlert.handleEvents(carProbeData.mo_id, (affected_events||[]).concat(notified_messages||[]));
+			driverInsightsAlert.handleEvents(probe.mo_id, (affected_events||[]).concat(notified_messages||[]));
 
 			var qs = {
 					min_longitude: (payload.longitude-0.001),
@@ -81,7 +80,7 @@ _.extend(driverInsightsProbe, {
 						}
 					}
 					if(!probe){
-						callback("no probe data for " + payload.mo_id);
+						deferred.reject({statusCode: 500, message: "no probe data for " + payload.mo_id});
 						return;
 					}
 					_.extend(payload, probe, {ts: ts});
@@ -96,15 +95,16 @@ _.extend(driverInsightsProbe, {
 					notified_messages: notified_messages || []
 				};
 
-				callback(payload);
+				deferred.resolve(payload);
 			})["catch"](function(err){
 				console.error("error: " + JSON.stringify(err));
-				callback(err);
+				deferred.reject(err);
 			}).done();
 		})["catch"](function(err){
 			console.error("error: " + JSON.stringify(err));
-			callback(err);
+			deferred.reject(err);
 		}).done();
+		return deferred.promise;
 	},
 	
 	getLastProbeTime: function(mo_id){

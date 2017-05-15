@@ -148,8 +148,7 @@ _.extend(probe, {
 				}
 				
 				// Send car probe to VDH
-				driverInsightsProbe.sendRawData(probe, function(data) {
-				});
+				driverInsightsProbe.sendCarProbe(probe);
 			})["catch"](function(err) {
 				console.error(err);
 			}).done();

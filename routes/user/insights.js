@@ -38,17 +38,11 @@ function handleAssetError(res, err) {
 }
 
 router.post('/probeData',  authenticate, function(req, res) {
-	try{
-		driverInsightsProbe.sendRawData(req.body, function(msg){
-			if (msg.statusCode) {
-				res.status(msg.statusCode).send(msg);
-			} else {
-				res.send(msg);
-			}
-		});
-	}catch(error){
+	Q.when(driverInsightsProbe.sendCarProbe(req.body), function(msg) {
+		res.send(msg);
+	})["catch"](function(err) {
 		handleAssetError(res, error);
-	}
+	}).done();
 });
 
 /**

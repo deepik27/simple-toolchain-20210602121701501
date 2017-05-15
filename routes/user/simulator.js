@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016, 2017 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -21,6 +21,8 @@ debug.log = console.log.bind(console);
 
 var iot4aAsset = app_module_require('iot4a-api/asset.js');
 var driverInsightsProbe = require('../../driverInsights/probe.js');
+
+var simulatorManager = require('../../simulator/simulatorManager.js');
 
 var authenticate = require('./auth.js').authenticate;
 
@@ -193,5 +195,206 @@ router.get("/simulatedDriver", authenticate, function(req, res){
 	})["catch"](function(err){
 		// assume driver is not available 
 		_createSimulatedDriver(res);
+	}).done();
+});
+
+/**
+ * 
+ */
+
+function handleError(res, err) {
+	//{message: msg, error: error, response: response}
+	console.error('error: ' + JSON.stringify(err));
+	var status = (err && (err.status||err.statusCode)) || 500;
+	var message = err.message || (err.data && err.data.message) || err;
+	return res.status(status).send(message);
+}
+
+/**
+ * Create a simulator
+ * 
+ * request:
+ * {numVehicles, location, range} 
+ * 
+ * response:
+ * {numVehicles, createdTime, lastModified}
+ */
+router.post("/simulator", authenticate, function(req, res) {
+	var clientId = req.body.clientId || req.query.clientId;
+	var numVehicles = req.body.numVehicles;
+	var latitude = req.body.latitude;
+	var longitude = req.body.longitude;
+	var distance = req.body.distance;
+	Q.when(simulatorManager.create(clientId, numVehicles, longitude, latitude, distance), function(response) {
+		res.send(response);
+	})["catch"](function(err) {
+		handleError(res, err);
+	}).done();
+});
+
+/**
+ * Get simulator list
+ * response:
+ * {[clientId, numVehicles, createdTime, lastModified]}
+ */
+router.get("/simulator/simulatorList", authenticate, function(req, res) {
+	var clientId = req.query.clientId;
+	Q.when(simulatorManager.getSimulatorList(), function(response) {
+		res.send(response);
+	})["catch"](function(err) {
+		handleError(res, err);
+	}).done();
+});
+
+/**
+ * Get a simulator  
+ * response:
+ * {clientId, numVehicles, createdTime, lastModified}
+ */
+router.get("/simulator", authenticate, function(req, res) {
+	var clientId = req.query.clientId;
+	Q.when(simulatorManager.getSimulator(clientId), function(response) {
+		res.send(response.getInformation());
+	})["catch"](function(err) {
+		handleError(res, err);
+	}).done();
+});
+
+/**
+ * Delete a simulator
+ * 
+ */
+router["delete"]("/simulator", authenticate, function(req, res) {
+	var clientId = req.query.clientId;
+	Q.when(simulatorManager.release(clientId), function(response) {
+		res.send(response);
+	})["catch"](function(err){
+		handleError(res, err);
+	}).done();
+});
+
+/**
+ * Get vehicle list for a simulator
+ * request:
+ * {numInPage, pageIndex}
+ * 
+ * response:
+ * [{vehicleId, vehicle, state, options, properties}]
+ */
+router.get("/simulator/vehicleList", authenticate, function(req, res) {
+	var clientId = req.query.clientId;
+	var numInPages = req.query.numInPages ? parseInt(req.query.numInPages) : null;
+	var pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0;
+	var properties = req.query.properties ? req.query.properties.split(',') : null;
+	Q.when(simulatorManager.getSimulator(clientId), function(simulator) {
+		res.send({data: simulator.getVehicleList(numInPages, pageIndex, properties)});
+	})["catch"](function(err) {
+		handleError(res, err);
+	}).done();
+});
+
+/**
+ * Get vehicle details for given vehicle id
+ * 
+ * response:
+ * {vehicleId, vehicle, state, options, properties}
+ */
+router.get("/simulator/vehicle/:vehicle_id", authenticate, function(req, res) {
+	var clientId = req.query.clientId;
+	var properties = req.query.properties ? req.query.properties.split(',') : null;
+	Q.when(simulatorManager.getSimulator(clientId), function(simulator) {
+		var data = simulator.getVehicleInformation(req.params.vehicle_id, properties);
+		if (data) {
+			res.send({data: simulator.getVehicleInformation(req.params.vehicle_id, properties)});
+		} else {
+			handleError(res, {statusCode: 404, message: "vehicle does not exist."});
+		}
+	})["catch"](function(err) {
+		handleError(res, err);
+	}).done();
+});
+
+/**
+ * Start/stop all vehicles
+ */
+router.put("/simulator/vehicles", authenticate, function(req, res) {
+	var clientId = req.query.clientId || req.body.clientId;
+	var command =  req.query.command || req.body.command;
+	var parameters = req.body.parameters;
+	if (!command) {
+		handleError(res, {statusCode: 400, message: "Command must be specified"});
+	}
+	
+	Q.when(simulatorManager.getSimulator(clientId), function(simulator) {
+		if (command === 'start') {
+			Q.when(simulator.start(), function(result) { res.send(result); });
+		} else if (command === 'stop') {
+			Q.when(simulator.stop(), function(result) { res.send(result); });
+		} else if (command === 'properties') {
+			Q.when(simulator.setProperties(null, parameters), function(result) { res.send(result); });
+		} else if (command === 'unsetproperties') {
+			Q.when(simulator.unsetProperties(null, parameters), function(result) { res.send(result); });
+		} else if (command === 'position') {
+			Q.when(simulator.setProperties(null, parameters), function(result) { res.send(result); });
+		} else if (command === 'route') {
+			Q.when(simulator.setRouteOptions(null, parameters), function(result) { res.send(result); });
+		} else {
+			handleError(res, {statusCode: 400, message: "Invalid command"});
+		}
+	})["catch"](function(err) {
+		handleError(res, err);
+	}).done();
+});
+
+/**
+ * Start or stop a vehicle or change route options
+ */
+router.put("/simulator/vehicle/:vehicle_id", authenticate, function(req, res) {
+	var clientId = req.body.clientId || req.query.clientId;
+	var vehicleId = req.params.vehicle_id;
+	var command =  req.query.command || req.body.command;
+	var parameters = req.body.parameters;
+	if (!command) {
+		handleError(res, {statusCode: 400, message: "Command must be specified"});
+	}
+	
+	Q.when(simulatorManager.getSimulator(clientId), function(simulator) {
+		if (command === 'start') {
+			Q.when(simulator.start(vehicleId), function(result) { res.send(result); });
+		} else if (command === 'stop') {
+			Q.when(simulator.stop(vehicleId), function(result) { res.send(result); });
+		} else if (command === 'properties') {
+			Q.when(simulator.setProperties(vehicleId, parameters), function(result) { res.send(result); });
+		} else if (command === 'unsetproperties') {
+			Q.when(simulator.unsetProperties(vehicleId, parameters), function(result) { res.send(result); });
+		} else if (command === 'position') {
+			Q.when(simulator.setProperties(vehicleId, parameters), function(result) { res.send(result); });
+		} else if (command === 'route') {
+			Q.when(simulator.setRouteOptions(vehicleId, parameters), function(result) { res.send(result); });
+		} else {
+			handleError(res, {statusCode: 400, message: "Invalid command"});
+		}
+	})["catch"](function(err) {
+		handleError(res, err);
+	}).done();
+});
+
+/**
+ * watch vehicles
+ */
+router.get("/simulator/watch", authenticate, function(req, res){
+	var server = req.app.server;
+
+	// initialize WSS server
+	var wssUrl = req.baseUrl + req.route.path;
+	if (!req.app.server) {
+		handleError(res, {statusCode: 500, message: 'failed to create WebSocketServer due to missing app.server'});
+		return;
+	}
+	
+	Q.when(simulatorManager.watch(server, wssUrl), function(response){
+			res.send(response);
+	})["catch"](function(err){
+		handleError(res, err);
 	}).done();
 });
