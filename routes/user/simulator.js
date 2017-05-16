@@ -306,7 +306,28 @@ router.get("/simulator/vehicle/:vehicle_id", authenticate, function(req, res) {
 	Q.when(simulatorManager.getSimulator(clientId), function(simulator) {
 		var data = simulator.getVehicleInformation(req.params.vehicle_id, properties);
 		if (data) {
-			res.send({data: simulator.getVehicleInformation(req.params.vehicle_id, properties)});
+			res.send({data: data});
+		} else {
+			handleError(res, {statusCode: 404, message: "vehicle does not exist."});
+		}
+	})["catch"](function(err) {
+		handleError(res, err);
+	}).done();
+});
+
+/**
+ * Get route of specific vehicle
+ * 
+ * response:
+ * {vehicleId: vehicleId, data: [array of route node]}
+ */
+router.get("/simulator/vehicle/:vehicle_id/route", authenticate, function(req, res) {
+	var clientId = req.query.clientId || req.get("iota-simulator-uuid");
+	var properties = req.query.properties ? req.query.properties.split(',') : null;
+	Q.when(simulatorManager.getSimulator(clientId), function(simulator) {
+		var data = simulator.getRouteData(req.params.vehicle_id);
+		if (data) {
+			res.send({data: data});
 		} else {
 			handleError(res, {statusCode: 404, message: "vehicle does not exist."});
 		}
@@ -328,17 +349,17 @@ router.put("/simulator/vehicles", authenticate, function(req, res) {
 	
 	Q.when(simulatorManager.getSimulator(clientId), function(simulator) {
 		if (command === 'start') {
-			Q.when(simulator.start(), function(result) { res.send(result); });
+			Q.when(simulator.start(), function(result) { res.send(result); })["catch"](function(err) { handleError(res, err); }).done();
 		} else if (command === 'stop') {
-			Q.when(simulator.stop(), function(result) { res.send(result); });
+			Q.when(simulator.stop(), function(result) { res.send(result); })["catch"](function(err) { handleError(res, err); }).done();
 		} else if (command === 'properties') {
-			Q.when(simulator.setProperties(null, parameters), function(result) { res.send(result); });
+			Q.when(simulator.setProperties(null, parameters), function(result) { res.send(result); })["catch"](function(err) { handleError(res, err); }).done();
 		} else if (command === 'unsetproperties') {
-			Q.when(simulator.unsetProperties(null, parameters), function(result) { res.send(result); });
+			Q.when(simulator.unsetProperties(null, parameters), function(result) { res.send(result); })["catch"](function(err) { handleError(res, err); }).done();
 		} else if (command === 'position') {
-			Q.when(simulator.setProperties(null, parameters), function(result) { res.send(result); });
+			Q.when(simulator.setPosition(null, parameters), function(result) { res.send(result); })["catch"](function(err) { handleError(res, err); }).done();
 		} else if (command === 'route') {
-			Q.when(simulator.setRouteOptions(null, parameters), function(result) { res.send(result); });
+			Q.when(simulator.setRouteOptions(null, parameters), function(result) { res.send(result); })["catch"](function(err) { handleError(res, err); }).done();
 		} else {
 			handleError(res, {statusCode: 400, message: "Invalid command"});
 		}
@@ -361,17 +382,17 @@ router.put("/simulator/vehicle/:vehicle_id", authenticate, function(req, res) {
 	
 	Q.when(simulatorManager.getSimulator(clientId), function(simulator) {
 		if (command === 'start') {
-			Q.when(simulator.start(vehicleId), function(result) { res.send(result); });
+			Q.when(simulator.start(vehicleId), function(result) { res.send(result); })["catch"](function(err) { handleError(res, err); }).done();
 		} else if (command === 'stop') {
-			Q.when(simulator.stop(vehicleId), function(result) { res.send(result); });
+			Q.when(simulator.stop(vehicleId), function(result) { res.send(result); })["catch"](function(err) { handleError(res, err); }).done();
 		} else if (command === 'properties') {
-			Q.when(simulator.setProperties(vehicleId, parameters), function(result) { res.send(result); });
+			Q.when(simulator.setProperties(vehicleId, parameters), function(result) { res.send(result); })["catch"](function(err) { handleError(res, err); }).done();
 		} else if (command === 'unsetproperties') {
-			Q.when(simulator.unsetProperties(vehicleId, parameters), function(result) { res.send(result); });
+			Q.when(simulator.unsetProperties(vehicleId, parameters), function(result) { res.send(result); })["catch"](function(err) { handleError(res, err); }).done();
 		} else if (command === 'position') {
-			Q.when(simulator.setProperties(vehicleId, parameters), function(result) { res.send(result); });
+			Q.when(simulator.setPosition(vehicleId, parameters), function(result) { res.send(result); })["catch"](function(err) { handleError(res, err); }).done();
 		} else if (command === 'route') {
-			Q.when(simulator.setRouteOptions(vehicleId, parameters), function(result) { res.send(result); });
+			Q.when(simulator.setRouteOptions(vehicleId, parameters), function(result) { res.send(result); })["catch"](function(err) { handleError(res, err); }).done();
 		} else {
 			handleError(res, {statusCode: 400, message: "Invalid command"});
 		}

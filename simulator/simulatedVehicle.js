@@ -229,30 +229,38 @@ simulatedVehicle.prototype.getVehicleInformation = function(properties) {
  * Update route according to route search options
  */
 simulatedVehicle.prototype.updateRoute = function() {
-	this.route._resetRoute();
+	return this.route._resetRoute();
+};
+
+/**
+ * Update route according to route search options
+ */
+simulatedVehicle.prototype.getRoute = function() {
+	return this.route.tripRoute;
 };
 
 /**
  * Set current vehicle position
  */
 simulatedVehicle.prototype.setCurrentPosition = function(longitude, latitude, heading, donotResetRoute) {
-	this.route.setCurrentPosition({lat: latitude, lon: longitude, heading: heading || 0}, donotResetRoute);
+	return this.route.setCurrentPosition({lat: latitude, lon: longitude, heading: heading || 0}, donotResetRoute);
 };
 	
 /**
  * Set destination of this vehicle
  */
 simulatedVehicle.prototype.setDestination = function(longitude, latitude, heading, donotResetRoute) {
-	this.route.setDestinationPosition({lat: latitude, lon: longitude, heading: heading || 0}, donotResetRoute);
+	return this.route.setDestinationPosition({lat: latitude, lon: longitude, heading: heading || 0}, donotResetRoute);
 };
 	
 /**
  * Set options for route search (e.g. avoid_events, route_loop)
  */
-simulatedVehicle.prototype.setRouteOptions = function(options) {
+simulatedVehicle.prototype.setRouteOptions = function(options, donotResetRoute) {
 	_.each(options, function(value, key) {
 		this.route.setOption(key, value);
 	}.bind(this));
+	return donotResetRoute ? Q() : this.updateRoute();
 };
 
 /**

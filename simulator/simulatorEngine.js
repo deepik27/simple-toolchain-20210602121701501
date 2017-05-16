@@ -177,6 +177,17 @@ simulatorEngine.prototype.getVehicleInformation = function(vehicleId, properties
 };
 
 /**
+ * Get route data
+ */
+simulatorEngine.prototype.getRouteData = function(vehicleId) {
+	var simulatedVehicle = this.simulatedVehicles[vehicleId];
+	if (!simulatedVehicle) {
+		return null;
+	}
+	return simulatedVehicle.getRoute() || [];
+};
+
+/**
  * Start a vehicle/vehicles
  */
 simulatorEngine.prototype.start = function(vehicleId) {
@@ -194,7 +205,7 @@ simulatorEngine.prototype.start = function(vehicleId) {
 simulatorEngine.prototype.stop = function(vehicleId) {
 	return this.control(vehicleId, function(vehicle, id) {
 		vehicle.stop();
-		return Q(iotaAsset.updateVehicle(id, {"status": "inactive"}));
+		return iotaAsset.updateVehicle(id, {"status": "inactive"});
 	}, true, false);
 };
 
@@ -212,7 +223,7 @@ simulatorEngine.prototype.setProperties = function(vehicleId, properties) {
  */
 simulatorEngine.prototype.unsetProperties = function(vehicleId, properties) {
 	return this.control(vehicleId, function(vehicle) {
-		return Q(vehicle.unsetProperties(properties));
+		return vehicle.unsetProperties(properties);
 	}, true, true);
 };
 
@@ -221,7 +232,7 @@ simulatorEngine.prototype.unsetProperties = function(vehicleId, properties) {
  */
 simulatorEngine.prototype.setPosition = function(vehicleId, position) {
 	return this.control(vehicleId, function(vehicle) {
-		return Q(vehicle.setCurrentPosition(position.longitude, position.langitude, position.heading));
+		return vehicle.setCurrentPosition(position.longitude, position.latitude, position.heading, position.doNotResetRoute);
 	}, false, true);
 };
 
@@ -231,13 +242,13 @@ simulatorEngine.prototype.setPosition = function(vehicleId, position) {
 simulatorEngine.prototype.setRouteOptions = function(vehicleId, options) {
 	return this.control(vehicleId, function(vehicle) {
 		if (options.options) {
-			vehicle.setRouteOptions(options.options);
+			vehicle.setRouteOptions(options.options, true);
 		}
 		if (options.origin) {
-			vehicle.setCurrentPosition(options.origin.longitude, options.origin.langitude, options.origin.heading, true);
+			vehicle.setCurrentPosition(options.origin.longitude, options.origin.latitude, options.origin.heading, true);
 		}
 		if (options.destination) {
-			vehicle.setDestination(options.destination.longitude, options.destination.langitude, options.destination.heading, true);
+			vehicle.setDestination(options.destination.longitude, options.destination.latitude, options.destination.heading, true);
 		}
 		return Q(vehicle.updateRoute());
 	}, false, true);
@@ -257,19 +268,25 @@ simulatorEngine.prototype.control = function(vehicleId, method, allowedWhenRunni
 		} else if (!allowedWhenStopping && !vehicle.isRunning()) {
 			return Q.reject({statusCode: 400, message: "Vehicle is not running"});
 		}
-		promises.push(method(vehicle, vehicleId));
+		promises.push(Q.when(method(vehicle, vehicleId), function(result) {
+			return {vehicleId: vehicleId, result: result};
+		}));
 	} else {
 		promises = _.filter(_.map(this.simulatedVehicles, function(vehicle, id) {
 			var isRunning = vehicle.isRunning();
 			if ((allowedWhenRunning && isRunning) || (allowedWhenStopping && !isRunning)) {
-				return method(vehicle, id);
+				return Q.when(method(vehicle, id), function(result) {
+					return {vehicleId: id, result: result};
+				});
 			}
 		}), function(p) { return !!p; });
 	}
 
-	return Q.all(promises).then(function(vehicles) {
+	return Q.all(promises).then(function(results) {
 		this._updateTime();
-		return {numVehicles: vehicles.length};
+		var data = {};
+		_.each(results, function(v) {data[v.vehicleId] = v.result;});
+		return {numVehicles: results.length, data: data};
 	}.bind(this));
 };
 

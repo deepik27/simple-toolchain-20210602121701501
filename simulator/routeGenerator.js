@@ -54,13 +54,13 @@ routeGenerator.prototype.stop = function() {
 routeGenerator.prototype.setCurrentPosition = function(loc /* lat, lon */, donotResetRoute){
 	if(this.driving || !loc){
 		// under driving
-		return;
+		return Q();
 	}
 	this.prevLoc = loc;
 	if(isNaN(this.prevLoc.speed)){
 		this.prevLoc.speed = 0;
 	}
-	return donotResetRoute ? null : this._resetRoute();
+	return donotResetRoute ? Q() : this._resetRoute();
 };
 
 routeGenerator.prototype.getCurrentPosition = function(){
@@ -70,10 +70,10 @@ routeGenerator.prototype.getCurrentPosition = function(){
 routeGenerator.prototype.setDestinationPosition = function(loc, donotResetRoute){
 	if(this.driving){
 		// under driving
-		return;
+		return Q();
 	}
 	this.destination = loc;
-	return donotResetRoute ? null : this._resetRoute();
+	return donotResetRoute ? Q() : this._resetRoute();
 };
 
 routeGenerator.prototype.getDestination = function() {
@@ -205,8 +205,11 @@ routeGenerator.prototype._createRoutes = function(locs, loop) {
 			var r = routeArrays["index" + i];
 			if (r === null) {
 				return deferred.reject();
+			} else if (r.length > 0) {
+				if (!r[0])
+					console.warn("wrong route was found");
+				routeArray = routeArray.concat(r);
 			}
-			routeArray = routeArray.concat(r);
 		}
 		self.routing = false;
 		deferred.resolve(routeArray);
