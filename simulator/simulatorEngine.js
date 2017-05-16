@@ -47,6 +47,9 @@ simulatorEngine.prototype.open = function(numVehicles, excludes, longitude, lati
 	}
 	this.state = SIMLATOR_STATUS_OPENING;
 	this.watchMap = {};
+	this.longitude = longitude;
+	this.latitude = latitude;
+	this.distance = distance;
 	
 	// Prepare vehicles and a driver to run
 	var promises = [];
@@ -124,7 +127,9 @@ simulatorEngine.prototype.isValid = function() {
  *  - close : the simulator is closed
  */
 simulatorEngine.prototype.getInformation = function() {
-	return {numVehicles: this.simulatedVehicleIdArray.length, state: this.state, creationTime: this.creationTime, lastModified: this.lastModified};
+	return {numVehicles: this.simulatedVehicleIdArray.length, state: this.state, 
+		creationTime: this.creationTime, lastModified: this.lastModified,
+		latitude: this.latitude, longitude: this.longitude, distance: this.distance};
 };
 
 /**

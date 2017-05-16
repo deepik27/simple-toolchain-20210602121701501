@@ -220,12 +220,13 @@ function handleError(res, err) {
  * {numVehicles, createdTime, lastModified}
  */
 router.post("/simulator", authenticate, function(req, res) {
-	var clientId = req.body.clientId || req.query.clientId;
+	var clientId = req.body.clientId || req.query.clientId || req.get("iota-simulator-uuid");
 	var numVehicles = req.body.numVehicles;
 	var latitude = req.body.latitude;
 	var longitude = req.body.longitude;
 	var distance = req.body.distance;
-	Q.when(simulatorManager.create(clientId, numVehicles, longitude, latitude, distance), function(response) {
+	var noErrorOnExist = req.body.noErrorOnExist;
+	Q.when(simulatorManager.create(clientId, numVehicles, longitude, latitude, distance, noErrorOnExist), function(response) {
 		res.send(response);
 	})["catch"](function(err) {
 		handleError(res, err);
@@ -238,7 +239,7 @@ router.post("/simulator", authenticate, function(req, res) {
  * {[clientId, numVehicles, createdTime, lastModified]}
  */
 router.get("/simulator/simulatorList", authenticate, function(req, res) {
-	var clientId = req.query.clientId;
+	var clientId = req.query.clientId || req.get("iota-simulator-uuid");
 	Q.when(simulatorManager.getSimulatorList(), function(response) {
 		res.send(response);
 	})["catch"](function(err) {
@@ -252,7 +253,7 @@ router.get("/simulator/simulatorList", authenticate, function(req, res) {
  * {clientId, numVehicles, createdTime, lastModified}
  */
 router.get("/simulator", authenticate, function(req, res) {
-	var clientId = req.query.clientId;
+	var clientId = req.query.clientId || req.get("iota-simulator-uuid");
 	Q.when(simulatorManager.getSimulator(clientId), function(response) {
 		res.send(response.getInformation());
 	})["catch"](function(err) {
@@ -265,7 +266,7 @@ router.get("/simulator", authenticate, function(req, res) {
  * 
  */
 router["delete"]("/simulator", authenticate, function(req, res) {
-	var clientId = req.query.clientId;
+	var clientId = req.query.clientId || req.get("iota-simulator-uuid");
 	Q.when(simulatorManager.release(clientId), function(response) {
 		res.send(response);
 	})["catch"](function(err){
@@ -282,7 +283,7 @@ router["delete"]("/simulator", authenticate, function(req, res) {
  * [{vehicleId, vehicle, state, options, properties}]
  */
 router.get("/simulator/vehicleList", authenticate, function(req, res) {
-	var clientId = req.query.clientId;
+	var clientId = req.query.clientId || req.get("iota-simulator-uuid");
 	var numInPages = req.query.numInPages ? parseInt(req.query.numInPages) : null;
 	var pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0;
 	var properties = req.query.properties ? req.query.properties.split(',') : null;
@@ -300,7 +301,7 @@ router.get("/simulator/vehicleList", authenticate, function(req, res) {
  * {vehicleId, vehicle, state, options, properties}
  */
 router.get("/simulator/vehicle/:vehicle_id", authenticate, function(req, res) {
-	var clientId = req.query.clientId;
+	var clientId = req.query.clientId || req.get("iota-simulator-uuid");
 	var properties = req.query.properties ? req.query.properties.split(',') : null;
 	Q.when(simulatorManager.getSimulator(clientId), function(simulator) {
 		var data = simulator.getVehicleInformation(req.params.vehicle_id, properties);
@@ -318,7 +319,7 @@ router.get("/simulator/vehicle/:vehicle_id", authenticate, function(req, res) {
  * Start/stop all vehicles
  */
 router.put("/simulator/vehicles", authenticate, function(req, res) {
-	var clientId = req.query.clientId || req.body.clientId;
+	var clientId = req.query.clientId || req.body.clientId || req.get("iota-simulator-uuid");
 	var command =  req.query.command || req.body.command;
 	var parameters = req.body.parameters;
 	if (!command) {
@@ -350,7 +351,7 @@ router.put("/simulator/vehicles", authenticate, function(req, res) {
  * Start or stop a vehicle or change route options
  */
 router.put("/simulator/vehicle/:vehicle_id", authenticate, function(req, res) {
-	var clientId = req.body.clientId || req.query.clientId;
+	var clientId = req.body.clientId || req.query.clientId || req.get("iota-simulator-uuid");
 	var vehicleId = req.params.vehicle_id;
 	var command =  req.query.command || req.body.command;
 	var parameters = req.body.parameters;

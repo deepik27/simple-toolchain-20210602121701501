@@ -173,6 +173,12 @@ simulatedVehicle.prototype.getVehicleInformation = function(properties) {
 	if (!properties || properties.length === 0 || _.contains(properties, "vehicle")) {
 		info.vehicle = this.vehicle;
 	}
+	if (!properties || properties.length === 0 || _.contains(properties, "driverId")) {
+		info.driverId = this.driver && this.driver.driver_id;
+	}
+	if (!properties || properties.length === 0 || _.contains(properties, "driver")) {
+		info.driver = this.driver;
+	}
 	if (!properties || properties.length === 0 || _.contains(properties, "position")) {
 		info.position = this.route.getCurrentPosition();
 	}

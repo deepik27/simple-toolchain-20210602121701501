@@ -97,7 +97,9 @@ routeGenerator.prototype.updateRoute = function(locs) {
 	this._createRoutes(locs, true).then(function(routeArray){
 		self.tripRouteIndex = 0;
 		self.tripRoute = routeArray;
-		self.prevLoc = routeArray[0];
+		if (routeArray.length > 0) {
+			self.prevLoc = routeArray[0];
+		}
 		deferred.resolve(routeArray);
 		if (self.callback) {
 			self.callback({data: {route: self.tripRoute, loop: true, current: self.prevLoc, destination: self.destination, options: self.options}, type: 'route'});
@@ -162,8 +164,8 @@ routeGenerator.prototype._resetRoute = function(){
 	return Q.when(this._createRoutes(locs, loop)).then(function(routeArray){
 		self.tripRouteIndex = 0;
 		self.tripRoute = routeArray;
-		self.prevLoc = routeArray[0];
 		if (routeArray.length > 0) {
+			self.prevLoc = routeArray[0];
 			self.prevLoc.heading = self._calcHeading(routeArray[0], routeArray[1]);
 		} else if (self.prevLoc.heading === undefined) {
 			self.prevLoc.heading = sheading;

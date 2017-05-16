@@ -32,7 +32,7 @@ _.extend(simulatorManager, {
 	 * Create a simulator engine for given client. Default client is created if client is not specified.
 	 * Created simulator engine enables specified number of vehicles within area specified with longitude, latitude, distance(m).
 	 */
-	create: function(clientId, numVehilces, longitude, latitude, distance) {
+	create: function(clientId, numVehilces, longitude, latitude, distance, noErrorOnExist) {
 		
 		if (isNaN(longitude) || isNaN(latitude)) {
 			return Q.reject({statusCode: 400, message: 'Invalid longitude or latitude parameter'});
@@ -44,6 +44,9 @@ _.extend(simulatorManager, {
 		clientId = clientId || DEFAULT_CLIENT_ID;
 		var simulatorInfo = simulatorInfoMap[clientId];
 		if (simulatorInfo && simulatorInfo.simulator && simulatorInfo.simulator.isValid()) {
+			if (noErrorOnExist) {
+				return Q(simulatorInfo.simulator.getInformation());
+			}
 			return Q.reject({statusCode: 400, message: "simulator already exist."});
 		}
 
