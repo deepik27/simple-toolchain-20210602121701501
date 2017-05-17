@@ -182,9 +182,9 @@ simulatorEngine.prototype.getVehicleInformation = function(vehicleId, properties
 simulatorEngine.prototype.getRouteData = function(vehicleId) {
 	var simulatedVehicle = this.simulatedVehicles[vehicleId];
 	if (!simulatedVehicle) {
-		return null;
+		return Q.reject({statusCode: 404, message: "No vehicle was found."});
 	}
-	return simulatedVehicle.getRoute() || [];
+	return simulatedVehicle.getRouteData();
 };
 
 /**
@@ -193,8 +193,7 @@ simulatorEngine.prototype.getRouteData = function(vehicleId) {
 simulatorEngine.prototype.start = function(vehicleId) {
 	return this.control(vehicleId, function(vehicle, id) {
 		return Q.when(iotaAsset.updateVehicle(id, {"status": "active"}), function() {
-			vehicle.start();
-			return id;
+			return vehicle.start();
 		});
 	}, false, true);
 };
@@ -204,8 +203,10 @@ simulatorEngine.prototype.start = function(vehicleId) {
  */
 simulatorEngine.prototype.stop = function(vehicleId) {
 	return this.control(vehicleId, function(vehicle, id) {
-		vehicle.stop();
-		return iotaAsset.updateVehicle(id, {"status": "inactive"});
+		var result = vehicle.stop();
+		return Q.when(iotaAsset.updateVehicle(id, {"status": "inactive"}), function() {
+			return result;
+		});
 	}, true, false);
 };
 

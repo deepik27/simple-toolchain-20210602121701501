@@ -45,11 +45,12 @@ function simulatedVehicle(vehicle, driver, callback) {
 simulatedVehicle.prototype.start = function() {
 	if (this.route.driving) {
 		console.warn("vehicle is already running. mo_id=" + this.vehicle.mo_id);
-		return;
+		return this.trip_id;
 	}
 	this.trip_id = new Chance().hash({length: 20});
 	this.route.start();
 	console.log("vehicle is started. mo_id=" + this.vehicle.mo_id);
+	return {tripId: this.trip_id, state: this._getState()};
 };
 
 /**
@@ -67,9 +68,11 @@ simulatedVehicle.prototype.stop = function() {
 		debug("vehicle is not running. mo_id=" + this.vehicle.mo_id);
 		return;
 	}
+	var trip_id = this.trip_id;
 	this.route.stop();
 	delete this.trip_id;
 	console.log("vehicle is stopped. mo_id=" + this.vehicle.mo_id);
+	return {tripId: trip_id, state: this._getState()};
 };
 
 /**
@@ -86,7 +89,7 @@ simulatedVehicle.prototype.setupCallback = function(callback) {
 	var driver_id = this.driver ? this.driver.driver_id : null;
 	var self = this;
 	var handlers = {
-		position: function(data) {
+		position: function(data, error) {
 			var ts = Date.now();
 			var probe = {
 					ts: ts,
@@ -113,14 +116,24 @@ simulatedVehicle.prototype.setupCallback = function(callback) {
 				self.prevProps = probe.props = props;
 			}
 			callback({vehicleId: mo_id, data: probe, type: 'probe'});
+			return true;
+		},
+		route: function(data, error) {
+			var list = this._waitingForRoute;
+			delete this._waitingForRoute;
+			
+			_.each(list, function(deferred) {
+				if (error)
+					deferred.reject(error);
+				else
+					deferred.resolve(data.route);
+			});
 		}
 	};
 
 	this.route.listen(function(data) {
 		var handler = handlers[data.type];
-		if (_.isFunction(handler)) {
-			handler(data.data);
-		} else {
+		if (!_.isFunction(handler) || !handler.call(self, data.data, data.error)) {
 			data.vehicleId = mo_id;
 			callback(data);
 		}
@@ -186,13 +199,7 @@ simulatedVehicle.prototype.getVehicleInformation = function(properties) {
 		info.options = this.route.options;
 	}
 	if (!properties || properties.length === 0 || _.contains(properties, "state")) {
-		var state = VEHICLE_STATE_STOP;
-		if (this.route.tripRoute) {
-			state = this.route.driving ? VEHICLE_STATE_DRIVE : VEHICLE_STATE_IDLE;
-		} else if (this.route.routing) {
-			state = VEHICLE_STATE_SEARCH;
-		}
-		info.state = state;
+		info.state = this._getState();
 	}
 	if (!properties || properties.length === 0 || _.contains(properties, "properties")) {
 		info.properties = {};
@@ -235,8 +242,19 @@ simulatedVehicle.prototype.updateRoute = function() {
 /**
  * Update route according to route search options
  */
-simulatedVehicle.prototype.getRoute = function() {
-	return this.route.tripRoute;
+simulatedVehicle.prototype.getRouteData = function() {
+	var deferred = Q.defer();
+	if (this._getState() === VEHICLE_STATE_SEARCH) {
+		// Return later if route being searched
+		if (!this._waitingForRoute) {
+			this._waitingForRoute = [deferred];
+		} else {
+			this._waitingForRoute.push(deferred);
+		}
+	} else {
+		deferred.resolve(this.route.tripRoute);
+	}
+	return deferred.promise;
 };
 
 /**
@@ -292,6 +310,19 @@ simulatedVehicle.prototype.unsetProperties = function(properties) {
 	_.each(properties, function(key) {
 		delete this.fixedProps[key];
 	}.bind(this));
+};
+
+/**
+ * Get current vehicle state
+ */
+simulatedVehicle.prototype._getState = function() {
+	var state = VEHICLE_STATE_STOP;
+	if (this.route.tripRoute) {
+		state = this.route.driving ? VEHICLE_STATE_DRIVE : VEHICLE_STATE_IDLE;
+	} else if (this.route.routing) {
+		state = VEHICLE_STATE_SEARCH;
+	}
+	return state;
 };
 
 module.exports = simulatedVehicle;

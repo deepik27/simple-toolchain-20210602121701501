@@ -105,6 +105,9 @@ routeGenerator.prototype.updateRoute = function(locs) {
 			self.callback({data: {route: self.tripRoute, loop: true, current: self.prevLoc, destination: self.destination, options: self.options}, type: 'route'});
 		}
 	})["catch"](function(error){
+		if (self.callback) {
+			self.callback({data: {loop: true, current: self.prevLoc, destination: self.destination, options: self.options}, error: error, type: 'route'});
+		}
 		deferred.reject(error);
 	});
 	return deferred.promise;
@@ -160,8 +163,9 @@ routeGenerator.prototype._resetRoute = function(){
 		locs.push(this._getDestLoc(slat, slng, sheading));
 	}
 
+	var deferred = Q.defer();
 	var self = this;
-	return Q.when(this._createRoutes(locs, loop)).then(function(routeArray){
+	Q.when(this._createRoutes(locs, loop), function(routeArray){
 		self.tripRouteIndex = 0;
 		self.tripRoute = routeArray;
 		if (routeArray.length > 0) {
@@ -174,8 +178,14 @@ routeGenerator.prototype._resetRoute = function(){
 		if (self.callback) {
 			self.callback({data: {route: self.tripRoute, loop: loop, current: self.prevLoc, destination: self.destination, options: self.options}, type: 'route'});
 		}
-		return routeArray;
-	});
+		deferred.resolve(routeArray);
+	})["catch"](function(error){
+		if (self.callback) {
+			self.callback({data: {loop: loop, current: self.prevLoc, destination: self.destination, options: self.options}, error: error, type: 'route'});
+		}
+		deferred.reject(error);
+	}).done();
+	return deferred.promise;
 };
 
 routeGenerator.prototype._createRoutes = function(locs, loop) {
@@ -203,7 +213,7 @@ routeGenerator.prototype._createRoutes = function(locs, loop) {
 		var routeArray = [];
 		for (var i = 0; i < promises.length; i++) {
 			var r = routeArrays["index" + i];
-			if (r === null) {
+			if (!r) {
 				return deferred.reject();
 			} else if (r.length > 0) {
 				if (!r[0])

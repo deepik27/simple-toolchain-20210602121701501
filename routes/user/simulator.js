@@ -206,7 +206,7 @@ function handleError(res, err) {
 	//{message: msg, error: error, response: response}
 	console.error('error: ' + JSON.stringify(err));
 	var status = (err && (err.status||err.statusCode)) || 500;
-	var message = err.message || (err.data && err.data.message) || err;
+	var message = (err && (err.message||(err.data&&err.data.message)||err)) || 'Unknown error';
 	return res.status(status).send(message);
 }
 
@@ -325,12 +325,11 @@ router.get("/simulator/vehicle/:vehicle_id/route", authenticate, function(req, r
 	var clientId = req.query.clientId || req.get("iota-simulator-uuid");
 	var properties = req.query.properties ? req.query.properties.split(',') : null;
 	Q.when(simulatorManager.getSimulator(clientId), function(simulator) {
-		var data = simulator.getRouteData(req.params.vehicle_id);
-		if (data) {
+		Q.when(simulator.getRouteData(req.params.vehicle_id), function(data) {
 			res.send({data: data});
-		} else {
-			handleError(res, {statusCode: 404, message: "vehicle does not exist."});
-		}
+		})["catch"](function(err) {
+			handleError(res, err);
+		});
 	})["catch"](function(err) {
 		handleError(res, err);
 	}).done();
