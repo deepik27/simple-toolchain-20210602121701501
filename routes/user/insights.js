@@ -40,7 +40,7 @@ function handleAssetError(res, err) {
 router.post('/probeData',  authenticate, function(req, res) {
 	Q.when(driverInsightsProbe.sendCarProbe(req.body), function(msg) {
 		res.send(msg);
-	})["catch"](function(err) {
+	})["catch"](function(error) {
 		handleAssetError(res, error);
 	}).done();
 });
