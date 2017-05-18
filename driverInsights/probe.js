@@ -23,8 +23,8 @@ _.extend(driverInsightsProbe, {
 
 	sendCarProbe: function(probe) {
 		// check mandatory field
-		if(!probe.trip_id || probe.trip_id.length === 0 || !probe.lng || !probe.lat || isNaN(probe.lng) || isNaN(probe.lat) || isNaN(probe.speed)){
-			return Q.resolve({statusCode: 400, message: "mandatory parameters are not specified."});
+		if(!probe.trip_id || probe.trip_id.length === 0 || isNaN(probe.longitude) || isNaN(probe.latitude) || isNaN(probe.speed)){
+			return Q({statusCode: 400, message: "mandatory parameters are not specified."});
 		}
 		
 		var ts = probe.ts || Date.now();
@@ -39,8 +39,8 @@ _.extend(driverInsightsProbe, {
 				speed: probe.speed,
 				mo_id: probe.mo_id,
 				driver_id: probe.driver_id, //FIXME Get car probe requires driver_id as of 20160731
-				longitude: probe.lng,
-				latitude: probe.lat,
+				longitude: probe.longitude,
+				latitude: probe.latitude,
 				heading: probe.heading || 0
 			};
 		if(probe.props){

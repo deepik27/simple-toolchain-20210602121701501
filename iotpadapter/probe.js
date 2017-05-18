@@ -118,8 +118,8 @@ _.extend(probe, {
 				var probe = {
 					mo_id: mo_id,
 					trip_id: payload.trip_id,
-					lng: payload.lng,
-					lat: payload.lat,
+					longitude: payload.lng,
+					latitude: payload.lat,
 					speed: payload.speed || 0,
 					heading: payload.heading || 0
 				};

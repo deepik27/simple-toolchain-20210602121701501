@@ -60,14 +60,19 @@ simulatorEngine.prototype.open = function(numVehicles, excludes, longitude, lati
 	var self = this;
 	var callback = function(data) {
 		var vehicleId = data.vehicleId;
+		var watchObject = self.watchMap[vehicleId];
+		var watchMethod = null;
+		if (watchObject && (!watchObject.properties || _.contains(watchObject.properties, data.type))) {
+			watchMethod = watchObject.callback;
+		}
 		var handler = vehicleEventHandler[data.type];
 		if (_.isFunction(handler)) {
-			handler.call(vehicleEventHandler, vehicleId, data.data, self.watchMap[vehicleId]);
-		} else {
-			var callback = self.watchMap[vehicleId];
-			if (callback) {
-				callback(data);
+			if (handler.call(vehicleEventHandler, vehicleId, data.data, watchMethod)) {
+				return;
 			}
+		}
+		if (watchMethod) {
+			watchMethod.call(self, data);
 		}
 	};
 
@@ -190,10 +195,10 @@ simulatorEngine.prototype.getRouteData = function(vehicleId) {
 /**
  * Start a vehicle/vehicles
  */
-simulatorEngine.prototype.start = function(vehicleId) {
+simulatorEngine.prototype.start = function(vehicleId, parameters) {
 	return this.control(vehicleId, function(vehicle, id) {
 		return Q.when(iotaAsset.updateVehicle(id, {"status": "active"}), function() {
-			return Q(vehicle.start());
+			return Q(vehicle.start(parameters));
 		});
 	}, false, true);
 };
@@ -201,9 +206,9 @@ simulatorEngine.prototype.start = function(vehicleId) {
 /**
  * Stop a vehicle/vehicles
  */
-simulatorEngine.prototype.stop = function(vehicleId) {
+simulatorEngine.prototype.stop = function(vehicleId, parameters) {
 	return this.control(vehicleId, function(vehicle, id) {
-		return Q.when(vehicle.stop(), function(result) {
+		return Q.when(vehicle.stop(parameters), function(result) {
 			return Q.when(iotaAsset.updateVehicle(id, {"status": "inactive"}), function() {
 				return result;
 			});
@@ -292,17 +297,17 @@ simulatorEngine.prototype.control = function(vehicleId, method, allowedWhenRunni
 	}.bind(this));
 };
 
-simulatorEngine.prototype.watch = function(vehicleId, callback) {
+simulatorEngine.prototype.watch = function(vehicleId, properties, callback) {
 	if (vehicleId) {
 		if (_.isFunction(callback)) {
-			this.watchMap[vehicleId] = callback;
+			this.watchMap[vehicleId] = {properties: properties, callback: callback};
 		} else {
 			delete this.watchMap[vehicleId];
 		}
 	} else {
 		_.each(this.simulatedVehicles, function(vehicle, id) {
 			if (_.isFunction(callback)) {
-				this.watchMap[vehicleId] = callback;
+				this.watchMap[vehicleId] = {properties: properties, callback: callback};
 			} else {
 				delete this.watchMap[vehicleId];
 			}

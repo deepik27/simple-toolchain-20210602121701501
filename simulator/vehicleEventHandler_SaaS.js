@@ -13,7 +13,7 @@ var iotaVehicleDataHub = app_module_require('iot4a-api/vehicleDataHub.js');
 
 var vehicleEventHandler = {
 	probe: function(vehicleId, probe, callback) {
-		this._sendCarProbe(vehicleId, probe, callback);
+		return this._sendCarProbe(vehicleId, probe, callback);
 	},
 	
 	_sendCarProbe: function(vehicleId, probe, callback) {
@@ -33,39 +33,14 @@ var vehicleEventHandler = {
 					affected_events: affected_events || [],
 					notified_messages: notified_messages || []
 				};
-
-				var qs = {
-						min_longitude: (probe.longitude-0.001),
-						max_longitude: (probe.longitude+0.001),
-						min_latitude: (probe.latitude-0.001),
-						max_latitude: (probe.latitude+0.001),
-						mo_id: payload.mo_id
-					};
-				Q.when(iot4aVehicleDataHub.getCarProbe(qs), function(result) {
-					if(result && result.length > 0) {
-						var p = null;
-						// Workaround:
-						//   IoT for Automotive service returns probes of multiple vehicle in the area for now
-						//   even if the request specifies only one mo_id
-						for(var i=0; i<result.length; i++){
-							if(result[i].mo_id === probe.mo_id){
-								p = result[i];
-								break;
-							}
-						}
-						if(p){
-							var ts = {ts: probe.ts, timestamp: probe.timestamp};
-							_.extend(probe, p, ts);
-						}
-					}
-					callback({vehicleId: vehicleId, data: probe, type: 'probe'});
-				})["catch"](function(err) {
-					callback({vehicleId: vehicleId, data: probe, type: 'probe', error: err});
-				}).done();
+				callback({vehicleId: vehicleId, data: probe, type: 'probe'});
 			}
 		})["catch"](function(err){
 			console.error("error: " + JSON.stringify(err));
+			if (callback)
+				callback({vehicleId: vehicleId, data: probe, type: 'probe', error: err});
 		}).done();
+		return true;
 	}
 };
 

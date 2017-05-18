@@ -8,6 +8,7 @@
  * You may not use this file except in compliance with the license.
  */
 var fs = require('fs');
+var Q = require('q');
 
 var vehicleEventHandler = null;
 //try {
@@ -20,9 +21,14 @@ if (!vehicleEventHandler) {
 	var driverInsightsProbe = require('../driverInsights/probe.js');
 	vehicleEventHandler = {
 			probe: function(vehicleId, probe, callback) {
-				probe.lng = probe.longitude;
-				probe.lat = probe.latitude;
-				driverInsightsProbe.sendCarProbe(probe);
+				Q.when(driverInsightsProbe.sendCarProbe(probe), function(probe) {
+					if (callback)
+						callback({vehicleId: vehicleId, data: probe, type: 'probe'});
+				})["catch"](function(err){
+					if (callback)
+						callback({vehicleId: vehicleId, data: probe, type: 'probe', error: err});
+				}).done();
+				return true;
 			}
 		};
 

@@ -12,6 +12,7 @@ var simulatorManager = module.exports = {};
 
 var Q = require('q');
 var _ = require('underscore');
+var appEnv = require("cfenv").getAppEnv();
 var WebSocketServer = require('ws').Server;
 var simulatorEngine = require('./simulatorEngine.js');
 	
@@ -159,11 +160,20 @@ _.extend(simulatorManager, {
 			simulatorInfoMap = self.simulatorInfoMap;
 			var simulatorInfo = simulatorInfoMap[clientId];
 			if (simulatorInfo) {
-				simulatorInfo.watch(vehicleId, enable ? function(data) { 
+				simulatorInfo.simulator.watch(vehicleId, client.properties, enable ? function(data) { 
 					if (data.error) {
 						console.error("error: " + JSON.stringify(data.error));
 					}
-					client.send(data);
+					try {
+						var message = JSON.stringify(data);
+						_.each(self.wsServer.clients, function(client) {
+							if (client.clientId === clientId && client.vehicleId === vehicleId) {
+								client.send(message);
+							}
+						});
+					} catch(error) {
+						console.error('socket error: ' + error);
+					}
 				} : undefined);
 			} else {
 				console.log("simulator does not exist.");
@@ -190,6 +200,8 @@ _.extend(simulatorManager, {
 							client.clientId = params[1];
 						else if (params[0] === 'vehicleId')
 							client.vehicleId = params[1];
+						else if (params[0] === 'properties')
+							client.properties = params[1].split(',');
 					}
 				});
 			}

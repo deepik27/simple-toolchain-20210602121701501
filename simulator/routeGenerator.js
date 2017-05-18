@@ -16,13 +16,12 @@ debug.log = console.log.bind(console);
 var lastProbeTimeByMoId = {};
 
 function routeGenerator() {
-	this.tripRoute = null;
 	this.watchId = null;
 	this.driving = false;
 	this.routing = false;
-	this.options = {};
+	this.tripRoute = null;
 	this.tripRouteIndex = 0;
-	this.prevLoc = {lat:48.134994,lon:11.671026,speed:0,init:true};
+	this.prevLoc = {lat:48.134994, lon:11.671026, speed:0, heading: 0};
 	this.destination = null;
 	this.options = {avoid_events: true, route_loop: true};
 }
@@ -31,15 +30,20 @@ routeGenerator.prototype.listen = function(callback) {
 	this.callback = callback;
 };
 
-routeGenerator.prototype.start = function() {
+routeGenerator.prototype.start = function(interval) {
 	if(!this.routing && !this.tripRoute) {
 		this._resetRoute();
 	}
 	this.driving = true;
 	var self = this;
 	this.watchId = setInterval(function(){
-		self._getPosition(self.callback);
-	}, 1000);
+		if (self.driving) {
+			var p = self._getRoutePosition();
+			if(p && self.callback) {
+				self.callback({data: {latitude: p.lat, longitude: p.lon, speed: p.speed, heading: p.heading}, type: 'position'});
+			}
+		}
+	}, interval || 1000);
 };
 
 routeGenerator.prototype.stop = function() {
@@ -56,7 +60,7 @@ routeGenerator.prototype.setCurrentPosition = function(loc /* lat, lon */, donot
 		// under driving
 		return Q();
 	}
-	this.prevLoc = loc;
+	this.prevLoc = {lat: loc.latitude, lon: loc.longitude, heading: loc.heading, speed: loc.speed};
 	if(isNaN(this.prevLoc.speed)){
 		this.prevLoc.speed = 0;
 	}
@@ -67,12 +71,12 @@ routeGenerator.prototype.getCurrentPosition = function(){
 	return {latitude:this.prevLoc.lat, longitude:this.prevLoc.lon, heading: this.prevLoc.heading, speed: this.prevLoc.speed};
 };
 
-routeGenerator.prototype.setDestinationPosition = function(loc, donotResetRoute){
+routeGenerator.prototype.setDestination = function(loc, donotResetRoute){
 	if(this.driving){
 		// under driving
 		return Q();
 	}
-	this.destination = loc;
+	this.destination = {lat: loc.latitude, lon: loc.longitude, heading: loc.heading, speed: loc.speed};
 	return donotResetRoute ? Q() : this._resetRoute();
 };
 
@@ -111,25 +115,6 @@ routeGenerator.prototype.updateRoute = function(locs) {
 		deferred.reject(error);
 	});
 	return deferred.promise;
-};
-
-routeGenerator.prototype._getPosition = function(callback){
-	var position = null;
-	var p = this._getRoutePosition();
-	if(p && !p.init){
-		position = {
-			latitude: p.lat,
-			longitude: p.lon,
-			speed: p.speed*1000/3600,
-			heading: p.heading
-		};
-	}else{
-		position = this.getCurrentPosition();
-	}
-	if (callback) {
-		callback({data: position, type: 'position'});
-	}
-	return position;
 };
 
 // find a random location in about 5km from the specified location

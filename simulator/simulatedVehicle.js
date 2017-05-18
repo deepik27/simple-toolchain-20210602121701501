@@ -43,13 +43,13 @@ function simulatedVehicle(vehicle, driver, callback) {
 /**
  * Start running
  */
-simulatedVehicle.prototype.start = function() {
+simulatedVehicle.prototype.start = function(parameters) {
 	if (this.route.driving) {
 		console.warn("vehicle is already running. mo_id=" + this.vehicle.mo_id);
 		return this.trip_id;
 	}
 	this.trip_id = new Chance().hash({length: 20});
-	this.route.start();
+	this.route.start(parameters && parameters.interval);
 	console.log("vehicle is started. mo_id=" + this.vehicle.mo_id);
 	
 	var self = this;
@@ -77,7 +77,7 @@ simulatedVehicle.prototype.isRunning = function() {
 /**
  * Stop running
  */
-simulatedVehicle.prototype.stop = function() {
+simulatedVehicle.prototype.stop = function(parameters) {
 	if (!this.route.driving) {
 		return Q.reject("vehicle is not running. mo_id=" + this.vehicle.mo_id);
 	}
@@ -272,14 +272,14 @@ simulatedVehicle.prototype.getRouteData = function() {
  * Set current vehicle position
  */
 simulatedVehicle.prototype.setCurrentPosition = function(longitude, latitude, heading, donotResetRoute) {
-	return this.route.setCurrentPosition({lat: latitude, lon: longitude, heading: heading || 0}, donotResetRoute);
+	return this.route.setCurrentPosition({latitude: latitude, longitude: longitude, heading: heading || 0}, donotResetRoute);
 };
 	
 /**
  * Set destination of this vehicle
  */
 simulatedVehicle.prototype.setDestination = function(longitude, latitude, heading, donotResetRoute) {
-	return this.route.setDestinationPosition({lat: latitude, lon: longitude, heading: heading || 0}, donotResetRoute);
+	return this.route.setDestination({latitude: latitude, longitude: longitude, heading: heading || 0}, donotResetRoute);
 };
 	
 /**
