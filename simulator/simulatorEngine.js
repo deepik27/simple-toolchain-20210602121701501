@@ -193,7 +193,7 @@ simulatorEngine.prototype.getRouteData = function(vehicleId) {
 simulatorEngine.prototype.start = function(vehicleId) {
 	return this.control(vehicleId, function(vehicle, id) {
 		return Q.when(iotaAsset.updateVehicle(id, {"status": "active"}), function() {
-			return vehicle.start();
+			return Q(vehicle.start());
 		});
 	}, false, true);
 };
@@ -203,9 +203,10 @@ simulatorEngine.prototype.start = function(vehicleId) {
  */
 simulatorEngine.prototype.stop = function(vehicleId) {
 	return this.control(vehicleId, function(vehicle, id) {
-		var result = vehicle.stop();
-		return Q.when(iotaAsset.updateVehicle(id, {"status": "inactive"}), function() {
-			return result;
+		return Q.when(vehicle.stop(), function(result) {
+			return Q.when(iotaAsset.updateVehicle(id, {"status": "inactive"}), function() {
+				return result;
+			});
 		});
 	}, true, false);
 };

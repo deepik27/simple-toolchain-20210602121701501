@@ -34,6 +34,7 @@ var VEHICLE_STATE_DRIVE = 'driving';
 function simulatedVehicle(vehicle, driver, callback) {
 	this.vehicle = vehicle;
 	this.driver = driver;
+	this._waitingForRoute = [];
 	this.route = new routeGenerator();
 	this.loadProperties();
 	this.setupCallback(callback);
@@ -50,7 +51,20 @@ simulatedVehicle.prototype.start = function() {
 	this.trip_id = new Chance().hash({length: 20});
 	this.route.start();
 	console.log("vehicle is started. mo_id=" + this.vehicle.mo_id);
-	return {tripId: this.trip_id, state: this._getState()};
+	
+	var self = this;
+	var deferred = Q.defer();
+	if (this._getState() === 'routing') {
+		this._waitingForRoute.push({param: deferred, func: function(data, error, deferred) {
+			if (error)
+				deferred.reject(error);
+			else
+				deferred.resolve({tripId: self.trip_id, state: self._getState()});
+		}});
+	} else {
+		deferred.resolve({tripId: this.trip_id, state: this._getState()});
+	}
+	return deferred.promise;
 };
 
 /**
@@ -65,14 +79,13 @@ simulatedVehicle.prototype.isRunning = function() {
  */
 simulatedVehicle.prototype.stop = function() {
 	if (!this.route.driving) {
-		debug("vehicle is not running. mo_id=" + this.vehicle.mo_id);
-		return;
+		return Q.reject("vehicle is not running. mo_id=" + this.vehicle.mo_id);
 	}
 	var trip_id = this.trip_id;
 	this.route.stop();
 	delete this.trip_id;
 	console.log("vehicle is stopped. mo_id=" + this.vehicle.mo_id);
-	return {tripId: trip_id, state: this._getState()};
+	return Q({tripId: trip_id, state: this._getState()});
 };
 
 /**
@@ -120,14 +133,11 @@ simulatedVehicle.prototype.setupCallback = function(callback) {
 		},
 		route: function(data, error) {
 			var list = this._waitingForRoute;
-			delete this._waitingForRoute;
+			this._waitingForRoute = [];
 			
-			_.each(list, function(deferred) {
-				if (error)
-					deferred.reject(error);
-				else
-					deferred.resolve(data.route);
-			});
+			_.each(list, function(obj) {
+				obj.func.call(this, data.route, error, obj.param);
+			}.bind(this));
 		}
 	};
 
@@ -246,11 +256,12 @@ simulatedVehicle.prototype.getRouteData = function() {
 	var deferred = Q.defer();
 	if (this._getState() === VEHICLE_STATE_SEARCH) {
 		// Return later if route being searched
-		if (!this._waitingForRoute) {
-			this._waitingForRoute = [deferred];
-		} else {
-			this._waitingForRoute.push(deferred);
-		}
+		this._waitingForRoute.push({param: deferred, func: function(data, error, deferred) {
+			if (error)
+				deferred.reject(error);
+			else
+				deferred.resolve(data);
+		}});
 	} else {
 		deferred.resolve(this.route.tripRoute);
 	}

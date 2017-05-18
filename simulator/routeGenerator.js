@@ -32,7 +32,7 @@ routeGenerator.prototype.listen = function(callback) {
 };
 
 routeGenerator.prototype.start = function() {
-	if(!this.tripRoute) {
+	if(!this.routing && !this.tripRoute) {
 		this._resetRoute();
 	}
 	this.driving = true;
