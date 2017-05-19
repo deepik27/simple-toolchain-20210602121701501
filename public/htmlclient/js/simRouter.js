@@ -194,7 +194,7 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 					"Content-Type": "application/JSON;charset=utf-8",
 					"iota-simulator-uuid": mobileClientUuid
 				},
-				data: {numVehicles: 5, latitude: locs[0], longitude: locs[1], distance: 100, noErrorOnExist: true}
+				data: {latitude: locs[0], longitude: locs[1], distance: 100, noErrorOnExist: true}
 			}).success(function(data, status) {
 				var numVehicles = data.numVehicles;
 				if (data.latitude !== undefined && data.longitude !== undefined) {
@@ -231,8 +231,8 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 				        	try {
 				        		jsonData = JSON.parse(messageData);
 				        		if (jsonData.timeout) {
-				        			alert("The simulator was terminated automaticaly due to timeout. Close the simulator page and reopen it to run vehicles.");
-				    				$scope.requestingStarting = true;
+				        			alert("The simulator was terminated automaticaly due to timeout. Reopen the simulator to run vehicles again.");
+				    				$scope.busy = true;
 				    				_postMessageToVehicles("simulator-terminated-all");
 				        		}
 				        	} catch (e) {

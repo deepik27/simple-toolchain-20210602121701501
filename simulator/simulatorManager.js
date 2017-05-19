@@ -20,7 +20,7 @@ var debug = require('debug')('simulatedVehicleManager');
 debug.log = console.log.bind(console);
 
 var DEFAULT_CLIENT_ID = 'default';
-var DEFAULT_NUM_VEHICLES = 5;
+var DEFAULT_NUM_VEHICLES = (process.env.DEFAULT_NUM_VEHICLES && parseInt(process.env.DEFAULT_NUM_VEHICLES)) || 5;
 
 /*
  * Manage simulator engines per client
@@ -41,6 +41,7 @@ _.extend(simulatorManager, {
 		
 		// check if the simulator already exists or not
 		numVehicles = numVehilces || DEFAULT_NUM_VEHICLES;
+		if (numVehicles < 1) numVehicles = 5;
 		simulatorInfoMap = this.simulatorInfoMap;
 		clientId = clientId || DEFAULT_CLIENT_ID;
 		var simulatorInfo = simulatorInfoMap[clientId];

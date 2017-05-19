@@ -48,6 +48,7 @@
         			postStatusMessage(e.originalEvent.source, message.message, message.requestId);
 	        	} else if (message.message === "simulator-terminated-all") {
 	        		// terminated
+					$scope.requestSending = true;
 	        	}
 	        });
 	        
