@@ -68,7 +68,7 @@ angular.module('htmlClient')
 				headers: {
 					"iota-simulator-uuid": this.clientId
 				},
-				data: {parameters: {interval: 1000}}
+				data: {parameters: {interval: 1000, successWhenAlready: true}}
 			})).success(function(result, status){
 				var data = result.data && result.data[self.vehicleId];
 				deferred.resolve(self._updateState(data && data.state));
@@ -87,7 +87,8 @@ angular.module('htmlClient')
 				url: '/user/simulator/vehicle/' + this.vehicleId + '?command=stop',
 				headers: {
 					"iota-simulator-uuid": this.clientId
-				}
+				},
+				data: {parameters: {successWhenAlready: true}}
 			})).success(function(result, status){
 				var data = result.data && result.data[self.vehicleId];
 				deferred.resolve(self._updateState(data && data.state));

@@ -209,9 +209,15 @@ simulatorEngine.prototype.start = function(vehicleId, parameters) {
 simulatorEngine.prototype.stop = function(vehicleId, parameters) {
 	return this.control(vehicleId, function(vehicle, id) {
 		return Q.when(vehicle.stop(parameters), function(result) {
-			return Q.when(iotaAsset.updateVehicle(id, {"status": "inactive"}), function() {
-				return result;
+			var deferred = Q.defer();
+			Q.when(iotaAsset.updateVehicle(id, {"status": "inactive"}), function() {
+			})["catch"](function(err) {
+				console.error(err);
+			}).done(function() {
+				// return success event when disabling vehicle status
+				deferred.resolve(result);
 			});
+			return deferred.promise;
 		});
 	}, true, false);
 };

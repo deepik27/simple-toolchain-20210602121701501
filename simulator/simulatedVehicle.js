@@ -45,6 +45,9 @@ function simulatedVehicle(vehicle, driver, callback) {
  */
 simulatedVehicle.prototype.start = function(parameters) {
 	if (this.route.driving) {
+		if (parameters.succesWhenAlready) {
+			return Q({tripId: this.trip_id, state: this._getState()});
+		}
 		console.warn("vehicle is already running. mo_id=" + this.vehicle.mo_id);
 		return this.trip_id;
 	}
@@ -66,6 +69,9 @@ simulatedVehicle.prototype.isRunning = function() {
  */
 simulatedVehicle.prototype.stop = function(parameters) {
 	if (!this.route.driving) {
+		if (parameters.succesWhenAlready) {
+			return Q({tripId: this.trip_id, state: this._getState()});
+		}
 		return Q.reject("vehicle is not running. mo_id=" + this.vehicle.mo_id);
 	}
 	var trip_id = this.trip_id;
