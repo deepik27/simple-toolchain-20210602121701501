@@ -116,7 +116,7 @@ _.extend(simulatedVehicleManager, {
 		Q.when(this._getVehicleList('active', excludes), function(vehicles){
 			debug("Active vehicles: " + JSON.stringify(vehicles));
 			var defList = [];
-			for(var i=0; i<vehicles.length; i++){
+			for(var i=0; i<vehicles.length && num > 0; i++){
 				var mo_id = vehicles[i].mo_id;
 				if (!_.contains(excludes, mo_id)) {
 					num--;

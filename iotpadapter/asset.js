@@ -13,7 +13,7 @@ var _ = require("underscore");
 var Q = new require('q');
 var dbClient = require('./../cloudantHelper.js');
 
-var queue = require('./queue.js');
+var queue = app_module_require('utils/queue.js');
 var IOTF = app_module_require('iotfclient');
 var iot4aAsset = app_module_require("iot4a-api/asset.js");
 

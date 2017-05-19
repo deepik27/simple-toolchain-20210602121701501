@@ -44,6 +44,9 @@ routeGenerator.prototype.start = function(interval) {
 			}
 		}
 	}, interval || 1000);
+	if (this.callback) {
+		this.callback({data: {driving: this.driving, routing: this.routing}, type: "state"});
+	}
 };
 
 routeGenerator.prototype.stop = function() {
@@ -53,6 +56,9 @@ routeGenerator.prototype.stop = function() {
 	}
 	this.prevLoc.speed = 0;
 	this.driving = false;
+	if (this.callback) {
+		this.callback({data: {driving: this.driving, routing: this.routing}, type: "state"});
+	}
 };
 
 routeGenerator.prototype.setCurrentPosition = function(loc /* lat, lon */, donotResetRoute){

@@ -51,20 +51,7 @@ simulatedVehicle.prototype.start = function(parameters) {
 	this.trip_id = new Chance().hash({length: 20});
 	this.route.start(parameters && parameters.interval);
 	console.log("vehicle is started. mo_id=" + this.vehicle.mo_id);
-	
-	var self = this;
-	var deferred = Q.defer();
-	if (this._getState() === 'routing') {
-		this._waitingForRoute.push({param: deferred, func: function(data, error, deferred) {
-			if (error)
-				deferred.reject(error);
-			else
-				deferred.resolve({tripId: self.trip_id, state: self._getState()});
-		}});
-	} else {
-		deferred.resolve({tripId: this.trip_id, state: this._getState()});
-	}
-	return deferred.promise;
+	return Q({tripId: this.trip_id, state: this._getState()});
 };
 
 /**
@@ -138,6 +125,10 @@ simulatedVehicle.prototype.setupCallback = function(callback) {
 			_.each(list, function(obj) {
 				obj.func.call(this, data.route, error, obj.param);
 			}.bind(this));
+		},
+		state: function(data, error) {
+			callback({vehicleId: mo_id, data: self._getState(), type: 'state'});
+			return true;
 		}
 	};
 
@@ -327,13 +318,14 @@ simulatedVehicle.prototype.unsetProperties = function(properties) {
  * Get current vehicle state
  */
 simulatedVehicle.prototype._getState = function() {
-	var state = VEHICLE_STATE_STOP;
-	if (this.route.tripRoute) {
-		state = this.route.driving ? VEHICLE_STATE_DRIVE : VEHICLE_STATE_IDLE;
+	if (this.route.driving) {
+		return VEHICLE_STATE_DRIVE;
 	} else if (this.route.routing) {
-		state = VEHICLE_STATE_SEARCH;
+		return VEHICLE_STATE_SEARCH;
+	} else if (this.route.tripRoute) {
+		return VEHICLE_STATE_IDLE;
 	}
-	return state;
+	return VEHICLE_STATE_STOP;
 };
 
 module.exports = simulatedVehicle;

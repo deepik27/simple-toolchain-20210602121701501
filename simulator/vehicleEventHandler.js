@@ -9,6 +9,7 @@
  */
 var fs = require('fs');
 var Q = require('q');
+var Queue = app_module_require('utils/queue.js');
 
 var vehicleEventHandler = null;
 //try {
@@ -20,15 +21,37 @@ var vehicleEventHandler = null;
 if (!vehicleEventHandler) {
 	var driverInsightsProbe = require('../driverInsights/probe.js');
 	vehicleEventHandler = {
+			queueMap: {},
 			probe: function(vehicleId, probe, callback) {
-				Q.when(driverInsightsProbe.sendCarProbe(probe), function(probe) {
-					if (callback)
-						callback({vehicleId: vehicleId, data: probe, type: 'probe'});
-				})["catch"](function(err){
-					if (callback)
-						callback({vehicleId: vehicleId, data: probe, type: 'probe', error: err});
-				}).done();
+				var queue = this.queueMap[vehicleId];
+				if (!queue) {
+					queue = new Queue();
+					this.queueMap[vehicleId] = queue;
+				}
+				// serialize results of send car probe
+				queue.push({
+					params: driverInsightsProbe.sendCarProbe(probe),
+					run: function(promise) {
+						return promise;
+					},
+					done: function(result) {
+						if (callback)
+							callback({vehicleId: vehicleId, data: result, type: 'probe'});
+					},
+					error: function(err) {
+						if (callback)
+							callback({vehicleId: vehicleId, data: probe, type: 'probe', error: err});
+					}
+				});
 				return true;
+			},
+			state: function(vehicleId, state, callback) {
+				if (state === 'idling') {
+					var queue = this.queueMap[vehicleId];
+					if (queue) {
+						delete this.queueMap[vehicleId];
+					}
+				}
 			}
 		};
 
