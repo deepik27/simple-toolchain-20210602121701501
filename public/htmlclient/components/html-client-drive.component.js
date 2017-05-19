@@ -46,6 +46,8 @@
 	        	} else if (message.message === "simulator-set-message-target") {
 	        		$scope.messageTarget = e.originalEvent.source;
         			postStatusMessage(e.originalEvent.source, message.message, message.requestId);
+	        	} else if (message.message === "simulator-terminated-all") {
+	        		// terminated
 	        	}
 	        });
 	        

@@ -36,6 +36,10 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 					"iota-simulator-uuid": mobileClientUuid
 				}
 			});
+			if ($scope.wsSim) {
+				$scope.wsSim.close();
+				delete $scope.wsSim;
+			}
 			$timeout(function(){}, 3000);
 			return "Top simultors?";
 		};
@@ -207,6 +211,35 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 					$http({
 						method: "GET",
 						url: "/user/simulator/watch"
+					}).success(function(data, status) {
+						// receive close message
+						var wsProtocol = (location.protocol == "https:") ? "wss" : "ws";
+						var wsPort = location.port;
+						var wssUrl = wsProtocol + '://' + $window.location.hostname;
+						if (wsPort) {
+							wssUrl += ':' + wsPort;
+						}
+						wssUrl += '/user/simulator/watch?clientId=' + mobileClientUuid + '&close=true';
+				    	$scope.wsSim = new WebSocket(wssUrl);
+				    	$scope.wsSim.onmessage = function(message) {
+				        	var messageData = message && message.data;
+				        	if (!messageData) {
+					            console.error("no data contents");  
+				        		return;
+				        	}
+				        	var jsonData = null;
+				        	try {
+				        		jsonData = JSON.parse(messageData);
+				        		if (jsonData.timeout) {
+				        			alert("The simulator was terminated automaticaly due to timeout. Close the simulator page and reopen it to run vehicles.");
+				    				$scope.requestingStarting = true;
+				    				_postMessageToVehicles("simulator-terminated-all");
+				        		}
+				        	} catch (e) {
+				        		console.error("parse error: " + messageData);
+				        		return;
+				        	}
+				        };
 					});
 					
 					var vehicles = [];

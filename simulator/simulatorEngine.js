@@ -26,6 +26,13 @@ var SIMLATOR_STATUS_OPENING = 'opening';
 var SIMLATOR_STATUS_CLOSING = 'closing';
 var SIMLATOR_STATUS_CLOSE = 'close';
 
+/**
+ * Simulator engine manages vehicles per client. 
+ * 
+ * @param clientId id for the simulator
+ * @param timeout close when timeout occurs after the last modification
+ * @returns
+ */
 function simulatorEngine(clientId, timeout/*hour*/) {
 	this.clientId = clientId;
 	this.state = SIMLATOR_STATUS_CLOSE;
@@ -44,7 +51,7 @@ function simulatorEngine(clientId, timeout/*hour*/) {
  */
 simulatorEngine.prototype.open = function(numVehicles, excludes, longitude, latitude, distance) {
 	if (this.state !==  SIMLATOR_STATUS_CLOSE) {
-		Q.reject({statusCode: 400, message: "The simulator status is already started. current status = " + this.status});
+		return Q.reject({statusCode: 400, message: "The simulator status is already started. current status = " + this.status});
 	}
 	this.state = SIMLATOR_STATUS_OPENING;
 	this.watchMap = {};
@@ -52,11 +59,6 @@ simulatorEngine.prototype.open = function(numVehicles, excludes, longitude, lati
 	this.latitude = latitude;
 	this.distance = distance;
 	
-	// Prepare vehicles and a driver to run
-	var promises = [];
-	promises.push(Q.when(vehicleManager.getSimulatedVehicles(this.clientId, numVehicles, excludes)));
-	promises.push(Q.when(vehicleManager.getSimulatorDriver()));
-
 	// message handler
 	var messageHandler = {
 		queueMap: {},
@@ -113,6 +115,11 @@ simulatorEngine.prototype.open = function(numVehicles, excludes, longitude, lati
 		}
 	};
 
+	// Prepare vehicles and a driver to run
+	var promises = [];
+	promises.push(Q.when(vehicleManager.getSimulatedVehicles(this.clientId, numVehicles, excludes)));
+	promises.push(Q.when(vehicleManager.getSimulatorDriver()));
+
 	// Create simulated vehicles
 	this.simulatedVehicles = {};
 	return Q.all(promises).then(function(result) {
@@ -138,7 +145,7 @@ simulatorEngine.prototype.open = function(numVehicles, excludes, longitude, lati
 /**
  * Close this simulator
  */
-simulatorEngine.prototype.close = function() {
+simulatorEngine.prototype.close = function(timeout) {
 	var deferred = Q.defer();
 	this.state = SIMLATOR_STATUS_CLOSING;
 	Q.when(this.stop(), function() {
@@ -152,12 +159,32 @@ simulatorEngine.prototype.close = function() {
 		this.simulatedVehicles = {};
 		this.simulatedVehicleIdArray = [];
 		this.watchMap = {};
+		if (this.callbackOnClose) {
+			this.callbackOnClose(this.clientId, timeout);
+		}
 	}.bind(this));
 	return deferred.promise;
 };
 
 simulatorEngine.prototype.isValid = function() {
 	return this.state !== SIMLATOR_STATUS_CLOSING && this.state !== SIMLATOR_STATUS_CLOSE;
+};
+
+/**
+ * Update base location and relocate all vehicles
+ */
+simulatorEngine.prototype.updateBaseLocation = function(longitude, latitude, distance) {
+	this.longitude = longitude;
+	this.latitude = latitude;
+	this.distance = distance;
+
+	_.each(this.simulatedVehicles, function(vehicle, id) {
+		// Calculate location and heading randomly and set them to each vehicle
+		var loc = this._calcPosition([longitude, latitude], distance * Math.random(), 360 * Math.random());
+		console.log("simulated vehicle=" + id + ", lon=" + loc[0] + ", lat=" + loc[1]);
+		vehicle.setCurrentPosition(loc[0], loc[1], 360 * Math.random());
+	}.bind(this));
+	this._updateTime();
 };
 
 /**
@@ -358,6 +385,10 @@ simulatorEngine.prototype.watch = function(vehicleId, properties, callback) {
 	}
 };
 
+simulatorEngine.prototype.setCallbackOnClose = function(callback) {
+	this.callbackOnClose = callback;
+};
+
 /**
  * Update modified time. Reset a timer to handle timeout. If timeout happens, the simulator is automatically stopped.
  */
@@ -371,7 +402,7 @@ simulatorEngine.prototype._updateTime = function() {
 	if (this.timeout > 0 && this.isValid()) {
 		this.timeoutObject = setTimeout(function() {
 			console.log("simulator is automatically closed due to timeout.");
-			this.close();
+			this.close(true);
 		}.bind(this), this.timeout);
 		console.log("timer is reset. clientId=" + this.clientId + ", timeout=" + moment(this.lastModified + this.timeout).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 	}

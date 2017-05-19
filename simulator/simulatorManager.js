@@ -46,6 +46,7 @@ _.extend(simulatorManager, {
 		var simulatorInfo = simulatorInfoMap[clientId];
 		if (simulatorInfo && simulatorInfo.simulator && simulatorInfo.simulator.isValid()) {
 			if (noErrorOnExist) {
+				simulatorInfo.simulator.updateBaseLocation(longitude, latitude, distance);
 				return Q(simulatorInfo.simulator.getInformation());
 			}
 			return Q.reject({statusCode: 400, message: "simulator already exist."});
@@ -154,27 +155,42 @@ _.extend(simulatorManager, {
 		});
 
 		var self = this;
+		var callbackOnClose = function(clientId, timeout) {
+			_.each(self.wsServer.clients, function(client) {
+				if (client.callbackOnClose) {
+					client.send(JSON.stringify({clientId: clientId, timeout: timeout}));
+				}
+			});
+			if (self.simulatorInfoMap[clientId]) {
+				delete self.simulatorInfoMap[clientId];
+			}
+		};
+		
 		var watchMethod = function(client, enable) {
 			var clientId = client.clientId || DEFAULT_CLIENT_ID;
 			var vehicleId = client.vehicleId;
 			simulatorInfoMap = self.simulatorInfoMap;
 			var simulatorInfo = simulatorInfoMap[clientId];
 			if (simulatorInfo) {
-				simulatorInfo.simulator.watch(vehicleId, client.properties, enable ? function(data) { 
-					if (data.error) {
-						console.error("error: " + JSON.stringify(data.error));
-					}
-					try {
-						var message = JSON.stringify(data);
-						_.each(self.wsServer.clients, function(client) {
-							if (client.clientId === clientId && client.vehicleId === vehicleId) {
-								client.send(message);
-							}
-						});
-					} catch(error) {
-						console.error('socket error: ' + error);
-					}
-				} : undefined);
+				if (client.callbackOnClose) {
+					simulatorInfo.simulator.setCallbackOnClose(enable ? callbackOnClose : undefined);
+				} else {
+					simulatorInfo.simulator.watch(vehicleId, client.properties, enable ? function(data) { 
+						if (data.error) {
+							console.error("error: " + JSON.stringify(data.error));
+						}
+						try {
+							var message = JSON.stringify(data);
+							_.each(self.wsServer.clients, function(client) {
+								if (client.clientId === clientId && client.vehicleId === vehicleId) {
+									client.send(message);
+								}
+							});
+						} catch(error) {
+							console.error('socket error: ' + error);
+						}
+					} : undefined);
+				}
 			} else {
 				console.log("simulator does not exist.");
 			}
@@ -202,6 +218,8 @@ _.extend(simulatorManager, {
 							client.vehicleId = params[1];
 						else if (params[0] === 'properties')
 							client.properties = params[1].split(',');
+						else if (params[0] === 'close')
+							client.callbackOnClose = params[1] === 'true';
 					}
 				});
 			}
