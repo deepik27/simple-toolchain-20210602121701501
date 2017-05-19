@@ -16,20 +16,25 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 	}])
  
 	/* === GENERAL CONTROLLERS === */
-	.controller('mainCtrl', ['$scope', '$state', '$http', '$sce', '$location', '$window', '$timeout', function($scope, $state, $http, $sce, $location, $window, $timeout) {
+	.controller('mainCtrl', ['$scope', '$state', '$http', '$q', '$sce', '$location', '$window', '$document', '$timeout', function($scope, $state, $http, $q, $sce, $location, $window, $document, $timeout) {
 		$scope.pageLoaded = false;
 
+		var key = "vehicle-simulator-client";
+        var mobileClientUuid = getCookie(key);
+        if (!mobileClientUuid) {
+    		mobileClientUuid = chance.guid();
+	        setCookie(key, mobileClientUuid);
+        }
+
 		$window.onbeforeunload = function (e) {
-			// inactivate when user closes simulator window
-			$scope.vehicles.forEach(function(v){
-				$http({
-					method: "PUT",
-					url: "/user/vehicle/" + v.mo_id + "?addition=true",
-					headers: {
-						"Content-Type": "application/JSON;charset=utf-8"
-					},
-					data: {mo_id: v.mo_id, status: "inactive"}
-				});
+			// release the simulator
+			$http({
+				method: "DELETE",
+				url: "/user/simulator",
+				headers: {
+					"Content-Type": "application/JSON;charset=utf-8",
+					"iota-simulator-uuid": mobileClientUuid
+				}
 			});
 			$timeout(function(){}, 3000);
 			return "Top simultors?";
@@ -142,85 +147,133 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 			}, 1000);
 		};
 		
-		var oldDate = (new Date(0)).toUTCString(); // to avoid IE cache issue
-		// Get simulation vehicles
-		$http({
-			method: "GET",
-			url: "/user/simulatedVehicles",
-			headers: {
-				"If-Modified-Since": oldDate
-			}
-		}).success(function(data, status){					
-			var vehicles = data.data || []; 
-			if(vehicles.length > 5){
-				vehicles = vehicles.slice(0, 5);
-			}
-			$scope.vehiclesToBeInitialzed = vehicles.map(function(vehicle) {
-				return vehicle.mo_id;
-			});
+        function getCookie(name) {
+            var cookies = $window.document.cookie;
+        	var cookieName = name + '=';
+            var index = cookies.indexOf(cookieName);
+            if (index < 0) {
+            	return null;
+            }
+            var start = index + cookieName.length;
+            var end = cookies.indexOf(';', start);
+            if (end < 0) {
+            	end = cookies.length;
+            }
+            return decodeURIComponent(cookies.substring(start, end));
+        }
+        
+        function setCookie(name, value) {
+        	var cookieValue = name + '=' + encodeURIComponent(value) + '; ';
+            $window.document.cookie = cookieValue;
+        }
+        
+        function getLocation(loc) {
+        	var deferred = $q.defer();
+        	if (loc) {
+        		deferred.resolve(loc.split(','));
+        	} else if (navigator.geolocation){
+	    		navigator.geolocation.getCurrentPosition(function(position){
+	    			var c = position.coords;
+	        		deferred.resolve([c.latitude, c.longitude]);
+	    		});
+	    	} else {
+        		deferred.resolve([0, 0]);
+        	}
+	    	return deferred.promise;
+        }
+
+		$q.when(getLocation($location.search()["loc"]), function(locs) {
 			$http({
-				method: "GET",
-				url: "/user/simulatedDriver",
+				method: "POST",
+				url: "/user/simulator",
 				headers: {
-					"If-Modified-Since": oldDate
+					"Content-Type": "application/JSON;charset=utf-8",
+					"iota-simulator-uuid": mobileClientUuid
+				},
+				data: {numVehicles: 5, latitude: locs[0], longitude: locs[1], distance: 100, noErrorOnExist: true}
+			}).success(function(data, status) {
+				var numVehicles = data.numVehicles;
+				if (data.latitude !== undefined && data.longitude !== undefined) {
+					loc = data.latitude + ',' + data.longitude;
 				}
-			}).success(function(drivers, status){
-				var loc = $location.search()["loc"];
-				vehicles.forEach(function(vehicle, i){
-					$scope.vehicleStatus[vehicle.mo_id] = {busy: true, driving: false};
-
-					var url = "../htmlclient/#/home" 
-						+ "?vehicleId=" + vehicle.mo_id 
-						+ "&driverId=" + drivers.data[0].driver_id; 
-					if (vehicle.siteid) {
-						url += "&siteId=" + vehicle.siteid;
+				$http({
+					method: "GET",
+					url: "/user/simulator/vehicleList?properties=vehicle,driverId",
+					headers: {
+						"Content-Type": "application/JSON;charset=utf-8",
+						"iota-simulator-uuid": mobileClientUuid
 					}
-					if(vehicle.vendor){
-						url += "&vendor=" + vehicle.vendor;
-					}
-					if(vehicle.serial_number){
-						url += "&serial_number=" + vehicle.serial_number;
-					}
-					if(loc){
-						url += "&loc=" + loc;
-					}
-					vehicle.url = $sce.trustAsResourceUrl(url);
-					vehicle.display = i === 0;
-					if (vehicle.properties) {
-						var props = {};
-						for (var key in vehicle.properties) {
-							props[key.toLowerCase()] = vehicle.properties[key];
+				}).success(function(data, status){
+					$http({
+						method: "GET",
+						url: "/user/simulator/watch"
+					});
+					
+					var vehicles = [];
+					var promises = [];
+					$scope.vehiclesToBeInitialzed = [];
+					(data.data || []).forEach(function(info, i){
+						var vehicle = info.vehicle;
+						var driverId = info.driverId;
+						$scope.vehicleStatus[vehicle.mo_id] = {busy: true, driving: info.state === 'driving'};
+						$scope.vehiclesToBeInitialzed.push(vehicle.mo_id);
+						vehicles.push(vehicle);
+		
+						var url = "../htmlclient/#/home" 
+							+ "?vehicleId=" + vehicle.mo_id 
+							+ "&driverId=" + driverId; 
+						if (vehicle.siteid) {
+							url += "&siteId=" + vehicle.siteid;
 						}
-						vehicle.properties = props;
-					}
-				});
-
-				$scope.vehicles = vehicles;
-
-				// dynamic state
-				if(vehicles.length > 0){
-					for (i=0; i < vehicles.length; i++) {
-						$stateProviderRef.state(vehicles[i].mo_id, {
-							url: "/fleet.html#" + vehicles[i].mo_id,
-							views: {
-								'vehicle': {
-									templateUrl: '/htmlclient/vehicle.html',
-									persist: true
-								}
+						if(vehicle.vendor){
+							url += "&vendor=" + vehicle.vendor;
+						}
+						if(vehicle.serial_number){
+							url += "&serial_number=" + vehicle.serial_number;
+						}
+						if (mobileClientUuid) {
+							url += "&clientId=" + mobileClientUuid;
+						}
+						if(locs){
+							url += "&loc=" + locs[0] + ',' + locs[1];
+						}
+						vehicle.url = $sce.trustAsResourceUrl(url);
+						vehicle.display = i === 0;
+						if (vehicle.properties) {
+							var props = {};
+							for (var key in vehicle.properties) {
+								props[key.toLowerCase()] = vehicle.properties[key];
 							}
-						});
-					}
-
-					$scope.pageLoaded = true;
-					$scope.selectedIndex = 0;
-					$state.go(vehicles[0].mo_id);
-				}
+							vehicle.properties = props;
+						}
+					});
+					
+					$scope.vehicles = vehicles;
+						
+					// dynamic state
+					if(vehicles.length > 0){
+						for (i=0; i < vehicles.length; i++) {
+							$stateProviderRef.state(vehicles[i].mo_id, {
+								url: "/fleet.html#" + vehicles[i].mo_id,
+								views: {
+									'vehicle': {
+										templateUrl: '/htmlclient/vehicle.html',
+										persist: true
+									}
+								}
+							});
+						}
 			
+						$scope.pageLoaded = true;
+						$scope.selectedIndex = 0;
+						$state.go(vehicles[0].mo_id);
+					}
+				}).error(function(error, status){
+					console.error("Cannot get simulated driver");
+				});
 			}).error(function(error, status){
-				console.error("Cannot get simulated driver");
+				console.error("Cannot get simulated vehicles");
 			});
-		}).error(function(error, status){
-			console.error("Cannot get simulated vehicles");
 		});
 		
 		$scope.selectItem = function(index) {

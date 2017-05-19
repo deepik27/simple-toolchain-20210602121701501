@@ -11,10 +11,11 @@
 	angular.module('htmlClient').
 	component('clientDrive', {
 		templateUrl: scriptBaseUrl + 'html-client-drive.html',
-		controller: function ClientTop($scope, $http ,$q, assetService, carProbeService, eventService, geofenceService, virtualGeoLocation, $window, $timeout) {
+		controller: function ClientTop($scope, $http ,$q, $window, $timeout, eventService, geofenceService, simulatedVehicle) {
 			$window.onbeforeunload = function (e) {
-				// inactivate when user closes simulator window
-				assetService.activateAssets(false);
+				// stop driving when user closes simulator window
+				simulatedVehicle.setVehicleMonitor();
+//				simulatedVehicle.stopDriving();
 			};
 			
 			// inter frame communication to recieve start/stop all and return status
@@ -23,8 +24,8 @@
 				if (!target) {
 					return;
 				}
-				var vehicleId = assetService.getVehicleId();
-				var driving = carProbeService.hasTripId();
+				var vehicleId = simulatedVehicle.getVehicleId();
+				var driving = simulatedVehicle.isDriving();
 				var busy = $scope.requestSending;
 				
 				var messageObj = {message: "status", mo_id: vehicleId, driving: driving, busy: busy, requestMessage: requestMessage, requestId: requestId, isError: isError};
@@ -48,77 +49,114 @@
 	        	}
 	        });
 	        
-			$scope.drivingButtonLabel = "Start Driving";
-			var updateUIHandle = null;
+			$scope.drivingButtonLabel = simulatedVehicle.isDriving() ? "Stop Driving" : "Start Driving";
 			// start driving
 			function startDriving() {
-				var self = this;
-				return $q.when(assetService.prepareAssets(), function(assets) {
-			    	var promise = [];
-			    	promise.push($q.when(assetService.activateAssets(true), function() {
-			    		return;
-					}));
-			    	promise.push($q.when(carProbeService.connect(assets), function() {
-			    		return;
-					}));
-					return $q.all(promise).then(function(){
-						var tripId = carProbeService.makeTrip(function(probe) {
-							if (self.requiredEvents > 0) {
-								self.requiredEvents--;
-							}
-							updateVehicle(probe, probe.notification);
-						});
-						return tripId;
-					});
-				});
+				return $q.when(simulatedVehicle.startDriving(function() {
+					console.log("vehicle is started.");
+				}));
 			}
 			
 			// stop driving
 			function stopDriving() {
-				carProbeService.clearTrip();
-				updateVehicle();
-				return $q.when(assetService.activateAssets(false), function() {
-					return null;
+				return $q.when(simulatedVehicle.stopDriving(), function() {
+					// clear messages
+					updateDrvingEvent();
+					updateVehicle();
 				});
 			}
+
+			function updateDrvingEvent(probe) {
+				var event = {isDriving: simulatedVehicle.isDriving(), props:{}};
+				try {
+					if (probe) {
+						event.latitude = probe.matched_latitude || probe.latitude;
+						event.longitude = probe.matched_longitude || probe.longitude;
+						event.heading = probe.matched_heading || probe.heading;
+						event.speed = probe.speed;
+			        	if (probe.props) {
+			        		event.props = probe.props;
+			        	}
+					} else {
+						var loc = simulatedVehicle.getCurrentPosition();
+						event.latitude = loc.latitude;
+						event.longitude = loc.longitude;
+						event.heading = loc.heading || 0;
+						event.speed = 0;
+			        	if (simulatedVehicle.properties) {
+			        		event.props = simulatedVehicle.properties;
+			        	}
+					}
+		        	$scope.drivingEvent = event;
+				} catch(e) {
+					console.error(e);
+				}
+			}
+
+			var callbackMethods = {
+					initialized: function updateMethod_initialized(b, error) {
+						if (error) {
+							console.log("initialization failed");
+							return;
+						}
+						var vehicle = simulatedVehicle.getVehicle();
+						var tank = vehicle.properties && vehicle.properties.fueltank;
+						if(tank){
+							$scope.rules[1].label = "Fuel (Troubled if smaller than " + tank/2 + ", Critical if smaller than " + tank/10 + ")";
+						}
+						postStatusMessage();
+					},
+					route: function updateMethod_route(tripRoute, error) {
+						if (tripRoute && tripRoute.length > 0)
+							$scope.routeSearching = false;
+						_plotTripRoute(tripRoute);
+					},
+					state: function udpateMethod_state(state, error) {
+						$scope.isDriving = state === 'driving';
+					},
+					position: function updateMethod_position(position, error) {
+		        		if ($scope.traceCurrentLocation) {
+		        			lockPosition = true;
+			        		showLocation(position);
+		        		}
+		    			var loc = [position.longitude||0, position.latitude||0];
+						var newPosition = ol.proj.fromLonLat(loc);
+		        		carFeature.getGeometry().setCoordinates(newPosition);
+					},
+					probe: function updateMethod_probe(probe, error) {
+						if (probe) {
+			    			var loc = [probe.longitude||0, probe.latitude||0];
+							var newPosition = ol.proj.fromLonLat(loc);
+			    			plotRoute(newPosition, error ? routeStype : matchedRouteStyle);
+			    			if (!error) {
+				    			updateDrvingEvent(probe);
+								updateVehicle(probe, probe.notification);
+			    			}
+						}
+					}
+			};
 			
-			function connectionStateListner(state) {
-        		if (state === carProbeService.connectionStateDef.CONNECTION_STATE_DISCONNECTED) {
-	            	$scope.isConnected = false;
-	            	$scope.connecting = false;
-        		} else if (state === carProbeService.connectionStateDef.CONNECTION_STATE_CONNECTING) {
-	            	$scope.isConnected = false;
-	            	$scope.connecting = true;
-        		} else {
-	            	$scope.isConnected = true;
-	            	$scope.connecting = false;
-        		}
-        	}
+			function vehicleMonitor(type, data, error) {
+				var func = callbackMethods[type];
+				if (func) {
+					func(data, error);
+				}
+			}
 
 			//////////////////////////////////////////////////////////////////
 			// UI handlers
 			//////////////////////////////////////////////////////////////////
 
-			// Connect/Disconnect button
-		    $scope.onConnect = function() {
-		    	if (carProbeService.getConnectionState() === carProbeService.connectionStateDef.CONNECTION_STATE_DISCONNECTED) {
-		            carProbeService.connect();
-		    	} else if (carProbeService.getConnectionState() === carProbeService.connectionStateDef.CONNECTION_STATE_CONNECTED) {
-		    		carProbeService.disconnect();
-		    	}
-		    };
-		    
 		    // Start/Stop driving button
 		    $scope.onDriving = function(force, drive) {
 		    	var deferred = $q.defer();
 		    	if ($scope.requestSending) {
 		    		deferred.reject("function is busy");
-		    	} else if (carProbeService.hasTripId() && (!force || !drive)) {
-					$scope.drivingButtonLabel = "Stopping Driving";
+		    	} else if (simulatedVehicle.isDriving() && (!force || !drive)) {
+					$scope.drivingButtonLabel = "Stopping...";
 					$scope.requestSending = true;
 					!force && postStatusMessage();
 					stopDriving().then(function() {
-						$scope.driveEvent.trip_id = null;
 						$scope.drivingButtonLabel = "Start Driving";
 						$scope.requestSending = false;
 						deferred.resolve(true);
@@ -130,16 +168,15 @@
 						deferred.reject(err);
 						!force && postStatusMessage();
 					});
-				} else if (!carProbeService.hasTripId() && (!force || drive)) {
+				} else if (!simulatedVehicle.isDriving() && (!force || drive)) {
 					// clean route dots
 					routeLayer.getSource().clear();
-					$scope.drivingButtonLabel = "Preparing Driving";
+					$scope.drivingButtonLabel = "Starting...";
 					$scope.requestSending = true;
 					!force && postStatusMessage();
 					startDriving().then(function(tripId) {
 						$scope.drivingButtonLabel = "Stop Driving";
 						$scope.requestSending = false;
-						$scope.driveEvent.trip_id = tripId;
 						deferred.resolve(true);
 						!force && postStatusMessage();
 					}, function(err) {
@@ -172,69 +209,89 @@
 					}else{
 		    		vehicleData[$scope.vehicleDataName] = value;
 					}
-			    	carProbeService.setVehicleData(vehicleData);
+			    	simulatedVehicle.setProperties(vehicleData);
 			    }
-		    };
-		    $scope.updateVehicleData = function(){
-		    	carProbeService.setVehicleData({
-		    		fuel: $scope.fuel,
-		    		engineTemp: $scope.engineTemp
-		    	});
 		    };
 		
 		    $scope.onChangeSrcDirection = function() {
-				var loc = virtualGeoLocation.getCurrentPosition(function(loc) {
-					var coords = loc.coords;
-					if (!coords) {
-						return;
-					}
-					virtualGeoLocation.setCurrentPosition({lat: coords.latitude, lon: coords.longitude, heading: $scope.srcDirection}).then(function(tripRoute){
-						_plotTripRoute(tripRoute);
-					});
+				var loc = simulatedVehicle.getCurrentPosition();
+				if (!loc) {
+					return;
+				}
+				$scope.requestSending = true;
+				$scope.routeSearching = true;
+				postStatusMessage();
+				simulatedVehicle.setCurrentPosition({latitude: loc.latitude, longitude: loc.longitude, heading: $scope.srcDirection}).then(function(tripRoute){
+					$scope.requestSending = false;
+					$scope.routeSearching = false;
+					postStatusMessage();
+				}, function(error) {
+					$scope.requestSending = false;
+					$scope.routeSearching = false;
+					postStatusMessage();
 				});
 		    };
 			
 		    $scope.onChangeDstDirection = function() {
-		    	var destination = virtualGeoLocation.getDestination();
-		    	if (!destination) {
+		    	var loc = simulatedVehicle.getDestination();
+		    	if (!loc) {
 		    		return;
 		    	}
-				virtualGeoLocation.setDestinationPosition({lat: destination.lat, lon: destination.lon, heading: $scope.dstDirection}).then(function(tripRoute){
-					_plotTripRoute(tripRoute);
+				$scope.requestSending = true;
+				$scope.routeSearching = true;
+				postStatusMessage();
+		    	simulatedVehicle.setDestination({latitude: loc.latitude, longitude: loc.longitude, heading: $scope.dstDirection}).then(function(tripRoute){
+					$scope.requestSending = false;
+					$scope.routeSearching = false;
+					postStatusMessage();
+				}, function(error) {
+					$scope.requestSending = false;
+					$scope.routeSearching = false;
+					postStatusMessage();
 				});
 		    };
 		    
 		    $scope.onAvoidEventChange = function() {
-		    	virtualGeoLocation.setOption("avoid_events", $scope.opt_avoid_events);
-		    	virtualGeoLocation.updateRoute().then(function(tripRoute) {
-					_plotTripRoute(tripRoute);
-		    	});
+				$scope.requestSending = true;
+				$scope.routeSearching = true;
+				postStatusMessage();
+		    	simulatedVehicle.setOption("avoid_events", $scope.opt_avoid_events).then(function(tripRoute) {
+					$scope.requestSending = false;
+					$scope.routeSearching = false;
+					postStatusMessage();
+				}, function(error) {
+					$scope.requestSending = false;
+					$scope.routeSearching = false;
+					postStatusMessage();
+				});
 		    };
 		    
 		    $scope.onRouteLoop = function() {
-		    	virtualGeoLocation.setOption("route_loop", $scope.opt_route_loop);
-		    	virtualGeoLocation.updateRoute().then(function(tripRoute) {
-					_plotTripRoute(tripRoute);
-		    	});
+				$scope.requestSending = true;
+				$scope.routeSearching = true;
+				postStatusMessage();
+		    	simulatedVehicle.setOption("route_loop", $scope.opt_route_loop).then(function(tripRoute) {
+					$scope.requestSending = false;
+					$scope.routeSearching = false;
+					postStatusMessage();
+				}, function(error) {
+					$scope.requestSending = false;
+					$scope.routeSearching = false;
+					postStatusMessage();
+				});
 		    };
 		    
 	        // device ID
-		    $scope.connectOnStartup = carProbeService.getSettings().connectOnStartup;
-			$scope.simulation = carProbeService.settings.simulation;
-		    
 		    $scope.traceCurrentLocation = true;
-
-        	$scope.isConnected = false;
-        	$scope.connecting = false;
-	        $scope.deviceLocation = {};
-	        $scope.driveEvent = {};
 			$scope.directions = [{label: "North", value: 0}, {label: "North East", value: 45}, {label: "East", value: 90}, {label: "South East", value: 135},
 				                      {label: "South", value: 180}, {label: "South West", value: 225}, {label: "West", value: 270}, {label: "North West", value: 315}];
-			$scope.srcDirection = 0;
+        	$scope.drivingEvent = {};
+		    $scope.routeSearching = true;
+ 			$scope.srcDirection = 0;
 			$scope.dstDirection = 0;
 	        $scope.actionMode = "action-car-position";
-	        $scope.opt_avoid_events = virtualGeoLocation.getOption("avoid_events");
-	        $scope.opt_route_loop = virtualGeoLocation.getOption("route_loop");
+	        $scope.opt_avoid_events = simulatedVehicle.getOption("avoid_events");
+	        $scope.opt_route_loop = simulatedVehicle.getOption("route_loop");
 
 			// rules
 			// should be synced with rules defined in /driverinsights/fleetalert.js
@@ -242,12 +299,6 @@
 				{propName: "engineTemp", label: "Engine Temperature (Critical if larger than 248)"},
 				{propName: "fuel", label: "Fuel"}
 			];
-			assetService.getVehicle(assetService.getVehicleId()).then(function(vehicle){
-				var tank = vehicle.properties && vehicle.properties.fueltank;
-				if(tank){
-					$scope.rules[1].label = "Fuel (Troubled if smaller than " + tank/2 + ", Critical if smaller than " + tank/10 + ")";
-				}
-			});
 			
 			// vehicle data control panel
 			$scope.fuel = null;
@@ -277,16 +328,9 @@
 		    
 		    // Show current location on a map
 		    $scope.onCurrentLocation = function() {
-        		carProbeService.getProbeData().then(function(data) {
-        			lockPosition = true;
-    				$scope.traceCurrentLocation = true;
-    				showLocation(data.deviceLocation);
-       		}, function(err) {});
-		    };
-
-		    // Show current location on a map
-		    $scope.showControlPanel = function() {
-   				$scope.isControlPanelDisplayed = !$scope.isControlPanelDisplayed; 
+    			lockPosition = true;
+				$scope.traceCurrentLocation = true;
+				showLocation(simulatedVehicle.getCurrentPosition());
 		    };
 
 			// Show specified location on a map
@@ -294,7 +338,7 @@
 				if (!map) return;
 				var view = map.getView();
 				view.setRotation(0);
-				view.setCenter(ol.proj.fromLonLat([location.lng||0, location.lat||0]));
+				view.setCenter(ol.proj.fromLonLat([location.longitude||0, location.latitude||0]));
 				view.setZoom(DEFAULT_ZOOM);
 			}
 
@@ -327,24 +371,6 @@
 				});
 			}
 	    	
-	    	function addStoppingPoint(location){
-	    		if(!destFeature){
-					destFeature = new ol.Feature({geometry:new ol.geom.Point(location)});	
-					var destStyle = new ol.style.Style({
-						image: new ol.style.Circle({
-							radius:8,
-							fill : new ol.style.Fill({
-								color: 'rgba(255, 0, 0, 0.7)'
-							})
-						})
-					});
-					destFeature.setStyle(destStyle);
-					carsLayer.getSource().addFeature(destFeature);
-				}
-				
-				destFeature.getGeometry().setCoordinates(location);
-	    	}
-	    	
 	    	function setDestination(location){
 	    		if(!destFeature){
 					destFeature = new ol.Feature({geometry:new ol.geom.Point(location)});	
@@ -362,36 +388,6 @@
 				
 				destFeature.getGeometry().setCoordinates(location);
 	    	}
-			
-			function updateUI(force) {
-	        	var data = {
-			        	deviceLocation: {},
-			        	driveEvent: {},
-			        	matchedData: {}
-		        	};
-		        if (carProbeService.updateData(data, force)) {
-		        	for (var key in data) {
-		        		$scope[key] = data[key];
-		        	}
-		        	
-	        		if (carFeature && data.deviceLocation) {
-	        			var loc = [data.deviceLocation.lng||0, data.deviceLocation.lat||0];
-	    				var newPosition = ol.proj.fromLonLat(loc);
-		        		carFeature.getGeometry().setCoordinates(newPosition);
-	        			plotRoute(newPosition, routeStyle);
-	        		}
-	        		if ($scope.traceCurrentLocation) {
-	        			lockPosition = true;
-		        		showLocation(data.deviceLocation);
-	        		}
-	        		if(data.matchedData && carProbeService.hasTripId()){
-	        			var loc = [data.matchedData.matched_longitude||0, data.matchedData.matched_latitude||0];
-	    				var matchedPosition = ol.proj.fromLonLat(loc);
-	        			plotRoute(matchedPosition, matchedRouteStyle, data.matchedData);
-	        		}
-		        }
-		        return false;
-        	}
 
 	    	// Start handling move event 
 			function enableMoveListener() {
@@ -410,16 +406,22 @@
 					lockPosition = false;
 				});
 				map.on("click", function(e){
-					if(!carProbeService.hasTripId() && carProbeService.settings.simulation){
+					if(!simulatedVehicle.isDriving()) {
 						var loc = ol.proj.toLonLat(e.coordinate);
 						if ($scope.actionMode === "action-car-position") {
-							virtualGeoLocation.setCurrentPosition({lat: loc[1], lon: loc[0], heading: $scope.srcDirection}).then(function(tripRoute){
-								_plotTripRoute(tripRoute);
+							$scope.requestSending = true;
+							simulatedVehicle.setCurrentPosition({latitude: loc[1], longitude: loc[0], heading: $scope.srcDirection}).then(function(tripRoute){
+								$scope.requestSending = false;
+							}, function(error) {
+								$scope.requestSending = false;
 							});
 							carFeature.getGeometry().setCoordinates(e.coordinate);
 						} else if ($scope.actionMode === "action-route") {
-							virtualGeoLocation.setDestinationPosition({lat: loc[1], lon: loc[0], heading: $scope.dstDirection}).then(function(tripRoute){
-								_plotTripRoute(tripRoute);
+							$scope.requestSending = true;
+							simulatedVehicle.setDestination({latitude: loc[1], longitude: loc[0], heading: $scope.dstDirection}).then(function(tripRoute){
+								$scope.requestSending = false;
+							}, function(error) {
+								$scope.requestSending = false;
 							});
 							setDestination(e.coordinate);
 						}
@@ -432,6 +434,9 @@
 					return;
 				}
 				tripLayer.getSource().clear();
+				if (!tripRoute || tripRoute.length < 2) {
+					return;
+				}
 				var lines = [];
 				for (i=0; i<(tripRoute.length-1); i++) {
 					lines.push([ol.proj.fromLonLat([tripRoute[i].lon, tripRoute[i].lat]), 
@@ -443,45 +448,9 @@
 				tripLayer.getSource().addFeature( feature );
 			}
 			
-	    	// start monitoring car probe date
-	    	function startPositionMonitoring(interval) {
-	    		stopPositionMonitoring();
-	        	updateUIHandle = setInterval(function() {
-		        	if (updateUI()) {
-		        		$scope.$apply();
-		        	}
-	        	}, interval||1000);
-	    	}
-
-	    	// stop monitoring car probe date
-	    	function stopPositionMonitoring() {
-	        	if (updateUIHandle) {
-	        		clearInterval(updateUIHandle);
-	        		updateUIHandle = null;
-	        	}
-	    	}
-	    	
-	    	function setDestination(location){
-	    		if(!destFeature){
-					destFeature = new ol.Feature({geometry:new ol.geom.Point(location)});	
-					var destStyle = new ol.style.Style({
-						image: new ol.style.Circle({
-							radius:8,
-							fill : new ol.style.Fill({
-								color: 'rgba(255, 0, 0, 0.7)'
-							})
-						})
-					});
-					destFeature.setStyle(destStyle);
-					carsLayer.getSource().addFeature(destFeature);
-				}
-				
-				destFeature.getGeometry().setCoordinates(location);
-	    	}
-			
 		    // Initialize a map
 			var initMap = function initMap(location){
-				var centerPosition = ol.proj.fromLonLat([location.lng||0, location.lat||0]);
+				var centerPosition = ol.proj.fromLonLat([location.longitude||0, location.latitude||0]);
     			lockPosition = true;
 				
 				// Setup current car position
@@ -577,7 +546,7 @@
 	    				}
 						map.updateSize();
 					}, 200);
-				}
+				};
 
 				//
 				// Setup popover
@@ -660,7 +629,7 @@
 							return result;
 						} else if (feature === carFeature) {
 						} else if (feature === destFeature) {
-							var destination = virtualGeoLocation.getDestination();
+							var destination = simulatedVehicle.getDestination();
 							if (destination) {
 								var result = { content: '', title: 'Destination' };
 								result.content = '<table><tbody>' +
@@ -677,29 +646,10 @@
 	    	
 			// initializer
 			this.$onInit = function() {
-	        	connectionStateListner(carProbeService.getConnectionState());
-	        	carProbeService.setConnectionStateChangedListener(connectionStateListner);
-
-        		carProbeService.getProbeData(true).then(function(data) {
-        			// Show current location
-					initMap(data.deviceLocation);
-					if(carProbeService.settings.simulation){
-						virtualGeoLocation.setCurrentPosition({lat: data.deviceLocation.lat, lon: data.deviceLocation.lng}).then(function(tripRoute){
-							_plotTripRoute(tripRoute);
-						});
-//						$timeout($scope.onDriving, 3000); // automatically start driving after 3 seconds
-					}
-					
-        		}, function(err) {
-					initMap({lat: 0, lng: 0});
-        		});
-        		
-        		updateUI(true);
-	        	startPositionMonitoring();
-			};
-			
-			this.$onDestroy = function() {
-	        	stopPositionMonitoring();
+				initMap(simulatedVehicle.getCurrentPosition());
+				$scope.routeSearching = true;
+				simulatedVehicle.setVehicleMonitor(vehicleMonitor);
+				updateDrvingEvent();
 			};
 		}
 	});
@@ -710,7 +660,7 @@
 	var MapHelper = function(map){
 		// the map
 		this.map = map;
-	}
+	};
 	
 	/**
 	 * Add popover to the map

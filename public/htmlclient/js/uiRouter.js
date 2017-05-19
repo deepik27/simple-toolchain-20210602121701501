@@ -12,26 +12,10 @@ var htmlClient = angular.module('htmlClient',['ui.router']);
 htmlClient.config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
 		$stateProvider
 			.state('home', {
-				url: '/home?loc&vehicleId&serial_number&vendor&driverId&siteId',
+				url: '/home?vehicleId&serial_number&vendor&driverId&siteId&clientId',
 				template: '<client-drive></client-drive>',
-				controller: function($stateParams, virtualGeoLocation, assetService){
-					if($stateParams.loc){
-						var coord = $stateParams.loc.split(','); // --> [lat,lng]
-						if(coord.length === 2){
-							virtualGeoLocation.setCurrentPosition({lat: coord[0], lon: coord[1]});
-						}
-					}
-					if($stateParams.vehicleId){
-						assetService.setVehicleId($stateParams.vehicleId);
-						assetService.setAutoManagedAsset(true);
-					}
-					if($stateParams.driverId){
-						assetService.setDriverId($stateParams.driverId);
-						assetService.shared_driver = true;
-					}
-					assetService.setSiteId($stateParams.siteId);
-					assetService.serial_number = $stateParams.serial_number; 
-					assetService.vendor = $stateParams.vendor; 
+				controller: function($stateParams, $q, simulatedVehicle){
+					simulatedVehicle.init($stateParams.clientId, $stateParams.vehicleId);
 				}
 			})
 			.state('profile', {
