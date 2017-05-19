@@ -7,39 +7,14 @@
  *
  * You may not use this file except in compliance with the license.
  */
+
 var Q = require('q');
 var _ = require('underscore');
-var Queue = app_module_require('utils/queue.js');
 var iotaVehicleDataHub = app_module_require('iot4a-api/vehicleDataHub.js');
 
-var vehicleEventHandler = {
-	queueMap: {},
-	probe: function(vehicleId, probe, callback) {
-		var queue = this.queueMap[vehicleId];
-		if (!queue) {
-			queue = new Queue();
-			this.queueMap[vehicleId] = queue;
-		}
-		// serialize results of send car probe
-		queue.push({
-			params: this._sendCarProbe(probe),
-			run: function(promise) {
-				return promise;
-			},
-			done: function(result) {
-				if (callback)
-					callback({vehicleId: vehicleId, data: result, type: 'probe'});
-			},
-			error: function(err) {
-				if (callback)
-					callback({vehicleId: vehicleId, data: probe, type: 'probe', error: err});
-			}
-		});
-		return true;
-	},
-	
-	_sendCarProbe: function(probe) {
-//		console.log("mo_id=" + probe.mo_id + ", lat=" + probe.latitude + ", lon=" + probe.longitude + ", speed=" + probe.speed + ", heading=" + probe.heading);
+var probeInterface = {};
+_.extend(probeInterface, {
+	sendCarProbe: function(probe) {
 		var deferred = Q.defer();
 		Q.when(iotaVehicleDataHub.sendCarProbe(probe, "sync"), function(message) {
 			var affected_events = null;
@@ -62,6 +37,15 @@ var vehicleEventHandler = {
 		}).done();
 		return deferred.promise;
 	}
-};
+});
 
-module.exports = vehicleEventHandler;
+if (!app_module_require('iot4a-api/asset.js').isSaaS() && process.env.DIRECT_VDH_CALL !== 'true') {
+	var driverInsightsProbe = require('../../driverInsights/probe.js');
+	_.extend(probeInterface, {
+		sendCarProbe: function(probe) {
+			return driverInsightsProbe.sendCarProbe(probe);
+		}
+	});
+}
+
+module.exports = probeInterface;

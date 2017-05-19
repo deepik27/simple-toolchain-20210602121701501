@@ -15,7 +15,8 @@ var routeGenerator = require('./routeGenerator.js');
 var vehicleManager = require('./vehicleManager.js');
 var simulatedVehicle = require('./simulatedVehicle.js');
 var iotaAsset = app_module_require('iot4a-api/asset.js');
-var vehicleEventHandler = require('./vehicleEventHandler.js');
+var Queue = app_module_require('utils/queue.js');
+var probeInterface = app_module_require("utils/probe.js");
 
 var debug = require('debug')('simulatorEngine');
 debug.log = console.log.bind(console);
@@ -56,6 +57,42 @@ simulatorEngine.prototype.open = function(numVehicles, excludes, longitude, lati
 	promises.push(Q.when(vehicleManager.getSimulatedVehicles(this.clientId, numVehicles, excludes)));
 	promises.push(Q.when(vehicleManager.getSimulatorDriver()));
 
+	// message handler
+	var messageHandler = {
+		queueMap: {},
+		probe: function(vehicleId, probe, callback) {
+			var queue = this.queueMap[vehicleId];
+			if (!queue) {
+				queue = new Queue();
+				this.queueMap[vehicleId] = queue;
+			}
+			// serialize results of send car probe
+			queue.push({
+				params: probeInterface.sendCarProbe(probe),
+				run: function(promise) {
+					return promise;
+				},
+				done: function(result) {
+					if (callback)
+						callback({vehicleId: vehicleId, data: result, type: 'probe'});
+				},
+				error: function(err) {
+					if (callback)
+						callback({vehicleId: vehicleId, data: probe, type: 'probe', error: err});
+				}
+			});
+			return true;
+		},
+		state: function(vehicleId, state, callback) {
+			if (state === 'idling') {
+				var queue = this.queueMap[vehicleId];
+				if (queue) {
+					delete this.queueMap[vehicleId];
+				}
+			}
+		}
+	};
+	
 	// Set up callback method for events from each vehicle
 	var self = this;
 	var callback = function(data) {
@@ -65,9 +102,9 @@ simulatorEngine.prototype.open = function(numVehicles, excludes, longitude, lati
 		if (watchObject && (!watchObject.properties || _.contains(watchObject.properties, data.type))) {
 			watchMethod = watchObject.callback;
 		}
-		var handler = vehicleEventHandler[data.type];
+		var handler = messageHandler[data.type];
 		if (_.isFunction(handler)) {
-			if (handler.call(vehicleEventHandler, vehicleId, data.data, watchMethod)) {
+			if (handler.call(messageHandler, vehicleId, data.data, watchMethod)) {
 				return;
 			}
 		}
