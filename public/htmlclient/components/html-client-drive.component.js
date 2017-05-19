@@ -127,7 +127,7 @@
 						if (probe) {
 			    			var loc = [probe.longitude||0, probe.latitude||0];
 							var newPosition = ol.proj.fromLonLat(loc);
-			    			plotRoute(newPosition, error ? routeStype : matchedRouteStyle);
+			    			plotRoute(newPosition, error ? routeStyle : matchedRouteStyle);
 			    			if (!error) {
 				    			updateDrvingEvent(probe);
 								updateVehicle(probe, probe.notification);
@@ -820,6 +820,58 @@
 		
 	};
 	
+	function SingleRequestQueue() {
+		this.queue = null;
+		this.running = false;
+	}
+
+	SingleRequestQueue.prototype.push = function(request) {
+		this.queue = request;
+		if (!this.running && this.queue.length === 1) {
+			this._run();
+		}
+	};
+
+	SingleRequestQueue.prototype.clear = function(request) {
+		_.each(this.queue, function(request) {
+			request.canceled && request.canceled();
+		});
+		this.queue = [];
+	};
+
+	SingleRequestQueue.prototype._run = function() {
+		if (this.queue.length === 0) {
+			return;
+		}
+		
+		var self = this;
+		this.running = true;
+		var request = this.queue.shift();
+		Q.when(request.run(request.params), function(result) {
+			try {
+				request.done && request.done(result);
+			} finally {
+				self._next();
+			}
+		})["catch"](function(error) {
+			try {
+				request.error && request.error(error);
+			} finally {
+				self._next();
+			}
+		});
+	};
+
+	SingleRequestQueue.prototype._next = function() {
+		this.running = false;
+		if (this.queue.length === 0) {
+			return;
+		}
+		var self = this;
+		setTimeout(function() {
+			self._run();
+		}, 10);
+	};
 	
 	/*
 	 * Event healer
@@ -960,7 +1012,7 @@
     	return deferred.promise;
 	};
 	
-	EventHelper.prototype.updateEvents = function updateEvents() {
+	EventHelper.prototype.updateEvents = function updateEvents(force) {
 		var size = this.map.getSize();
 		if (!size) {
 			return;
@@ -969,12 +1021,18 @@
 		var self = this;
     	var ext = this.map.getView().calculateExtent(size);
     	var extent = ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326');
-    	this.q.when(this.eventService.queryEvents({
-	    		min_longitude: extent[0],
-	    		min_latitude: extent[1],
-	    		max_longitude: extent[2],
-	    		max_latitude: extent[3]
-    	}), function(events) {
+    	if (this.searchArea &&
+    		this.searchArea.min_longitude <= extent[0] && this.searchArea.min_latitude <= extent[1] &&
+    		this.searchArea.max_longitude >= extent[2] && this.searchArea.max_latitude >= extent[3]) {
+    		return;
+    	}
+    	this.searchArea = {
+	    		min_longitude: extent[0] - 0.01,
+	    		min_latitude: extent[1] - 0.01,
+	    		max_longitude: extent[2] + 0.01,
+	    		max_latitude: extent[3] + 0.01
+    	};
+    	this.q.when(this.eventService.queryEvents(this.searchArea), function(events) {
 			var eventsToAdd = [];
 			var eventsToRemoveMap = {};
 			for (var key in self.eventMap) {
@@ -1234,12 +1292,18 @@
 		var self = this;
     	var ext = this.map.getView().calculateExtent(size);
     	var extent = ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326');
-    	this.q.when(this.geofenceService.queryGeofences({
-	    		min_longitude: extent[0],
-	    		min_latitude: extent[1],
-	    		max_longitude: extent[2],
-	    		max_latitude: extent[3]
-    	}), function(geofences) {
+    	if (this.searchArea &&
+        		this.searchArea.min_longitude <= extent[0] && this.searchArea.min_latitude <= extent[1] &&
+        		this.searchArea.max_longitude >= extent[2] && this.searchArea.max_latitude >= extent[3]) {
+        		return;
+    	}
+    	this.searchArea = {
+	    		min_longitude: extent[0] - 0.01,
+	    		min_latitude: extent[1] - 0.01,
+	    		max_longitude: extent[2] + 0.01,
+	    		max_latitude: extent[3] + 0.01
+    	};
+    	this.q.when(this.geofenceService.queryGeofences(this.searchArea), function(geofences) {
 			var geofencesToAdd = [];
 			var geofencesToRemoveMap = {};
 			for (var key in self.geofenceMap) {
