@@ -21,7 +21,7 @@ debug.log = console.log.bind(console);
 
 
 /**
- * 
+ * error handler
  */
 
 function handleError(res, err) {
@@ -33,13 +33,15 @@ function handleError(res, err) {
 }
 
 /**
- * Create a simulator
+ * Create a simulator. One simulator can be created per client id. 404 error is returned 
+ * if a simulator for specified client id exists. To avoid the error, set noErrorOnExit true.
+ * The created simulator will be terminated automatically when specified minutes by timeoutInMinutes pass after last access.
  * 
  * request:
- * {numVehicles, location, range} 
+ * {numVehicles, latitude, longitude, distance, timeoutInMinutes, noErrorOnExit} 
  * 
  * response:
- * {numVehicles, createdTime, lastModified}
+ * {numVehicles, state, creationTime, lastModified, latitude, longitude, distance}
  */
 router.post("/simulator", authenticate, function(req, res) {
 	var clientId = req.body.clientId || req.query.clientId || req.get("iota-simulator-uuid");
@@ -47,8 +49,9 @@ router.post("/simulator", authenticate, function(req, res) {
 	var latitude = req.body.latitude;
 	var longitude = req.body.longitude;
 	var distance = req.body.distance;
+	var timeoutInMinutes = req.body.timeoutInMinutes;
 	var noErrorOnExist = req.body.noErrorOnExist;
-	Q.when(simulatorManager.create(clientId, numVehicles, longitude, latitude, distance, noErrorOnExist), function(response) {
+	Q.when(simulatorManager.create(clientId, numVehicles, longitude, latitude, distance, timeoutInMinutes, noErrorOnExist), function(response) {
 		res.send(response);
 	})["catch"](function(err) {
 		handleError(res, err);
@@ -58,12 +61,12 @@ router.post("/simulator", authenticate, function(req, res) {
 /**
  * Get simulator list
  * response:
- * {[clientId, numVehicles, createdTime, lastModified]}
+ * {[clientId, {numVehicles, state, creationTime, lastModified, latitude, longitude, distance}]}
  */
 router.get("/simulator/simulatorList", authenticate, function(req, res) {
 	var clientId = req.query.clientId || req.get("iota-simulator-uuid");
 	Q.when(simulatorManager.getSimulatorList(), function(response) {
-		res.send(response);
+		res.send({data: response});
 	})["catch"](function(err) {
 		handleError(res, err);
 	}).done();
@@ -84,7 +87,7 @@ router.get("/simulator", authenticate, function(req, res) {
 });
 
 /**
- * Delete a simulator
+ * Terminate a simulator
  * 
  */
 router["delete"]("/simulator", authenticate, function(req, res) {
@@ -97,12 +100,23 @@ router["delete"]("/simulator", authenticate, function(req, res) {
 });
 
 /**
- * Get vehicle list for a simulator
+ * Get vehicle list for a simulator. Specify properties to get with properties parameter in body.
+ * The properties value is a comma-separated text that contains one or more of the following values
+ * 
+ * vehicleId: vehicle id
+ * vehicle: vehicle object that shows vehicle's detail
+ * driverId: driver id associated for the vehicle
+ * driver: driver object that shows driver's detail
+ * state: vehicle's state (stop, idling, routing or driving)
+ * position: location of the vehicle
+ * options: options for route search
+ * properties: properties to be added to car probe
+ * 
  * request:
- * {numInPage, pageIndex}
+ * {numInPage, pageIndex, properties}
  * 
  * response:
- * [{vehicleId, vehicle, state, options, properties}]
+ * {[{vehicleId, vehicle, driverId, driver, state, position, options, properties}]}
  */
 router.get("/simulator/vehicleList", authenticate, function(req, res) {
 	var clientId = req.query.clientId || req.get("iota-simulator-uuid");
@@ -117,10 +131,20 @@ router.get("/simulator/vehicleList", authenticate, function(req, res) {
 });
 
 /**
- * Get vehicle details for given vehicle id
+ * Get vehicle details for given vehicle id. Specify properties to get with properties parameter in body.
+ * The properties value is a comma-separated text that contains one or more of the following values
+ * 
+ * vehicleId: vehicle id
+ * vehicle: vehicle object that shows vehicle's detail
+ * driverId: driver id associated for the vehicle
+ * driver: driver object that shows driver's detail
+ * state: vehicle's state (stop, idling, routing or driving)
+ * position: location of the vehicle
+ * options: options for route search
+ * properties: properties to be added to car probe
  * 
  * response:
- * {vehicleId, vehicle, state, options, properties}
+ * {vehicleId, vehicle, driverId, driver, state, position, options, properties}
  */
 router.get("/simulator/vehicle/:vehicle_id", authenticate, function(req, res) {
 	var clientId = req.query.clientId || req.get("iota-simulator-uuid");
@@ -141,7 +165,7 @@ router.get("/simulator/vehicle/:vehicle_id", authenticate, function(req, res) {
  * Get route of specific vehicle
  * 
  * response:
- * {vehicleId: vehicleId, data: [array of route node]}
+ * {vehicleId, [array of route node]}
  */
 router.get("/simulator/vehicle/:vehicle_id/route", authenticate, function(req, res) {
 	var clientId = req.query.clientId || req.get("iota-simulator-uuid");
@@ -158,7 +182,7 @@ router.get("/simulator/vehicle/:vehicle_id/route", authenticate, function(req, r
 });
 
 /**
- * Start/stop all vehicles
+ * Control vehicles (start, stop, move, set/unset properties, route search)
  */
 router.put("/simulator/vehicles", authenticate, function(req, res) {
 	var clientId = req.query.clientId || req.body.clientId || req.get("iota-simulator-uuid");

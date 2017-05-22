@@ -19,8 +19,9 @@ var simulatorEngine = require('./simulatorEngine.js');
 var debug = require('debug')('simulatedVehicleManager');
 debug.log = console.log.bind(console);
 
-var DEFAULT_CLIENT_ID = 'default';
-var DEFAULT_NUM_VEHICLES = (process.env.DEFAULT_NUM_VEHICLES && parseInt(process.env.DEFAULT_NUM_VEHICLES)) || 5;
+var DEFAULT_CLIENT_ID = 'default_simulator';
+var DEFAULT_NUM_VEHICLES = (process.env.DEFAULT_SIMULATOR_VEHICLES && parseInt(process.env.DEFAULT_SIMULATOR_VEHICLES)) || 5;
+var DEFAULT_TIMEOUT = (process.env.DEFAULT_SIMULATOR_TIMEOUT && parseInt(process.env.DEFAULT_SIMULATOR_TIMEOUT)) || 10;
 
 /*
  * Manage simulator engines per client
@@ -30,16 +31,17 @@ _.extend(simulatorManager, {
 	simulatorInfoMap: {},
 
 	/**
-	 * Create a simulator engine for given client. Default client is created if client is not specified.
-	 * Created simulator engine enables specified number of vehicles within area specified with longitude, latitude, distance(m).
+	 * Create a simulator engine for given client. Default client is created if the clientId is not specified.
+	 * Created simulator engine enables specified number of vehicles within area of (longitude, latitude, distance(m)).
 	 */
-	create: function(clientId, numVehilces, longitude, latitude, distance, noErrorOnExist) {
+	create: function(clientId, numVehilces, longitude, latitude, distance, timeoutInMinutes, noErrorOnExist) {
 		
 		if (isNaN(longitude) || isNaN(latitude)) {
 			return Q.reject({statusCode: 400, message: 'Invalid longitude or latitude parameter'});
 		}
 		
 		// check if the simulator already exists or not
+		timeoutInMinutes = timeoutInMinutes !== undefined ? timeoutInMinutes : DEFAULT_TIMEOUT;
 		numVehicles = numVehilces || DEFAULT_NUM_VEHICLES;
 		if (numVehicles < 1) numVehicles = 5;
 		simulatorInfoMap = this.simulatorInfoMap;
@@ -47,6 +49,7 @@ _.extend(simulatorManager, {
 		var simulatorInfo = simulatorInfoMap[clientId];
 		if (simulatorInfo && simulatorInfo.simulator && simulatorInfo.simulator.isValid()) {
 			if (noErrorOnExist) {
+				simulatorInfo.simulator.setTimeout(timeoutInMinutes);
 				simulatorInfo.simulator.updateBaseLocation(longitude, latitude, distance);
 				return Q(simulatorInfo.simulator.getInformation());
 			}
@@ -70,8 +73,7 @@ _.extend(simulatorManager, {
 
 		// create a simulator if not exist
 		var deferred = Q.defer();
-		var timeoutInHours = 2;
-		simulator = new simulatorEngine(clientId, timeoutInHours);
+		simulator = new simulatorEngine(clientId, timeoutInMinutes);
 		simulatorInfoMap[clientId] = {clientId: clientId, simulator: simulator};
 		Q.when(simulator.open(numVehicles, excludes, longitude, latitude, distance), function(result) {
 			deferred.resolve(result);
@@ -83,7 +85,7 @@ _.extend(simulatorManager, {
 	},
 
 	/**
-	 * Discard a simulator. All vehicles are stopped if they are running.
+	 * Terminate a simulator and release all resources. All vehicles are stopped if they are running.
 	 */
 	release: function(clientId) {
 		clientId = clientId || DEFAULT_CLIENT_ID;
@@ -105,18 +107,18 @@ _.extend(simulatorManager, {
 	},
 
 	/**
-	 * Get simulator list
+	 * Get list of simulator information
 	 */
 	getSimulatorList: function() {
 		var simulatorList = [];
 		_.each(this.simulatorInfoMap, function(simulatorInfo, key) {
 			simulatorList.push({clientId: key, simulatorInfo: simulatorInfo.simulator.getInformation()});
 		});
-		return Q(simulatorList);
+		return simulatorList;
 	},
 
 	/**
-	 * Get a simulator information
+	 * Get a simulator information of given clientId
 	 */
 	getSimulator: function(clientId) {
 		clientId = clientId || DEFAULT_CLIENT_ID;
@@ -156,12 +158,38 @@ _.extend(simulatorManager, {
 		});
 
 		var self = this;
+		var sendClosedMessageToClient = function(clientId, vehicleId, message, json) {
+			if (json) {
+				message = JSON.stringify(message);
+			}
+			try {
+				_.each(self.wsServer.clients, function(client) {
+					if (client.callbackOnClose && client.clientId === clientId) {
+						client.send(message);
+					}
+				});
+			} catch(error) {
+				console.error('socket error: ' + error);
+			}
+		};
+		
+		var sendMessageToClient = function(clientId, vehicleId, message, json) {
+			if (json) {
+				message = JSON.stringify(message);
+			}
+			try {
+				_.each(self.wsServer.clients, function(client) {
+					if (client.clientId === clientId && client.vehicleId === vehicleId) {
+						client.send(message);
+					}
+				});
+			} catch(error) {
+				console.error('socket error: ' + error);
+			}
+		};
+
 		var callbackOnClose = function(clientId, timeout) {
-			_.each(self.wsServer.clients, function(client) {
-				if (client.callbackOnClose) {
-					client.send(JSON.stringify({clientId: clientId, timeout: timeout}));
-				}
-			});
+			sendClosedMessageToClient(clientId, {type: 'closed', reason: timeout ? 'timeout' : 'normal'}, true);
 			if (self.simulatorInfoMap[clientId]) {
 				delete self.simulatorInfoMap[clientId];
 			}
@@ -180,16 +208,7 @@ _.extend(simulatorManager, {
 						if (data.error) {
 							console.error("error: " + JSON.stringify(data.error));
 						}
-						try {
-							var message = JSON.stringify(data);
-							_.each(self.wsServer.clients, function(client) {
-								if (client.clientId === clientId && client.vehicleId === vehicleId) {
-									client.send(message);
-								}
-							});
-						} catch(error) {
-							console.error('socket error: ' + error);
-						}
+						sendMessageToClient(clientId, vehicleId, data, true);
 					} : undefined);
 				}
 			} else {
@@ -204,6 +223,23 @@ _.extend(simulatorManager, {
 			client.on('close', function () {
 				debug('client is disconnected');
 				watchMethod(client, false);
+		    });
+			client.on('message', function (message) {
+				try {
+					var messageObj = JSON.parse(message);
+					if (messageObj.type === 'heartbeat') {
+						simulatorInfoMap = self.simulatorInfoMap;
+						var simulatorInfo = simulatorInfoMap[messageObj.clientId];
+						if (simulatorInfo) {
+							simulatorInfo.simulator.updateTime(true);
+//							console.log("recieved heartbeat message. clientId = " + messageObj.clientId);
+						} else {
+							sendClosedMessageToClient(clientId, {type: 'closed', reason: 'heartbeat'}, true);
+						}
+					}
+				} catch(e) {
+					console.error("websocket message parse error. message = " + message);
+				}
 		    });
 			
 			debug('got wss connectoin at: ' + client.upgradeReq.url);

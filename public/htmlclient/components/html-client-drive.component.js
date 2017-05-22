@@ -49,6 +49,7 @@
 	        	} else if (message.message === "simulator-terminated-all") {
 	        		// terminated
 					$scope.requestSending = true;
+	        		$scope.$apply();
 	        	}
 	        });
 	        
@@ -91,6 +92,7 @@
 			        	}
 					}
 		        	$scope.drivingEvent = event;
+	        		$scope.$apply();
 				} catch(e) {
 					console.error(e);
 				}

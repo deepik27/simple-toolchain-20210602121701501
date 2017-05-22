@@ -27,23 +27,19 @@ var SIMLATOR_STATUS_CLOSING = 'closing';
 var SIMLATOR_STATUS_CLOSE = 'close';
 
 /**
- * Simulator engine manages vehicles per client. 
+ * Simulator engine class tha manages vehicles per client. 
  * 
  * @param clientId id for the simulator
  * @param timeout close when timeout occurs after the last modification
- * @returns
  */
-function simulatorEngine(clientId, timeout/*hour*/) {
+function simulatorEngine(clientId, timeoutInMinutes/*minutes*/) {
 	this.clientId = clientId;
 	this.state = SIMLATOR_STATUS_CLOSE;
 	this.creationTime = Date.now();
 	this.lastModified = this.creationTime;
 	this.simulatedVehicles = {};
 	this.simulatedVehicleIdArray = [];
-	if (timeout > 0)
-		this.timeout = timeout * 60 * 60 * 1000;
-	else
-		this.timeout = -1;
+	this.setTimeout(timeoutInMinutes);
 }
 
 /**
@@ -137,7 +133,7 @@ simulatorEngine.prototype.open = function(numVehicles, excludes, longitude, lati
 		this.simulatedVehicles = vehicles;
 		this.simulatedVehicleIdArray = vehicleIdArray;
 		this.state = SIMLATOR_STATUS_OPEN;
-		this._updateTime();
+		this.updateTime();
 		return this.getInformation();
 	}.bind(this));		
 };
@@ -150,7 +146,7 @@ simulatorEngine.prototype.close = function(timeout) {
 	this.state = SIMLATOR_STATUS_CLOSING;
 	Q.when(this.stop(), function() {
 		this.state = SIMLATOR_STATUS_CLOSE;
-		this._updateTime();
+		this.updateTime();
 		deferred.resolve(this.getInformation());
 	}.bind(this))["catch"](function(err) {
 		deferred.reject(err);
@@ -184,7 +180,7 @@ simulatorEngine.prototype.updateBaseLocation = function(longitude, latitude, dis
 		console.log("simulated vehicle=" + id + ", lon=" + loc[0] + ", lat=" + loc[1]);
 		vehicle.setCurrentPosition(loc[0], loc[1], 360 * Math.random());
 	}.bind(this));
-	this._updateTime();
+	this.updateTime();
 };
 
 /**
@@ -206,7 +202,7 @@ simulatorEngine.prototype.getInformation = function() {
  * numInPages : how many vehicles are returned at this request
  * pageIndex : index of page to be returned
  * properties : information contained in the vehicle information. 
- *              comma separated combination of these values (vehicleId, vehicle, state, position, options) can be specified
+ *              comma separated combination of these values (vehicleId, vehicle, driverId, driver, state, position, options, properties) can be specified
  */
 simulatorEngine.prototype.getVehicleList = function(numInPages, pageIndex, properties) {
 	if (!numInPages || numInPages < 1) {
@@ -360,7 +356,7 @@ simulatorEngine.prototype.control = function(vehicleId, method, allowedWhenRunni
 	}
 
 	return Q.all(promises).then(function(results) {
-		this._updateTime();
+		this.updateTime();
 		var data = {};
 		_.each(results, function(v) {data[v.vehicleId] = v.result;});
 		return {numVehicles: results.length, data: data};
@@ -389,12 +385,22 @@ simulatorEngine.prototype.setCallbackOnClose = function(callback) {
 	this.callbackOnClose = callback;
 };
 
+simulatorEngine.prototype.setTimeout = function(timeoutInMinutes) {
+	if (timeoutInMinutes > 0)
+		this.timeout = timeoutInMinutes * 60 * 1000;
+	else
+		this.timeout = -1;
+};
+
 /**
  * Update modified time. Reset a timer to handle timeout. If timeout happens, the simulator is automatically stopped.
  */
-simulatorEngine.prototype._updateTime = function() {
-	this.lastModified = Date.now();
-	console.log("time is updated. clientId=" + this.clientId + ", time=" + moment(this.lastModified).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+simulatorEngine.prototype.updateTime = function(notModified) {
+	var currentTime = Date.now();
+	if (!notModified) {
+		this.lastModified = currentTime;
+	}
+	console.log("time is updated. clientId=" + this.clientId + ", time=" + moment(currentTime).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 	if (this.timeoutObject) {
 		clearTimeout(this.timeoutObject);
 		delete this.timeoutObject;
@@ -404,8 +410,10 @@ simulatorEngine.prototype._updateTime = function() {
 			console.log("simulator is automatically closed due to timeout.");
 			this.close(true);
 		}.bind(this), this.timeout);
-		console.log("timer is reset. clientId=" + this.clientId + ", timeout=" + moment(this.lastModified + this.timeout).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+		console.log("timer is reset. clientId=" + this.clientId + ", timeout=" + moment(currentTime + this.timeout).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+		return Q({timeout: currentTime + this.timeout});
 	}
+	return Q({timeout: 0});
 };
 
 simulatorEngine.prototype._calcPosition = function(start, distance, bearing) {
