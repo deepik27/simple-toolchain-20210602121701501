@@ -91,7 +91,10 @@ simulatedVehicle.prototype.setupCallback = function(callback) {
 		return;
 	}
 
-	var mo_id = this.vehicle.mo_id;
+	var vehicleId = mo_id = this.vehicle.mo_id;
+	if(this.vehicle.siteid){
+		mo_id = this.vehicle.siteid + ":" + mo_id;
+	}
 	var driver_id = this.driver ? this.driver.driver_id : null;
 	var self = this;
 	var handlers = {
@@ -121,7 +124,7 @@ simulatedVehicle.prototype.setupCallback = function(callback) {
 				});
 				self.prevProps = probe.props = props;
 			}
-			callback({vehicleId: mo_id, data: probe, type: 'probe'});
+			callback({vehicleId: vehicleId, data: probe, type: 'probe'});
 			return true;
 		},
 		route: function(data, error) {
@@ -133,7 +136,7 @@ simulatedVehicle.prototype.setupCallback = function(callback) {
 			}.bind(this));
 		},
 		state: function(data, error) {
-			callback({vehicleId: mo_id, data: self._getState(), type: 'state'});
+			callback({vehicleId: vehicleId, data: self._getState(), type: 'state'});
 			return true;
 		}
 	};
@@ -141,7 +144,7 @@ simulatedVehicle.prototype.setupCallback = function(callback) {
 	this.route.listen(function(data) {
 		var handler = handlers[data.type];
 		if (!_.isFunction(handler) || !handler.call(self, data.data, data.error)) {
-			data.vehicleId = mo_id;
+			data.vehicleId = vehicleId;
 			callback(data);
 		}
 	});

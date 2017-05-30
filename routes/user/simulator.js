@@ -34,11 +34,11 @@ function handleError(res, err) {
 
 /**
  * Create a simulator. One simulator can be created per client id. 404 error is returned 
- * if a simulator for specified client id exists. To avoid the error, set noErrorOnExit true.
+ * if a simulator for specified client id exists. To avoid the error, set noErrorOnExist true.
  * The created simulator will be terminated automatically when specified minutes by timeoutInMinutes pass after last access.
  * 
  * request:
- * {numVehicles, latitude, longitude, distance, timeoutInMinutes, noErrorOnExit} 
+ * {numVehicles, latitude, longitude, distance, timeoutInMinutes, noErrorOnExist} 
  * 
  * response:
  * {numVehicles, state, creationTime, lastModified, latitude, longitude, distance}
