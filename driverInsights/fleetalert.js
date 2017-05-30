@@ -80,7 +80,7 @@ _.extend(driverInsightsAlert, {
 					var deferred = Q.defer();
 					rule.status = "inactive";
 					Q.when(iot4aAsset.updateRule(rule.rule_id, rule, null, true), function(updated){
-						Q.when(iot4aAsset.deleteRule(rule.rule_id), function(deleted){
+						Q.when(iot4aAsset.deleteRule(rule.rule_id, true), function(deleted){
 							deferred.resolve(deleted);
 						})["catch"](function(err){
 							deferred.reject(err);
@@ -100,7 +100,11 @@ _.extend(driverInsightsAlert, {
 							}
 						})
 					}
-					self._addRules();
+					Q.when(iot4aAsset.refreshRule(), function(response){
+						self._addRules();
+					})["catch"](function(err){
+						self._addRules();
+					});
 				}, function(err){
 					console.error("Deleting existing alert rules failed.");
 					console.error(err.message);
@@ -130,7 +134,7 @@ _.extend(driverInsightsAlert, {
 						console.error("Alert rule id cannot be assigned.");
 					}
 					var rule = {description: ALERT_RULE_DESCRIPTION + alert_rule_id, type: "Action", status: "active"};
-					data = data.replace("{alert_rule_id}", alert_rule_id);
+					data = data.replace(/\{alert_rule_id\}/g, alert_rule_id);
 					iot4aAsset.addRule(rule, data);
 				})
 			});

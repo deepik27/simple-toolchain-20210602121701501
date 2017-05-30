@@ -390,13 +390,13 @@ var maximoAssetApi = {
 		return deferred.promise;
 	},
 	
-	addRule: function(rule, ruleXML){
+	addRule: function(rule, ruleXML, refresh){
 		var deferred = Q.defer();
 		var context = 'rule';
 		if (ruleXML) {
 			rule.rule = ruleXML.replace(/\n|\r/g, '');
 		}
-		Q.when(this.addOrUpdateAsset(context, null, rule, true), function(result) {
+		Q.when(this.addOrUpdateAsset(context, null, rule, refresh), function(result) {
 			deferred.resolve({id: rule.rule_id});
 		})["catch"](function(err){
 			deferred.reject(err);
@@ -404,13 +404,13 @@ var maximoAssetApi = {
 		return deferred.promise;
 	},
 	
-	updateRule: function(id, rule, ruleXML, overwrite) {
+	updateRule: function(id, rule, ruleXML, overwrite, refresh) {
 		var deferred = Q.defer();
 		var context = 'rule';
 		if (ruleXML) {
 			rule.rule = ruleXML.replace(/\n|\r/g, '');
 		}
-		Q.when(this.addOrUpdateAsset(context, id, rule, true), function(result) {
+		Q.when(this.addOrUpdateAsset(context, id, rule, refresh), function(result) {
 			deferred.resolve(result);
 		})["catch"](function(err){
 			deferred.reject(err);

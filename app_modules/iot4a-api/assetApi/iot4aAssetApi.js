@@ -81,16 +81,20 @@ var iot4aAssetApi = {
 	/*
 	 * Delete an asset
 	 */
-	deleteAsset: function(context, id){
+	deleteAsset: function(context, id, refresh){
 		var deferred = Q.defer();
 		var self = this;
 		var api = "/" + context + "/" + id;
 		Q.when(this._run("DELETE", api), function(response) {
-			Q.when(self.refreshAsset(context), function() {
+			if(refresh){
+				Q.when(self.refreshAsset(context), function() {
+					deferred.resolve(response);
+				})["catch"](function(err){
+					deferred.reject(err);
+				}).done();
+			}else{
 				deferred.resolve(response);
-			})["catch"](function(err){
-				deferred.reject(err);
-			}).done();
+			}
 		})["catch"](function(err){
 			deferred.reject(err);
 		}).done();
@@ -100,7 +104,7 @@ var iot4aAssetApi = {
 		var api = "/rule/" + id + "/rule";
 		return this._run("GET", api, null, null, true);
 	},
-	addRule: function(rule, ruleXML){
+	addRule: function(rule, ruleXML, refresh){
 		var self = this;
 		var deferred = Q.defer();
 		Q.when(this._runForm("POST", "/rule", rule, function(form) {
@@ -108,17 +112,21 @@ var iot4aAssetApi = {
 				form.append("file", ruleXML);
 			}
 		}), function(response) {
-			Q.when(self._run("POST", "/rule/refresh"), function(refreshed){
+			if(refresh){
+				Q.when(self._run("POST", "/rule/refresh"), function(refreshed){
+					deferred.resolve(response);
+				})["catch"](function(err){
+					deferred.reject(err);
+				}).done();
+			}else{
 				deferred.resolve(response);
-			})["catch"](function(err){
-				deferred.reject(err);
-			}).done();
+			}
 		})["catch"](function(err){
 			deferred.reject(err);
 		}).done();
 		return deferred.promise;
 	},
-	updateRule: function(id, rule, ruleXML, overwrite) {
+	updateRule: function(id, rule, ruleXML, overwrite, refresh) {
 		var deferred = Q.defer();
 		var self = this;
 		var api = "/rule/" + id;
@@ -127,11 +135,15 @@ var iot4aAssetApi = {
 				form.append("file", ruleXML);
 			}
 		}), function(response){
-			Q.when(self._run("POST", "/rule/refresh"), function(refreshed){
+			if(refresh){
+				Q.when(self._run("POST", "/rule/refresh"), function(refreshed){
+					deferred.resolve(response);
+				})["catch"](function(err){
+					deferred.reject(err);
+				}).done();
+			}else{
 				deferred.resolve(response);
-			})["catch"](function(err){
-				deferred.reject(err);
-			}).done();
+			}
 		})["catch"](function(err){
 			deferred.reject(err);
 		}).done();

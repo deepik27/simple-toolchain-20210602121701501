@@ -103,18 +103,18 @@ _.extend(asset, {
 	getVendorList: function(params){
 		return this._getAssetList("vendor", params);
 	},
-	getVendor: function(vendor){
-		return this._getAsset("vendor", vendor);
+	getVendor: function(vendor_id){
+		return this._getAsset("vendor", vendor_id);
 	},
 	addVendor: function(vendor){
 		vendor = _.extend({"status":"active"}, vendor||{});
-		return this._addAsset("vendor", vendor, false);
+		return this._addAsset("vendor", vendor, false /* Vendor doesn't need to be synchronized with agent. */);
 	},
 	updateVendor: function(id, vendor, overwrite){
 		return this._updateAsset("vendor", id || vendor.vendor, vendor, overwrite, false);
 	},
-	deleteVendor: function(vendor){
-		return this._deleteAsset("vendor", vendor);
+	deleteVendor: function(vendor_id){
+		return this._deleteAsset("vendor", vendor_id, false);
 	},
 
 	/*
@@ -151,10 +151,10 @@ _.extend(asset, {
 	getRuleXML: function(id){
 		return this._assetApi.getRuleXML(id);
 	},
-	addRule: function(rule, ruleXML){
-		return this._assetApi.addRule(rule, ruleXML);
+	addRule: function(rule, ruleXML, noRefresh){
+		return this._assetApi.addRule(rule, ruleXML, !noRefresh);
 	},
-	updateRule: function(id, rule, ruleXML, overwrite) {
+	updateRule: function(id, rule, ruleXML, overwrite, noRefresh) {
 		var deferred = Q.defer();
 		var self = this;
 		if (overwrite) {
@@ -168,7 +168,7 @@ _.extend(asset, {
 				rule = self._mergeObject(existingRule, rule);
 				Q.when(self.getRuleXML(id), function(existingXML) {
 					ruleXML = ruleXML || existingXML;
-					Q.when(self.updateRule(id, rule, ruleXML, true), function(response) {
+					Q.when(self.updateRule(id, rule, ruleXML, true, noRefresh), function(response) {
 						deferred.resolve(response);
 					})["catch"](function(err){
 						deferred.reject(err);
@@ -180,8 +180,11 @@ _.extend(asset, {
 		}
 		return deferred.promise;
 	},
-	deleteRule: function(id){
-		return this._deleteAsset("rule", id);
+	refreshRule: function(){
+		return this._refreshAsset("rule");
+	},
+	deleteRule: function(id, noRefresh){
+		return this._deleteAsset("rule", id, !noRefresh);
 	},
 	/*
 	 * Get list of assets
