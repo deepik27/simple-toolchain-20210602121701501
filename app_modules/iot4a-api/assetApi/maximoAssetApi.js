@@ -368,7 +368,7 @@ var maximoAssetApi = {
 						deferred.reject(err);
 					}).done();
 				} else {
-					deferred.resolve(result);
+					deferred.resolve({id: id});
 				}
 			})["catch"](function(err){
 				deferred.reject(err);

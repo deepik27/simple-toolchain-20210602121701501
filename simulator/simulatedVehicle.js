@@ -91,7 +91,8 @@ simulatedVehicle.prototype.setupCallback = function(callback) {
 		return;
 	}
 
-	var vehicleId = mo_id = this.vehicle.mo_id;
+	var vehicleId = this.vehicle.mo_id;
+	var mo_id = this.vehicle.mo_id;
 	if(this.vehicle.siteid){
 		mo_id = this.vehicle.siteid + ":" + mo_id;
 	}

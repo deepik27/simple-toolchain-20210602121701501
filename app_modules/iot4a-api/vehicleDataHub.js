@@ -15,6 +15,7 @@ var request = require('./requestSecureGw.js');
 var debug = require('debug')('vehicleDataHub');
 debug.log = console.log.bind(console);
 
+var SEND_PROBE_USER_AGENT = process.env.SEND_PROBE_USER_AGENT; //DEFAULT_USER_AGENT of sample vdh plug-in is "IoT4A Starter App Fleet Management"
 
 _.extend(vehicleDataHub, {
 
@@ -72,7 +73,13 @@ _.extend(vehicleDataHub, {
 			body: carProbeData,
 			json: true
 		});
-		
+		if(SEND_PROBE_USER_AGENT){
+			if(options.headers){
+				_.extend(options.headers, {"User-Agent": SEND_PROBE_USER_AGENT});
+			}else{
+				_.extend(options, {headers: {"User-Agent": SEND_PROBE_USER_AGENT}});
+			}
+		}
 		var deferred = Q.defer();
 		debug("sendCarProbe(url): " + options.url);
 		debug("sendCarProbe:" + JSON.stringify(options.body));
