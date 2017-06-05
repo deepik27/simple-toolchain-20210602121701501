@@ -156,7 +156,7 @@ _.extend(driverInsightsAlert, {
 				deferred.resolve(alert_rules_in_page);
 			}
 		})["catch"](function(err){
-			if(err.response.statusCode === 404){
+			if(err.response && err.response.statusCode === 404){
 				deferred.resolve([]);
 			}else{
 				deferred.reject(err);

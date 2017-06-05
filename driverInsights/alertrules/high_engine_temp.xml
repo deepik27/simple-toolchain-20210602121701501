@@ -16,14 +16,15 @@
 		<Target></Target>
 		<Condition>
 			<ValueCondition>
-				<Attribute>EngineTemp</Attribute>
+				<Attribute object="CarProbe">engineTemp</Attribute>
 				<Operator>GT</Operator>
-				<Value>120</Value>
+				<Value>120.0</Value>
 			</ValueCondition>
 		</Condition>
 		<Action>
 			<VehicleAction>
 				<Message>Engine temperature is too high</Message>
+				<Parameter><Key>mo_id</Key><Value>CarProbe.Vehicle_id_ext</Value></Parameter>
 				<Parameter><Key>message_type</Key><Value>high_engine_temp</Value></Parameter>
 				<Parameter><Key>source_id</Key><Value>high_engine_temp</Value></Parameter>
 				<Parameter><Key>longitude</Key><Value>CarProbe.Longitude</Value></Parameter>

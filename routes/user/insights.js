@@ -38,6 +38,55 @@ function handleAssetError(res, err) {
 }
 
 /**
+ * {
+ * 	"mo_id1": {
+ * 		affected_events: [
+ * 			{
+ * 				"event_time":"yyyy-MM-ddTHH:mm:ss.sssZ"
+ * 				"event_id":nn
+ * 				"base_event_id":nn
+ * 				"event_type":"nnn"
+ * 				"event_name":"AAAAA"
+ * 				...
+ * 			}
+ * 		],
+ * 		notified_messages: [
+ * 			{
+ * 				"message":"MessageMessageMessage"
+ * 				"props":{
+ * 					"message_type":"xxxx",
+ * 					"source_id":"xxxx",
+ * 					"severity":"High/Mid/Low/Info"
+ * 					"longitude":"xxx.xxxx"
+ * 					"latitude":"xx.xxxx"
+ * 				}
+ * 			},
+ * 			{...}
+ * 		]
+ * 	},
+ * 	"mo_id2": {...}
+ * }
+ */
+router.post('/notifiedActions', authenticate, function(req, res){
+	try{
+			var affected_events = null;
+			var notified_messages = null;
+			if(req.body){
+				debug("notifiedActions req.body: " + JSON.stringify(req.body));
+				Object.keys(req.body).forEach(function(mo_id){
+					var body = req.body[mo_id];
+					affected_events = body.affectedEvents;
+					notified_messages = body.notifiedMessages;
+					driverInsightsAlert.handleEvents(mo_id, (affected_events||[]).concat(notified_messages||[]));
+				});
+			}
+			res.status(200).send("");
+	}catch(error){
+		handleAssetError(res, error);
+	}
+});
+
+/**
  * Examples:
  *  List all the cars
  *   http://localhost:6003/monitoring/cars/query?min_lat=-90&max_lat=90&min_lng=-180&max_lng=180
