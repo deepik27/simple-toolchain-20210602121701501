@@ -26,6 +26,7 @@ var ALERT_RULE_DESCRIPTION = "ALERT RULE: ";
 var ALERT_RULE_ID_RANGE_MAX = 21000;
 var ALERT_RULE_ID_RANGE_MIN = 20000;
 var MAX_NUM_REC_IN_PAGE = 50;
+var ALERT_LIFE_SPAN = process.env.ALERT_LIFE_SPAN || 3000;
 
 _.extend(driverInsightsAlert, {
 	/*
@@ -49,6 +50,15 @@ _.extend(driverInsightsAlert, {
 	 * }
 	 */
 	_alertRules: {},
+
+	/*
+	 * Timer for each mo_id to close alerts created from notified actions
+	 * 
+	 * {
+	 * 	mo_id: timer_id
+	 * }
+	 */
+	_alertTimer: {},
 
 	_init: function(){
 		var self = this;
@@ -260,6 +270,12 @@ _.extend(driverInsightsAlert, {
 				});
 			}
 		});
+
+		var timer = this._alertTimer[mo_id];
+		clearTimeout(timer);
+		this._alertTimer[mo_id] = setTimeout(function(){
+			self.closeAlertFromEvents(mo_id);
+		}, ALERT_LIFE_SPAN);
 	},
 	closeAlertFromEvents: function(mo_id, events){
 		var self = this;
