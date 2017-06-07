@@ -15,15 +15,15 @@
 		<Description>Fuel less half full</Description>
 		<Target></Target>
 		<Condition>
-			<ValueCondition>
-				<Attribute>FuelRate</Attribute>
-				<Operator>LT</Operator>
-				<Value>0.5</Value>
-			</ValueCondition>
+			<MethodCondition>
+				<MethodJar>FleetAlert.jar</MethodJar>
+				<ComplexMethodClass>com.ibm.mobility.agent.sample.HalfFuelCondition</ComplexMethodClass>
+			</MethodCondition>
 		</Condition>
 		<Action>
 			<VehicleAction>
 				<Message>Fuel less than half full</Message>
+				<Parameter><Key>mo_id</Key><Value>CarProbe.Vehicle_id_ext</Value></Parameter>
 				<Parameter><Key>message_type</Key><Value>half_fuel</Value></Parameter>
 				<Parameter><Key>source_id</Key><Value>half_fuel</Value></Parameter>
 				<Parameter><Key>longitude</Key><Value>CarProbe.Longitude</Value></Parameter>

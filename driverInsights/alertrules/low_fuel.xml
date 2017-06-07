@@ -15,15 +15,15 @@
 		<Description>Fuel less than 1/10 tank</Description>
 		<Target></Target>
 		<Condition>
-			<ValueCondition>
-				<Attribute>FuelRate</Attribute>
-				<Operator>LT</Operator>
-				<Value>0.1</Value>
-			</ValueCondition>
+			<MethodCondition>
+				<MethodJar>FleetAlert.jar</MethodJar>
+				<ComplexMethodClass>com.ibm.mobility.agent.sample.LowFuelCondition</ComplexMethodClass>
+			</MethodCondition>
 		</Condition>
 		<Action>
 			<VehicleAction>
 				<Message>Fuel less than 1/10 tank</Message>
+				<Parameter><Key>mo_id</Key><Value>CarProbe.Vehicle_id_ext</Value></Parameter>
 				<Parameter><Key>message_type</Key><Value>low_fuel</Value></Parameter>
 				<Parameter><Key>source_id</Key><Value>low_fuel</Value></Parameter>
 				<Parameter><Key>longitude</Key><Value>CarProbe.Longitude</Value></Parameter>
