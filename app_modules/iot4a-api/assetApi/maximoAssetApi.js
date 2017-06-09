@@ -311,7 +311,7 @@ var maximoAssetApi = {
 						result = {id: asset.mo_id, siteid: asset.siteid};
 					}
 					if (refresh) {
-						Q.when(self.refreshAsset(context), function(refreshed){
+						Q.when(self._refreshAsset(context), function(refreshed){
 							deferred.resolve(result);
 						})["catch"](function(err){
 							deferred.reject(err);
@@ -353,6 +353,11 @@ var maximoAssetApi = {
 		return deferred.promise;
 	},
 	/*
+	 * To be overridden by queue requests function
+	 */
+	_refreshAsset: function(context){return this.refreshAsset(context);},
+
+	/*
 	 * Delete an asset
 	 */
 	deleteAsset: function(context, id, refresh){
@@ -362,7 +367,7 @@ var maximoAssetApi = {
 		Q.when(this._query(context, null, null, id), function(result) {
 			Q.when(self._request(result.href + '?lean=1', 'POST', 'DELETE'), function(result) {
 				if (refresh) {
-					Q.when(self.refreshAsset(context), function(refreshed){
+					Q.when(self._refreshAsset(context), function(refreshed){
 						deferred.resolve({id: id});
 					})["catch"](function(err){
 						deferred.reject(err);

@@ -51,7 +51,7 @@ var iot4aAssetApi = {
 		var api = "/" + context + (id?"/"+id:"");
 		Q.when(this._run(id?"PUT":"POST", api, null, asset), function(response){
 			if (refresh) {
-				Q.when(self.refreshAsset(context), function(refreshed){
+				Q.when(self._refreshAsset(context), function(refreshed){
 					deferred.resolve(response);
 				})["catch"](function(err){
 					deferred.reject(err);
@@ -77,6 +77,10 @@ var iot4aAssetApi = {
 		}).done();
 		return deferred.promise;
 	},
+	/*
+	 * To be overridden by queue requests function
+	 */
+	_refreshAsset: function(context){this.refreshAsset(context);},
 
 	/*
 	 * Delete an asset
@@ -87,7 +91,7 @@ var iot4aAssetApi = {
 		var api = "/" + context + "/" + id;
 		Q.when(this._run("DELETE", api), function(response) {
 			if(refresh){
-				Q.when(self.refreshAsset(context), function() {
+				Q.when(self._refreshAsset(context), function() {
 					deferred.resolve(response);
 				})["catch"](function(err){
 					deferred.reject(err);

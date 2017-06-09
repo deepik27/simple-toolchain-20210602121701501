@@ -24,6 +24,7 @@ _.extend(asset, {
 		if (!this._assetApi) {
 			throw new Exception("!!! no provided credentials for Asset Data Management. using shared one !!!");
 		}
+		this._assetApi._refreshAsset = _.bind(this._refreshAsset, this);
 	},
 
 	_mergeObject: function(obj1, obj2) {
@@ -219,8 +220,32 @@ _.extend(asset, {
 	/*
 	 * Refresh assets
 	 */
+	_refreshQueue: {},
 	_refreshAsset: function(context) {
-		return this._assetApi.refreshAsset(context);
+		var queue = this._refreshQueue[context];
+		if(!queue){
+			queue = this._refreshQueue[context] = {};
+		}
+		debug("Refresh Queue: onGoing=" + queue.onGoing + ", waiting=" + queue.waiting);
+		if(queue.onGoing){
+			if(!queue.waiting){
+				var self = this;
+				var deferred = Q.defer();
+				Q.when(queue.onGoing, function(){
+					queue.onGoing = self._assetApi.refreshAsset(context);
+					delete queue.waiting;
+					Q.when(queue.onGoing, function(){
+						deferred.resolve();
+						delete queue.onGoing;
+					})
+				});
+				queue.waiting = deferred.promise;
+			}
+			return queue.waiting;
+		}else{
+			queue.onGoing = this._assetApi.refreshAsset(context);
+			return queue.onGoing;
+		}
 	},
 	/*
 	 * Update an asset
