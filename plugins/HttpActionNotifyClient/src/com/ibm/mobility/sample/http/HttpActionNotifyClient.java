@@ -186,7 +186,7 @@ public class HttpActionNotifyClient extends AbstractClient {
 			Payload payload = new RequestWrapperPayload(getConfig(), getMyname(), request, cmd);
 			ProcessResult result = processPayload(payload);
 			res.setRes_type(result.getType().getName());
-			res.setMsg(result.getMessage());
+			res.setContents(result.getContents());
 			res.setPreferred_HTTP_status_code(ClientResponse.SC_OK);
 		}
 		
@@ -227,13 +227,14 @@ public class HttpActionNotifyClient extends AbstractClient {
 				((HttpsURLConnection)connection).setSSLSocketFactory(factory);
 			}
 
+			connection.setRequestProperty("Accept", "application/json");
+			for(Entry<String, String> entry : postHeaders.entrySet()){
+				connection.setRequestProperty(entry.getKey(), entry.getValue());
+			}
 			if(credential != null){
 				connection.setRequestProperty("Authorization", "Basic " + credential);
 			}
 
-			for(Entry<String, String> entry : postHeaders.entrySet()){
-				connection.setRequestProperty(entry.getKey(), entry.getValue());
-			}
 			String strContents = (String)action.getContents();
 			DisplayActionContents contents = mapper.readValue(strContents, DisplayActionContents.class);
 			String[] vehicles = action.getTarget_vehicles();

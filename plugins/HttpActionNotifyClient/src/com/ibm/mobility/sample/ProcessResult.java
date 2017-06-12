@@ -43,6 +43,10 @@ public class ProcessResult {
 	public void setMessage(String message) {
 		this.message = message;
 	}
+	@Override
+	public String toString(){
+		return "Type: " + type + ", Message: " + message + ", Contents: " + contents;
+	}
 
 	public static ProcessResult buildActionContentsResult(ActionContents ac){
 		ProcessResult result = new ProcessResult();
