@@ -10,7 +10,7 @@
 	<h5>Location</h5>
 	<div id="locationMap" class="locationMap">
 	 <button class="button mapCurrentLocation" ng-show="!traceCurrentLocation" ng-click="onCurrentLocation()">Current Location</button>
-	 <div class="mapProbe" ng-show="drivingEvent.isDriving">
+	 <div class="mapProbe" ng-show="isDriving">
 	 					Location=({{drivingEvent.latitude||0}},{{drivingEvent.longitude||0}})<br> 
 	 					Speed={{(drivingEvent.speed/1.609344).toPrecision(3)}} MPH<br>
 	 					Fuel={{drivingEvent.props.fuel}}<br>
@@ -29,19 +29,19 @@
 		 	<div class="marginTop-15"><strong>Mouse Click Action:</strong></div>
 			 	<div style="margin-top: 5px; margin-left: 10px;">
 			 		<span  style="white-space: nowrap">
-				 		<span style="white-space: nowrap; margin-right: 5px;"><input type="radio" name="actionGroup" ng-disabled="drivingEvent.isDriving" ng-model="actionMode" value="action-car-position" id="start"><label for="start">Set start position</label></span>
-			 		  	<select style="margin-right: 10px;" ng-model="srcDirection" ng-options="dir.value as dir.label for dir in directions" ng-change="onChangeSrcDirection()" ng-disabled="drivingEvent.isDriving"></select>
+				 		<span style="white-space: nowrap; margin-right: 5px;"><input type="radio" name="actionGroup" ng-disabled="isDriving" ng-model="actionMode" value="action-car-position" id="start"><label for="start">Set start position</label></span>
+			 		  	<select style="margin-right: 10px;" ng-model="srcDirection" ng-options="dir.value as dir.label for dir in directions" ng-change="onChangeSrcDirection()" ng-disabled="isDriving"></select>
 			 		</span>
 			 		<span  style="white-space: nowrap">
-				 		<span style="white-space: nowrap; margin-right: 5px;"><input type="radio" name="actionGroup" ng-disabled="drivingEvent.isDriving" ng-model="actionMode" value="action-route" id="destination"><label for="destination">Set end position</label></span>
-			 		  	<select style="margin-right: 10px;" ng-model="dstDirection" ng-options="dir.value as dir.label for dir in directions" ng-change="onChangeDstDirection()" ng-disabled="drivingEvent.isDriving">></select>
+				 		<span style="white-space: nowrap; margin-right: 5px;"><input type="radio" name="actionGroup" ng-disabled="isDriving" ng-model="actionMode" value="action-route" id="destination"><label for="destination">Set end position</label></span>
+			 		  	<select style="margin-right: 10px;" ng-model="dstDirection" ng-options="dir.value as dir.label for dir in directions" ng-change="onChangeDstDirection()" ng-disabled="isDriving">></select>
 			 		</span>
 			 	</div>	
 	 		</div>
 		 	<div class="marginTop-15"><strong>Route Option:</strong></div>
 			 	<div style="margin-top: 5px; margin-left: 10px;">
-			 		<span style="white-space: nowrap; margin-right: 10px;"><input type="checkbox" ng-disabled="drivingEvent.isDriving" ng-model="opt_avoid_events" ng-change="onAvoidEventChange()" id="avoid"><label for="avoid">Avoid events</label></span>
-			 		<span style="white-space: nowrap"><input type="checkbox" ng-disabled="drivingEvent.isDriving" ng-model="opt_route_loop" ng-change="onRouteLoop()" id="loop"><label for="loop">Loop between start and end positions</label></span>
+			 		<span style="white-space: nowrap; margin-right: 10px;"><input type="checkbox" ng-disabled="isDriving" ng-model="opt_avoid_events" ng-change="onAvoidEventChange()" id="avoid"><label for="avoid">Avoid events</label></span>
+			 		<span style="white-space: nowrap"><input type="checkbox" ng-disabled="isDriving" ng-model="opt_route_loop" ng-change="onRouteLoop()" id="loop"><label for="loop">Loop between start and end positions</label></span>
 			 	</div>	
 	 		</div>
  		</div>

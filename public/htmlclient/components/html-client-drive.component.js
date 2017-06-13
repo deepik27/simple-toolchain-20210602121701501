@@ -71,7 +71,7 @@
 			}
 
 			function updateDrvingEvent(probe) {
-				var event = {isDriving: simulatedVehicle.isDriving(), props:{}};
+				var event = {props:{}};
 				try {
 					if (probe) {
 						event.latitude = probe.matched_latitude || probe.latitude;
@@ -92,7 +92,9 @@
 			        	}
 					}
 		        	$scope.drivingEvent = event;
-	        		$scope.$apply();
+		        	if (probe)
+		        		$scope.$apply();
+//		        	$scope.isDriving = simulatedVehicle.isDriving();
 				} catch(e) {
 					console.error(e);
 				}
@@ -291,6 +293,7 @@
 			$scope.directions = [{label: "North", value: 0}, {label: "North East", value: 45}, {label: "East", value: 90}, {label: "South East", value: 135},
 				                      {label: "South", value: 180}, {label: "South West", value: 225}, {label: "West", value: 270}, {label: "North West", value: 315}];
         	$scope.drivingEvent = {};
+        	$scope.isDriving = simulatedVehicle.isDriving();
 		    $scope.routeSearching = true;
  			$scope.srcDirection = 0;
 			$scope.dstDirection = 0;
