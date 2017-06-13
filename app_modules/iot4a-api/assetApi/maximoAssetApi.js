@@ -57,7 +57,7 @@ var attributesMap = {
 				return assetspec;
 			}}
 		}, "rextend": function(asset) {
-			asset.assettype = "!CV!";
+			asset.assettype = "CV";
 		}},
 		"driver": {id: "personid", objectstructure: "IOTCVDRIVER", map: {
 			"personid": "driver_id",
@@ -197,15 +197,17 @@ var maximoAssetApi = {
 		var map = attributesMap[context] ? attributesMap[context].map : null;
 		return map ? _.keys(map) : null;
 	},
-	_getSearchCondition: function(context) {
-		var conditions = (attributesMap[context] && attributesMap[context].searchCondition) ? attributesMap[context].searchCondition() : null;
-		return _.map(conditions, function(value, key) {
+	_getSearchCondition: function(context, params) {
+		var makeCondition = function(value, key) {
 			if (_.isString(value)) {
 				return key + '=' + '"' + value + '"';
 			} else {
 				return key + '=' + value;
 			}
-		});
+		};
+		var obj = this._getMaximoObject(context, params);
+		var conditions = (attributesMap[context] && attributesMap[context].searchCondition) ? attributesMap[context].searchCondition() : null;
+		return _.map(obj, makeCondition).concat(_.map(conditions, makeCondition));
 	},
 	_filterAssets: function(context, assets) {
 		return (attributesMap[context] && attributesMap[context].filter) ? attributesMap[context].filter(assets) : assets;
@@ -267,7 +269,7 @@ var maximoAssetApi = {
 	getAssetList: function(context, params){
 		var deferred = Q.defer();
 		var attributes = this._getResourceObjectAttributes(context);
-		var conditions = this._getSearchCondition(context);
+		var conditions = this._getSearchCondition(context, params);
 		params = params || {};
 		Q.when(this._query(context, attributes, conditions, /*id*/null, params.num_rec_in_page, params.num_page), function(result) {
 			deferred.resolve({data: result});

@@ -178,7 +178,7 @@ _.extend(simulatedVehicleManager, {
 	
 	_createSimulatedDriver: function(){
 		var deferred = Q.defer();
-		var promise = iot4aAsset.addDriver({"name": DRIVER_NAME, "status":"Active"});
+		var promise = iot4aAsset.addDriver({"name": DRIVER_NAME, "driver_id": DRIVER_NAME, "status":"Active"});
 		Q.when(promise, function(response){
 			var data = {driver_id: response.id, name: DRIVER_NAME};
 			debug("Simulated driver was created");
@@ -190,12 +190,13 @@ _.extend(simulatedVehicleManager, {
 	},
 	
 	getSimulatorDriver: function() {
+		var self = this;
 		var deferred = Q.defer();
 		Q.when(iot4aAsset.getDriverList({"name": DRIVER_NAME}), function(response){
 			if (response && response.data && response.data.length > 0) {
 				deferred.resolve(response.data[0]);
 			} else {
-				Q.when(_createSimulatedDriver(), function(driver) {
+				Q.when(self._createSimulatedDriver(), function(driver) {
 					deferred.resolve(driver);
 				})["catch"](function(err){
 					deferred.reject(err);
@@ -205,7 +206,7 @@ _.extend(simulatedVehicleManager, {
 			var status = (err.response && (err.response.status||err.response.statusCode)) || 500;
 			if(status === 404){
 				// assume driver is not available 
-				Q.when(_createSimulatedDriver(), function(driver) {
+				Q.when(self._createSimulatedDriver(), function(driver) {
 					deferred.resolve(driver);
 				})["catch"](function(err){
 					deferred.reject(err);
