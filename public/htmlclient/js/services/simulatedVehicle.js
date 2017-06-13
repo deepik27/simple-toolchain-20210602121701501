@@ -231,6 +231,16 @@ angular.module('htmlClient')
 	        this.ws.onopen = function(){  
 	            console.log("Socket is opened");
 	        };
+	        this.ws.onclose = function(){
+	        	if (self.ws) {
+	        		// socket is disconnected unexpectedly. try to reconnect
+	        		self.ws = null;
+	        		setTimeout(function() {
+	        			console.log("socket is disconnected unexpectedly. try to reconnect");
+	        			self._watchChanges(properties);
+	        		}, 100);
+	        	}
+	        };
 	        this.ws.onmessage = function(message) {
 	        	var messageData = message && message.data;
 	        	if (!messageData) {
@@ -245,19 +255,23 @@ angular.module('htmlClient')
 	        		return;
 	        	}
 	        	
-	        	var data = jsonData.data;
-	        	var error = jsonData.error;
-	        	if (jsonData.type === 'probe') {
-	        		self._updateProbe(data, error);
-	        	} else if (jsonData.error) {
-	        		console.error("data error: " + error);
-	        	}
+	        	var jsonDataArray = jsonData.data;
+	        	jsonDataArray.forEach(function(jdata) {
+		        	var error = jdata.error;
+		        	if (jdata.type === 'probe') {
+		        		self._updateProbe(jdata.data, error);
+		        	} else if (jdata.error) {
+		        		console.error("data error: " + error);
+		        	}
+	        	});
 	        };
-    	},
+	    },
     	_clearWatch: function(watchId){
     		if (this.ws) {
-    			this.ws.close();
+    			console.log("closing socket");
+    			var ws = this.ws;
     			this.ws = null;
+    			ws.close();
     		}
     	},
  

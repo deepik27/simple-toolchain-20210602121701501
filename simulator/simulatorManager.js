@@ -29,6 +29,7 @@ var DEFAULT_TIMEOUT = (process.env.DEFAULT_SIMULATOR_TIMEOUT && parseInt(process
 _.extend(simulatorManager, {
 	wsServer: null,
 	simulatorInfoMap: {},
+	messageQueue: {},
 
 	/**
 	 * Create a simulator engine for given client. Default client is created if the clientId is not specified.
@@ -96,6 +97,11 @@ _.extend(simulatorManager, {
 			return Q.reject({statusCode: 404, message: "simulator does not exist."});
 		}
 		delete simulatorInfoMap[clientId];
+		delete this.messageQueue[clientId];
+		if (_.isEmpty(this.messageQueue) && this.intervalHandle) {
+			clearInterval(this.intervalHandle);
+			delete this.intervalHandle;
+		}
 		
 		var deferred = Q.defer();
 		Q.when(simulatorInfo.simulator.close(), function(result) {
@@ -156,9 +162,9 @@ _.extend(simulatorManager, {
 				callback (allow, statusCode);
 			}
 		});
-
+		
 		var self = this;
-		var sendClosedMessageToClient = function(clientId, vehicleId, message, json) {
+		var sendClosedMessageToClient = function(clientId, message, json) {
 			if (json) {
 				message = JSON.stringify(message);
 			}
@@ -172,19 +178,37 @@ _.extend(simulatorManager, {
 				console.error('socket error: ' + error);
 			}
 		};
-		
-		var sendMessageToClient = function(clientId, vehicleId, message, json) {
-			if (json) {
-				message = JSON.stringify(message);
-			}
+
+		var flushQueue = function() {
 			try {
-				_.each(self.wsServer.clients, function(client) {
-					if (client.clientId === clientId && client.vehicleId === vehicleId) {
-						client.send(message);
+				var clientsById = _.groupBy(self.wsServer.clients, "clientId");
+				_.each(clientsById, function(clients, clientId) {
+					var myMessageQueue = self.messageQueue[clientId];
+					if (!myMessageQueue || _.isEmpty(myMessageQueue)) {
+						return;
 					}
+					self.messageQueue[clientId] = {};
+					_.each(clients, function(client) {
+						var vehicleMessage = myMessageQueue[client.vehicleId];
+						if (!_.isEmpty(vehicleMessage)) {
+							client.send(JSON.stringify({data: vehicleMessage}));
+						}
+					});
 				});
 			} catch(error) {
 				console.error('socket error: ' + error);
+			}
+		};
+		
+		var sendMessageToClient = function(clientId, vehicleId, message, json) {
+			var myMessageQueue = self.messageQueue[clientId];
+			if (!myMessageQueue) {
+				return;
+			}
+			if (vehicleId) {
+				if (!myMessageQueue[vehicleId])
+					myMessageQueue[vehicleId] = [];
+				myMessageQueue[vehicleId].push(message);
 			}
 		};
 
@@ -221,7 +245,7 @@ _.extend(simulatorManager, {
 		//
 		this.wsServer.on('connection', function(client){
 			client.on('close', function () {
-				debug('client is disconnected');
+				console.log("client is disconnected. id=" + client.clientId + ", vid=" + client.vehicleId);
 				watchMethod(client, false);
 		    });
 			client.on('message', function (message) {
@@ -259,8 +283,15 @@ _.extend(simulatorManager, {
 							client.callbackOnClose = params[1] === 'true';
 					}
 				});
+				if (client.clientId && !self.messageQueue[client.clientId]) {
+					self.messageQueue[client.clientId] = {};
+				}
 			}
 			watchMethod(client, true);
+
+			if (!self.intervalHandle) {
+				self.intervalHandle = setInterval(_.bind(flushQueue, self), 1000);
+			}
 		});
 	}
 });

@@ -13,6 +13,7 @@
 	 <div class="mapProbe" ng-show="isDriving">
 	 					Location=({{drivingEvent.latitude||0}},{{drivingEvent.longitude||0}})<br> 
 	 					Speed={{(drivingEvent.speed/1.609344).toPrecision(3)}} MPH<br>
+	 					Heading={{(drivingEvent.heading).toPrecision(3)}}<br>
 	 					Fuel={{drivingEvent.props.fuel}}<br>
 	 					Engine Temperature={{(drivingEvent.props.engineTemp*9/5+32).toPrecision(3)}} F</div>
 	 <div class="mapMessage" ng-show="routeSearching">Searching route...</div>

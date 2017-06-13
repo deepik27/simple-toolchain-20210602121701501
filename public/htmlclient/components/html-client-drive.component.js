@@ -375,7 +375,7 @@
 				// notifed messages
 				var notifiedMessages = (notification && notification.notified_messages) || [];
 				notifiedMessages.forEach(function(message) {
-					console.log("notified message = " + message.message);
+//					console.log("notified message = " + message.message);
 				});
 			}
 	    	
@@ -1022,7 +1022,7 @@
 	
 	EventHelper.prototype.updateEvents = function updateEvents(force) {
 		var size = this.map.getSize();
-		if (!size) {
+		if (!size || isNaN(size[0]) || isNaN(size[1])) {
 			return;
 		}
 		
@@ -1293,7 +1293,7 @@
 	
 	GeofenceHelper.prototype.updateGeofences = function updateGeofences() {
 		var size = this.map.getSize();
-		if (!size) {
+		if (!size || isNaN(size[0]) || isNaN(size[1])) {
 			return;
 		}
 		
