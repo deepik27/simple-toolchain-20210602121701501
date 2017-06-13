@@ -6,8 +6,8 @@ declared-services:
     label: iotforautomotive
     plan: free_shared
 #  FleetIoTPlatform:
-#    label: iotforautomotive
-#    plan: free_shared
+#    label: iotf-service
+#    plan: iotf-service-free
 
 applications:
   - services:
