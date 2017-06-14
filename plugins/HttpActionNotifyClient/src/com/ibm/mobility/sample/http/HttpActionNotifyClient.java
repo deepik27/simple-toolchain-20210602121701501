@@ -88,6 +88,7 @@ public class HttpActionNotifyClient extends AbstractClient {
 		setUserAgent(ua);
 
 		String strPostUrl = loader.getPropertyValue(PROP_POST_URL);
+		strPostUrl += strPostUrl.endsWith("/") ? "" : "/" + "user/notifiedActions";
 		try {
 			this.postUrl = new URL(strPostUrl);
 			logger.info("Post actions to " + this.postUrl);

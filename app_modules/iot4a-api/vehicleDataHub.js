@@ -15,7 +15,7 @@ var request = require('./requestSecureGw.js');
 var debug = require('debug')('vehicleDataHub');
 debug.log = console.log.bind(console);
 
-var SEND_PROBE_USER_AGENT = process.env.SEND_PROBE_USER_AGENT; //DEFAULT_USER_AGENT of sample vdh plug-in is "IoT4A Starter App Fleet Management"
+var SEND_PROBE_USER_AGENT = process.env.SEND_PROBE_USER_AGENT || "IoT4A Starter App Fleet Management";
 
 _.extend(vehicleDataHub, {
 

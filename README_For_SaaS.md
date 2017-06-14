@@ -24,6 +24,49 @@ The Fleet Management Starter Application uses the following IBM Bluemix services
 To deploy and use the Fleet Management Starter Application, you need an instance of IBM IoT for Automotive that is deployed and running on either IBM SaaS or IBM Bluemix. To use the app with an instance of IBM IoT for Automotive on IBM Bluemix, see the following instructions: 
 [IBM for Automotive (Bluemix) - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fm).
 
+## Deploy plugins to IoT for Automotive SaaS
+There are two plugins for IoT for Automotive in order to run the Fleet Management Starter Application. They are contained in a same github repository with the Fleet Management Starter Application itself.
+
+|          Plugin        | Component              | Description                          |
+|------------------------|------------------------|--------------------------------------|
+| HttpActionNotifyClient | Vehicle Data Hub (VDH) | A VDH plugin which POSTs affected events and notified messages to the Fleet Management Starter Application in addition to responding to vehicles which sent probes to VDH. |
+| FleetAlert             | Agent                  | An Agent plugin which calculate fuel level from fuel tank capacity as a vehicle property and remaining fuel contained in probe. It will be used as a condition to send notifications of fuel warning to the Fleet Management Starter Application. |
+
+To deploy the plugins, complete all of the following steps:
+
+### Prerequisites
+1. Make sure that IoT for Automotive Plugin Deploy Tool has already set up for your SaaS environment. Ask administrators of your SaaS environment wheather it has done or not.
+1. Make sure that IoT for Automotive Plugin Development Tool (Eclipse IDE and its plugin) has already set up on your local environment according to <u>IoT for Automotive Plug-In Programmer's Guide</u>. Ask administorators of your SaaS environment from where you can download the guide and tools.
+
+### Import plugin projects
+1. Launch the eclipse
+1. Open Git perspective (Window > Perspective > Open Perspective > Other...)
+1. Click "Clone a Git repository" link in Git Repositories view
+1. Select GitHub and click Next
+1. Input iota-starter-server-fm-saas and click Search
+1. Select ibm-watson-iot/iota-starter-server-fm-saas and click Next
+1. Check master branch and click Next
+1. Set Directory and click Finish
+1. Right click the created repository and select Import Projects...
+1. Select "Import existing Eclipse projects" and click Next
+1. Select FleetAlert and HttpActionNotifyClient and click Finish
+
+### Modify VDH configuration file (gatway.properties)
+1. Download current gateway.properties from VDH using IoT for Automotive Plugin Deploy Tool
+1. Increment `client.num` in the gateway.properties
+1. Open Java perspective (WIndow > Perspective > Open Perspective > Other...)
+1. Copy contents in HttpActionNotifyClient/conf/gateway.properties and paste it into the downloaded gateway.properties
+1. Replace `<n>` to proper number
+1. Replace `postUrl` to your fleet management server which will be deployed in subsequent steps
+
+### Build & Deploy
+1. Right click HttpActionNotifyClient project in Package Explorer view and select Export...
+1. Select Java > JAR file and click Next
+1. Input file name in JAR file field and click Finish
+1. Deploy exported HttpActionNotifyClient jar file and modified gateway.properties as a VDH plugin using IoT for Automotive Plugin Deploy Tool
+1. In the same manner, export FleetAlert project as a jar file and deploy it as a Agent plugin
+1. Restart IoT for Automotive compornents using IoT for Automotive Plugin Deploy Tool as needed
+
 ## Deploying the app
 
 Deploy the Fleet Management Starter Application on IBM Bluemix either automatically or manually, as outlined in the following instructions.
@@ -51,7 +94,7 @@ To manually deploy the Fleet Management Starter Application on IBM Bluemix, comp
   git clone https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git  
   ```  
 4. Change to the directory that you created.
-5. Edit the `manifest.yml` file and change the values of `<name>` and `<host>` to something unique.
+5. Edit the `manifest.yml` file and change the values of `<name>` and `<host>` to something unique. `<host>` must be same with `postUrl` in gateway.properties.
 
   ```
   applications:
