@@ -366,27 +366,43 @@ angular.module('htmlClient')
 				console.error("Error[" + status + "]: " + error);
 				deferred.reject(error);
 			});
-    		return deferred.promise;
-    	},
-    	setProperties: function(properties) {
-    		this.properties = properties;
- 			var deferred = $q.defer();
-			$http(mobileClientService.makeRequestOption({
-				method: "PUT",
-				url: '/user/simulator/vehicle/' + this.vehicleId + '?command=properties',
-				headers: {
-					"iota-simulator-uuid": this.clientId
-				},
-				data: {parameters: properties}
-			})).success(function(result, status){
-				deferred.resolve(result);
-			}).error(function(error, status){
-				console.error("Error[" + status + "]: " + error);
-				deferred.reject(error);
-			});
-    		return deferred.promise;
-    	}
-   };
-    return service;
-})
-;
+				return deferred.promise;
+			},
+			setProperties: function(properties) {
+				this.properties = properties;
+				var deferred = $q.defer();
+				$http(mobileClientService.makeRequestOption({
+					method: "PUT",
+					url: '/user/simulator/vehicle/' + this.vehicleId + '?command=properties',
+					headers: {
+						"iota-simulator-uuid": this.clientId
+					},
+					data: {parameters: properties}
+				})).success(function(result, status){
+					deferred.resolve(result);
+				}).error(function(error, status){
+					console.error("Error[" + status + "]: " + error);
+					deferred.reject(error);
+				});
+				return deferred.promise;
+			},
+			unsetProperties: function(/*Array*/ propertyNames){
+				var deferred = $q.defer();
+				$http(mobileClientService.makeRequestOption({
+					method: "PUT",
+					url: '/user/simulator/vehicle/' + this.vehicleId + '?command=unsetproperties',
+					headers: {
+						"iota-simulator-uuid": this.clientId
+					},
+					data: {parameters: propertyNames}
+				})).success(function(result, status){
+					deferred.resolve(result);
+				}).error(function(error, status){
+					console.error("Error[" + status + "]: " + error);
+					deferred.reject(error);
+				});
+				return deferred.promise;
+			}
+		};
+		return service;
+});

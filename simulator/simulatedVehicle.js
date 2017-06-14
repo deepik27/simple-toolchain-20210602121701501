@@ -310,6 +310,9 @@ simulatedVehicle.prototype.setProperties = function(properties) {
 			delete this.fixedProps[key];
 		} else {
 			this.fixedProps[key] = value;
+			if (this.propProviders[key] !== undefined) {
+				this.propProviders[key].updateValue(value);
+			}
 		}
 	}.bind(this));
 };

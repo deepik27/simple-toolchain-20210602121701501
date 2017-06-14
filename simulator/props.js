@@ -22,13 +22,14 @@ propSimulator.prototype.getValue = function() {
 propSimulator.prototype.setValueRange = function(min, max, def) {
 	this.minValue = min;
 	this.maxValue = max;
-	this.defalutValue = def;
+	this.defaultValue = def;
 	if (isNaN(this.value)) {
 		this.value = def;
 	}
 };
 
-propSimulator.prototype.updateValue = function() {
+propSimulator.prototype.updateValue = function(value) {
+	this.value = value;
 	if (this.value === undefined) {
 		this.value = this.defaultValue;
 	}
