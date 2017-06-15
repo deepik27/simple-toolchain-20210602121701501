@@ -149,7 +149,7 @@ _.extend(driverInsightsGeofence, {
 		Q.when(this._getAvailableRuleId(), function(ids) {
 			var rule = {rule_id: ids.id, description: "geofence rule", type: "Action", status: "active"};
 			var rule_xml_id = ids.xmlid;
-			Q.when(iot4aAsset.addRule(rule, self._createGeofenceEmptyRuleXML(rule_xml_id)), function(response) {
+			Q.when(iot4aAsset.addRule(rule, self._createGeofenceEmptyRuleXML(rule_xml_id), true), function(response) {
 				var promises = [];
 				var geofence_id = response.id;
 				var ruleXML = self._createGeofenceRuleXML(geofence_id, geofence, rule_xml_id);

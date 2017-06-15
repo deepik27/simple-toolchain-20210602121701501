@@ -159,7 +159,7 @@ _.extend(asset, {
 		var deferred = Q.defer();
 		var self = this;
 		if (overwrite) {
-			Q.when(this._assetApi.updateRule(id, rule, ruleXML), function(response) {
+			Q.when(this._assetApi.updateRule(id, rule, ruleXML, overwrite, !noRefresh), function(response) {
 				deferred.resolve(response);
 			})["catch"](function(err){
 				deferred.reject(err);
@@ -226,7 +226,7 @@ _.extend(asset, {
 		if(!queue){
 			queue = this._refreshQueue[context] = {};
 		}
-		debug("Refresh Queue: onGoing=" + queue.onGoing + ", waiting=" + queue.waiting);
+		debug("Refresh Queue[" + context + "] onGoing=" + queue.onGoing + ", waiting=" + queue.waiting);
 		if(queue.onGoing){
 			if(!queue.waiting){
 				var self = this;
@@ -234,8 +234,8 @@ _.extend(asset, {
 				Q.when(queue.onGoing, function(){
 					queue.onGoing = self._assetApi.refreshAsset(context);
 					delete queue.waiting;
-					Q.when(queue.onGoing, function(){
-						deferred.resolve();
+					Q.when(queue.onGoing, function(result){
+						deferred.resolve(result);
 						delete queue.onGoing;
 					})
 				});

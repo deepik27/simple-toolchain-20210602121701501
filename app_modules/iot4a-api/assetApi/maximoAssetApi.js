@@ -579,7 +579,7 @@ var maximoAssetApi = {
 		if (pagesize) {
 			url += '&oslc.pageSize=' + pagesize;
 		}
-		if (pageno) {
+		if (pageno > 1) {
 			url += '&pageno=' + pageno;
 		}
 
