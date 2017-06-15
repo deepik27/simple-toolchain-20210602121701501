@@ -11,22 +11,8 @@
  * Generate and get mobile client uuid that is substitute for mobile user id
  */
 angular.module('htmlClient')
-.factory('mobileClientService', function($q, $timeout, settingsService) {
+.factory('mobileClientService', function($q, $timeout) {
     return {
-		settings: null,
-		
-		/*
-		 * get client uuid
-		 */
-		getMobileDeviceId: function() {
-			var settings = this.getSettings();
-			return settings.mobileClientUuid;
-		},
-
-		uuid: function() {
-			return chance.guid();
-		},
-		
 		/*
 		 * add client uuid to http request option. call this for any request that requires authentication
 		 */
@@ -36,28 +22,9 @@ angular.module('htmlClient')
 			if (request.method && request.method.toLowerCase() === "get")	 {
 				request.headers["If-Modified-Since"] = (new Date(0)).toUTCString(); // to avoid IE cache issue
 			}
-			request.headers["iota-starter-uuid"] = this.getMobileDeviceId();
 			if (!request.dataType)
 				request.dataType = "json";
 			return request;
-		},
-		
-		getSettings: function() {
-			if (this.settings)
-				return this.settings;
-			var settings = settingsService.loadSettings("mobileClientService", {});
-			if (!settings.mobileClientUuid) {
-				settings.mobileClientUuid = this.uuid();
-				this.updateSettings(settings);
-			} else {
-				this.settings = settings;
-			}
-			return settings;
-		},
-		
-		updateSettings: function(settings) {
-			this.settings = settings;
-			settingsService.saveSettings("mobileClientService", settings);
 		}
 	};
 })

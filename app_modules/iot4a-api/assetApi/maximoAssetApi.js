@@ -57,7 +57,7 @@ var attributesMap = {
 				return assetspec;
 			}}
 		}, "rextend": function(asset) {
-			asset.assettype = "!CV!";
+			asset.assettype = "CV";
 		}},
 		"driver": {id: "personid", objectstructure: "IOTCVDRIVER", map: {
 			"personid": "driver_id",
@@ -197,15 +197,17 @@ var maximoAssetApi = {
 		var map = attributesMap[context] ? attributesMap[context].map : null;
 		return map ? _.keys(map) : null;
 	},
-	_getSearchCondition: function(context) {
-		var conditions = (attributesMap[context] && attributesMap[context].searchCondition) ? attributesMap[context].searchCondition() : null;
-		return _.map(conditions, function(value, key) {
+	_getSearchCondition: function(context, params) {
+		var makeCondition = function(value, key) {
 			if (_.isString(value)) {
 				return key + '=' + '"' + value + '"';
 			} else {
 				return key + '=' + value;
 			}
-		});
+		};
+		var obj = this._getMaximoObject(context, params);
+		var conditions = (attributesMap[context] && attributesMap[context].searchCondition) ? attributesMap[context].searchCondition() : null;
+		return _.map(obj, makeCondition).concat(_.map(conditions, makeCondition));
 	},
 	_filterAssets: function(context, assets) {
 		return (attributesMap[context] && attributesMap[context].filter) ? attributesMap[context].filter(assets) : assets;
@@ -267,8 +269,9 @@ var maximoAssetApi = {
 	getAssetList: function(context, params){
 		var deferred = Q.defer();
 		var attributes = this._getResourceObjectAttributes(context);
-		var conditions = this._getSearchCondition(context);
-		Q.when(this._query(context, attributes, conditions), function(result) {
+		var conditions = this._getSearchCondition(context, params);
+		params = params || {};
+		Q.when(this._query(context, attributes, conditions, /*id*/null, params.num_rec_in_page, params.num_page), function(result) {
 			deferred.resolve({data: result});
 		})["catch"](function(err){
 			deferred.reject(err);
@@ -310,7 +313,7 @@ var maximoAssetApi = {
 						result = {id: asset.mo_id, siteid: asset.siteid};
 					}
 					if (refresh) {
-						Q.when(self.refreshAsset(context), function(refreshed){
+						Q.when(self._refreshAsset(context), function(refreshed){
 							deferred.resolve(result);
 						})["catch"](function(err){
 							deferred.reject(err);
@@ -352,6 +355,11 @@ var maximoAssetApi = {
 		return deferred.promise;
 	},
 	/*
+	 * To be overridden by queue requests function
+	 */
+	_refreshAsset: function(context){return this.refreshAsset(context);},
+
+	/*
 	 * Delete an asset
 	 */
 	deleteAsset: function(context, id, refresh){
@@ -361,13 +369,13 @@ var maximoAssetApi = {
 		Q.when(this._query(context, null, null, id), function(result) {
 			Q.when(self._request(result.href + '?lean=1', 'POST', 'DELETE'), function(result) {
 				if (refresh) {
-					Q.when(self.refreshAsset(context), function(refreshed){
+					Q.when(self._refreshAsset(context), function(refreshed){
 						deferred.resolve({id: id});
 					})["catch"](function(err){
 						deferred.reject(err);
 					}).done();
 				} else {
-					deferred.resolve(result);
+					deferred.resolve({id: id});
 				}
 			})["catch"](function(err){
 				deferred.reject(err);
@@ -389,13 +397,13 @@ var maximoAssetApi = {
 		return deferred.promise;
 	},
 	
-	addRule: function(rule, ruleXML){
+	addRule: function(rule, ruleXML, refresh){
 		var deferred = Q.defer();
 		var context = 'rule';
 		if (ruleXML) {
 			rule.rule = ruleXML.replace(/\n|\r/g, '');
 		}
-		Q.when(this.addOrUpdateAsset(context, null, rule, true), function(result) {
+		Q.when(this.addOrUpdateAsset(context, null, rule, refresh), function(result) {
 			deferred.resolve({id: rule.rule_id});
 		})["catch"](function(err){
 			deferred.reject(err);
@@ -403,13 +411,13 @@ var maximoAssetApi = {
 		return deferred.promise;
 	},
 	
-	updateRule: function(id, rule, ruleXML, overwrite) {
+	updateRule: function(id, rule, ruleXML, overwrite, refresh) {
 		var deferred = Q.defer();
 		var context = 'rule';
 		if (ruleXML) {
 			rule.rule = ruleXML.replace(/\n|\r/g, '');
 		}
-		Q.when(this.addOrUpdateAsset(context, id, rule, true), function(result) {
+		Q.when(this.addOrUpdateAsset(context, id, rule, refresh), function(result) {
 			deferred.resolve(result);
 		})["catch"](function(err){
 			deferred.reject(err);
@@ -571,7 +579,7 @@ var maximoAssetApi = {
 		if (pagesize) {
 			url += '&oslc.pageSize=' + pagesize;
 		}
-		if (pageno) {
+		if (pageno > 1) {
 			url += '&pageno=' + pageno;
 		}
 

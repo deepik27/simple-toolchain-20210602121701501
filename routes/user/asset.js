@@ -16,7 +16,7 @@ var _ = require('underscore');
 var debug = require('debug')('device');
 debug.log = console.log.bind(console);
 
-var driverInsightsAsset = require('../../driverInsights/asset.js');
+var iot4aAsset = app_module_require('iot4a-api/asset.js');
 
 var authenticate = require('./auth.js').authenticate;
 
@@ -33,7 +33,7 @@ function handleAssetError(res, err) {
 
 router.post("/vehicle", authenticate, function(req, res){
 	var vehicle = req.body && req.body.vehicle;
-	Q.when(driverInsightsAsset.addVehicle(vehicle), function(response){
+	Q.when(iot4aAsset.addVehicle(vehicle), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -44,7 +44,7 @@ router.get("/vehicle", authenticate, function(req, res){
 	if (req.query.num_rec_in_page || req.query.num_page) {
 		params = {num_rec_in_page: req.query.num_rec_in_page||50, num_page: req.query.num_page||1};
 	}
-	Q.when(driverInsightsAsset.getVehicleList(params), function(response){
+	Q.when(iot4aAsset.getVehicleList(params), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -52,7 +52,7 @@ router.get("/vehicle", authenticate, function(req, res){
 });
 router.get("/vehicle/:vehicleId", authenticate, function(req, res){
 	var vehicleId = req.params.vehicleId;
-	Q.when(driverInsightsAsset.getVehicle(vehicleId), function(response){
+	Q.when(iot4aAsset.getVehicle(vehicleId), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -61,7 +61,7 @@ router.get("/vehicle/:vehicleId", authenticate, function(req, res){
 router.put("/vehicle/:vehicleId", authenticate, function(req, res){
 	var vehicleId = req.params.vehicleId;
 	var overwrite = !req.query.addition || req.query.addition.toLowerCase() !== 'true';
-	Q.when(driverInsightsAsset.updateVehicle(vehicleId, req.body, overwrite), function(response){
+	Q.when(iot4aAsset.updateVehicle(vehicleId, req.body, overwrite), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -69,7 +69,7 @@ router.put("/vehicle/:vehicleId", authenticate, function(req, res){
 });
 router["delete"]("/vehicle/:vehicleId", authenticate, function(req, res){
 	var vehicleId = req.params.vehicleId;
-	Q.when(driverInsightsAsset.deleteVehicle(vehicleId), function(response){
+	Q.when(iot4aAsset.deleteVehicle(vehicleId), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -78,7 +78,7 @@ router["delete"]("/vehicle/:vehicleId", authenticate, function(req, res){
 
 router.post("/driver", authenticate, function(req, res){
 	var driver = req.body && req.body.driver;
-	Q.when(driverInsightsAsset.addDriver(driver), function(response){
+	Q.when(iot4aAsset.addDriver(driver), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -89,7 +89,7 @@ router.get("/driver", authenticate, function(req, res){
 	if (req.query.num_rec_in_page || req.query.num_page) {
 		params = {num_rec_in_page: req.query.num_rec_in_page||50, num_page: req.query.num_page||1};
 	}
-	Q.when(driverInsightsAsset.getDriverList(params), function(response){
+	Q.when(iot4aAsset.getDriverList(params), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -97,7 +97,7 @@ router.get("/driver", authenticate, function(req, res){
 });
 router.get("/driver/:driverId", authenticate, function(req, res){
 	var driverId = req.params.driverId;
-	Q.when(driverInsightsAsset.getDriver(driverId), function(response){
+	Q.when(iot4aAsset.getDriver(driverId), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -106,7 +106,7 @@ router.get("/driver/:driverId", authenticate, function(req, res){
 router.put("/driver/:driverId", authenticate, function(req, res){
 	var driverId = req.params.driverId;
 	var overwrite = !req.query.addition || req.query.addition.toLowerCase() !== 'true';
-	Q.when(driverInsightsAsset.updateDriver(driverId, req.body, overwrite), function(response){
+	Q.when(iot4aAsset.updateDriver(driverId, req.body, overwrite), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -114,7 +114,7 @@ router.put("/driver/:driverId", authenticate, function(req, res){
 });
 router["delete"]("/driver/:driverId", authenticate, function(req, res){
 	var driverId = req.params.driverId;
-	Q.when(driverInsightsAsset.deleteDriver(driverId), function(response){
+	Q.when(iot4aAsset.deleteDriver(driverId), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -122,7 +122,7 @@ router["delete"]("/driver/:driverId", authenticate, function(req, res){
 });
 router.post("/vendor", authenticate, function(req, res){
 	var vendor = req.body && req.body.vendor;
-	Q.when(driverInsightsAsset.addVendor(vendor), function(response){
+	Q.when(iot4aAsset.addVendor(vendor), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -133,7 +133,7 @@ router.get("/vendor", authenticate, function(req, res){
 	if (req.query.num_rec_in_page || req.query.num_page) {
 		params = {num_rec_in_page: req.query.num_rec_in_page||50, num_page: req.query.num_page||1};
 	}
-	Q.when(driverInsightsAsset.getVendorList(params), function(response){
+	Q.when(iot4aAsset.getVendorList(params), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -141,7 +141,7 @@ router.get("/vendor", authenticate, function(req, res){
 });
 router.get("/vendor/:vendor", authenticate, function(req, res){
 	var vendor = req.params.vendor;
-	Q.when(driverInsightsAsset.getVendor(vendor), function(response){
+	Q.when(iot4aAsset.getVendor(vendor), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -150,7 +150,7 @@ router.get("/vendor/:vendor", authenticate, function(req, res){
 router.put("/vendor/:vendor", authenticate, function(req, res){
 	var vendor = req.params.vendor;
 	var overwrite = !req.query.addition || req.query.addition.toLowerCase() !== 'true';
-	Q.when(driverInsightsAsset.updateVendor(vendor, req.body, overwrite), function(response){
+	Q.when(iot4aAsset.updateVendor(vendor, req.body, overwrite), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -158,7 +158,7 @@ router.put("/vendor/:vendor", authenticate, function(req, res){
 });
 router["delete"]("/vendor/:vendor", authenticate, function(req, res){
 	var vendor = req.params.vendor;
-	Q.when(driverInsightsAsset.deleteVendor(vendor), function(response){
+	Q.when(iot4aAsset.deleteVendor(vendor), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -166,7 +166,7 @@ router["delete"]("/vendor/:vendor", authenticate, function(req, res){
 });
 router.post("/eventtype", authenticate, function(req, res){
 	var eventtype = req.body && req.body.eventtype;
-	Q.when(driverInsightsAsset.addEventType(eventtype), function(response){
+	Q.when(iot4aAsset.addEventType(eventtype), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -177,7 +177,7 @@ router.get("/eventtype", authenticate, function(req, res){
 	if (req.query.num_rec_in_page || req.query.num_page) {
 		params = {num_rec_in_page: req.query.num_rec_in_page||50, num_page: req.query.num_page||1};
 	}
-	Q.when(driverInsightsAsset.getEventTypeList(params), function(response){
+	Q.when(iot4aAsset.getEventTypeList(params), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -185,7 +185,7 @@ router.get("/eventtype", authenticate, function(req, res){
 });
 router.get("/eventtype/:event_type", authenticate, function(req, res){
 	var id = req.params.event_type;
-	Q.when(driverInsightsAsset.getEventType(id), function(response){
+	Q.when(iot4aAsset.getEventType(id), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -193,7 +193,7 @@ router.get("/eventtype/:event_type", authenticate, function(req, res){
 });
 router.put("/eventtype/:event_type", authenticate, function(req, res){
 	var id = req.params.event_type;
-	Q.when(driverInsightsAsset.updateEventType(id, req.body), function(response){
+	Q.when(iot4aAsset.updateEventType(id, req.body), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -201,7 +201,7 @@ router.put("/eventtype/:event_type", authenticate, function(req, res){
 });
 router["delete"]("/eventtype/:event_type", authenticate, function(req, res){
 	var id = req.params.event_type;
-	Q.when(driverInsightsAsset.deleteEventType(id), function(response){
+	Q.when(iot4aAsset.deleteEventType(id), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -209,7 +209,7 @@ router["delete"]("/eventtype/:event_type", authenticate, function(req, res){
 });
 router.post("/rule", authenticate, function(req, res){
 	var rule = req.body && req.body.rule;
-	Q.when(driverInsightsAsset.addRule(rule), function(response){
+	Q.when(iot4aAsset.addRule(rule), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -220,7 +220,7 @@ router.get("/rule", authenticate, function(req, res){
 	if (req.query.num_rec_in_page || req.query.num_page) {
 		params = {num_rec_in_page: req.query.num_rec_in_page||50, num_page: req.query.num_page||1};
 	}
-	Q.when(driverInsightsAsset.getRuleList(params), function(response){
+	Q.when(iot4aAsset.getRuleList(params), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -228,7 +228,7 @@ router.get("/rule", authenticate, function(req, res){
 });
 router.get("/rule/:rule_id", authenticate, function(req, res){
 	var rule_id = req.params.rule_id;
-	Q.when(driverInsightsAsset.getRule(rule_id), function(response){
+	Q.when(iot4aAsset.getRule(rule_id), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -236,7 +236,7 @@ router.get("/rule/:rule_id", authenticate, function(req, res){
 });
 router.put("/rule/:rule_id", authenticate, function(req, res){
 	var rule_id = req.params.rule_id;
-	Q.when(driverInsightsAsset.updateRule(rule_id, req.body), function(response){
+	Q.when(iot4aAsset.updateRule(rule_id, req.body), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
@@ -244,7 +244,7 @@ router.put("/rule/:rule_id", authenticate, function(req, res){
 });
 router["delete"]("/rule/:rule_id", authenticate, function(req, res){
 	var rule_id = req.params.rule_id;
-	Q.when(driverInsightsAsset.deleteRule(rule_id), function(response){
+	Q.when(iot4aAsset.deleteRule(rule_id), function(response){
 		res.send(response);
 	})["catch"](function(err){
 		return handleAssetError(res, err);
