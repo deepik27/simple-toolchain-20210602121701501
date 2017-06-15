@@ -139,7 +139,7 @@ To build and deploy the plugins, complete the following steps:
 1. Input a file name in the **JAR file** field and click **Finish**
 1. Deploy exported jar file and modified gateway.properties to a VDH server using IoT for Automotive Plugin Deploy Tool
 1. In the same manner, export the `FleetAlert` project as a jar file and deploy it to an Agent server
-1. Restart IoT for Automotive compornents using IoT for Automotive Plugin Deploy Tool as needed
+1. Restart IoT for Automotive components using IoT for Automotive Plugin Deploy Tool as needed
 
 ## <a id="connect2iot4a"></a> Connecting the app to your IBM IoT for Automotive service
 
