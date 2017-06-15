@@ -101,17 +101,17 @@ To manually deploy the Fleet Management Starter Application on IBM Bluemix, comp
 **Result:** Your very own instance of the IBM IoT for Automotive - Fleet Management Starter Application is now deployed on Bluemix.
 
 ## Deploying custom plugins to your IoT for Automotive instance
-To run the Fleet Management Starter Application with your IoT for Automotive instance, the following two custom plugins must be deployed to your IoT for Automotive instance. The source code of the plugins is contained in `plugins` folder under the Fleet Management Starter Application repository.
+To run the Fleet Management Starter Application with your IoT for Automotive instance, the following two custom plugins must be deployed to your IoT for Automotive instance. The source code of the plugins is contained in `plugins` folder under the Fleet Management Starter Application repository.
 
 |          Plugin        | Component              | Description                          |
 |------------------------|------------------------|--------------------------------------|
 | HttpActionNotifyClient | Vehicle Data Hub (VDH) | A VDH plugin that accepts sendCarProbe requests from simulated vehicles and POSTs affected events and notified messages to the Fleet Management Starter Application. |
 | FleetAlert             | Agent                  | A rule plugin that calculates fuel level from fuel tank capacity of a vehicle and remaining fuel in received probe. A fuel alert rule estimates the value to generate a fuel warning to be notified to the Fleet Management Starter Application. |
 
-To build and deploy the plugins, complete the following steps:
+To build and deploy the plugins, complete the following steps:
 
 ### Prerequisites
-1. IoT for Automotive Plugin Deployment Tool has been installed on your IoT for Automotive SaaS instance. Ask an administrator of the IoT for Automotive SaaS offering if it has not been done.
+1. IoT for Automotive Plugin Deployment Tool has been installed on your IoT for Automotive SaaS instance. Ask an administrator of the IoT for Automotive SaaS offering if it has not been done.
 1. IoT for Automotive Plugin Development Tool has been installed on your eclipse IDE according to <u>IoT for Automotive Plug-In Programmer's Guide</u>. Ask an administrator of your IoT for Automotive SaaS offering to get the guide and tool.
 1. The Fleet Management Starter Application Git repository exists on your local environment. If you don't have, clone it by using the following console command.
     ```
