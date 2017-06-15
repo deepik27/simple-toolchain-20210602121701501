@@ -156,8 +156,6 @@
 				<!-- exclude saas files -->
 				<exclude name="**/manifest_For_SaaS.yml"/>
 				<exclude name="**/README_For_SaaS.md"/>
-				<exclude name="**/plugins" unless="env.saas"/>
-				<exclude name="**/plugins/**/*" unless="env.saas"/>
 				<exclude name="**/driverInsights/alertrules/*.xml" unless="env.saas"/>
  				<exclude name="**/driverInsights/alertrules/*.js" if="env.saas"/>
 			</fileset>
@@ -166,6 +164,8 @@
     				@see https://ant.apache.org/manual/dirtasks.html
     			 -->
 				<include name="**/.gitignore"/>
+				<exclude name="**/plugins" unless="env.saas"/>
+				<exclude name="**/plugins/**/*" unless="env.saas"/>
 			</fileset>
 		</copy>
 		
