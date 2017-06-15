@@ -14,9 +14,8 @@ var Q = new require('q');
 var moment = require("moment");
 
 var dbClient = require('./../cloudantHelper.js');
-var driverInsightsAsset = require('./asset.js');
 var ruleGenerator = require('./ruleGenerator.js');
-var assetApiFactory = require("./assetApi/assetApiFactory.js");
+var iot4aAsset = app_module_require('iot4a-api/asset.js');
 
 var debug = require('debug')('geofence');
 debug.log = console.log.bind(console);
@@ -67,8 +66,7 @@ _.extend(driverInsightsGeofence, {
 	},
 
 	isAvailable: function() {
-		var api = assetApiFactory.getAssetApi();
-		return api && api.isNative && api.isNative();
+		return iot4aAsset.isSaaS();
 	},
 	
 	queryGeofence: function(min_latitude, min_longitude, max_latitude, max_longitude) {
@@ -151,11 +149,11 @@ _.extend(driverInsightsGeofence, {
 		Q.when(this._getAvailableRuleId(), function(ids) {
 			var rule = {rule_id: ids.id, description: "geofence rule", type: "Action", status: "active"};
 			var rule_xml_id = ids.xmlid;
-			Q.when(driverInsightsAsset.addRule(rule, self._createGeofenceEmptyRuleXML(rule_xml_id)), function(response) {
+			Q.when(iot4aAsset.addRule(rule, self._createGeofenceEmptyRuleXML(rule_xml_id), true), function(response) {
 				var promises = [];
 				var geofence_id = response.id;
 				var ruleXML = self._createGeofenceRuleXML(geofence_id, geofence, rule_xml_id);
-				promises.push(driverInsightsAsset.updateRule(geofence_id, rule, ruleXML, true));
+				promises.push(iot4aAsset.updateRule(geofence_id, rule, ruleXML, true));
 				promises.push(self._createDoc(response.id, {geofence: geofence, rule_xml_id: rule_xml_id}));
 				
 				Q.all(promises).then(function(data) {
@@ -179,7 +177,7 @@ _.extend(driverInsightsGeofence, {
 			var rule = {description: "geofence rule", type: "Action", status: "active"};
 			var ruleXML = self._createGeofenceRuleXML(geofence_id, geofence, doc.rule_xml_id);
 			var promises = [];
-			promises.push(driverInsightsAsset.updateRule(geofence_id, rule, ruleXML, true));
+			promises.push(iot4aAsset.updateRule(geofence_id, rule, ruleXML, true));
 			promises.push(self._updateDoc(geofence_id, {geofence: geofence}));
 			Q.all(promises).then(function(data) {
 				deferred.resolve({id: geofence_id});
@@ -195,8 +193,8 @@ _.extend(driverInsightsGeofence, {
 	_deleteGeofenceRule: function(rule_id, successOnNoExists) {
 		var deferred = Q.defer();
 		var rule = {description: "geofence being removed", type: "Action", status: "inactive"};
-		Q.when(driverInsightsAsset.updateRule(rule_id, rule, null, true), function(response) {
-			Q.when(driverInsightsAsset.deleteRule(rule_id), function(response) {
+		Q.when(iot4aAsset.updateRule(rule_id, rule, null, true), function(response) {
+			Q.when(iot4aAsset.deleteRule(rule_id), function(response) {
 				deferred.resolve({id: rule_id});
 			})["catch"](function(err){
 				if (err.statusCode === 404 && successOnNoExists) {
@@ -261,7 +259,7 @@ _.extend(driverInsightsGeofence, {
 				latitude: geofenceJson.geometry.latitude,
 				longitude: geofenceJson.geometry.longitude,
 				radius: geofenceJson.geometry.radius
-			}
+			};
 		} else {
 			ruleJson.condition.location_condition = {
 				range: range,
@@ -269,7 +267,7 @@ _.extend(driverInsightsGeofence, {
 				start_longitude: geofenceJson.geometry.min_longitude,
 				end_latitude: geofenceJson.geometry.max_latitude,
 				end_longitude: geofenceJson.geometry.max_longitude
-			}
+			};
 		}
 		if (geofenceJson.target) {
 			ruleJson.target = {};

@@ -19,7 +19,7 @@ The Fleet Management Starter Application uses the following services that are av
 - [IoT for Automotive (Experimental)](https://console.ng.bluemix.net/catalog/services/iot-for-automotive/)
 - [Cloudant NoSQL DB](https://console.ng.bluemix.net/catalog/services/cloudant-nosql-db/)
 
-You can also use the Fleet Management Starter Application together with an instance of the IBM IoT for Automotive SaaS offering on IBM SoftLayer. For more information, see [IBM for Automotive (SaaS) - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fleetmanagement/README_For_SaaS.md ).
+You can also use the Fleet Management Starter Application together with an instance of the IBM IoT for Automotive SaaS offering on IBM SoftLayer. For more information, see [IBM for Automotive (SaaS) - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fm-saas ).
  
 ## Deploying the app on Bluemix
 

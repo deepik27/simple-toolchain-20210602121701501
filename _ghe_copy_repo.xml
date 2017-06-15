@@ -156,6 +156,8 @@
 				<!-- exclude saas files -->
 				<exclude name="**/manifest_For_SaaS.yml"/>
 				<exclude name="**/README_For_SaaS.md"/>
+				<exclude name="**/driverInsights/alertrules/*.xml" unless="env.saas"/>
+ 				<exclude name="**/driverInsights/alertrules/*.js" if="env.saas"/>
 			</fileset>
 			<fileset dir="${src.clone}" defaultexcludes="no">
 				<!-- include files from default excludes (? .gitattributes, .gitmodules)

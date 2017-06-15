@@ -13,8 +13,8 @@ var _ = require("underscore");
 var Q = new require('q');
 var chance = require('chance')();
 var asset = require("./asset.js");
-var IOTF = require('../iotfclient');
-var driverInsightsProbe = require("../driverInsights/probe.js");
+var IOTF = app_module_require('iotfclient');
+var probeInterface = app_module_require("utils/probe.js");
 
 _.extend(probe, {
 	// server-side generated trip id list. 
@@ -118,8 +118,8 @@ _.extend(probe, {
 				var probe = {
 					mo_id: mo_id,
 					trip_id: payload.trip_id,
-					lng: payload.lng,
-					lat: payload.lat,
+					longitude: payload.lng || payload.longitude,
+					latitude: payload.lat || payload.latitude,
 					speed: payload.speed || 0,
 					heading: payload.heading || 0
 				};
@@ -148,8 +148,7 @@ _.extend(probe, {
 				}
 				
 				// Send car probe to VDH
-				driverInsightsProbe.sendRawData(probe, function(data) {
-				});
+				probeInterface.sendCarProbe(probe);
 			})["catch"](function(err) {
 				console.error(err);
 			}).done();

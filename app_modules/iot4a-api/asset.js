@@ -7,6 +7,8 @@
  *
  * You may not use this file except in compliance with the license.
  */
+var asset = module.exports = {};
+
 var _ = require("underscore");
 var Q = new require('q');
 var debug = require('debug')('asset');
@@ -14,7 +16,7 @@ debug.log = console.log.bind(console);
 
 var assetApiFactory = require("./assetApi/assetApiFactory.js");
 
-var driverInsightsAsset = {
+_.extend(asset, {
 	_assetApi: null,
 	
 	_init: function(){
@@ -22,6 +24,7 @@ var driverInsightsAsset = {
 		if (!this._assetApi) {
 			throw new Exception("!!! no provided credentials for Asset Data Management. using shared one !!!");
 		}
+		this._assetApi._refreshAsset = _.bind(this._refreshAsset, this);
 	},
 
 	_mergeObject: function(obj1, obj2) {
@@ -34,12 +37,15 @@ var driverInsightsAsset = {
 				}
 			}
 		}
-		for (var key in obj2) {
-			if (!(key in obj1)) {
-				obj1[key] = obj2[key];
+		for (var key2 in obj2) {
+			if (!(key2 in obj1)) {
+				obj1[key2] = obj2[key2];
 			}
 		}
 		return obj1;
+	},
+	isSaaS: function() {
+		return this._assetApi && this._assetApi.isNative && this._assetApi.isNative();
 	},
 	/*
 	 * Vehicle apis
@@ -98,18 +104,18 @@ var driverInsightsAsset = {
 	getVendorList: function(params){
 		return this._getAssetList("vendor", params);
 	},
-	getVendor: function(vendor){
-		return this._getAsset("vendor", vendor);
+	getVendor: function(vendor_id){
+		return this._getAsset("vendor", vendor_id);
 	},
 	addVendor: function(vendor){
 		vendor = _.extend({"status":"active"}, vendor||{});
-		return this._addAsset("vendor", vendor, false);
+		return this._addAsset("vendor", vendor, false /* Vendor doesn't need to be synchronized with agent. */);
 	},
 	updateVendor: function(id, vendor, overwrite){
 		return this._updateAsset("vendor", id || vendor.vendor, vendor, overwrite, false);
 	},
-	deleteVendor: function(vendor){
-		return this._deleteAsset("vendor", vendor);
+	deleteVendor: function(vendor_id){
+		return this._deleteAsset("vendor", vendor_id, false);
 	},
 
 	/*
@@ -146,14 +152,14 @@ var driverInsightsAsset = {
 	getRuleXML: function(id){
 		return this._assetApi.getRuleXML(id);
 	},
-	addRule: function(rule, ruleXML){
-		return this._assetApi.addRule(rule, ruleXML);
+	addRule: function(rule, ruleXML, noRefresh){
+		return this._assetApi.addRule(rule, ruleXML, !noRefresh);
 	},
-	updateRule: function(id, rule, ruleXML, overwrite) {
+	updateRule: function(id, rule, ruleXML, overwrite, noRefresh) {
 		var deferred = Q.defer();
 		var self = this;
 		if (overwrite) {
-			Q.when(this._assetApi.updateRule(id, rule, ruleXML), function(response) {
+			Q.when(this._assetApi.updateRule(id, rule, ruleXML, overwrite, !noRefresh), function(response) {
 				deferred.resolve(response);
 			})["catch"](function(err){
 				deferred.reject(err);
@@ -163,7 +169,7 @@ var driverInsightsAsset = {
 				rule = self._mergeObject(existingRule, rule);
 				Q.when(self.getRuleXML(id), function(existingXML) {
 					ruleXML = ruleXML || existingXML;
-					Q.when(self.updateRule(id, rule, ruleXML, true), function(response) {
+					Q.when(self.updateRule(id, rule, ruleXML, true, noRefresh), function(response) {
 						deferred.resolve(response);
 					})["catch"](function(err){
 						deferred.reject(err);
@@ -175,8 +181,11 @@ var driverInsightsAsset = {
 		}
 		return deferred.promise;
 	},
-	deleteRule: function(id){
-		return this._deleteAsset("rule", id);
+	refreshRule: function(){
+		return this._refreshAsset("rule");
+	},
+	deleteRule: function(id, noRefresh){
+		return this._deleteAsset("rule", id, !noRefresh);
 	},
 	/*
 	 * Get list of assets
@@ -211,8 +220,32 @@ var driverInsightsAsset = {
 	/*
 	 * Refresh assets
 	 */
+	_refreshQueue: {},
 	_refreshAsset: function(context) {
-		return this._assetApi.refreshAsset(context);
+		var queue = this._refreshQueue[context];
+		if(!queue){
+			queue = this._refreshQueue[context] = {};
+		}
+		debug("Refresh Queue[" + context + "] onGoing=" + queue.onGoing + ", waiting=" + queue.waiting);
+		if(queue.onGoing){
+			if(!queue.waiting){
+				var self = this;
+				var deferred = Q.defer();
+				Q.when(queue.onGoing, function(){
+					queue.onGoing = self._assetApi.refreshAsset(context);
+					delete queue.waiting;
+					Q.when(queue.onGoing, function(result){
+						deferred.resolve(result);
+						delete queue.onGoing;
+					})
+				});
+				queue.waiting = deferred.promise;
+			}
+			return queue.waiting;
+		}else{
+			queue.onGoing = this._assetApi.refreshAsset(context);
+			return queue.onGoing;
+		}
 	},
 	/*
 	 * Update an asset
@@ -256,7 +289,6 @@ var driverInsightsAsset = {
 		}
 		return this._assetApi.deleteAsset(context, id, refresh);
 	}
-};
-driverInsightsAsset._init();
+});
 
-module.exports = driverInsightsAsset;
+asset._init();

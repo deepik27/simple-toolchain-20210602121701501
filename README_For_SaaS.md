@@ -22,7 +22,7 @@ The Fleet Management Starter Application uses the following IBM Bluemix services
 
 ## Prerequisites
 To deploy and use the Fleet Management Starter Application, you need an instance of IBM IoT for Automotive that is deployed and running on either IBM SaaS or IBM Bluemix. To use the app with an instance of IBM IoT for Automotive on IBM Bluemix, see the following instructions: 
-[IBM for Automotive (Bluemix) - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fm-saas).
+[IBM for Automotive (Bluemix) - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fm).
 
 ## Deploying the app
 
@@ -51,7 +51,7 @@ To manually deploy the Fleet Management Starter Application on IBM Bluemix, comp
   git clone https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git  
   ```  
 4. Change to the directory that you created.
-5. Edit the `manifest.yml` file and change the values of `<name>` and `<host>` to something unique.
+5. Edit the `manifest.yml` file and change the values of `<name>` and `<host>` to something unique. `<host>` must be same with `postUrl` in gateway.properties.
 
   ```
   applications:
@@ -99,6 +99,73 @@ To manually deploy the Fleet Management Starter Application on IBM Bluemix, comp
   **Important:** When you run the `push` command, you must include the `--no-start` option as you must complete further steps manually before you start the app.
 
 **Result:** Your very own instance of the IBM IoT for Automotive - Fleet Management Starter Application is now deployed on Bluemix.
+
+## Deploying custom plugins to your IoT for Automotive instance
+To run the Fleet Management Starter Application with your IoT for Automotive instance, the following two custom plugins must be deployed to your IoT for Automotive instance. The source code of the plugins is contained in `plugins` folder under the Fleet Management Starter Application repository.
+
+|          Plugin        | Component              | Description                          |
+|------------------------|------------------------|--------------------------------------|
+| HttpActionNotifyClient | Vehicle Data Hub (VDH) | A VDH plugin that accepts sendCarProbe requests from simulated vehicles and POSTs affected events and notified messages to the Fleet Management Starter Application. |
+| FleetAlert             | Agent                  | A rule plugin that calculates fuel level from fuel tank capacity of a vehicle and remaining fuel in received probe. A fuel alert rule estimates the value to generate a fuel warning to be notified to the Fleet Management Starter Application. |
+
+To build and deploy the plugins, complete the following steps:
+
+### Prerequisites
+1. IoT for Automotive Plugin Deployment Tool has been installed on your IoT for Automotive SaaS instance. Ask an administrator of the IoT for Automotive SaaS offering if it has not been done.
+1. IoT for Automotive Plugin Development Tool has been installed on your eclipse IDE according to <u>IoT for Automotive Plug-In Programmer's Guide</u>. Ask an administrator of your IoT for Automotive SaaS offering to get the guide and tool.
+1. The Fleet Management Starter Application Git repository exists on your local environment. If you don't have, clone it by using the following console command.
+    ```
+    git clone https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git
+    ```
+
+### Import custom plugin projects to your eclipse IDE
+1. Launch the eclipse that contains IoT for Automotive Plugin Development Tool
+1. Open Git perspective (**Window > Perspective > Open Perspective > Other...**)
+1. Click **Add an existing local Git repository** link on Git Repositories view
+   (You can also clone the repository by selecting **Clone a Git repository**)
+1. Specify a directory that contains the Fleet Management Starter Application Git repository
+1. Select the Fleet Management Starter Application Git repository and click **Finish**
+1. Right click the added repository on Git Repositories view and select **Import Projects...**
+1. Select **Import existing Eclipse projects** and click **Next**
+1. Select `FleetAlert` and `HttpActionNotifyClient` and click **Finish**
+
+### Export custom plugin jars
+1. Open Java perspective (**WIndow > Perspective > Open Perspective > Other...**) in your eclipse
+1. Right click the `HttpActionNotifyClient` project in **Package Explorer** view and select **Export...**
+1. Select **Java > JAR file** and click **Next**
+1. Input a file name in the **JAR file** field and click **Finish**
+1. In the same manner, export the `FleetAlert` project as a jar file
+
+### Update a VDH configuration file (gatway.properties)
+1. Download a copy of gateway.properties that has been deployed on VDH server using IoT for Automotive Plugin Deploy Tool
+1. Open the gateway.properties file with a text editor
+1. Increment `client.num` in the gateway.properties
+1. Insert the following two lines before the DefaultHTTPClient client definition.
+   ```
+   client.client1=com.ibm.mobility.sample.http.HttpActionNotifyClient
+   client.client1.protocol=http
+   ```
+1. Renumber all the existing client definition keys so as not to conflict with each other. For instance:
+   ```
+   client.client2=com.ibm.mobility.autodrive.client.def.DefaultHTTPClient
+   client.client2.protocol=http
+   client.client2.agent=SM_API
+   ```
+1. Insert the following client unique properties
+   ```
+   HttpActionNotifyClient.postUrl=https://<your-iota-starter-fleetmanagement>.mybluemix.net
+   HttpActionNotifyClient.postUser=starter
+   HttpActionNotifyClient.postPassword=Starter4Iot
+   ```
+   Replace `postUrl` with your Fleet Management app URL, and replace postUser and postPassword with the right credentials if you have changed them.
+1. Save the changes and close the editor
+
+A fragment of the gateway.properties file exists under `conf` folder of the `HttpActionNotifyClient` project. You can copy contents from the file.
+
+### Deploy custom plugins to IoT for Automotive
+1. Deploy exported `HttpActionNotifyClient` jar and updated gateway.properties to a VDH server using IoT for Automotive Plugin Deploy Tool
+1. Deploy export the `FleetAlert` jar to an Agent server
+1. Restart IoT for Automotive components using IoT for Automotive Plugin Deploy Tool as needed
 
 ## <a id="connect2iot4a"></a> Connecting the app to your IBM IoT for Automotive service
 
@@ -182,7 +249,7 @@ The starter app also provides a mobile app to connect to an OBDII dongle plugged
 1. Open the IBM IoT for Automotive service.
 1. Select **Connections** tab at the left navigation bar.
 1. Click **Connect New**.
-1. Select *IBM Watson IoT Platform* service, and then click *Create* to bind the service.
+1. Select *IBM Watson IoT Platform* service, and then click **Create** to bind the service.
 
 ### Create a device type for your device
 
