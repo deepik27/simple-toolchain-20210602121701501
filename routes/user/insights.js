@@ -19,6 +19,7 @@ var router = module.exports = require('express').Router();
 var authenticate = require('./auth.js').authenticate;
 var driverInsightsProbe = require('../../driverInsights/probe');
 var driverInsightsAlert = require('../../driverInsights/fleetalert.js');
+var driverInsightsAnalysis = require('../../driverInsights/analysis.js');
 var iot4aContextMapping = app_module_require('iot4a-api/contextMapping');
 var iot4aVehicleDataHub = app_module_require('iot4a-api/vehicleDataHub');
 var dbClient = require('../../cloudantHelper.js');
@@ -239,6 +240,34 @@ router.post("/event", function(req, res){
 
 router["delete"]("/event", function(req, res){
 	iot4aContextMapping.deleteEvent(req.query.event_id).then(function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
+
+router.get("/capability/analysis", authenticate, function(req, res) {
+	res.send({available: driverInsightsAnalysis.isAvailable()});
+});
+
+router.get('/analysis/latesttrip/:mo_id', authenticate, function(req, res) {
+	Q.when(driverInsightsAnalysis.getLatestTrip(req.params.mo_id), function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
+
+router.get('/analysis/behaviors/:mo_id', authenticate, function(req, res) {
+	Q.when(driverInsightsAnalysis.getTripBehavior(req.params.mo_id, req.query.trip_id, req.query.lastHours), function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
+
+router.get("/analysis/triproutes/:mo_id", function(req, res){
+	Q.when(driverInsightsAnalysis.getTripRoute(req.params.mo_id, req.query.trip_id, req.query.lastHours), function(msg){
 		res.send(msg);
 	})["catch"](function(error){
 		handleAssetError(res, error);

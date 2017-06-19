@@ -1679,6 +1679,7 @@ ul.thermometer li::before
     .column-5-med,
     .column-6-med,
     .column-7-med,
+    .column-8-med,
     .column-9-med,
     .column-10-med
     {
@@ -1695,6 +1696,7 @@ ul.thermometer li::before
     .noOffsetRow .column-5-med,
     .noOffsetRow .column-6-med,
     .noOffsetRow .column-7-med,
+    .noOffsetRow .column-8-med,
     .noOffsetRow .column-9-med,
     .noOffsetRow .column-10-med
     {

@@ -8,6 +8,9 @@
   </div>
   <h3>Vehicle ID: {{device?.vehicle?.serial_number || mo_id}}</h3>
 
+  <div class="row" *ngIf="isAnalysisAvailable" style="margin-top:30px;margin-bottom:10px;">
+    <driver-behavior class="column-12-med"></driver-behavior>
+  </div>
   <status-meter [minValue]="0" [maxValue]="100"
     [value]="((probeData?.speed||0)/1.609344).toPrecision(3)" status=""
     title="Speed" valueSuffix="" valueUnit="MPH" graphType="gauge">
