@@ -10,7 +10,7 @@
 import * as ol from 'openlayers';
 
 import { ActivatedRoute, Params } from '@angular/router';
-import { Component, Input, Output, OnInit, OnChanges, SimpleChange, ViewChild } from '@angular/core';
+import { Component, Input, Output, OnInit, OnChanges, OnDestroy, SimpleChange, ViewChild } from '@angular/core';
 import { HttpClient } from '../../shared/http-client';
 import { Response, Headers, RequestOptions } from '@angular/http';
 import { Observable }     from 'rxjs/Observable';
@@ -241,6 +241,9 @@ export class DriverBehaviorComponent implements OnInit {
 		this.loadDriverBehavior();
   }
 
+	OnDestroy() {
+	}
+
 	loadDriverBehavior() {
 		this.tripRouteHttpError = undefined;
 		this.behaviorHttpError = undefined;
@@ -275,8 +278,10 @@ export class DriverBehaviorComponent implements OnInit {
 						return; // no trip_features
 					}
 					var tripFeatures = [].concat(data.trip_features);
-					this.tripFeatures = _.sortBy(tripFeatures.map(function(p){
+					this.tripFeatures = _.sortBy(_.filter(tripFeatures.map(function(p){
 						return {name: p.feature_name, value: p.feature_value};
+					}), function(feature) {
+						return !_.contains(["month_of_year", "day_of_week", "day_of_month"], feature.name);
 					}), function(feature) {
 						return feature.name;
 					});

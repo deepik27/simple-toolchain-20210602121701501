@@ -25,6 +25,7 @@ import * as _ from 'underscore';
   moduleId: module.id,
   selector: 'fmdash-car-status',
   templateUrl: 'car-status.component.html',
+  styleUrls: ['car-status.component.css'],
 })
 export class CarStatusComponent implements OnInit {
   private mo_id: string;
@@ -34,6 +35,7 @@ export class CarStatusComponent implements OnInit {
   private device: RealtimeDeviceData;
   private probeData: any; // probe data to show
   private isAnalysisAvailable: boolean = false;
+  private realtimeMode: boolean = true;
 
   constructor(
     private route: ActivatedRoute,
@@ -110,5 +112,9 @@ export class CarStatusComponent implements OnInit {
       this.proveDataSubscription.unsubscribe();
       this.proveDataSubscription = null;
     }
+  }
+
+  setRealtimeMode(mode:boolean) {
+    this.realtimeMode = mode;
   }
 }

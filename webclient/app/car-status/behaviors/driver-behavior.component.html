@@ -34,7 +34,7 @@
 				<span class="list-group-item behavior-list-item"
 					*ngFor="let feature of tripFeatures">
 					<div>{{feature.name}}</div>
-					<div>{{feature.value}}</div>
+					<div>{{feature.value|number:'1.0-2'}}</div>
 				</span>
 			</div>
 		</div>
