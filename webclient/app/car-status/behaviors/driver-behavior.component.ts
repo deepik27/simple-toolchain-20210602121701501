@@ -258,48 +258,68 @@ export class DriverBehaviorComponent implements OnInit {
 					} finally {
 						this.loading = false;
 					}
+					this.driverBehaviorService.getDrivingBehavior(this.mo_id, trip_id).subscribe(data => {
+						if (!data || !data.ctx_sub_trips) {
+							return; // no content
+						}
+						var subTrips = [].concat(data.ctx_sub_trips);
+						var behaviorDetails = _.flatten(_.pluck(subTrips, 'driving_behavior_details'));
+						behaviorDetails = behaviorDetails.sort((a, b) => {return a.start_time - b.start_time;});
+						var detailIndex = 0;
+						var detailList = [];
+						this.trip.forEach(probe => {
+							for(var i=detailIndex; i<behaviorDetails.length; i++){
+								if(probe.timestamp >= behaviorDetails[i].start_time){
+									behaviorDetails[i].route = [];
+									detailList.push(behaviorDetails[i]);
+									detailIndex++;
+								}else{
+									break;
+								}
+							}
+							detailList.forEach(detail => {
+								detail.route.push({
+									longitude: probe.matched_longitude||probe.longitude,
+									latitude: probe.matched_latitude||probe.latitude
+								});
+							});
+							detailList = detailList.filter(detail => {return probe.timestamp < 	detail.end_time;});
+						});
+						var byName = _.groupBy(behaviorDetails, function(d){ return d.behavior_name; });
+
+						this.behaviors = _.sortBy(_.pairs(byName).map(function(p){
+							return {name: p[0], details: p[1]};
+						}), function(behavior) {
+							return behavior.name;
+						});
+						this.selectedBehavior = this.behaviors[0];
+						this.setSelectedBehavior(this.selectedBehavior);
+						
+						// features
+						if (!data.trip_features) {
+							return; // no trip_features
+						}
+						var tripFeatures = [].concat(data.trip_features);
+						this.tripFeatures = _.sortBy(_.filter(tripFeatures.map(function(p){
+							return {name: p.feature_name, value: p.feature_value};
+						}), function(feature) {
+							return !_.contains(["month_of_year", "day_of_week", "day_of_month"], feature.name);
+						}), function(feature) {
+							return feature.name;
+						});
+					}, error => {
+						if (error.status === 400) {
+							// The trajectory may be too short to analyze. 
+						} else {
+							this.behaviorHttpError = error.message || error._body || error;
+						}
+					});
 				}, error => {
 					this.loading = false;
 					this.tripRouteHttpError = error.message || error._body || error;
 				});
-
-				this.driverBehaviorService.getDrivingBehavior(this.mo_id, trip_id).subscribe(data => {
-					if (!data || !data.ctx_sub_trips) {
-						return; // no content
-					}
-					var subTrips = [].concat(data.ctx_sub_trips);
-					var behaviorDetails = _.flatten(_.pluck(subTrips, 'driving_behavior_details'));
-					var byName = _.groupBy(behaviorDetails, function(d){ return d.behavior_name; });
-
-					this.behaviors = _.sortBy(_.pairs(byName).map(function(p){
-						return {name: p[0], details: p[1]};
-					}), function(behavior) {
-						return behavior.name;
-					});
-					this.selectedBehavior = this.behaviors[0];
-					this.setSelectedBehavior(this.selectedBehavior);
-					
-					// features
-					if (!data.trip_features) {
-						return; // no trip_features
-					}
-					var tripFeatures = [].concat(data.trip_features);
-					this.tripFeatures = _.sortBy(_.filter(tripFeatures.map(function(p){
-						return {name: p.feature_name, value: p.feature_value};
-					}), function(feature) {
-						return !_.contains(["month_of_year", "day_of_week", "day_of_month"], feature.name);
-					}), function(feature) {
-						return feature.name;
-					});
-				}, error => {
-					if (error.status === 400) {
-						// The trajectory may be too short to analyze. 
-					} else {
-						this.behaviorHttpError = error.message || error._body || error;
-					}
-				});
 			}, error => {
-				this.tripRouteHttpError = error.message || error._body || error;
+				this.tripRouteHttpError = error.message || error;
 			})
 		}
 	}
