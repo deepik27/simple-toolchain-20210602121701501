@@ -124,19 +124,39 @@ routeGenerator.prototype.updateRoute = function(locs) {
 };
 
 // find a random location in about 5km from the specified location
-routeGenerator.prototype._getDestLoc = function(slat, slng, heading){
+routeGenerator.prototype._getRandomLoc = function(slat, slng){
+	var deferred = Q.defer();
 	var ddist = (Math.random()/2 + 0.5) * 0.025 / 2;
 	var dtheta = 2 * Math.PI * Math.random();
-	var dlat = 0;
-	var dlng = 0;
-	if(this.destination){
-		dlat = this.destination.lat;
-		dlng = this.destination.lon;
-	}else{
-		dlat = +slat + ddist * Math.sin(dtheta);
-		dlng = +slng + ddist * Math.cos(dtheta);
+	var dlat = +slat + ddist * Math.sin(dtheta);
+	var dlng = +slng + ddist * Math.cos(dtheta);
+	return {lat: dlat, lng: dlng};
+};
+
+routeGenerator.prototype._generateAnchors = function(slat, slng, sheading) {
+	var deferred = Q.defer();
+	var locs = [];
+	if (this.destination) {
+		locs.push({lat: slat, lng: slng, heading: sheading});
+		locs.push({lat: this.destination.lat, lng: this.destination.lon, heading: this.destination.heading});
+		deferred.resolve(locs);
+	} else {
+		var promises = [];
+		var numPoints = 3;
+		var porg = {lat: slat, lng: slng};
+		for (var i = 0; i < numPoints; i++) {
+			var pdst = i === (numPoints - 1) ? {lat: slat, lng: slng} : this._getRandomLoc(slat, slng);
+			var heading = this._calcHeading(porg, pdst);
+			promises.push(iot4aContextMapping.matchMapFirst(porg.lat, porg.lng, heading));
+			porg = pdst;
+		}
+		Q.all(promises).then(function(results) {
+			deferred.resolve(_.filter(results, function(loc) {return loc;}));
+		})["catch"](function(error){
+			deferred.reject(error);
+		});
 	}
-	return {lat: dlat, lng: dlng, heading: (this.destination ? this.destination.heading : heading)};
+	return deferred.promise;
 };
 
 // reset trip route
@@ -145,37 +165,32 @@ routeGenerator.prototype._resetRoute = function(){
 	var slng = this.prevLoc.lon;
 	var sheading = this.prevLoc.heading;
 	var speed = this.prevLoc.speed;
-	
 	var loop = !this.destination || (this.options && this.options.route_loop);
-	var locs = [];
-	locs.push({lat: slat, lng: slng, heading: sheading});
-	locs.push(this._getDestLoc(slat, slng, sheading));
-	if (!this.destination) {
-		locs.push(this._getDestLoc(slat, slng, sheading));
-	}
 
 	var deferred = Q.defer();
 	var self = this;
-	Q.when(this._createRoutes(locs, loop), function(routeArray){
-		self.tripRouteIndex = 0;
-		self.tripRoute = routeArray;
-		if (routeArray.length > 0) {
-			self.prevLoc = routeArray[0];
-			self.prevLoc.heading = self._calcHeading(routeArray[0], routeArray[1]);
-		} else if (self.prevLoc.heading === undefined) {
-			self.prevLoc.heading = sheading;
-		}
-		self.prevLoc.speed = speed;
-		if (self.callback) {
-			self.callback({data: {route: self.tripRoute, loop: loop, current: self.prevLoc, destination: self.destination, options: self.options}, type: 'route'});
-		}
-		deferred.resolve(routeArray);
-	})["catch"](function(error){
-		if (self.callback) {
-			self.callback({data: {loop: loop, current: self.prevLoc, destination: self.destination, options: self.options}, error: error, type: 'route'});
-		}
-		deferred.reject(error);
-	}).done();
+	Q.when(this._generateAnchors(slat, slng, sheading), function(locs) {
+		Q.when(self._createRoutes(locs, loop), function(routeArray){
+			self.tripRouteIndex = 0;
+			self.tripRoute = routeArray;
+			if (routeArray.length > 0) {
+				self.prevLoc = routeArray[0];
+				self.prevLoc.heading = self._calcHeading(routeArray[0], routeArray[1]);
+			} else if (self.prevLoc.heading === undefined) {
+				self.prevLoc.heading = sheading;
+			}
+			self.prevLoc.speed = speed;
+			if (self.callback) {
+				self.callback({data: {route: self.tripRoute, loop: loop, current: self.prevLoc, destination: self.destination, options: self.options}, type: 'route'});
+			}
+			deferred.resolve(routeArray);
+		})["catch"](function(error){
+			if (self.callback) {
+				self.callback({data: {loop: loop, current: self.prevLoc, destination: self.destination, options: self.options}, error: error, type: 'route'});
+			}
+			deferred.reject(error);
+		}).done();
+	});
 	return deferred.promise;
 };
 
