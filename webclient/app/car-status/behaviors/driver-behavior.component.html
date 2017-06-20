@@ -24,7 +24,18 @@
 				</a>
 			</div>
 		</div>
+	</div>
+	</div>
 
+	<!-- driving behavior map -->
+	<div *ngIf="tripRouteHttpError" class="alert alert-danger" role="alert">{{tripRouteHttpError}}</div>
+	<div class="column-8-med trip-details-map">
+		<div class="html-client-trip-detail">
+			<div id="carmonitor" class="behaviorMap">
+				<div id="carmonitorpop"></div>
+			</div>
+			<table id="legend"></table>
+		</div>
 		<div *ngIf="!loading && tripFeatures && trip" class="trip-details">
 			<div class="list-group">
 				<div class="list-group-item behavior-list-header">
@@ -37,18 +48,6 @@
 					<div>{{feature.value|number:'1.0-2'}}</div>
 				</span>
 			</div>
-		</div>
-	</div>
-	</div>
-
-	<!-- driving behavior map -->
-	<div *ngIf="tripRouteHttpError" class="alert alert-danger" role="alert">{{tripRouteHttpError}}</div>
-	<div class="column-8-med trip-details-map">
-		<div class="html-client-trip-detail">
-			<div id="carmonitor" class="behaviorMap">
-				<div id="carmonitorpop"></div>
-			</div>
-			<table id="legend"></table>
 		</div>
 	</div>
 </div>
