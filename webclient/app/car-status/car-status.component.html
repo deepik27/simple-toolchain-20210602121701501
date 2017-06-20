@@ -1,7 +1,7 @@
 <div *ngIf="probeData!=null">
   <ul class="marginTop tabs" *ngIf="isAnalysisAvailable">
   　   <li [class.selected]="realtimeMode"><a href="javascript:void(0)" (click)="setRealtimeMode(true)">Realtime Car Status</a>
-  　   <li [class.selected]="!realtimeMode"><a href="javascript:void(0)" (click)="setRealtimeMode(false)">Trip Information</a>
+  　   <li [class.selected]="!realtimeMode"><a href="javascript:void(0)" (click)="setRealtimeMode(false)">Driving Analysis</a>
   </ul>
 </div>  
 <div class="card primary">

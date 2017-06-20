@@ -70,7 +70,7 @@ _.extend(driverBehavior, {
 			if (!error && response.statusCode >= 200 && response.statusCode < 300) {
 				deferred.resolve(body);
 			} else {
-				deferred.reject(error || {statusCode: response.statusCode || 500, message: "Function is not supported or not available temporarily."});
+				deferred.reject(error || {statusCode: response.statusCode || 500, message: response.body || "Function is not supported or not available temporarily."});
 			}
 		});
 		return deferred.promise;

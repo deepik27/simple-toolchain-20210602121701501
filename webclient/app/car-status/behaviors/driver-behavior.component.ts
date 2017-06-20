@@ -249,15 +249,21 @@ export class DriverBehaviorComponent implements OnInit {
 		this.behaviorHttpError = undefined;
 		if (this.mo_id) {
 			this.driverBehaviorService.getTripId(this.mo_id).subscribe(trip_id => {
+				this.loading = true;
+				this.behaviors = [];
+				this.tripFeatures = [];
 				this.driverBehaviorService.getCarProbeHistory(this.mo_id, trip_id).subscribe(data => {
-					this.updateTripRoute(data);
+					try {
+						this.updateTripRoute(data);
+					} finally {
+						this.loading = false;
+					}
 				}, error => {
-					this.tripRouteHttpError = error.message || error;
+					this.loading = false;
+					this.tripRouteHttpError = error.message || error._body || error;
 				});
 
-				this.loading = true;
 				this.driverBehaviorService.getDrivingBehavior(this.mo_id, trip_id).subscribe(data => {
-					this.loading = false;
 					if (!data || !data.ctx_sub_trips) {
 						return; // no content
 					}
@@ -285,13 +291,15 @@ export class DriverBehaviorComponent implements OnInit {
 					}), function(feature) {
 						return feature.name;
 					});
-					
 				}, error => {
-					this.loading = false;
-					this.behaviorHttpError = error.message || error;
+					if (error.status === 400) {
+						// The trajectory may be too short to analyze. 
+					} else {
+						this.behaviorHttpError = error.message || error._body || error;
+					}
 				});
 			}, error => {
-				this.tripRouteHttpError = error.message || error;
+				this.tripRouteHttpError = error.message || error._body || error;
 			})
 		}
 	}
