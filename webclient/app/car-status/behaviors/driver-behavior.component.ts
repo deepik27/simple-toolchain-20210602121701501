@@ -416,10 +416,13 @@ export class DriverBehaviorComponent implements OnInit {
 			this.behaviorLayer.getSource().clear();
 			if(!details) return;
 			
-			let features:any = [].concat(details.details).map(function(detail){
-				return this.createRouteLine({longitude: detail.start_longitude, latitude: detail.start_latitude}, 
-													{longitude: detail.end_longitude, latitude: detail.end_latitude}, this.BEHAVIOR_DETAIL_STYLE);
-			}.bind(this));
+			let features:any = _.flatten([].concat(details.details).map(function(detail){
+				let route = [];
+				for(let i=0; i<detail.route.length-1; i++){
+					route.push(this.createRouteLine(detail.route[i], detail.route[i+1], this.BEHAVIOR_DETAIL_STYLE));
+				}
+				return route;
+			}.bind(this)));
 			this.behaviorLayer.getSource().addFeatures(features);
 		};
 }
