@@ -21,6 +21,7 @@ import { MapGeofenceHelper } from '../../shared/map-geofence-helper';
 import { GeofenceService } from '../../shared/iota-geofence.service';
 import { DriverBehaviorService } from '../../shared/iota-driver-behavior.service';
 import { LocationService, MapArea } from '../../shared/location.service';
+import { AlertService } from '../../shared/alert.service';
 
 declare var $; // jQuery from <script> tag in the index.html
 // as bootstrap type definitoin doesn't extend jQuery $'s type definition
@@ -55,6 +56,7 @@ export class DriverBehaviorComponent implements OnInit {
 	BEHAVIOR_DETAIL_STYLE: ol.style.Style;
 	behaviors = [];
 	tripFeatures = [];
+	alerts = [];
 	selectedBehavior: any;
 	trip: any;
 	loading: boolean = false;
@@ -67,7 +69,8 @@ export class DriverBehaviorComponent implements OnInit {
 						private locationService: LocationService, 
 						private eventService: EventService,
 						private geofenceService: GeofenceService,
-						private driverBehaviorService: DriverBehaviorService) {
+						private driverBehaviorService: DriverBehaviorService,
+						private alertService: AlertService) {
 		this.START_PIN_STYLE = this.getIconStyle('/images/MarkerGreen.png', [79,158], 0.1);
 		this.END_PIN_STYLE = this.getIconStyle('/images/MarkerRed.png', [79,158], 0.1);
  		this.TRIP_ROUTE_STYLE = this.getLineStyle('blue', 3);
@@ -265,10 +268,10 @@ export class DriverBehaviorComponent implements OnInit {
 						var subTrips = [].concat(data.ctx_sub_trips);
 						var behaviorDetails = _.flatten(_.pluck(subTrips, 'driving_behavior_details'));
 						behaviorDetails = behaviorDetails.sort((a, b) => {return a.start_time - b.start_time;});
-						var detailIndex = 0;
-						var detailList = [];
+						let detailIndex = 0;
+						let detailList = [];
 						this.trip.forEach(probe => {
-							for(var i=detailIndex; i<behaviorDetails.length; i++){
+							for(let i=detailIndex; i<behaviorDetails.length; i++){
 								if(probe.timestamp >= behaviorDetails[i].start_time){
 									behaviorDetails[i].route = [];
 									detailList.push(behaviorDetails[i]);
@@ -313,6 +316,35 @@ export class DriverBehaviorComponent implements OnInit {
 						} else {
 							this.behaviorHttpError = error.message || error._body || error;
 						}
+					});
+
+					let from = this.trip[0].timestamp;
+					let to = this.trip[this.trip.length-1].timestamp;
+					this.alertService.getAlert({from: from, to: to, mo_id: this.mo_id, includeClosed: true, limit: 200}).subscribe(data => {
+						var alerts = data.alerts;
+						alerts.sort((a, b) => {return a.ts - b.ts;});
+						let alertIndex = 0;
+						let alertList = [];
+						this.trip.forEach(probe => {
+							for(let i=alertIndex; i<alerts.length; i++){
+								if(probe.timestamp >= alerts[i].ts){
+									alerts[i].route = [];
+									alertList.push(alerts[i]);
+									alertIndex++;
+								}else{
+									break;
+								}
+							}
+							alertList.forEach(alert => {
+								alert.route.push({
+									longitude: probe.matched_longitude||probe.longitude,
+									latitude: probe.matched_latitude||probe.latitude
+								});
+							});
+							alertList = alertList.filter(alert => {return alert.closed_ts < 0 || probe.timestamp < alert.closed_ts;});
+						});
+						var byType = _.groupBy(alerts, "description");
+						this.alerts = _.sortBy(_.pairs(byType).map(p => {return {name: p[0], details: p[1]};}), "name");
 					});
 				}, error => {
 					this.loading = false;

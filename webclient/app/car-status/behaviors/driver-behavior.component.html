@@ -1,9 +1,9 @@
 <div class="row">
 	<div class="column-4-med">
-	<div>
-		<span>Driver Behavior</span>
-		<span><button (click)="loadDriverBehavior()">reload</button></span>
-	</div>
+		<div>
+			<span>Driver Behavior and Alert</span>
+			<span><button (click)="loadDriverBehavior()">reload</button></span>
+		</div>
 
 	<!-- driving behavior list -->
 	<div class="trip-details">
@@ -12,7 +12,7 @@
 		<div *ngIf="!loading">
 			<div class="list-group">
 				<div class="list-group-item behavior-list-header">
-					<div>Behavior name</div>
+						<div>Driver Behavior</div>
 					<div>Occurrences</div>
 				</div>	
 				<a href="javascript:void(0)" class="list-group-item behavior-list-item"
@@ -24,6 +24,23 @@
 			</div>
 		</div>
 	</div>
+		<div class="trip-details">
+			<div *ngIf="behaviorHttpError" class="alert alert-danger" role="alert">{{behaviorHttpError}}</div>
+			<div *ngIf="!loading && alerts && trip">
+				<div class="list-group">
+					<div class="list-group-item behavior-list-header">
+						<div>Alert</div>
+						<div>Occurrences</div>
+					</div>	
+					<a href="javascript:void(0)" class="list-group-item behavior-list-item"
+						*ngFor="let alert of alerts" (click)="setSelectedBehavior(alert)" 
+						[ngClass]="{active: alert.name === (selectedBehavior && selectedBehavior.name)}">
+						<div>{{alert.name}}</div>
+						<div>{{alert.details.length}}</div>
+					</a>
+				</div>
+			</div>
+		</div>
 	</div>
 
 	<div *ngIf="tripRouteHttpError" class="alert alert-danger" role="alert">{{tripRouteHttpError}}</div>

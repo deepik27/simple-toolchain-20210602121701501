@@ -173,13 +173,16 @@ router.get("/alert", function(req, res){
 	var q = req.query;
 	var conditions = [];
 	if(q.type){
-		conditions.push("type:" + q.type);
+		conditions.push("type:\"" + q.type + "\"");
 	}
 	if(q.severity){
-		conditions.push("severity:" + q.severity);
+		conditions.push("severity:\"" + q.severity + "\"");
 	}
 	if(q.mo_id){
-		conditions.push("mo_id:" + q.mo_id);
+		conditions.push("mo_id:\"" + q.mo_id + "\"");
+	}
+	if(q.from || q.to){
+		conditions.push("ts:[" + (q.from || "0") + " TO " + (q.to || "Infinity") + "]");
 	}
 	var includeClosed = q.includeClosed === "true";
 	var limit = q.limit;

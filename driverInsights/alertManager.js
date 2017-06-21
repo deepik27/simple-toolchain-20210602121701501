@@ -49,6 +49,7 @@ _.extend(alertManager, {
 	},
 
 	_searchAlertIndex: function(opts){
+		debug("_searchAlertIndex: " + opts.q);
 		return Q(this.db).then(function(db){
 			var deferred = Q.defer();
 			db.search(FLEETALERT_DB_NAME, 'alerts', opts, function(err, result){

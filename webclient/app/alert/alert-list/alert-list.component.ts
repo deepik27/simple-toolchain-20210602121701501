@@ -169,7 +169,8 @@ export class AlertListComponent{
       var vehicleExist = false;
       this.alertValues = vehicles.map((vehicle)=>{
         vehicleExist = vehicleExist || vehicle.mo_id === this.value;
-        return new PropValue(vehicle.mo_id, vehicle.serial_number || vehicle.mo_id);
+        let mo_id = (vehicle.siteid ? vehicle.siteid+":" : "") + vehicle.mo_id;
+        return new PropValue(mo_id, vehicle.serial_number || mo_id);
       }).sort((a, b) => {return <any>(a.label > b.label) - <any>(b.label > a.label)});
       if(!vehicleExist && this.value !== ""){
         this.alertValues.unshift(new PropValue(this.value, this.value));
