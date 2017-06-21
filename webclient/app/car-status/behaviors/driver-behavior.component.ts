@@ -344,7 +344,17 @@ export class DriverBehaviorComponent implements OnInit {
 							alertList = alertList.filter(alert => {return alert.closed_ts < 0 || probe.timestamp < alert.closed_ts;});
 						});
 						var byType = _.groupBy(alerts, "description");
-						this.alerts = _.sortBy(_.pairs(byType).map(p => {return {name: p[0], details: p[1]};}), "name");
+						this.alerts = _.sortBy(_.pairs(byType).map(p => {
+							let type;
+							if(p[1][0].type === "geofence"){
+								type = "Geofence";
+							}else if(p[1][0].source.type === "event"){
+								type = "Event";
+							}else{
+								type = "";
+							}
+							return {name: p[0], type: type, details: p[1]};
+						}), "type");
 					});
 				}, error => {
 					this.loading = false;

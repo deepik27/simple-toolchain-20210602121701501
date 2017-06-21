@@ -23,8 +23,11 @@
 		<Action>
 			<VehicleAction>
 				<Message>Fuel less than 1/10 tank</Message>
+				<Parameter><Key>mo_id</Key><Value>CarProbe.Vehicle_id_ext</Value></Parameter>
 				<Parameter><Key>message_type</Key><Value>low_fuel</Value></Parameter>
 				<Parameter><Key>source_id</Key><Value>low_fuel</Value></Parameter>
+				<Parameter><Key>longitude</Key><Value>CarProbe.Longitude</Value></Parameter>
+				<Parameter><Key>latitude</Key><Value>CarProbe.Latitude</Value></Parameter>
 				<Parameter><Key>severity</Key><Value>High</Value></Parameter>
 			</VehicleAction>
 		</Action>

@@ -23,8 +23,11 @@
 		<Action>
 			<VehicleAction>
 				<Message>Fuel less than half full</Message>
+				<Parameter><Key>mo_id</Key><Value>CarProbe.Vehicle_id_ext</Value></Parameter>
 				<Parameter><Key>message_type</Key><Value>half_fuel</Value></Parameter>
 				<Parameter><Key>source_id</Key><Value>half_fuel</Value></Parameter>
+				<Parameter><Key>longitude</Key><Value>CarProbe.Longitude</Value></Parameter>
+				<Parameter><Key>latitude</Key><Value>CarProbe.Latitude</Value></Parameter>
 				<Parameter><Key>severity</Key><Value>Medium</Value></Parameter>
 			</VehicleAction>
 		</Action>
