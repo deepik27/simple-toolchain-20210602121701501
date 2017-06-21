@@ -58,7 +58,7 @@ _.extend(driverInsightsProbe, {
 				affected_events = _.isArray(result) ? result : result.affectedEvents;
 				notified_messages = result.notifiedMessages;
 			}
-			driverInsightsAlert.handleEvents(probe.mo_id, (affected_events||[]).concat(notified_messages||[]));
+			driverInsightsAlert.handleEvents(probe, (affected_events||[]).concat(notified_messages||[]));
 
 			var qs = {
 					min_longitude: (payload.longitude-0.001),

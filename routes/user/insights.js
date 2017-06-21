@@ -41,29 +41,38 @@ function handleAssetError(res, err) {
 /**
  * {
  * 	"mo_id1": {
- * 		affected_events: [
- * 			{
- * 				"event_time":"yyyy-MM-ddTHH:mm:ss.sssZ"
- * 				"event_id":nn
- * 				"base_event_id":nn
- * 				"event_type":"nnn"
- * 				"event_name":"AAAAA"
- * 				...
- * 			}
- * 		],
- * 		notified_messages: [
- * 			{
- * 				"message":"MessageMessageMessage"
- * 				"props":{
- * 					"message_type":"xxxx",
- * 					"source_id":"xxxx",
- * 					"severity":"High/Mid/Low/Info"
- * 					"longitude":"xxx.xxxx"
- * 					"latitude":"xx.xxxx"
+ * 		"timestamp1": {
+ * 			affected_events: [
+ * 				{
+ * 					"event_time":"yyyy-MM-ddTHH:mm:ss.sssZ"
+ * 					"event_id":nn,
+ * 					"base_event_id":nn,
+ * 					"event_type":"nnn",
+ * 					"event_name":"AAAAA",
+ * 					...
  * 				}
- * 			},
- * 			{...}
- * 		]
+ * 			],
+ * 			notified_messages: [
+ * 				{
+ * 					"message":"MessageMessageMessage"
+ * 					"props":{
+ * 						"message_type":"xxxx",
+ * 						"source_id":"xxxx",
+ * 						"severity":"High/Mid/Low/Info"
+ * 					}
+ * 				},d_messages: [
+ * 				{
+ * 					"message":"MessageMessageMessage"
+ * 					"props":{
+ * 						"message_type":"xxxx",
+ * 						"source_id":"xxxx",
+ * 						"severity":"High/Mid/Low/Info"
+ * 					}
+ * 				},
+ * 				{...}
+ * 			]
+ * 		},
+ * 		"timestamp2": {...}
  * 	},
  * 	"mo_id2": {...}
  * }
@@ -75,10 +84,16 @@ router.post('/notifiedActions', authenticate, function(req, res){
 			if(req.body){
 				debug("notifiedActions req.body: " + JSON.stringify(req.body));
 				Object.keys(req.body).forEach(function(mo_id){
-					var body = req.body[mo_id];
-					affected_events = body.affectedEvents;
-					notified_messages = body.notifiedMessages;
-					driverInsightsAlert.handleEvents(mo_id, (affected_events||[]).concat(notified_messages||[]));
+					var byMoid = req.body[mo_id];
+					Object.keys(byMoid).forEach(function(ts){
+						var byTimestamp = byMoid[ts];
+						affected_events = byTimestamp.affectedEvents;
+						notified_messages = byTimestamp.notifiedMessages;
+						driverInsightsAlert.handleEvents(
+							{mo_id: mo_id, ts: Number(ts)},
+							(affected_events||[]).concat(notified_messages||[])
+						);
+					});
 				});
 			}
 			res.status(200).send("");
