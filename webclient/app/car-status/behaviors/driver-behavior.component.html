@@ -5,28 +5,29 @@
 			<span><button (click)="loadDriverBehavior()">reload</button></span>
 		</div>
 
-	<!-- driving behavior list -->
-	<div class="trip-details">
-		<div *ngIf="behaviorHttpError" class="alert alert-danger" role="alert">{{behaviorHttpError}}</div>
-		<div *ngIf="loading">Loading...</div>
-		<div *ngIf="!loading">
-			<div class="list-group">
-				<div class="list-group-item behavior-list-header">
-						<div>Driver Behavior</div>
-					<div>Occurrences</div>
-				</div>	
-				<a href="javascript:void(0)" class="list-group-item behavior-list-item"
-					*ngFor="let behavior of behaviors" (click)="setSelectedBehavior(behavior)" 
-					[ngClass]="{active: behavior.name === (selectedBehavior && selectedBehavior.name)}">
-					<div>{{behavior.name}}</div>
-					<div>{{behavior.details.length}}</div>
-				</a>
-			</div>
-		</div>
-	</div>
+		<!-- driving behavior list -->
 		<div class="trip-details">
 			<div *ngIf="behaviorHttpError" class="alert alert-danger" role="alert">{{behaviorHttpError}}</div>
-			<div *ngIf="!loading && alerts && trip">
+			<div *ngIf="loading">Loading...</div>
+			<div *ngIf="!loading">
+				<div class="list-group">
+					<div class="list-group-item behavior-list-header">
+							<div>Driver Behavior</div>
+						<div>Occurrences</div>
+					</div>	
+					<a href="javascript:void(0)" class="list-group-item behavior-list-item"
+						*ngFor="let behavior of behaviors" (click)="setSelectedBehavior(behavior)" 
+						[ngClass]="{active: behavior.name === (selectedBehavior && selectedBehavior.name)}">
+						<div>{{behavior.name}}</div>
+						<div>{{behavior.details.length}}</div>
+					</a>
+				</div>
+			</div>
+		</div>
+		<!-- alert list -->
+		<div class="trip-details">
+			<div *ngIf="behaviorHttpError" class="alert alert-danger" role="alert">{{behaviorHttpError}}</div>
+			<div *ngIf="!loading">
 				<div class="list-group">
 					<div class="list-group-item behavior-list-header">
 						<div>Alert</div>
