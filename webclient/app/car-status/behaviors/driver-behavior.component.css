@@ -93,3 +93,11 @@ a.behavior-list-item:hover {
     color: red;
     margin-bottom: 5px;
 }
+
+.driving_datetime {
+    font-weight: bold;   
+}
+
+.reload_button {
+    margin-left: 10px;
+}

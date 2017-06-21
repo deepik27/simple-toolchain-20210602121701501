@@ -1,10 +1,12 @@
 <div class="row">
+	<div class="column-12-med">
+		<p>
+		<span *ngIf="!trip || trip.length == 0">Driving data</span>
+		<span *ngIf="trip && trip.length >= 0">Driving data from <span class="driving_datetime">{{trip[0].timestamp|date:'medium'}}</span> to <span class="driving_datetime">{{trip[trip.length-1].timestamp|date:'medium'}}</span></span>
+		<span><button class="reload_button" (click)="loadDriverBehavior()">reload</button></span>
+		</p>
+	</div>
 	<div class="column-4-med">
-		<div>
-			<span>Driver Behavior and Alert</span>
-			<span><button (click)="loadDriverBehavior()">reload</button></span>
-		</div>
-
 		<!-- driving behavior list -->
 		<div class="trip-details">
 			<div *ngIf="behaviorHttpError" class="alert alert-danger" role="alert">{{behaviorHttpError}}</div>
@@ -58,7 +60,7 @@
 		<div *ngIf="!loading" class="trip-details">
 			<div class="list-group">
 				<div class="list-group-item behavior-list-header">
-					<div>Driving Profile</div>
+					<div>Driving profile</div>
 					<div>Value</div>
 				</div>	
 				<span class="list-group-item behavior-list-item"
