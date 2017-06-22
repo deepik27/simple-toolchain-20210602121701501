@@ -172,7 +172,12 @@ routeGenerator.prototype._resetRoute = function(){
 	Q.when(this._generateAnchors(slat, slng, sheading), function(locs) {
 		Q.when(self._createRoutes(locs, loop), function(routeArray){
 			self.tripRouteIndex = 0;
-			self.tripRoute = routeArray;
+			var prevLoc = null;
+			self.tripRoute = _.filter(routeArray, function(loc) {
+				var diff = !prevLoc || prevLoc.lon !== loc.lon || prevLoc.lat !== loc.lat;
+				prevLoc = loc;
+				return diff;
+			});
 			if (routeArray.length > 0) {
 				self.prevLoc = routeArray[0];
 				self.prevLoc.heading = self._calcHeading(routeArray[0], routeArray[1]);

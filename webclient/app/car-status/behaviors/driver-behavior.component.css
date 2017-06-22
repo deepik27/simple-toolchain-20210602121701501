@@ -47,8 +47,26 @@
     bottom: 30px;
 }
 
+.trip_label {
+    padding-left: 15px;   
+    padding-right: 15px;   
+}
+
+.trip_datetime_label {
+    vertical-align: middle;   
+}
+
+.trip_datetime {
+    font-weight: bold;   
+}
+
+.reload_button {
+    margin-left: 10px;
+}
+
 .trip-details {
-    margin-top: 20px;
+    padding-top: 10px;
+    padding-bottom: 20px;
 }
 
 .behavior-list-item {
@@ -92,12 +110,4 @@ a.behavior-list-item:hover {
 .alert-danger {
     color: red;
     margin-bottom: 5px;
-}
-
-.driving_datetime {
-    font-weight: bold;   
-}
-
-.reload_button {
-    margin-left: 10px;
 }
