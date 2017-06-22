@@ -143,7 +143,17 @@ export class DriverBehaviorComponent implements OnInit {
     this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, {itemLabel: "Boundary"});
 
     // add helpers
-    this.mapHelper = new MapHelper(this.map);
+		this.mapHelper = new MapHelper(this.map, function(coordinate, feature, layer) {
+      let item = feature.get("item");
+      if (item) {
+        let helper = this.mapItemHelpers[item.getItemType()];
+        if (helper && helper.hitTest) {
+          return helper.hitTest(item, feature, ol.proj.toLonLat(coordinate, undefined));
+        }
+      }
+      return true;
+    }.bind(this));
+
     this.initPopup();
   }
 
