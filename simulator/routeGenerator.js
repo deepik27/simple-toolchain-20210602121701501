@@ -275,6 +275,64 @@ routeGenerator.prototype._findRouteBetweenPoints = function(retryCount, start, e
 	return deferred.promise;
 };
 
+routeGenerator.prototype._getReferenceSpeed = function(index, speed){
+	var defReferenceSpeed = 120;
+	loc = this.tripRoute[index];
+	if (index === 0) {
+		return defReferenceSpeed;
+	} else if (!isNaN(loc.referenceSpeed)) {
+		return loc.referenceSpeed;
+	}
+
+	var distance = 0;
+	var p1 = loc;
+	for (var i = index + 1; i < this.tripRoute.length; i++) {
+		/*
+			 p1 ==== p2 ---- p3
+			 calculate direction of the p1-p2 path and distance between the points
+		 */
+		var p2 = this.tripRoute[i < this.tripRoute.length - 1 ? i : (i - this.tripRoute.length + 1)];
+		if (isNaN(p1.heading)) {
+			p1.heading = this._calcHeading(p1, p2);
+		}
+		if (isNaN(p1.length)) {
+			p1.length = this._getDistance(p1, p2);
+		}
+		/*
+			 p1 ---- p2 ==== p3
+			 calculate direction of the p2-p3 path and distance between the points
+		 */
+		var p3 = this.tripRoute[i < this.tripRoute.length - 2 ? (i + 1) : (i - this.tripRoute.length + 2)];
+		if (isNaN(p2.heading)) {
+			p2.heading = this._calcHeading(p2, p3);
+		}
+		if (isNaN(p2.length)) {
+			p2.length = this._getDistance(p2, p3);
+		}
+		distance += p1.length;
+		if (distance > 50) {
+			// break if distance from the current position is over 50m
+			break;
+		}
+		
+		var diff = Math.abs(loc.heading - p2.heading);
+		if (diff > 180) {
+			diff = 360 - diff;
+		}
+		if (diff < 110) {
+			loc.referenceSpeed = Math.min(Math.floor(distance * 2), defReferenceSpeed);
+			return loc.referenceSpeed;
+		} else if (diff < 135) {
+			loc.referenceSpeed = Math.min(Math.floor(distance * 3), defReferenceSpeed);
+			return loc.referenceSpeed;
+		}
+		p1 = p2;
+	}
+
+	loc.referenceSpeed = defReferenceSpeed;
+	return loc.referenceSpeed;
+};
+
 routeGenerator.prototype._getRoutePosition = function(){
 	if(!this.prevLoc || !this.tripRoute || this.tripRoute.length < 2){
 		return this.prevLoc;
@@ -282,13 +340,15 @@ routeGenerator.prototype._getRoutePosition = function(){
 	var prevLoc = this.prevLoc;
 	var loc = this.tripRoute[this.tripRouteIndex];
 	var speed = this._getDistance(loc, prevLoc)*0.001*3600;
-	while((speed - prevLoc.speed) < -20 && this.tripRouteIndex < this.tripRoute.length-1){ 
+	var referenceSpeed = this._getReferenceSpeed(this.tripRouteIndex, speed);
+	var acceleration = Math.floor(Math.random() * 10 + 10);
+	while((speed - prevLoc.speed) < (acceleration * -1) && this.tripRouteIndex < this.tripRoute.length-1){ 
 		// too harsh brake, then skip the pointpoint
 		this.tripRouteIndex++;
 		loc = this.tripRoute[this.tripRouteIndex];
 		speed = this._getDistance(loc, prevLoc)*0.001*3600;
 	}
-	while(speed>120 || (speed - prevLoc.speed) > 20){
+	while(speed>referenceSpeed || (speed - prevLoc.speed) > acceleration){
 		// too harsh acceleration, then insert intermediate point
 		var loc2 = {lat: (+loc.lat+prevLoc.lat)/2, lon: (+loc.lon+prevLoc.lon)/2};
 		speed = this._getDistance(loc2, prevLoc)*0.001*3600;
