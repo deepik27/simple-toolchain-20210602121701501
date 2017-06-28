@@ -124,19 +124,39 @@ routeGenerator.prototype.updateRoute = function(locs) {
 };
 
 // find a random location in about 5km from the specified location
-routeGenerator.prototype._getDestLoc = function(slat, slng, heading){
+routeGenerator.prototype._getRandomLoc = function(slat, slng){
+	var deferred = Q.defer();
 	var ddist = (Math.random()/2 + 0.5) * 0.025 / 2;
 	var dtheta = 2 * Math.PI * Math.random();
-	var dlat = 0;
-	var dlng = 0;
-	if(this.destination){
-		dlat = this.destination.lat;
-		dlng = this.destination.lon;
-	}else{
-		dlat = +slat + ddist * Math.sin(dtheta);
-		dlng = +slng + ddist * Math.cos(dtheta);
+	var dlat = +slat + ddist * Math.sin(dtheta);
+	var dlng = +slng + ddist * Math.cos(dtheta);
+	return {lat: dlat, lng: dlng};
+};
+
+routeGenerator.prototype._generateAnchors = function(slat, slng, sheading) {
+	var deferred = Q.defer();
+	var locs = [];
+	if (this.destination) {
+		locs.push({lat: slat, lng: slng, heading: sheading});
+		locs.push({lat: this.destination.lat, lng: this.destination.lon, heading: this.destination.heading});
+		deferred.resolve(locs);
+	} else {
+		var promises = [];
+		var numPoints = 3;
+		var porg = {lat: slat, lng: slng};
+		for (var i = 0; i < numPoints; i++) {
+			var pdst = i === (numPoints - 1) ? {lat: slat, lng: slng} : this._getRandomLoc(slat, slng);
+			var heading = this._calcHeading(porg, pdst);
+			promises.push(iot4aContextMapping.matchMapFirst(porg.lat, porg.lng, heading));
+			porg = pdst;
+		}
+		Q.all(promises).then(function(results) {
+			deferred.resolve(_.filter(results, function(loc) {return loc;}));
+		})["catch"](function(error){
+			deferred.reject(error);
+		});
 	}
-	return {lat: dlat, lng: dlng, heading: (this.destination ? this.destination.heading : heading)};
+	return deferred.promise;
 };
 
 // reset trip route
@@ -145,37 +165,37 @@ routeGenerator.prototype._resetRoute = function(){
 	var slng = this.prevLoc.lon;
 	var sheading = this.prevLoc.heading;
 	var speed = this.prevLoc.speed;
-	
 	var loop = !this.destination || (this.options && this.options.route_loop);
-	var locs = [];
-	locs.push({lat: slat, lng: slng, heading: sheading});
-	locs.push(this._getDestLoc(slat, slng, sheading));
-	if (!this.destination) {
-		locs.push(this._getDestLoc(slat, slng, sheading));
-	}
 
 	var deferred = Q.defer();
 	var self = this;
-	Q.when(this._createRoutes(locs, loop), function(routeArray){
-		self.tripRouteIndex = 0;
-		self.tripRoute = routeArray;
-		if (routeArray.length > 0) {
-			self.prevLoc = routeArray[0];
-			self.prevLoc.heading = self._calcHeading(routeArray[0], routeArray[1]);
-		} else if (self.prevLoc.heading === undefined) {
-			self.prevLoc.heading = sheading;
-		}
-		self.prevLoc.speed = speed;
-		if (self.callback) {
-			self.callback({data: {route: self.tripRoute, loop: loop, current: self.prevLoc, destination: self.destination, options: self.options}, type: 'route'});
-		}
-		deferred.resolve(routeArray);
-	})["catch"](function(error){
-		if (self.callback) {
-			self.callback({data: {loop: loop, current: self.prevLoc, destination: self.destination, options: self.options}, error: error, type: 'route'});
-		}
-		deferred.reject(error);
-	}).done();
+	Q.when(this._generateAnchors(slat, slng, sheading), function(locs) {
+		Q.when(self._createRoutes(locs, loop), function(routeArray){
+			self.tripRouteIndex = 0;
+			var prevLoc = null;
+			self.tripRoute = _.filter(routeArray, function(loc) {
+				var diff = !prevLoc || prevLoc.lon !== loc.lon || prevLoc.lat !== loc.lat;
+				prevLoc = loc;
+				return diff;
+			});
+			if (routeArray.length > 0) {
+				self.prevLoc = routeArray[0];
+				self.prevLoc.heading = self._calcHeading(routeArray[0], routeArray[1]);
+			} else if (self.prevLoc.heading === undefined) {
+				self.prevLoc.heading = sheading;
+			}
+			self.prevLoc.speed = speed;
+			if (self.callback) {
+				self.callback({data: {route: self.tripRoute, loop: loop, current: self.prevLoc, destination: self.destination, options: self.options}, type: 'route'});
+			}
+			deferred.resolve(routeArray);
+		})["catch"](function(error){
+			if (self.callback) {
+				self.callback({data: {loop: loop, current: self.prevLoc, destination: self.destination, options: self.options}, error: error, type: 'route'});
+			}
+			deferred.reject(error);
+		}).done();
+	});
 	return deferred.promise;
 };
 
@@ -255,6 +275,64 @@ routeGenerator.prototype._findRouteBetweenPoints = function(retryCount, start, e
 	return deferred.promise;
 };
 
+routeGenerator.prototype._getReferenceSpeed = function(index, speed){
+	var defReferenceSpeed = 120;
+	loc = this.tripRoute[index];
+	if (index === 0) {
+		return defReferenceSpeed;
+	} else if (!isNaN(loc.referenceSpeed)) {
+		return loc.referenceSpeed;
+	}
+
+	var distance = 0;
+	var p1 = loc;
+	for (var i = index + 1; i < this.tripRoute.length; i++) {
+		/*
+			 p1 ==== p2 ---- p3
+			 calculate direction of the p1-p2 path and distance between the points
+		 */
+		var p2 = this.tripRoute[i < this.tripRoute.length - 1 ? i : (i - this.tripRoute.length + 1)];
+		if (isNaN(p1.heading)) {
+			p1.heading = this._calcHeading(p1, p2);
+		}
+		if (isNaN(p1.length)) {
+			p1.length = this._getDistance(p1, p2);
+		}
+		/*
+			 p1 ---- p2 ==== p3
+			 calculate direction of the p2-p3 path and distance between the points
+		 */
+		var p3 = this.tripRoute[i < this.tripRoute.length - 2 ? (i + 1) : (i - this.tripRoute.length + 2)];
+		if (isNaN(p2.heading)) {
+			p2.heading = this._calcHeading(p2, p3);
+		}
+		if (isNaN(p2.length)) {
+			p2.length = this._getDistance(p2, p3);
+		}
+		distance += p1.length;
+		if (distance > 50) {
+			// break if distance from the current position is over 50m
+			break;
+		}
+		
+		var diff = Math.abs(loc.heading - p2.heading);
+		if (diff > 180) {
+			diff = 360 - diff;
+		}
+		if (diff < 110) {
+			loc.referenceSpeed = Math.min(Math.floor(distance * 2), defReferenceSpeed);
+			return loc.referenceSpeed;
+		} else if (diff < 135) {
+			loc.referenceSpeed = Math.min(Math.floor(distance * 3), defReferenceSpeed);
+			return loc.referenceSpeed;
+		}
+		p1 = p2;
+	}
+
+	loc.referenceSpeed = defReferenceSpeed;
+	return loc.referenceSpeed;
+};
+
 routeGenerator.prototype._getRoutePosition = function(){
 	if(!this.prevLoc || !this.tripRoute || this.tripRoute.length < 2){
 		return this.prevLoc;
@@ -262,13 +340,15 @@ routeGenerator.prototype._getRoutePosition = function(){
 	var prevLoc = this.prevLoc;
 	var loc = this.tripRoute[this.tripRouteIndex];
 	var speed = this._getDistance(loc, prevLoc)*0.001*3600;
-	while((speed - prevLoc.speed) < -20 && this.tripRouteIndex < this.tripRoute.length-1){ 
+	var referenceSpeed = this._getReferenceSpeed(this.tripRouteIndex, speed);
+	var acceleration = Math.floor(Math.random() * 10 + 10);
+	while((speed - prevLoc.speed) < (acceleration * -1) && this.tripRouteIndex < this.tripRoute.length-1){ 
 		// too harsh brake, then skip the pointpoint
 		this.tripRouteIndex++;
 		loc = this.tripRoute[this.tripRouteIndex];
 		speed = this._getDistance(loc, prevLoc)*0.001*3600;
 	}
-	while(speed>120 || (speed - prevLoc.speed) > 20){
+	while(speed>referenceSpeed || (speed - prevLoc.speed) > acceleration){
 		// too harsh acceleration, then insert intermediate point
 		var loc2 = {lat: (+loc.lat+prevLoc.lat)/2, lon: (+loc.lon+prevLoc.lon)/2};
 		speed = this._getDistance(loc2, prevLoc)*0.001*3600;

@@ -114,14 +114,15 @@ _.extend(contextMapping, {
 	 * - the result promise will be resolved to a response JSON
 	 *   * note that it may not have matched results.
 	 */
-	matchMapRaw: function(lat, lon, errorOnErrorResponse){
+	matchMapRaw: function(lat, lon, heading, errorOnErrorResponse){
 		var node = this.contextMappingConfig;
 		var options = this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/mapservice/map/matching',
 			qs: {
 				latitude: lat,
-				longitude: lon
+				longitude: lon,
+				heading: heading || 0
 			},
 			json: true,
 			pool: this._matchMapPool,
@@ -148,27 +149,29 @@ _.extend(contextMapping, {
 	 * Async map match
 	 * - returns the first match, returns the given (lat,lon) in case no match
 	 */
-	matchMap: function(lat, lon, errorOnErrorResponse){
-		return contextMapping.matchMapRaw(lat, lon, errorOnErrorResponse)
+	matchMap: function(lat, lon, heading, errorOnErrorResponse){
+		return contextMapping.matchMapRaw(lat, lon, heading, errorOnErrorResponse)
 			.then(function(results){ // results is parsed JSON of array of matches
 				if (results.length === 0)
 					return {lat: lat, lng: lon}; // fallback for not-matched
 				var latlng = results[0];
 				return  {
 					lat: latlng.matched_latitude,
-					lng: latlng.matched_longitude
+					lng: latlng.matched_longitude,
+					heading: latlng.matched_heading
 				};
 			});
 	},
-	matchMapFirst: function(lat, lon){ // no fallback, explicit error
-		return contextMapping.matchMapRaw(lat, lon, true)
+	matchMapFirst: function(lat, lon, heading){ // no fallback, explicit error
+		return contextMapping.matchMapRaw(lat, lon, heading, true)
 		.then(function(results){ // results is parsed JSON of array of matches
 			if (results.length === 0)
 				return null;
 			var latlng = results[0];
 			return  {
 				lat: latlng.matched_latitude,
-				lng: latlng.matched_longitude
+				lng: latlng.matched_longitude,
+				heading: latlng.matched_heading
 			};
 		});
 	},

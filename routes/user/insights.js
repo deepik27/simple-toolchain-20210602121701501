@@ -19,6 +19,7 @@ var router = module.exports = require('express').Router();
 var authenticate = require('./auth.js').authenticate;
 var driverInsightsProbe = require('../../driverInsights/probe');
 var driverInsightsAlert = require('../../driverInsights/fleetalert.js');
+var driverInsightsAnalysis = require('../../driverInsights/analysis.js');
 var iot4aContextMapping = app_module_require('iot4a-api/contextMapping');
 var iot4aVehicleDataHub = app_module_require('iot4a-api/vehicleDataHub');
 var dbClient = require('../../cloudantHelper.js');
@@ -40,29 +41,38 @@ function handleAssetError(res, err) {
 /**
  * {
  * 	"mo_id1": {
- * 		affected_events: [
- * 			{
- * 				"event_time":"yyyy-MM-ddTHH:mm:ss.sssZ"
- * 				"event_id":nn
- * 				"base_event_id":nn
- * 				"event_type":"nnn"
- * 				"event_name":"AAAAA"
- * 				...
- * 			}
- * 		],
- * 		notified_messages: [
- * 			{
- * 				"message":"MessageMessageMessage"
- * 				"props":{
- * 					"message_type":"xxxx",
- * 					"source_id":"xxxx",
- * 					"severity":"High/Mid/Low/Info"
- * 					"longitude":"xxx.xxxx"
- * 					"latitude":"xx.xxxx"
+ * 		"timestamp1": {
+ * 			affected_events: [
+ * 				{
+ * 					"event_time":"yyyy-MM-ddTHH:mm:ss.sssZ"
+ * 					"event_id":nn,
+ * 					"base_event_id":nn,
+ * 					"event_type":"nnn",
+ * 					"event_name":"AAAAA",
+ * 					...
  * 				}
- * 			},
- * 			{...}
- * 		]
+ * 			],
+ * 			notified_messages: [
+ * 				{
+ * 					"message":"MessageMessageMessage"
+ * 					"props":{
+ * 						"message_type":"xxxx",
+ * 						"source_id":"xxxx",
+ * 						"severity":"High/Mid/Low/Info"
+ * 					}
+ * 				},d_messages: [
+ * 				{
+ * 					"message":"MessageMessageMessage"
+ * 					"props":{
+ * 						"message_type":"xxxx",
+ * 						"source_id":"xxxx",
+ * 						"severity":"High/Mid/Low/Info"
+ * 					}
+ * 				},
+ * 				{...}
+ * 			]
+ * 		},
+ * 		"timestamp2": {...}
  * 	},
  * 	"mo_id2": {...}
  * }
@@ -74,10 +84,16 @@ router.post('/notifiedActions', authenticate, function(req, res){
 			if(req.body){
 				debug("notifiedActions req.body: " + JSON.stringify(req.body));
 				Object.keys(req.body).forEach(function(mo_id){
-					var body = req.body[mo_id];
-					affected_events = body.affectedEvents;
-					notified_messages = body.notifiedMessages;
-					driverInsightsAlert.handleEvents(mo_id, (affected_events||[]).concat(notified_messages||[]));
+					var byMoid = req.body[mo_id];
+					Object.keys(byMoid).forEach(function(ts){
+						var byTimestamp = byMoid[ts];
+						affected_events = byTimestamp.affectedEvents;
+						notified_messages = byTimestamp.notifiedMessages;
+						driverInsightsAlert.handleEvents(
+							{mo_id: mo_id, ts: Number(ts)},
+							(affected_events||[]).concat(notified_messages||[])
+						);
+					});
 				});
 			}
 			res.status(200).send("");
@@ -172,13 +188,16 @@ router.get("/alert", function(req, res){
 	var q = req.query;
 	var conditions = [];
 	if(q.type){
-		conditions.push("type:" + q.type);
+		conditions.push("type:\"" + q.type + "\"");
 	}
 	if(q.severity){
-		conditions.push("severity:" + q.severity);
+		conditions.push("severity:\"" + q.severity + "\"");
 	}
 	if(q.mo_id){
-		conditions.push("mo_id:" + q.mo_id);
+		conditions.push("mo_id:\"" + q.mo_id + "\"");
+	}
+	if(q.from || q.to){
+		conditions.push("ts:[" + (q.from || "0") + " TO " + (q.to || "Infinity") + "]");
 	}
 	var includeClosed = q.includeClosed === "true";
 	var limit = q.limit;
@@ -239,6 +258,34 @@ router.post("/event", function(req, res){
 
 router["delete"]("/event", function(req, res){
 	iot4aContextMapping.deleteEvent(req.query.event_id).then(function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
+
+router.get("/capability/analysis", authenticate, function(req, res) {
+	res.send({available: driverInsightsAnalysis.isAvailable()});
+});
+
+router.get('/analysis/latesttrip/:mo_id', authenticate, function(req, res) {
+	Q.when(driverInsightsAnalysis.getLatestTrip(req.params.mo_id), function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
+
+router.get('/analysis/behaviors/:mo_id', authenticate, function(req, res) {
+	Q.when(driverInsightsAnalysis.getTripBehavior(req.params.mo_id, req.query.trip_id, req.query.lastHours), function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
+
+router.get("/analysis/triproutes/:mo_id", function(req, res){
+	Q.when(driverInsightsAnalysis.getTripRoute(req.params.mo_id, req.query.trip_id, req.query.lastHours), function(msg){
 		res.send(msg);
 	})["catch"](function(error){
 		handleAssetError(res, error);

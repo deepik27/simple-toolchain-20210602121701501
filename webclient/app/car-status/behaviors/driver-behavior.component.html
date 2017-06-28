@@ -1,0 +1,74 @@
+<div class="row">
+	<div class="column-12-med">
+		<div class="trip_label">
+		<span *ngIf="!trip || trip.length == 0" class="trip_datetime_label">Driving data</span>
+		<span *ngIf="trip && trip.length >= 0" class="trip_datetime_label">Driving data from <span class="trip_datetime">{{trip[0].timestamp|date:'short'}}</span> to <span class="trip_datetime">{{trip[trip.length-1].timestamp|date:'short'}}</span></span>
+		<span><button class="reload_button" (click)="loadDriverBehavior()">reload</button></span>
+		</div>
+	</div>
+	<div class="column-4-med">
+		<!-- driving behavior list -->
+		<div class="trip-details">
+			<div *ngIf="behaviorHttpError" class="alert alert-danger" role="alert">{{behaviorHttpError}}</div>
+			<div *ngIf="loading">Loading...</div>
+			<div *ngIf="!loading">
+				<div class="list-group">
+					<div class="list-group-item behavior-list-header">
+							<div>Driver Behavior</div>
+						<div>Occurrences</div>
+					</div>	
+					<a href="javascript:void(0)" class="list-group-item behavior-list-item"
+						*ngFor="let behavior of behaviors" (click)="setSelectedBehavior(behavior)" 
+						[ngClass]="{active: behavior.name === (selectedBehavior && selectedBehavior.name)}">
+						<div>{{behavior.name}}</div>
+						<div>{{behavior.details.length}}</div>
+					</a>
+				</div>
+			</div>
+		</div>
+		<!-- alert list -->
+		<div class="trip-details">
+			<div *ngIf="behaviorHttpError" class="alert alert-danger" role="alert">{{behaviorHttpError}}</div>
+			<div *ngIf="!loading">
+				<div class="list-group">
+					<div class="list-group-item behavior-list-header">
+						<div>Alert</div>
+						<div>Type</div>
+					</div>	
+					<a href="javascript:void(0)" class="list-group-item behavior-list-item"
+						*ngFor="let alert of alerts" (click)="setSelectedBehavior(alert)" 
+						[ngClass]="{active: alert.name === (selectedBehavior && selectedBehavior.name)}">
+						<div>{{alert.name}}</div>
+						<div>{{alert.type}}</div>
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div *ngIf="tripRouteHttpError" class="alert alert-danger" role="alert">{{tripRouteHttpError}}</div>
+	<!-- right pane -->
+	<div class="column-8-med trip-details-map">
+		<!-- driving behavior map -->
+		<div class="html-client-trip-detail">
+			<div id="carmonitor" class="behaviorMap">
+				<div id="carmonitorpop"></div>
+			</div>
+			<table id="legend"></table>
+		</div>
+		<!-- driving behavior map -->
+		<div *ngIf="!loading" class="trip-details">
+			<div class="list-group">
+				<div class="list-group-item behavior-list-header">
+					<div>Driving profile</div>
+					<div>Value</div>
+				</div>	
+				<span class="list-group-item behavior-list-item"
+					*ngFor="let feature of tripFeatures">
+					<div>{{feature.name}}</div>
+					<div>{{feature.value|number:'1.0-2'}}</div>
+				</span>
+			</div>
+		</div>
+	</div>
+</div>

@@ -19,8 +19,8 @@ var iot4aAsset = app_module_require('iot4a-api/asset.js');
 var debug = require('debug')('simulatedVehicleManager');
 debug.log = console.log.bind(console);
 
-var DRIVER_NAME = "simulated_driver";
-var VENDOR_NAME = "IBM";
+var DRIVER_NAME = process.env.SIMULATOR_DRIVER || "simulated_driver";
+var VENDOR_NAME = process.env.SIMULATOR_VENDOR || "IBM";
 var NUM_OF_SIMULATOR = 5;
 
 _.extend(simulatedVehicleManager, {

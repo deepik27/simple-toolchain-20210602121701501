@@ -14,14 +14,16 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from './shared/http-client';
 import { LocationService } from './shared/location.service';
 import { RealtimeDeviceDataProviderService } from './shared/realtime-device-manager.service';
+import { DriverBehaviorService } from './shared/iota-driver-behavior.service';
 import { EventService } from './shared/iota-event.service';
 import { GeofenceService } from './shared/iota-geofence.service';
+import { AlertService } from './shared/alert.service';
 
 @Component({
   selector: 'fmdash-app',
   moduleId: module.id,
   templateUrl: 'app.component.html',
-  providers: [HttpClient, RealtimeDeviceDataProviderService, LocationService, EventService, GeofenceService]
+  providers: [HttpClient, RealtimeDeviceDataProviderService, LocationService, EventService, GeofenceService, DriverBehaviorService, AlertService]
 })
 export class AppComponent {
   title = "IBM IoT for Automotive - Fleet Management Starter Application - Monitoring";

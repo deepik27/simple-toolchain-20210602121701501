@@ -1,4 +1,10 @@
-<div class="card marginTop primary">
+<div *ngIf="probeData!=null">
+  <ul class="marginTop tabs" *ngIf="isAnalysisAvailable">
+  　   <li [class.selected]="realtimeMode"><a href="javascript:void(0)" (click)="setRealtimeMode(true)">Realtime Car Status</a>
+  　   <li [class.selected]="!realtimeMode"><a href="javascript:void(0)" (click)="setRealtimeMode(false)">Driving Analysis</a>
+  </ul>
+</div>  
+<div class="card primary">
   <div class="cardOverlay" id="cardOverlay">
       <p>Connection to database not successful</p>
   </div>
@@ -8,35 +14,42 @@
   </div>
   <h3>Vehicle ID: {{device?.vehicle?.serial_number || mo_id}}</h3>
 
-  <status-meter [minValue]="0" [maxValue]="100"
-    [value]="((probeData?.speed||0)/1.609344).toPrecision(3)" status=""
-    title="Speed" valueSuffix="" valueUnit="MPH" graphType="gauge">
-  </status-meter>
-  <status-meter [minValue]="0" [maxValue]="60"
-    [value]="probeData?.props?.fuelLevel ? probeData?.props?.fuelLevel * 60 / 100 : probeData?.props?.fuel"
-    [status]="probeData?.info?.alerts?.fuelStatus"
-    title="Fuel Level" valueSuffix="/60" valueUnit="" graphType="gauge">
-  </status-meter>
-  <status-meter [minValue]="80" [maxValue]="300"
-    [value]="((probeData?.props?.engineTemp||0)*9/5+32).toPrecision(3)"
-    [status]="probeData?.info?.alerts?.engineTempStatus"
-    title="Engine Oil Temperature" valueSuffix="" valueUnit="Fahrenheit" graphType="temp-bar">
-  </status-meter>
-
-  <div class="row marginTop-15">
-    <div class="column-6-med">
-        <status-hist-graph [minValue]="0" [maxValue]="80" [interval]="5000" [historyCount]="20"
-          [value]="((probeData?.speed||0)/1.609344).toPrecision(3)"
-          [status]=""
-          title="Speed History" valueSuffix="" valueUnit="MPH">
-        </status-hist-graph>
-    </div>
-    <div class="column-6-med">
-        <status-hist-graph [minValue]="0" [maxValue]="60" [interval]="5000" [historyCount]="20"
-          [value]="probeData?.props?.fuelLevel ? probeData?.props?.fuelLevel * 60 / 100 : probeData?.props?.fuel"
-          [status]="probeData?.info?.alerts?.fuelStatus"
-          title="Fuel Level History" valueSuffix="" valueUnit="">
-        </status-hist-graph>
+  <div *ngIf="!realtimeMode">
+    <div class="row" *ngIf="isAnalysisAvailable" style="margin-top:30px;margin-bottom:10px;">
+      <driver-behavior class="column-12-med"></driver-behavior>
     </div>
   </div>
+  <div *ngIf="realtimeMode">
+    <status-meter [minValue]="0" [maxValue]="100"
+      [value]="((probeData?.speed||0)/1.609344).toPrecision(3)" status=""
+      title="Speed" valueSuffix="" valueUnit="MPH" graphType="gauge">
+    </status-meter>
+    <status-meter [minValue]="0" [maxValue]="60"
+      [value]="probeData?.props?.fuelLevel ? probeData?.props?.fuelLevel * 60 / 100 : probeData?.props?.fuel"
+      [status]="probeData?.info?.alerts?.fuelStatus"
+      title="Fuel Level" valueSuffix="/60" valueUnit="" graphType="gauge">
+    </status-meter>
+    <status-meter [minValue]="80" [maxValue]="300"
+      [value]="((probeData?.props?.engineTemp||0)*9/5+32).toPrecision(3)"
+      [status]="probeData?.info?.alerts?.engineTempStatus"
+      title="Engine Oil Temperature" valueSuffix="" valueUnit="Fahrenheit" graphType="temp-bar">
+    </status-meter>
+
+    <div class="row marginTop-15">
+      <div class="column-6-med">
+          <status-hist-graph [minValue]="0" [maxValue]="80" [interval]="5000" [historyCount]="20"
+            [value]="((probeData?.speed||0)/1.609344).toPrecision(3)"
+            [status]=""
+            title="Speed History" valueSuffix="" valueUnit="MPH">
+          </status-hist-graph>
+      </div>
+      <div class="column-6-med">
+          <status-hist-graph [minValue]="0" [maxValue]="60" [interval]="5000" [historyCount]="20"
+            [value]="probeData?.props?.fuelLevel ? probeData?.props?.fuelLevel * 60 / 100 : probeData?.props?.fuel"
+            [status]="probeData?.info?.alerts?.fuelStatus"
+            title="Fuel Level History" valueSuffix="" valueUnit="">
+          </status-hist-graph>
+      </div>
+    </div>
+  </div>  
 </div>

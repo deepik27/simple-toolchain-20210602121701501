@@ -1,0 +1,113 @@
+/**
+ * Copyright 2016 IBM Corp. All Rights Reserved.
+ *
+ * Licensed under the IBM License, a copy of which may be obtained at:
+ *
+ * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AEGGZJ&popup=y&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ *
+ * You may not use this file except in compliance with the license.
+ */
+.behaviorMap {
+    position: relative;   
+    height: 440px;
+    width: 100%;
+}
+
+@media screen and (max-width: 767px) {
+    .behaviorMap {
+        height: 300px;
+    }
+}
+
+.behaviorMap .mapLocationBar {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    z-index: 10;
+    padding: 10px 20px;
+    background: #fff;
+    font-weight: 500;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+#canvas .olControlAttribution {
+    font-size:13px;
+    bottom:3px;
+}
+
+.behaviorMap .ol-zoom {
+    left: auto;
+    top: auto;
+    right: 30px;
+    bottom: 70px;
+}
+
+.behaviorMap .ol-attribution {
+    right: 30px;
+    bottom: 30px;
+}
+
+.trip_label {
+    padding-left: 15px;   
+    padding-right: 15px;   
+}
+
+.trip_datetime_label {
+    vertical-align: middle;   
+}
+
+.trip_datetime {
+    font-weight: bold;   
+}
+
+.reload_button {
+    margin-left: 10px;
+}
+
+.trip-details {
+    padding-top: 10px;
+    padding-bottom: 20px;
+}
+
+.behavior-list-item {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+a.behavior-list-item:hover {
+    background-color: #bbbbbb;
+}
+
+.behavior-list-item.active {
+    background-color: #dddddd;
+}
+
+.behavior-list-item .behavior-list-item-right{
+	text-align: right;
+	white-space: nowrap;
+}
+
+.behavior-list-header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+    border-bottom: solid 1px ;
+    margin-bottom: 3px;
+    padding-bottom: 3px;
+}
+
+.behavior-list-item div {
+    margin-right: 5px;
+}
+
+.behavior-list-header .behavior-list-header-right{
+	text-align: right;
+	white-space: nowrap;
+}
+
+.alert-danger {
+    color: red;
+    margin-bottom: 5px;
+}

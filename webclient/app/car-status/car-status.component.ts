@@ -16,6 +16,8 @@ import { Subject } from 'rxjs/Subject';
 import { RealtimeDeviceData } from '../shared/realtime-device';
 import { RealtimeDeviceDataProviderService } from '../shared/realtime-device-manager.service';
 import { CarStatusDataService } from './summary/car-status-data.service';
+import { DriverBehaviorComponent } from './behaviors/driver-behavior.component';
+import { DriverBehaviorService } from '../shared/iota-driver-behavior.service';
 
 import * as _ from 'underscore';
 
@@ -23,6 +25,7 @@ import * as _ from 'underscore';
   moduleId: module.id,
   selector: 'fmdash-car-status',
   templateUrl: 'car-status.component.html',
+  styleUrls: ['car-status.component.css'],
 })
 export class CarStatusComponent implements OnInit {
   private mo_id: string;
@@ -31,16 +34,24 @@ export class CarStatusComponent implements OnInit {
 
   private device: RealtimeDeviceData;
   private probeData: any; // probe data to show
+  private isAnalysisAvailable: boolean = false;
+  private realtimeMode: boolean = true;
 
   constructor(
     private route: ActivatedRoute,
     private carStatusDataService: CarStatusDataService,
-    private realtimeDataProviderService: RealtimeDeviceDataProviderService
+    private realtimeDataProviderService: RealtimeDeviceDataProviderService,
+    private driverBehaviorService: DriverBehaviorService
   ){
   }
 
   ngOnInit() {
     var self = this;
+    this.driverBehaviorService.isAvailable().subscribe(data => {
+      if (data) {
+        this.isAnalysisAvailable = true;
+      }
+    });
     this.proveDataSubscription = this.moIdSubject.switchMap(mo_id => {
         // Start watching car probe of the vehicle. This method will monitor the car probe of the vehicle from whole world. 
         // It may result slow performance of querying car probe as the searching area is too large.
@@ -101,5 +112,9 @@ export class CarStatusComponent implements OnInit {
       this.proveDataSubscription.unsubscribe();
       this.proveDataSubscription = null;
     }
+  }
+
+  setRealtimeMode(mode:boolean) {
+    this.realtimeMode = mode;
   }
 }

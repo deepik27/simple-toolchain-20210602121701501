@@ -23,6 +23,7 @@ import { StatusMeterComponent } from './cards/status-meter.component';
 import { StatusHistoryGrahpComponent } from './cards/status-hist-graph.component';
 import { CarStatusComponent } from './car-status.component';
 import { CarStatusPageComponent } from './car-status-page.component';
+import { DriverBehaviorComponent } from './behaviors/driver-behavior.component';
 
 import { CarStatusDataService } from './summary/car-status-data.service';
 
@@ -40,7 +41,8 @@ import { carStatusRouting } from './car-status-page.routing';
     StatusMeterComponent,
     StatusHistoryGrahpComponent,
     CarStatusComponent,
-    CarStatusPageComponent
+    CarStatusPageComponent,
+    DriverBehaviorComponent
   ],
   exports: [
     CarStatusPageComponent

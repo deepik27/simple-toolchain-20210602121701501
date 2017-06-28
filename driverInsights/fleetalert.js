@@ -231,13 +231,14 @@ _.extend(driverInsightsAlert, {
 		return deferred.promise;
 	},
 
-	handleEvents: function(mo_id, events){
-		this.closeAlertFromEvents(mo_id, events);
-		this.addAlertFromEvents(mo_id, events);
+	handleEvents: function(probe, events){
+		this.closeAlertFromEvents(probe, events);
+		this.addAlertFromEvents(probe, events);
 	},
-	addAlertFromEvents: function(mo_id, events){
+	addAlertFromEvents: function(probe, events){
 		var self = this;
-		var ts = moment().valueOf();
+		var mo_id = probe.mo_id;
+		var ts = probe.ts;
 		(events||[]).forEach(function(event){
 			var props = event.props || {}; // A message should have props
 			var source_id = String(event.event_id || props.source_id);
@@ -274,12 +275,13 @@ _.extend(driverInsightsAlert, {
 		var timer = this._alertTimer[mo_id];
 		clearTimeout(timer);
 		this._alertTimer[mo_id] = setTimeout(function(){
-			self.closeAlertFromEvents(mo_id);
+			self.closeAlertFromEvents(probe);
 		}, ALERT_LIFE_SPAN);
 	},
-	closeAlertFromEvents: function(mo_id, events){
+	closeAlertFromEvents: function(probe, events){
 		var self = this;
-		var closed_ts = moment().valueOf();
+		var mo_id = probe.mo_id;
+		var closed_ts = probe.ts;
 		var _alertsForVehicle = _.clone(alertManager.getCurrentAlerts(mo_id));
 		Object.keys(_alertsForVehicle).forEach(function(key){
 			var source_type = _alertsForVehicle[key].source && _alertsForVehicle[key].source.type;
