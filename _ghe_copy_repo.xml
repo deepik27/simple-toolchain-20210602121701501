@@ -156,6 +156,7 @@
 				<!-- exclude saas files -->
 				<exclude name="**/manifest_For_SaaS.yml"/>
 				<exclude name="**/README_For_SaaS.md"/>
+				<exclude name="**/_deploy_create_services_For_SaaS.sh"/>
 				<exclude name="**/plugins" unless="env.saas"/>
 				<exclude name="**/plugins/**/*" unless="env.saas"/>
 				<exclude name="**/driverInsights/alertrules/*.xml" unless="env.saas"/>
@@ -178,6 +179,7 @@
 		<!-- copy saas specific files --> 
 		<copy tofile="${dest.clone}/manifest.yml" overwrite="true" file="manifest_For_SaaS.yml" />
 		<copy tofile="${dest.clone}/README.md" overwrite="true" file="README_For_SaaS.md" />
+		<copy tofile="${dest.clone}/_deploy_create_services.sh" overwrite="true" file="_deploy_create_services_For_SaaS.sh" />
 	</target>
 
 	<!-- check if "repo.clone" is a valid clone repo -->
