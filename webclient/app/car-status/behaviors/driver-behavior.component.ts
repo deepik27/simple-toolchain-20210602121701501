@@ -476,5 +476,9 @@ export class DriverBehaviorComponent implements OnInit {
 				return route;
 			}.bind(this)));
 			this.behaviorLayer.getSource().addFeatures(features);
-		};
+	}
+
+	_isFiniteNumber(value): boolean {
+		return isFinite(value-0) && value !== null && value !== "" && value !== false;
+	}
 }

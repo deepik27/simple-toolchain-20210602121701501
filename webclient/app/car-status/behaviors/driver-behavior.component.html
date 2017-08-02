@@ -66,7 +66,7 @@
 				<span class="list-group-item behavior-list-item"
 					*ngFor="let feature of tripFeatures">
 					<div>{{feature.name}}</div>
-					<div>{{feature.value|number:'1.0-2'}}</div>
+					<div>{{ _isFiniteNumber(feature.value) ? (feature.value|number:'1.0-2') : (feature.value) }}</div>
 				</span>
 			</div>
 		</div>
