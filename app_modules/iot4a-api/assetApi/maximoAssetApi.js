@@ -166,7 +166,7 @@ var maximoAssetApi = {
 		        	baseURL: assetCreds.api ? assetCreds.api : (iot4a_cred.api + "maximo"),
 		        	internalURL: assetCreds.internalURL,
 		        	orgid: assetCreds.orgid,		
-		        	classificationid: assetCreds.classificationid || "STARTER APPLICATION",		
+		        	classificationid: assetCreds.classificationid,	
 		            username: assetCreds.username,
 		            password: assetCreds.password
 		          };
@@ -470,7 +470,7 @@ var maximoAssetApi = {
 				}
 			});
 		} else {
-			deferred.reject(asset);
+			deferred.resolve(asset);
 		}
 		return deferred.promise;
 	},
