@@ -180,6 +180,11 @@ var maximoAssetApi = {
 		return true;
 	},
 	
+	acceptVehicleProperties: function() {
+		var cred = this.assetConfig.maximo;
+		return cred && cred.classificationid;
+	},
+
 	_getUrl: function(context, islean) {
 		var cred = this.assetConfig.maximo;
 		var objectName = this._getResourceObjectName(context).toLowerCase();

@@ -57,12 +57,13 @@ _.extend(asset, {
 		return this._getAsset("vehicle", mo_id);
 	},
 	addVehicle: function(vehicle, noRefresh){
-		vehicle = this._mergeObject({
-					status:"inactive",
-					properties: {
+		var props = {status: "inactive"};
+		if (this._assetApi.acceptVehicleProperties()) {
+			props.properties = {
 						fueltank: 60
-					}
-				}, vehicle||{});
+			};
+		}
+		vehicle = this._mergeObject(props, vehicle||{});
 		return this._addAsset("vehicle", vehicle, !noRefresh);
 	},
 	updateVehicle: function(id, vehicle, overwrite, noRefresh){
