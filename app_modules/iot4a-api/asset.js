@@ -47,6 +47,10 @@ _.extend(asset, {
 	isSaaS: function() {
 		return this._assetApi && this._assetApi.isNative && this._assetApi.isNative();
 	},
+
+	acceptVehicleProperties: function() {
+		return this._assetApi && this._assetApi.acceptVehicleProperties();
+	},
 	/*
 	 * Vehicle apis
 	 */
@@ -58,7 +62,7 @@ _.extend(asset, {
 	},
 	addVehicle: function(vehicle, noRefresh){
 		var props = {status: "inactive"};
-		if (this._assetApi.acceptVehicleProperties()) {
+		if (this.acceptVehicleProperties()) {
 			props.properties = {
 						fueltank: 60
 			};

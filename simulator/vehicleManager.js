@@ -144,8 +144,11 @@ _.extend(simulatedVehicleManager, {
 				"vendor": VENDOR_NAME, 
 				"serial_number": "s-" + chance.hash({length: 6})
 			};
-			vehicle.properties = this._getDeviceModelInfo();
-			vehicle.model = vehicle.properties.makeModel;
+			var properties = this._getDeviceModelInfo();
+			vehicle.model = properties.makeModel;
+			if (iot4aAsset.acceptVehicleProperties()) {
+				vehicle.properties = properties;				
+			}
 			defList.push(iot4aAsset.addVehicle(vehicle));
 		}
 		Q.all(defList).then(function(){
