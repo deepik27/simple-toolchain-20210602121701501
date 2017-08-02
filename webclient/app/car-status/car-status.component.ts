@@ -64,12 +64,14 @@ export class CarStatusComponent implements OnInit {
 
         // update overlay
         var cardOverlay = document.getElementById('cardOverlay');
-        if (probe == null && cardOverlay.style.opacity != '1') {
-            cardOverlay.style.opacity = '1';
-            cardOverlay.style.display = 'block';
-        } else if (probe != null && cardOverlay.style.opacity != '0') {
-            cardOverlay.style.opacity = '0';
-            cardOverlay.style.display = 'none';
+        if (cardOverlay) {
+          if (probe == null && cardOverlay.style.opacity != '1') {
+              cardOverlay.style.opacity = '1';
+              cardOverlay.style.display = 'block';
+          } else if (probe != null && cardOverlay.style.opacity != '0') {
+              cardOverlay.style.opacity = '0';
+              cardOverlay.style.display = 'none';
+          }
         }
       });
 

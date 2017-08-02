@@ -30,6 +30,7 @@ declare var $; // jQuery from <script> tag in the index.html
  * The default zoom value when the map `region` is set by `center`
  */
 var DEFAULT_ZOOM = 15;
+var MAX_TRIPS = 15;
 var PROJ_MAP = 'EPSG:3857';
 var PROJ_LONLAT = 'EPSG:4326'; // WSG84
 
@@ -59,6 +60,9 @@ export class DriverBehaviorComponent implements OnInit {
 	alerts = [];
 	selectedBehavior: any;
 	trip: any;
+	selectedTrip: any;
+	tripList = [];
+	maxTrips:number = MAX_TRIPS;
 	loading: boolean = false;
 	tripRouteHttpError: string;
 	behaviorHttpError: string;
@@ -257,123 +261,135 @@ export class DriverBehaviorComponent implements OnInit {
 	OnDestroy() {
 	}
 
+	onTripChanged(event) {
+		this.selectedTrip = this.tripList[event.target.selectedIndex];
+		this._loadDriverBehavior(this.mo_id, this.selectedTrip.trip_id);
+	}
+
 	loadDriverBehavior() {
 		this.tripRouteHttpError = undefined;
 		this.behaviorHttpError = undefined;
 		if (this.mo_id) {
-			this.driverBehaviorService.getTripId(this.mo_id).subscribe(trip_id => {
-				this.loading = true;
-				this.behaviors = [];
-				this.tripFeatures = [];
-				this.driverBehaviorService.getCarProbeHistory(this.mo_id, trip_id).subscribe(data => {
-					try {
-						this.updateTripRoute(data);
-					} finally {
-						this.loading = false;
+			this.selectedTrip = null;
+			this.tripList = [];
+			this.driverBehaviorService.getTrips(this.mo_id, this.maxTrips).subscribe(tripList => {
+				this.tripList = tripList;
+				if (this.tripList && this.tripList.length > 0)
+					this.selectedTrip = this.tripList[0];
+				this._loadDriverBehavior(this.mo_id, this.selectedTrip.trip_id);
+			});
+		}
+	}
+
+	_loadDriverBehavior(mo_id, trip_id) {
+		this.loading = true;
+		this.behaviors = [];
+		this.tripFeatures = [];
+		this.driverBehaviorService.getCarProbeHistory(mo_id, trip_id).subscribe(data => {
+			try {
+				this.updateTripRoute(data);
+			} finally {
+				this.loading = false;
+			}
+			this.driverBehaviorService.getDrivingBehavior(mo_id, trip_id).subscribe(data => {
+				if (!data || !data.ctx_sub_trips) {
+					return; // no content
+				}
+				var subTrips = [].concat(data.ctx_sub_trips);
+				var behaviorDetails = _.flatten(_.pluck(subTrips, 'driving_behavior_details'));
+				behaviorDetails = behaviorDetails.sort((a, b) => {return a.start_time - b.start_time;});
+				let detailIndex = 0;
+				let detailList = [];
+				this.trip.forEach(probe => {
+					for(let i=detailIndex; i<behaviorDetails.length; i++){
+						if(probe.timestamp >= behaviorDetails[i].start_time){
+							behaviorDetails[i].route = [];
+							detailList.push(behaviorDetails[i]);
+							detailIndex++;
+						}else{
+							break;
+						}
 					}
-					this.driverBehaviorService.getDrivingBehavior(this.mo_id, trip_id).subscribe(data => {
-						if (!data || !data.ctx_sub_trips) {
-							return; // no content
-						}
-						var subTrips = [].concat(data.ctx_sub_trips);
-						var behaviorDetails = _.flatten(_.pluck(subTrips, 'driving_behavior_details'));
-						behaviorDetails = behaviorDetails.sort((a, b) => {return a.start_time - b.start_time;});
-						let detailIndex = 0;
-						let detailList = [];
-						this.trip.forEach(probe => {
-							for(let i=detailIndex; i<behaviorDetails.length; i++){
-								if(probe.timestamp >= behaviorDetails[i].start_time){
-									behaviorDetails[i].route = [];
-									detailList.push(behaviorDetails[i]);
-									detailIndex++;
-								}else{
-									break;
-								}
-							}
-							detailList.forEach(detail => {
-								detail.route.push({
-									longitude: probe.matched_longitude||probe.longitude,
-									latitude: probe.matched_latitude||probe.latitude
-								});
-							});
-							detailList = detailList.filter(detail => {return probe.timestamp < 	detail.end_time;});
+					detailList.forEach(detail => {
+						detail.route.push({
+							longitude: probe.matched_longitude||probe.longitude,
+							latitude: probe.matched_latitude||probe.latitude
 						});
-						var byName = _.groupBy(behaviorDetails, function(d){ return d.behavior_name; });
-
-						this.behaviors = _.sortBy(_.pairs(byName).map(function(p){
-							return {name: p[0], details: p[1]};
-						}), function(behavior) {
-							return behavior.name;
-						});
-						this.selectedBehavior = this.behaviors[0];
-						this.setSelectedBehavior(this.selectedBehavior);
-						
-						// features
-						if (!data.trip_features) {
-							return; // no trip_features
-						}
-						var tripFeatures = [].concat(data.trip_features);
-						this.tripFeatures = _.sortBy(_.filter(tripFeatures.map(function(p){
-							return {name: p.feature_name, value: p.feature_value};
-						}), function(feature) {
-							return !_.contains(["month_of_year", "day_of_week", "day_of_month"], feature.name);
-						}), function(feature) {
-							return feature.name;
-						});
-					}, error => {
-						if (error.status === 400) {
-							// The trajectory may be too short to analyze. 
-						} else {
-							this.behaviorHttpError = error.message || error._body || error;
-						}
 					});
+					detailList = detailList.filter(detail => {return probe.timestamp < 	detail.end_time;});
+				});
+				var byName = _.groupBy(behaviorDetails, function(d){ return d.behavior_name; });
 
-					let from = this.trip[0].timestamp;
-					let to = this.trip[this.trip.length-1].timestamp;
-					this.alertService.getAlert({from: from, to: to, mo_id: this.mo_id, includeClosed: true, limit: 200}).subscribe(data => {
-						var alerts = data.alerts;
-						alerts.sort((a, b) => {return a.ts - b.ts;});
-						let alertIndex = 0;
-						let alertList = [];
-						this.trip.forEach(probe => {
-							for(let i=alertIndex; i<alerts.length; i++){
-								if(probe.timestamp >= alerts[i].ts){
-									alerts[i].route = [];
-									alertList.push(alerts[i]);
-									alertIndex++;
-								}else{
-									break;
-								}
-							}
-							alertList.forEach(alert => {
-								alert.route.push({
-									longitude: probe.matched_longitude||probe.longitude,
-									latitude: probe.matched_latitude||probe.latitude
-								});
-							});
-							alertList = alertList.filter(alert => {return alert.closed_ts < 0 || probe.timestamp < alert.closed_ts;});
-						});
-						var byType = _.groupBy(alerts, "description");
-						this.alerts = _.sortBy(_.pairs(byType).map(p => {
-							let type;
-							if(p[1][0].type === "geofence"){
-								type = "Geofence";
-							}else if(p[1][0].source.type === "event"){
-								type = "Event";
-							}else{
-								type = "";
-							}
-							return {name: p[0], type: type, details: p[1]};
-						}), "type");
-					});
-				}, error => {
-					this.loading = false;
-					this.tripRouteHttpError = error.message || error._body || error;
+				this.behaviors = _.sortBy(_.pairs(byName).map(function(p){
+					return {name: p[0], details: p[1]};
+				}), function(behavior) {
+					return behavior.name;
+				});
+				this.selectedBehavior = this.behaviors[0];
+				this.setSelectedBehavior(this.selectedBehavior);
+				
+				// features
+				if (!data.trip_features) {
+					return; // no trip_features
+				}
+				var tripFeatures = [].concat(data.trip_features);
+				this.tripFeatures = _.sortBy(_.filter(tripFeatures.map(function(p){
+					return {name: p.feature_name, value: p.feature_value};
+				}), function(feature) {
+					return !_.contains(["month_of_year", "day_of_week", "day_of_month"], feature.name);
+				}), function(feature) {
+					return feature.name;
 				});
 			}, error => {
-				this.tripRouteHttpError = error.message || error;
-			})
-		}
+				if (error.status === 400) {
+					// The trajectory may be too short to analyze. 
+				} else {
+					this.behaviorHttpError = error.message || error._body || error;
+				}
+			});
+
+			let from = this.trip[0].timestamp;
+			let to = this.trip[this.trip.length-1].timestamp;
+			this.alertService.getAlert({from: from, to: to, mo_id: mo_id, includeClosed: true, limit: 200}).subscribe(data => {
+				var alerts = data.alerts;
+				alerts.sort((a, b) => {return a.ts - b.ts;});
+				let alertIndex = 0;
+				let alertList = [];
+				this.trip.forEach(probe => {
+					for(let i=alertIndex; i<alerts.length; i++){
+						if(probe.timestamp >= alerts[i].ts){
+							alerts[i].route = [];
+							alertList.push(alerts[i]);
+							alertIndex++;
+						}else{
+							break;
+						}
+					}
+					alertList.forEach(alert => {
+						alert.route.push({
+							longitude: probe.matched_longitude||probe.longitude,
+							latitude: probe.matched_latitude||probe.latitude
+						});
+					});
+					alertList = alertList.filter(alert => {return alert.closed_ts < 0 || probe.timestamp < alert.closed_ts;});
+				});
+				var byType = _.groupBy(alerts, "description");
+				this.alerts = _.sortBy(_.pairs(byType).map(p => {
+					let type;
+					if(p[1][0].type === "geofence"){
+						type = "Geofence";
+					}else if(p[1][0].source.type === "event"){
+						type = "Event";
+					}else{
+						type = "";
+					}
+					return {name: p[0], type: type, details: p[1]};
+				}), "type");
+			});
+		}, error => {
+			this.loading = false;
+			this.tripRouteHttpError = error.message || error._body || error;
+		});
 	}
 	
 	expandExtent(extent, ratio):[number, number, number, number] {

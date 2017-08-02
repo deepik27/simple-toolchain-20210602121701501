@@ -24,15 +24,21 @@ export class DriverBehaviorService {
     });
    }
 
-  public getTripId(vehicleId) {
-    let url = "/user/analysis/latesttrip/" + vehicleId;
-    console.log("get trip id: " + url);
+  public getTrips(vehicleId, limit) {
+    let url = "/user/analysis/trip/" + vehicleId;
+    if (limit) {
+      url += ('?limit=' + limit);
+    }
+    console.log("get trip: " + url);
     return this.http.get(url).map(data => {
       if (data && (<any>data).status === 204) {
-        return {};
+        return [];
       }
       let resJson = data.json();
-      return resJson.trip_id || resJson.tirp_id;
+      return _.map(resJson, trip => {
+        (<any>trip).trip_id = (<any>trip).trip_id || (<any>trip).tirp_id;
+        return trip;
+      });
     });
   }
 

@@ -24,13 +24,15 @@ _.extend(driverInsightsAnalysis, {
 		return iot4aAsset.isSaaS();
 	},
 	
-	getLatestTrip: function(mo_id) {
+	getTrips: function(mo_id, limit) {
 		var deferred = Q.defer();
-		Q.when(iot4aDriverBehavior.getTrip({mo_id: mo_id, limit: 1}), function(response) {
+		var params = {mo_id: mo_id};
+		if (limit) {
+			params.limit = limit;
+		}
+		Q.when(iot4aDriverBehavior.getTrip(params), function(response) {
 			if (response && response.length > 0) {
-				deferred.resolve(response[0]);
-			} else {
-				deferred.reject({statusCode: 404, message: "No trip found"});
+				deferred.resolve(response);
 			}
 		})["catch"](function(err){
 			deferred.reject(err);
