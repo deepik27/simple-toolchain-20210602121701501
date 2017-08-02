@@ -115,7 +115,13 @@ iotfClient.prototype.createCommandsMethods = function createCommandsMethonds(){
 getCredentials = function (){
 	var iotfservices = VCAP_SERVICES["iotf-service"];
 	if (!iotfservices || iotfservices.length === 0) {
-		return null;
+		if (process.env.USER_PROVIDED_VCAP_SERVICES) {
+			var vcap = JSON.parse(process.env.USER_PROVIDED_VCAP_SERVICES);
+			iotfservices = vcap["iotf-service"];
+		}
+		if (!iotfservices || iotfservices.length === 0) {
+			return null;
+		}
 	}
 	var iotFcreds = iotfservices[0].credentials;
 	var config = {

@@ -30,6 +30,11 @@ var iot4aAssetApi = {
 			}
 		}
 	}(),
+
+	acceptVehicleProperties: function() {
+		return true;
+	},
+
 	/*
 	 * Get list of assets
 	 */

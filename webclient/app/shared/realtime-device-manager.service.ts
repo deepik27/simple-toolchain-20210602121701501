@@ -80,7 +80,14 @@ export class RealtimeDeviceDataProviderService {
       device.vehicle = {};
       this.getVehicle(vehicleId)
       .then(vehicle => { device.vehicle = vehicle; })
-      .catch(err => { console.error(err); device.vehicle = undefined; });
+      .catch(err => { 
+				if (err.status === 404) {
+					console.log(err); 
+				} else {
+					console.error(err); 
+					device.vehicle = undefined; 
+				}
+			});
     }
   }
 

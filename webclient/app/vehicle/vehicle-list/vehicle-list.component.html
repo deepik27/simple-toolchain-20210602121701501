@@ -59,7 +59,7 @@
 				<td class="alignCenter actionTD">
 					<a class="icon-edit" (click)="selected_mo_id=null;onUpdate(vehicle.mo_id)" href="javascript:void(0)" title="Update"></a>
 					<a class="icon-delete" [ngClass]="vehicle.status != 'active' ? '' : 'hidden'" (click)="selected_mo_id=null;onDelete(vehicle.mo_id)" title="Delete"></a>
-					<a class="icon-status" [routerLink]="['/carStatus', ''+vehicle.mo_id]" title="Show Status"></a>
+					<a class="icon-status" [routerLink]="['/carStatus', ''+vehicle.__mo_id]" title="Show Status"></a>
 				</td>
 			</tr>
 		</tbody>

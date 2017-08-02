@@ -179,15 +179,57 @@ CloudantDeferred.prototype.get = function(docname, params){
 	});
 };
 
-CloudantDeferred.prototype.bulk = function(docs, params){
-	return this.db.then(function(db){
-		var deferred = Q.defer();
-		db.bulk(docs, params, function(er, result){
-			if(er) return deferred.reject(er);
-			deferred.resolve(result);
-		});
-		return deferred.promise;
+
+CloudantDeferred.prototype.bulk = function(docs, params) {
+	var multi_docs = [];
+	var chunk = null;
+	var size = 0;
+	var i = 0;
+	_.each(docs.docs, function(d, index) {
+		if (i++ === 0) {
+			chunk = [];
+			multi_docs.push(chunk);
+			size = 0;
+		}
+		chunk.push(d);
+		size += JSON.stringify(d).length;
+		if (size >= 500000) {
+			i = 0;
+		}
 	});
+
+	var self = this;
+	var deferred = Q.defer();
+	Q.all(_.map(multi_docs, function(doc) { 
+		return self._bulk({docs: doc}, params); 
+	})).then(function(result) {
+		deferred.resolve(_.flatten(result, true));
+	}).catch(function(error) {
+		deferred.reject(error);
+	});
+	return deferred.promise;
+};
+
+CloudantDeferred.prototype._bulk = function(docs, params, deferred) {
+	var self = this;
+	deferred = deferred || Q.defer();
+	this.db.then(function(db){
+		db.bulk(docs, params, function(error, result){
+			if (error) {
+				if (error.error === 'too_many_requests') {
+					console.log("too many requests are submitted. retrying...");
+					setTimeout(function() {
+						self._bulk(docs, params, deferred);
+					}, 500);
+				} else {
+					deferred.reject(error);
+				}
+			} else {
+				deferred.resolve(result);
+			}
+		});
+	});
+	return deferred.promise;
 };
 
 CloudantDeferred.prototype.list = function(params){

@@ -1,8 +1,13 @@
 <div class="row">
 	<div class="column-12-med">
 		<div class="trip_label">
-		<span *ngIf="!trip || trip.length == 0" class="trip_datetime_label">Driving data</span>
-		<span *ngIf="trip && trip.length >= 0" class="trip_datetime_label">Driving data from <span class="trip_datetime">{{trip[0].timestamp|date:'short'}}</span> to <span class="trip_datetime">{{trip[trip.length-1].timestamp|date:'short'}}</span></span>
+		<span *ngIf="!trip || trip.length == 0" class="trip_datetime_label">Driving data <span *ngIf="!loading">(no trip)</span></span>
+		<span *ngIf="trip && trip.length >= 0" class="trip_datetime_label">Driving data: </span>
+		<select [(ngModel)]="selectedTrip" (change)="onTripChanged($event)" class="trip_datetime_label">
+			<optgroup label="The last {{maxTrips}} trips">
+				<option *ngFor="let t of tripList" [ngValue]="selectedTrip">From {{t.start_time|date:'short'}} to {{t.end_time|date:'short'}}</option>
+			</optgroup>
+		</select>
 		<span><button class="reload_button" (click)="loadDriverBehavior()">reload</button></span>
 		</div>
 	</div>
@@ -66,7 +71,7 @@
 				<span class="list-group-item behavior-list-item"
 					*ngFor="let feature of tripFeatures">
 					<div>{{feature.name}}</div>
-					<div>{{feature.value|number:'1.0-2'}}</div>
+					<div>{{ _isFiniteNumber(feature.value) ? (feature.value|number:'1.0-2') : (feature.value) }}</div>
 				</span>
 			</div>
 		</div>

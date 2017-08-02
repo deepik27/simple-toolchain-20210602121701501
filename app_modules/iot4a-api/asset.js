@@ -47,6 +47,10 @@ _.extend(asset, {
 	isSaaS: function() {
 		return this._assetApi && this._assetApi.isNative && this._assetApi.isNative();
 	},
+
+	acceptVehicleProperties: function() {
+		return this._assetApi && this._assetApi.acceptVehicleProperties();
+	},
 	/*
 	 * Vehicle apis
 	 */
@@ -57,12 +61,13 @@ _.extend(asset, {
 		return this._getAsset("vehicle", mo_id);
 	},
 	addVehicle: function(vehicle, noRefresh){
-		vehicle = this._mergeObject({
-					status:"inactive",
-					properties: {
+		var props = {status: "inactive"};
+		if (this.acceptVehicleProperties()) {
+			props.properties = {
 						fueltank: 60
-					}
-				}, vehicle||{});
+			};
+		}
+		vehicle = this._mergeObject(props, vehicle||{});
 		return this._addAsset("vehicle", vehicle, !noRefresh);
 	},
 	updateVehicle: function(id, vehicle, overwrite, noRefresh){

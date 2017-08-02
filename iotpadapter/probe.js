@@ -102,24 +102,29 @@ _.extend(probe, {
 		// Watch payload from IoT Platform and convert it into car probe
 		IOTF.on("+", function(payload, deviceType, deviceId) {
 			// check if mandatory fields exist
-			if (deviceType !== asset.deviceType || isNaN(payload.lng) || isNaN(payload.lat)) {
+			var latitude = payload.lat || payload.latitude;
+			var longitude = payload.lng || payload.longitude;
+			if (deviceType !== asset.deviceType || isNaN(latitude) || isNaN(longitude)) {
 				return;
 			}
 			if (!payload.trip_id && !this.makeTripId) {
 				return;
 			}
 			
-			return Q.when(self._getAssetInfo(deviceId, deviceType), function(assetInfo) {
+			return Q.when(payload.mo_id || self._getAssetInfo(deviceId, deviceType), function(assetInfo) {
 				// Convert payload to car probe
-				var mo_id = assetInfo.vehicleId;
-				if (assetInfo.siteId) {
-					mo_id = assetInfo.siteId + ":" + mo_id;
+				var mo_id = payload.mo_id;
+				if (!mo_id) {
+					mo_id = assetInfo.vehicleId;
+					if (assetInfo.siteId) {
+						mo_id = assetInfo.siteId + ":" + mo_id;
+					}
 				}
 				var probe = {
 					mo_id: mo_id,
 					trip_id: payload.trip_id,
-					longitude: payload.lng || payload.longitude,
-					latitude: payload.lat || payload.latitude,
+					longitude: longitude,
+					latitude: latitude,
 					speed: payload.speed || 0,
 					heading: payload.heading || 0
 				};
@@ -131,8 +136,8 @@ _.extend(probe, {
 				if (payload.altitude) {
 					probe.altitude = payload.altitude;
 				}
-				if (assetInfo.driverId) {
-					probe.driver_id = assetInfo.driverId;
+				if (payload.driver_id || assetInfo.driverId) {
+					probe.driver_id = payload.driver_id || assetInfo.driverId;
 				}
 				if (payload.props) {
 					probe.props = {};

@@ -268,8 +268,8 @@ router.get("/capability/analysis", authenticate, function(req, res) {
 	res.send({available: driverInsightsAnalysis.isAvailable()});
 });
 
-router.get('/analysis/latesttrip/:mo_id', authenticate, function(req, res) {
-	Q.when(driverInsightsAnalysis.getLatestTrip(req.params.mo_id), function(msg){
+router.get('/analysis/trip/:mo_id', authenticate, function(req, res) {
+	Q.when(driverInsightsAnalysis.getTrips(req.params.mo_id, req.query.limit), function(msg){
 		res.send(msg);
 	})["catch"](function(error){
 		handleAssetError(res, error);
