@@ -305,15 +305,11 @@ export class VehicleListComponent {
 
   // Get vendor list
   private _getVendors() {
-    let isRequestOwner = !this.requestSending;
-    this.requestSending = true;
-    this.errorMessage = null;
     let url = "/user/vendor?num_rec_in_page=50&num_page=1";
     return this.http.get(url)
     .map((response: Response) => {
-      this.requestSending = false;
       let resJson = response.json();
-      return resJson && resJson.data.map(function(v) {
+      return resJson && resJson.data.map(v => {
           return new Vendor(v);
       });
     });
