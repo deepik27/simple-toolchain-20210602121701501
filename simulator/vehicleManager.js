@@ -57,10 +57,11 @@ _.extend(simulatedVehicleManager, {
 				var params = {"type": "Vendor", "status":"Active"};
 				if (iot4aAsset.isSaaS()) {
 					var chance = new Chance();
-					var vendor =  chance.hash({length: 12});
+					vendor =  chance.hash({length: 12});
 					params["vendor"] = vendor;
 					params["name"] = VENDOR_NAME;
 				} else {
+					vendor = VENDOR_NAME;
 					params["vendor"] = VENDOR_NAME;
 				}
 				Q.when(iot4aAsset.addVendor(params), function(response){
