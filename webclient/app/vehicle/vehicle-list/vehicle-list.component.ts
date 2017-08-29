@@ -32,7 +32,7 @@ export class VehicleListComponent {
   isWorkingWithVehicle: boolean;
   workingVehicle: Vehicle;
   errorMessage: string;
-  vendors: string[];
+  vendors: Vendor[];
   selected_mo_id: string;
 
   constructor(private http: HttpClient) {
@@ -40,14 +40,22 @@ export class VehicleListComponent {
     this.pageNumber = 1;
     this.hasNext = false;
     this.isWorkingWithVehicle = false;
-    this.workingVehicle = new Vehicle({});
+    this.workingVehicle = new Vehicle({}, []);
     this.errorMessage = "";
     this.selected_mo_id = null;
   }
 
   ngOnInit() {
-    this.selected_mo_id = null;
-    this._updateVehicleList(1);
+    this.selected_mo_id = null
+    this._getVendors()
+    .subscribe((vendors: Array<Vendor>) => {
+      vendors.unshift(new Vendor({}));
+      this.vendors = vendors;
+      this._updateVehicleList(1);
+    }, (error: any) => {
+      this.vendors = [];
+      this._updateVehicleList(1);
+    });
   }
 
   onOrderBy(key) {
@@ -57,7 +65,15 @@ export class VehicleListComponent {
 
   // refresh table
   onReload(event) {
-    this._updateVehicleList(1);
+    this._getVendors()
+    .subscribe((vendors: Array<Vendor>) => {
+      vendors.unshift(new Vendor({}));
+      this.vendors = vendors;
+      this._updateVehicleList(1);
+    }, (error: any) => {
+      this.vendors = [];
+      this._updateVehicleList(1);
+    });
   }
 
   onNumPageChanged(num: number) {
@@ -66,9 +82,9 @@ export class VehicleListComponent {
   }
 
   onShowPrev(event) {
-      if (this.pageNumber > 1) {
-        this._updateVehicleList(this.pageNumber - 1);
-      }
+    if (this.pageNumber > 1) {
+      this._updateVehicleList(this.pageNumber - 1);
+    }
   }
 
   onShowNext(event) {
@@ -82,16 +98,16 @@ export class VehicleListComponent {
     this.requestSending = true;
     this.errorMessage = null;
     this._getVendors()
-    .subscribe((vendors: Array<string>) => {
-      vendors.unshift("");
+    .subscribe((vendors: Array<Vendor>) => {
+      vendors.unshift(new Vendor({}));
       this.vendors = vendors;
       this.requestSending = false;
-      this.workingVehicle = new Vehicle({});
+      this.workingVehicle = new Vehicle({}, []);
       this.isWorkingWithVehicle = true;
     }, (error: any) => {
         this.requestSending = false;
         if (error.status === 404) { // No vendor is registered
-          this.workingVehicle = new Vehicle({});
+          this.workingVehicle = new Vehicle({}, []);
           this.isWorkingWithVehicle = true;
         }
     });
@@ -102,16 +118,16 @@ export class VehicleListComponent {
     this.requestSending = true;
     this.errorMessage = null;
     this._getVendors()
-    .subscribe((vendors: Array<string>) => {
-      vendors.unshift("");
+    .subscribe((vendors: Array<Vendor>) => {
+      vendors.unshift(new Vendor({}));
       this.vendors = vendors;
       this.requestSending = false;
-      this.workingVehicle = new Vehicle(this._getVehicle(mo_id));
+      this.workingVehicle = new Vehicle(this._getVehicle(mo_id), this.vendors);
       this.isWorkingWithVehicle = true;
     }, (error: any) => {
         this.requestSending = false;
         if (error.status === 404) { // No vendor is registered
-          this.workingVehicle = new Vehicle(this._getVehicle(mo_id));
+          this.workingVehicle = new Vehicle(this._getVehicle(mo_id), this.vendors);
           this.isWorkingWithVehicle = true;
         }
     });
@@ -138,13 +154,13 @@ export class VehicleListComponent {
   }
 
   onToggleStatus(mo_id: string) {
-      let vehicle = new Vehicle(this._getVehicle(mo_id));
-      if (vehicle.status === "active") {
-        vehicle.status = "inactive";
-      } else {
-        vehicle.status = "active";
-      }
-      this._updateVehicle(mo_id, vehicle);
+    let vehicle = new Vehicle(this._getVehicle(mo_id), this.vendors);
+    if (vehicle.status === "active") {
+      vehicle.status = "inactive";
+    } else {
+      vehicle.status = "active";
+    }
+    this._updateVehicle(mo_id, vehicle);
   }
 
   onSyncWithIoTPlatform() {
@@ -209,8 +225,8 @@ export class VehicleListComponent {
     return this.http.get(url)
       .map((response: any) => {
         let resJson = response.json();
-        return resJson && resJson.data.map(function(v) {
-            return new Vehicle(v);
+        return resJson && resJson.data.map(v => {
+            return new Vehicle(v, this.vendors);
         });
     });
   }
@@ -295,9 +311,10 @@ export class VehicleListComponent {
     let url = "/user/vendor?num_rec_in_page=50&num_page=1";
     return this.http.get(url)
     .map((response: Response) => {
+      this.requestSending = false;
       let resJson = response.json();
       return resJson && resJson.data.map(function(v) {
-          return v.vendor;
+          return new Vendor(v);
       });
     });
   }
@@ -307,6 +324,7 @@ export class VehicleListComponent {
 class Vehicle {
   __id: string;
   __mo_id: string;
+  __vendorname: string;
   mo_id: string; // The ID of the vehicle that is automatically generated by the system.
   siteid: string; // site id only for SaaS environment
   internal_mo_id: number; // The numerical ID of the vehicle that is automatically generated by the system.
@@ -322,12 +340,20 @@ class Vehicle {
   status: string = "inactive";
   properties: any;
 
-  constructor(props) {
+  constructor(props, vendors: Vendor[]) {
     for (let key in props) {
       this[key] = props[key];
     }
     this.__id = this.serial_number || this.mo_id;
     this.__mo_id = this.siteid ? (this.siteid + ':' + this.mo_id) : this.mo_id;
+
+    if (this.vendor) {
+      _.each(vendors, v => {
+        if (v.vendor === this.vendor) {
+          this.__vendorname = v.name;
+        }
+      });
+    }
   }
 
   getData() {
@@ -338,5 +364,18 @@ class Vehicle {
       }
     }
     return data;
+  }
+}
+
+// Vendor definition
+class Vendor {
+  vendor: string; // The ID of the vendor.
+  name: string; // Name of the vendor.
+
+  constructor(props) {
+    if (props) {
+      this.vendor = props['vendor'];
+      this.name = props['name'] || this.vendor;
+    }
   }
 }

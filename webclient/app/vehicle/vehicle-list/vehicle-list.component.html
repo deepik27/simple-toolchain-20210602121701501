@@ -28,8 +28,8 @@
 					<span [ngClass]="orderByKey==='__id'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 				</th>
 				<th>
-					<span class="sortable" (click)="onOrderBy('vendor')">Vendor</span>
-					<span [ngClass]="orderByKey==='vendor'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+					<span class="sortable" (click)="onOrderBy('__vendorname')">Vendor</span>
+					<span [ngClass]="orderByKey==='__vendorname'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 				</th>
 				<th>
 					<span class="sortable" (click)="onOrderBy('model')">Model</span>
@@ -48,7 +48,7 @@
 					<span title="mo_id:{{vehicle.mo_id}}">{{numRecInPage * (pageNumber - 1) + i + 1}}</span>
 				</td>
 				<td>{{vehicle.__id||'-'}}</td>
-				<td>{{vehicle.vendor||'-'}}</td>
+				<td>{{vehicle.__vendorname||'-'}}</td>
 				<td>{{vehicle.model||'-'}}</td>
 				<td>
 					<div class="radarCircles">
@@ -73,7 +73,7 @@
 				<div class="row">
 					<label for="new_vendor" class="fieldLabel column-3-lg column-3-med column-3-sm">Vendor:</label>
 					<select id="new_vendor" class="column-7-lg column-7-med column-7-sm" [(ngModel)]="workingVehicle.vendor">
-							<option *ngFor="let vendor of vendors" value="{{vendor}}">{{vendor}}</option>
+							<option *ngFor="let vendor of vendors" value="{{vendor.vendor}}">{{vendor.name}}</option>
 					</select>
 				</div>
 				<div class="row">

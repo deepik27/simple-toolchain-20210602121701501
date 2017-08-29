@@ -26,7 +26,7 @@ _.extend(contextMapping, {
 				baseURL: (creds.mapinsights && creds.mapinsights.api) ? 
 						creds.mapinsights.api : (creds.api + "mapinsights"),
 				tenant_id : creds.tenant_id,
-				internal_tenant_id: creds.internal_tenant_id,
+				internal_tenant_id: creds.internal_tenant_id, // Workaround for DMM SaaS. DMM SaaS API needs internal_tenant_id
 				username : creds.username,
 				password : creds.password
 			};
@@ -39,10 +39,12 @@ _.extend(contextMapping, {
 		if (config.tenant_id) {
 			if (!options.qs) options.qs = {};
 			options.qs.tenant_id = config.tenant_id;
-		}
-		if (config.internal_tenant_id) {
-			if (!options.qs) options.qs = {};
-			options.qs.internal_tenant_id = config.internal_tenant_id;
+			
+			// Workaround for DMM SaaS. DMM SaaS API needs internal_tenant_id
+			if (config.internal_tenant_id) {
+				if (!options.qs) options.qs = {};
+				options.qs.internal_tenant_id = config.internal_tenant_id;
+			}
 		}
 		
 		// Add basic authentication if username and password are specified
