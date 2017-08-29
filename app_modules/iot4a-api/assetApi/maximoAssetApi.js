@@ -53,10 +53,10 @@ var attributesMap = {
 					if (value === undefined) {
 						return;
 					}
-//					if (_.isNumber(value)) {
-//						spec.numvalue = value;
-//					} else {
-//						spec.alnvalue = value.toString();
+					// if (_.isNumber(value)) {
+					// 	spec.numvalue = value;
+					// } else {
+						spec.alnvalue = value.toString();
 //					}
 					assetspec.push(spec);
 				});
