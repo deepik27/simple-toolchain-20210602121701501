@@ -25,8 +25,8 @@ export class NumberOfCarsService {
     this.animatedDeviceManager = animatedDeviceManagerService.getProvider();
   }
 
-  getNumberOfCars(region: any, interval = 3): Observable<Counts>{
-    var debugKey = Math.floor(Math.random()*100);
+  getNumberOfCars(region: any, interval = 3): Observable<Counts> {
+    var debugKey = Math.floor(Math.random() * 100);
     return Observable.interval(interval * 1000)
       .map(x => {
         let devices = this.animatedDeviceManager.getDevices();
@@ -36,7 +36,7 @@ export class NumberOfCarsService {
         let critical = -1;
         if (devices.length > 0 && devices[0].latestSample && devices[0].latestSample.aggregated) {
           all = 0;
-          devices.forEach(function(device) {
+          devices.forEach(function (device) {
             if (device.latestSample.count < 0) {
               all_anbiguous = true;
             } else if (all >= 0) {
@@ -45,16 +45,16 @@ export class NumberOfCarsService {
           });
         } else {
           all = devices.length;
-          troubled = devices.filter(device => (device.latestSample && device.latestSample.status === 'troubled')).length;
-          critical = devices.filter(device => (device.latestSample && device.latestSample.status === 'critical')).length;
- 		}
-         return <Counts>{ _region: region, all: all, all_anbiguous: all_anbiguous, troubled: troubled, critical: critical };
+          troubled = devices.filter(device => (device.latestSample && device.latestSample.alertLevel === 'troubled')).length;
+          critical = devices.filter(device => (device.latestSample && device.latestSample.alertLevel === 'critical')).length;
+        }
+        return <Counts>{ _region: region, all: all, all_anbiguous: all_anbiguous, troubled: troubled, critical: critical };
       })
       .startWith(loadingData)
       .do(counts => this.log('getNumberOfCars(%s) item: %s', debugKey, counts.all));
   }
 
-  private log(...vargs){
+  private log(...vargs) {
     // console.log.call(vargs);
   }
 }

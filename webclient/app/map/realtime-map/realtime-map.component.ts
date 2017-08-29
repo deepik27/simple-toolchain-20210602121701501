@@ -37,16 +37,16 @@ declare var $; // jQuery from <script> tag in the index.html
  *   <script src="https://cdnjs.cloudflare.com/ajax/libs/rxjs-dom/7.0.3/rx.dom.js"></script>
  */
 
-	/**
-	 * The default zoom value when the map `region` is set by `center`
-	 */
-	var DEFAULT_ZOOM = 15;
+/**
+ * The default zoom value when the map `region` is set by `center`
+ */
+var DEFAULT_ZOOM = 15;
 
-	// internal settings
-	var INV_MAX_FPS = 1000 / 10;
-	var ANIMATION_DELAY = 2000;
-	var DEFAULT_MOVE_REFRESH_DELAY = 500;
-	var NEXT_MAP_ELEMENT_ID = 1;
+// internal settings
+var INV_MAX_FPS = 1000 / 10;
+var ANIMATION_DELAY = 2000;
+var DEFAULT_MOVE_REFRESH_DELAY = 500;
+var NEXT_MAP_ELEMENT_ID = 1;
 
 
 @Component({
@@ -95,21 +95,21 @@ export class RealtimeMapComponent implements OnInit {
 		this.animatedDeviceManager = animatedDeviceManagerService.getProvider();
 	}
 
-	switchDebug(){
+	switchDebug() {
 		this.DEBUG = !this.DEBUG;
 		this.appConfig.DEBUG = !this.appConfig.DEBUG;
 	}
-	debugOut(){
+	debugOut() {
 		let ext = this.map.getView().calculateExtent(this.map.getSize());
 		let extent = this.mapHelper.normalizeExtent(ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326'));
 		let center = this.mapHelper.normalizeLocation(ol.proj.toLonLat(this.map.getView().getCenter(), 'EPSG:3857'));
 		this.debugData = "" + JSON.stringify(extent) + ", Center:" + JSON.stringify(center);
 	}
-	initMap(){
+	initMap() {
 		// create layers
 		this.eventsLayer = new ol.layer.Vector({
 			source: new ol.source.Vector(),
-			style: function(feature){
+			style: function (feature) {
 				return getDrivingEventStyle(feature.get('drivingEvent'));
 			},
 			renderOrder: undefined
@@ -117,7 +117,7 @@ export class RealtimeMapComponent implements OnInit {
 		// car layer with rendering style
 		this.carsLayer = new ol.layer.Vector({
 			source: new ol.source.Vector(),
-			style: function(feature){
+			style: function (feature) {
 				var device = feature.get('device');
 				if (device.aggregated) {
 					return getGroupStyle(device);
@@ -140,7 +140,7 @@ export class RealtimeMapComponent implements OnInit {
 		var opt = new ol.Object();
 		var mapTargetElement = document.getElementById(this.mapElementId);
 
-		this.map =  new ol.Map({
+		this.map = new ol.Map({
 			controls: ol.control.defaults({
 				attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
 					collapsible: false
@@ -167,7 +167,7 @@ export class RealtimeMapComponent implements OnInit {
 			}),
 		});
     // add helpers
-    this.mapHelper = new MapHelper(this.map, function(coordinate, feature, layer) {
+    this.mapHelper = new MapHelper(this.map, function (coordinate, feature, layer) {
       let item = feature.get("item");
       if (item) {
         let helper = this.mapItemHelpers[item.getItemType()];
@@ -178,7 +178,7 @@ export class RealtimeMapComponent implements OnInit {
       return true;
     }.bind(this));
 		this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
-    this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, {itemLabel: "Boundary"});
+    this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, { itemLabel: "Boundary" });
 
 		/*
 		* Monitor devices to update affected events. If there are affected events, highlight the events
@@ -187,15 +187,15 @@ export class RealtimeMapComponent implements OnInit {
 			// get all the alerts here
 			return _.union(_.flatten(this.animatedDeviceManager.getDevices()
 				.filter(device => (device.latestSample.info &&
-													 device.latestSample.info.alerts &&
-													 device.latestSample.info.alerts.items &&
-													 device.latestSample.info.alerts.items.length > 0))
+					device.latestSample.info.alerts &&
+					device.latestSample.info.alerts.items &&
+					device.latestSample.info.alerts.items.length > 0))
 				.map(device => {
 					let alerts = device.latestSample.info.alerts.items;
 					let ids = alerts.filter(alert => { return alert.source && alert.source.type === "event"; })
-															.map(alert => { return alert.source.id; });
-				return _.uniq(ids);
-			})));
+						.map(alert => { return alert.source.id; });
+					return _.uniq(ids);
+				})));
 		});
 		eventMonitor.subscribe(data => {
 			let helper = this.mapItemHelpers["event"];
@@ -223,33 +223,33 @@ export class RealtimeMapComponent implements OnInit {
 
 			});
 			// fire event
-			this.extentChanged.emit({extent: extent});
+			this.extentChanged.emit({ extent: extent });
 		});
 
 		//
 		// Setup popover
 		//
 		this.mapHelper.addPopOver({
-				elm: document.getElementById(this.popoverElemetId),
-				pin: true,
-				updateInterval: 1000,
-			},
-			function showPopOver(elem, feature, pinned, closeCallback){
-				if(!feature) return;
+			elm: document.getElementById(this.popoverElemetId),
+			pin: true,
+			updateInterval: 1000,
+		},
+			function showPopOver(elem, feature, pinned, closeCallback) {
+				if (!feature) return;
 				var content = <any>getPopOverContent(feature);
-				if(content){
+				if (content) {
 					var title = '<div>' + (content.title ? _.escape(content.title) : '') + '</div>' +
-							(pinned ? '<div><span class="btn btn-default close">&times;</span></div>' : '');
+						(pinned ? '<div><span class="btn btn-default close">&times;</span></div>' : '');
 					var pop = $(elem).popover({
 						//placement: 'top',
 						html: true,
 						title: title,
 						content: content.content
 					});
-					if(pinned){
-						pop.on('shown.bs.popover', function(){
+					if (pinned) {
+						pop.on('shown.bs.popover', function () {
 							var c = $(elem).parent().find('.popover .close');
-							c.on('click', function(){
+							c.on('click', function () {
 								closeCallback && closeCallback();
 							});
 						});
@@ -257,16 +257,16 @@ export class RealtimeMapComponent implements OnInit {
 					$(elem).popover('show');
 				}
 			},
-			function destroyPopOver(elem, feature, pinned){
-				if(!feature) return;
+			function destroyPopOver(elem, feature, pinned) {
+				if (!feature) return;
 				$(elem).popover('destroy');
 			},
-			function updatePopOver(elem, feature, pinned){
-				if(!feature) return;
+			function updatePopOver(elem, feature, pinned) {
+				if (!feature) return;
 				var content = getPopOverContent(feature);
-				if(content){
+				if (content) {
 					var popover = $(elem).data('bs.popover');
-					if(popover.options.content != content.content){
+					if (popover.options.content != content.content) {
 						popover.options.content = content.content;
 						$(elem).popover('show');
 					}
@@ -274,37 +274,37 @@ export class RealtimeMapComponent implements OnInit {
 			});
 
 		// popover - generate popover content from ol.Feature
-		var getPopOverContent = (feature): {title?: string, content: string} => {
+		var getPopOverContent = (feature): { title?: string, content: string } => {
 			var content = <string>feature.get('popoverContent');
-			if(content)
-				return {content: '<span style="white-space: nowrap;">' + _.escape(content) + '</span>' };
+			if (content)
+				return { content: '<span style="white-space: nowrap;">' + _.escape(content) + '</span>' };
 
 			var device = feature.get('device');
-			if(device){
+			if (device) {
 				let result = { content: '', title: null };
 				var sample = device.latestSample;
 				if (sample && sample.aggregated) {
-						result.content += '<div style="white-space: nowrap;">Cars in this area: ' + (sample.count >= 0 ? _.escape(sample.count) : "Unknown") + "</div>";
-						result.content += '<div style="white-space: nowrap;">Min Longitude: ' + _.escape(sample.geometry.min_lon) + "</div>";
-						result.content += '<div style="white-space: nowrap;">Min Latitude: ' + _.escape(sample.geometry.min_lat) + "</div>";
-						result.content += '<div style="white-space: nowrap;">Max Longitude: ' + _.escape(sample.geometry.max_lon) + "</div>";
-						result.content += '<div style="white-space: nowrap;">Max Latitude: ' + _.escape(sample.geometry.max_lat) + "</div>";
-						return result;
+					result.content += '<div style="white-space: nowrap;">Cars in this area: ' + (sample.count >= 0 ? _.escape(sample.count) : "Unknown") + "</div>";
+					result.content += '<div style="white-space: nowrap;">Min Longitude: ' + _.escape(sample.geometry.min_lon) + "</div>";
+					result.content += '<div style="white-space: nowrap;">Min Latitude: ' + _.escape(sample.geometry.min_lat) + "</div>";
+					result.content += '<div style="white-space: nowrap;">Max Longitude: ' + _.escape(sample.geometry.max_lon) + "</div>";
+					result.content += '<div style="white-space: nowrap;">Max Latitude: ' + _.escape(sample.geometry.max_lat) + "</div>";
+					return result;
 				}
 
 				result.content = ('<span style="white-space: nowrap;">ID: '
-												+ '<a onclick="document[\'' + ("_handleClick" + this.popoverElemetId) + '\'](\'' + _.escape(device.deviceID) + '\'); return 0;"'
-												+ ' href="javascript:void(0)">'
-												+ _.escape((device.vehicle && device.vehicle.serial_number) || device.deviceID)
-												+ '</a></span>');
+					+ '<a onclick="document[\'' + ("_handleClick" + this.popoverElemetId) + '\'](\'' + _.escape(device.deviceID) + '\'); return 0;"'
+					+ ' href="javascript:void(0)">'
+					+ _.escape((device.vehicle && device.vehicle.serial_number) || device.deviceID)
+					+ '</a></span>');
 				this.animatedDeviceManagerService.scheduleVehicleDataLoading(device.deviceID);
 				var info = device.latestInfo;
-				if(sample && this.DEBUG){
+				if (sample && this.DEBUG) {
 					var content = '<div class="">Connected: ' + sample.device_connection + '</div>' +
-									'<div class="">Device status: ' + sample.device_status + '</div>';
+						'<div class="">Device status: ' + sample.device_status + '</div>';
 					result.content += content;
 				}
-				if(sample){
+				if (sample) {
 					let fuelText = "";
 					if (sample.props) {
 						if (sample.props.fuelLevel) {
@@ -315,38 +315,38 @@ export class RealtimeMapComponent implements OnInit {
 					}
 					result.content += '<div style="white-space: nowrap;">Longitude: ' + _.escape(sample.lng) + "</div>";
 					result.content += '<div style="white-space: nowrap;">Latitude: ' + _.escape(sample.lat) + "</div>";
-					result.content += '<div style="white-space: nowrap;">Speed: ' + _.escape(String(Math.round(Number(sample.speed)/0.01609344)/100)) + "</div>";
+					result.content += '<div style="white-space: nowrap;">Speed: ' + _.escape(String(Math.round(Number(sample.speed) / 0.01609344) / 100)) + "</div>";
 					result.content += '<div style="white-space: nowrap;">Fuel: ' + _.escape(fuelText) + "</div>";
-					result.content += '<div style="white-space: nowrap;">Engine Oil Temperature: ' + _.escape(String(Math.round((Number(sample.props && sample.props.engineTemp)*9/5+32)*100)/100)) + "</div>";
+					result.content += '<div style="white-space: nowrap;">Engine Oil Temperature: ' + _.escape(String(Math.round((Number(sample.props && sample.props.engineTemp) * 9 / 5 + 32) * 100) / 100)) + "</div>";
 					result.content += '<div style="white-space: nowrap;">Timestamp: ' + _.escape(sample.timestamp) + "</div>";
 				}
-				if(info){
-					if(info.alerts && this.DEBUG){
+				if (info) {
+					if (info.alerts && this.DEBUG) {
 						result.content += '<div style="white-space: nowrap;">Alerts: ' + _.escape(JSON.stringify(info.alerts)) + "</div>";
 					}
-					if(info.name && info.makeModel){
+					if (info.name && info.makeModel) {
 						result.title = info.name;
-					}else if(info.name){
+					} else if (info.name) {
 						result.title = info.name;
 					}
-					if(info.reservation){
+					if (info.reservation) {
 						var content = "";
-						if(sample && sample.status == 'in_use'){
+						if (sample && sample.alertLevel == 'in_use') {
 							content = 'Reserved until ' + moment(parseInt(info.reservation.dropOffTime) * 1000).calendar();
-						}else{
+						} else {
 							content = 'Reserved from ' + moment(parseInt(info.reservation.pickupTime) * 1000).calendar();
 						}
 						result.content += '<div class="marginTop-10" style="white-space: nowrap;">' + content + '</div>';
 					}
 				}
-				if(sample && sample.status == 'in_use'){
-					if(sample.speed){
+				if (sample && sample.alertLevel == 'in_use') {
+					if (sample.speed) {
 						result.content += '<div class="">Speed: ' + sample.speed.toFixed(1) + 'km/h</div>';
 					}
-					if(sample.matched_heading){
+					if (sample.matched_heading) {
 						var heading = +sample.matched_heading;
 						heading = (heading < 0) ? heading + 360 : heading;
-						var index = Math.floor(((heading/360 + 1/32) % 1) * 16);
+						var index = Math.floor(((heading / 360 + 1 / 32) % 1) * 16);
 						var dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
 						var dir = dirs[index];
 						result.content += '<div class="">Heading: ' + dir + '</div>';
@@ -361,12 +361,12 @@ export class RealtimeMapComponent implements OnInit {
 					let props = helper.getHoverProps(item);
 					let title = helper.getItemLabel() + " (" + item.getId() + ")";
 					let details: string = "<table><tbody>";
-					props && props.forEach(function(prop) {
+					props && props.forEach(function (prop) {
 						details += "<tr><th style='white-space: nowrap;text-align:right;'><span style='margin-right:10px;'>" + _.escape(prop.key.toUpperCase()) +
-																":</span></th><td>" + _.escape(prop.value) + "</td></tr>";
+							":</span></th><td>" + _.escape(prop.value) + "</td></tr>";
 					});
 					details += "</tbody><table>";
-					return {title: title, content: details};
+					return { title: title, content: details };
 				}
 			}
 
@@ -376,20 +376,20 @@ export class RealtimeMapComponent implements OnInit {
 		// setup alert popover
 		// - 1. create alerts Observable
 		let getSeverityVal = (alert: any): number => {
-							return (alert.severity === 'Critical' || alert.severity === 'High') ? 3 :
-										 (alert.severity === 'Medium' || alert.severity === 'Low') ? 2 :
-										 (alert.severity === 'Info') ? 1 : 0;
+			return (alert.severity === 'Critical' || alert.severity === 'High') ? 3 :
+				(alert.severity === 'Medium' || alert.severity === 'Low') ? 2 :
+					(alert.severity === 'Info') ? 1 : 0;
 		}
 		let getSeverityColor = (sev: number) => ['green', 'blue', 'orange', 'red'][sev];
 
-		let severityToValue = {Critical: 3, High: 'red', Medium: 'orange', Low: 'orange', Info: 'blue'};
+		let severityToValue = { Critical: 3, High: 'red', Medium: 'orange', Low: 'orange', Info: 'blue' };
 		let alertsProvider = Observable.interval(2000).map(() => {
 			// get all the alerts here
 			let result = this.animatedDeviceManager.getDevices()
 				.filter(device => (device.latestSample.info &&
-													 device.latestSample.info.alerts &&
-													 device.latestSample.info.alerts.items &&
-													 device.latestSample.info.alerts.items.length > 0))
+					device.latestSample.info.alerts &&
+					device.latestSample.info.alerts.items &&
+					device.latestSample.info.alerts.items.length > 0))
 				.map(device => {
 					let alerts = device.latestSample.info.alerts.items;
 					let getColor = () => {
@@ -398,18 +398,18 @@ export class RealtimeMapComponent implements OnInit {
 					};
 					let getContent = () => {
 						var rows = alerts.map(alert => `<tr><td>${
-								_.escape(alert.description)
+							_.escape(alert.description)
 							}</td><td class="${_.escape(getSeverityColor(getSeverityVal(alert)))}">${
-								_.escape(alert.severity)
+							_.escape(alert.severity)
 							}</td></tr>`);
 						var content = `<table class="table table-hover table-striped"><tbody>\n` +
-													`<thead><tr><th>Messages</th><th>Severity</th></tr></thead>\n` +
+							`<thead><tr><th>Messages</th><th>Severity</th></tr></thead>\n` +
 														rows.join('\n') +
-													`</tbody></table>`;
+							`</tbody></table>`;
 						return content;
 					};
 					let getLastUpdated = () => {
-						return Math.max(...alerts.map((alert:any) => {
+						return Math.max(...alerts.map((alert: any) => {
 							return alert.ts || Date.parse(alert.timestamp);
 						}));
 					}
@@ -420,7 +420,7 @@ export class RealtimeMapComponent implements OnInit {
 						colorClass: getColor(),
 					}
 				});
-				return result;
+			return result;
 		});
 
 		// setup alert popover
@@ -441,24 +441,24 @@ export class RealtimeMapComponent implements OnInit {
 
 				let r = new ol.Overlay({
 					element: elem,
-					offset: [-10,-3],
+					offset: [-10, -3],
 					positioning: 'bottom-right',
 					stopEvent: true
 				});
 				return r;
 			}),
-			showPopover: function showInfoPopover(elem, feature, pinned, model, closeFunc){
+			showPopover: function showInfoPopover(elem, feature, pinned, model, closeFunc) {
 				// schedule opening animation
 				_.delay(() => elem.classList.remove('opening'), 100);
 				var c = $(elem).find('.close')
-				c && c.on('click', function(){
+				c && c.on('click', function () {
 					elem.classList.add('closing');
 					setTimeout(() => closeFunc(), 500); // schedule element removel
 				});
 			},
-			updatePopover: function updateInfoPopover(elem, feature, pin, model, closeFunc){
+			updatePopover: function updateInfoPopover(elem, feature, pin, model, closeFunc) {
 				// update color
-				if(model.colorClass){
+				if (model.colorClass) {
 					elem.classList.remove('green', 'blue', 'orange', 'red');
 					elem.classList.add(model.colorClass);
 				}
@@ -468,7 +468,7 @@ export class RealtimeMapComponent implements OnInit {
 					e.innerHTML = model.contentHTML;
 				})
 			},
-			destroyPopover: function destroyInfoPopover(elem, feature, pin, model, closeFunc){
+			destroyPopover: function destroyInfoPopover(elem, feature, pin, model, closeFunc) {
 				elem.classList.add('closing');
 				setTimeout(() => closeFunc(), 500); // schedule element removel
 				return true;
@@ -480,11 +480,11 @@ export class RealtimeMapComponent implements OnInit {
 		this.mapHelper.preloadStyles(this.map, CAR_STYLES);
 		// - define feature synchronizer
 		var syncCarFeatures = (devices, frameTime, surpussEvent = true) => {
-			if(this.appConfig.DEBUG){
+			if (this.appConfig.DEBUG) {
 				console.log('DEBUG-MAP: syncing car features. Number of devices=' + devices.length + ', frameTime=' + new Date(frameTime));
 			}
 			if (this.aggregationMode) {
-					this.clearAllFeatures();
+				this.clearAllFeatures();
 			}
 			var prevAggregationMode = this.aggregationMode;
 			devices.forEach((device) => {
@@ -494,11 +494,11 @@ export class RealtimeMapComponent implements OnInit {
 					this.changeAggreagationMode(cur.aggregated);
 				}
 				var curPoint = (cur.lng && cur.lat) ? new ol.geom.Point(ol.proj.fromLonLat([cur.lng, cur.lat], undefined)) : null;
-				var curStatus = cur.status || 'normal';
+				var curStatus = cur.alertLevel || 'normal';
 				//console.log('syncCarFeatures - Putting icon at ', [cur.lng, cur.lat])
 
 				var feature: any = this.deviceFeatures[device.deviceID];
-				if(curPoint && !feature){
+				if (curPoint && !feature) {
 					// create a feature for me
 					feature = new ol.Feature({
 						geometry: curPoint,
@@ -508,22 +508,22 @@ export class RealtimeMapComponent implements OnInit {
 					});
 					if (cur.aggregated)
 						feature.setStyle(getGroupStyle(cur));
-					else if(curStatus)
+					else if (curStatus)
 						feature.setStyle(getCarStyle(curStatus));
 					this.carsLayer.getSource().addFeature(feature);
 					this.deviceFeatures[device.deviceID] = feature;
-				}else if(curPoint && feature){
+				} else if (curPoint && feature) {
 					// update
 					if (cur.aggregated && feature.get('carStatus').device.count != cur.count) {
 						feature.setStyle(getGroupStyle(cur));
-					} else if(curStatus && curStatus !== feature.get('carStatus')){
+					} else if (curStatus && curStatus !== feature.get('carStatus')) {
 						feature.set('carStatus', curStatus, surpussEvent);
 						feature.setStyle(getCarStyle(curStatus)); //WORKAROUND: not sure why layer style not work
 					}
-					if(curPoint.getCoordinates() != feature.getGeometry().getCoordinates()){
+					if (curPoint.getCoordinates() != feature.getGeometry().getCoordinates()) {
 						feature.setGeometry(curPoint);
 					}
-				}else if(!curPoint && feature){
+				} else if (!curPoint && feature) {
 					// remove feature
 					(<any>this.carsLayer.getSource()).removeFeature(feature);
 					delete this.deviceFeatures[device.deviceID];
@@ -532,9 +532,9 @@ export class RealtimeMapComponent implements OnInit {
 		}
 		// // - register rendering handlers
 		this.mapHelper.preComposeHandlers.push((event, frameTime) => {
-			try{
+			try {
 				syncCarFeatures(this.animatedDeviceManager.getDevices(), frameTime);
-			} catch(e) {
+			} catch (e) {
 				console.error('DEBUG-MAP: got exception while syncing car features', e);
 			}
 		});
@@ -544,26 +544,26 @@ export class RealtimeMapComponent implements OnInit {
 	}
 
 	changeAggreagationMode(newMode) {
-			this.aggregationMode = newMode;
-			this.clearAllFeatures();
-			_.each(<any>this.mapItemHelpers, function(helper:any, key) {
-					if (newMode)
-						helper.stopMonitoring();
-					else	
-						helper.startMonitoring();
-			});
+		this.aggregationMode = newMode;
+		this.clearAllFeatures();
+		_.each(<any>this.mapItemHelpers, function (helper: any, key) {
+			if (newMode)
+				helper.stopMonitoring();
+			else
+				helper.startMonitoring();
+		});
 	}
 
 	clearAllFeatures() {
-			var source = (<any>this.carsLayer.getSource());
-			_.each(this.deviceFeatures, function(device) {
-				source.removeFeature(device);
-			});
-			this.deviceFeatures = {};
+		var source = (<any>this.carsLayer.getSource());
+		_.each(this.deviceFeatures, function (device) {
+			source.removeFeature(device);
+		});
+		this.deviceFeatures = {};
 
-			_.each(<any>this.mapItemHelpers, function(helper:any, key) {
-				helper.clearAllItems();
-			});
+		_.each(<any>this.mapItemHelpers, function (helper: any, key) {
+			helper.clearAllItems();
+		});
 	}
 
 	ngOnInit() {
@@ -577,19 +577,19 @@ export class RealtimeMapComponent implements OnInit {
 		};
 	}
 
-	ngOnChanges(changes: {[propertyName: string]: SimpleChange}){
-		if('region' in changes){
-		 	let region = changes['region'].currentValue;
-		 	console.log("MoveMap", region);
-		 	this.mapHelper && this.mapHelper.moveMap(region);
+	ngOnChanges(changes: { [propertyName: string]: SimpleChange }) {
+		if ('region' in changes) {
+			let region = changes['region'].currentValue;
+			console.log("MoveMap", region);
+			this.mapHelper && this.mapHelper.moveMap(region);
 		}
 	}
 
-  selectDevice(deviceId: string){
+  selectDevice(deviceId: string) {
 		// see if the device is loaded
 		var probe = new Promise((resolve, reject) => {
 			var dev = this.animatedDeviceManager.getDevice(deviceId);
-			if(dev)
+			if (dev)
 				return resolve(dev.latestSample);
 			return this.animatedDeviceManagerService.getProbe(deviceId);
 		});
@@ -602,9 +602,9 @@ export class RealtimeMapComponent implements OnInit {
 		var interval = 500;
 		var showPopoverFunc = () => {
 			var device = this.animatedDeviceManager.getDevice(deviceId);
-			if(device && this.deviceFeatures[device.deviceID]){
+			if (device && this.deviceFeatures[device.deviceID]) {
 				this.mapHelper.showPinnedPopover(this.deviceFeatures[device.deviceID]);
-			}else if(nRetry-- > 0){
+			} else if (nRetry-- > 0) {
 				setTimeout(showPopoverFunc, interval);
 			}
 		}
@@ -620,10 +620,10 @@ export class RealtimeMapComponent implements OnInit {
  * Get car style for the given status
  * @return ol.style.Style
  */
-var getCarStyle = function(status){
+var getCarStyle = function (status) {
 	return CAR_STYLE_MAP[status] || CAR_STYLE_MAP['unknown'];
 };
-var getGroupStyle = function(device){
+var getGroupStyle = function (device) {
 	if (!device || device.count == 0) {
 		return null;
 	}
@@ -640,7 +640,7 @@ var getGroupStyle = function(device){
 			size = 'medium';
 		}
 	} else {
-			size = 'x-large';  // uncountably big
+		size = 'x-large';  // uncountably big
 	}
 
 	var status = 'normal';
@@ -653,73 +653,76 @@ var getGroupStyle = function(device){
 	}
 	var countText = '' + (count >= 0 ? count : '...');
 	return new ol.style.Style({
-			image: GROUP_IMAGE_MAP[status][size],
-			text: new ol.style.Text({
-					fill: new ol.style.Fill({color: "#606060"}),
-					textAlign: "center",
-					textBaseline: "middle",
-					text: countText,
-					font: "bold 16px monospace"
-			})
+		image: GROUP_IMAGE_MAP[status][size],
+		text: new ol.style.Text({
+			fill: new ol.style.Fill({ color: "#606060" }),
+			textAlign: "center",
+			textBaseline: "middle",
+			text: countText,
+			font: "bold 16px monospace"
+		})
 		});
 };
 var CAR_STYLES = [];
 var CAR_STYLE_MAP = {};
 var GROUP_IMAGE_MAP = {};
-(function(){
+(function () {
 	var data = [['normal', 'img/car-blue.png'],
-							['available', 'img/car-green.png'],
-							['troubled', 'img/car-orange.png'],
-							['critical', 'img/car-red.png'],
-							['unknown', 'img/car-gray.png']];
-	data.forEach(function(item){
+		['available', 'img/car-green.png'],
+		['troubled', 'img/car-orange.png'],
+		['critical', 'img/car-red.png'],
+		['unknown', 'img/car-gray.png']];
+	data.forEach(function (item) {
 		var status = item[0], icon = item[1];
-		var style = new ol.style.Style({image: new ol.style.Icon({
-			anchor: [16, 16],
-			anchorXUnits: 'pixels',
-			anchorYUnits: 'pixels',
-			opacity: 1,
-			scale: 0.8,
-			src: icon,
-			//imgSize: [32, 32],
-		})});
+		var style = new ol.style.Style({
+			image: new ol.style.Icon({
+				anchor: [16, 16],
+				anchorXUnits: 'pixels',
+				anchorYUnits: 'pixels',
+				opacity: 1,
+				scale: 0.8,
+				src: icon,
+				//imgSize: [32, 32],
+			})
+		});
 		CAR_STYLES.push(style);
 		CAR_STYLE_MAP[status] = style;
 	});
-	
-	var groupStatus = [{status: "normal", fillColor: "rgba(149,207,96,0.9)", borderColor: "rgba(149,207,96,0.5)"},
-							{status: "troubled", fillColor: "rgba(231,187,57,0.9)", borderColor: "rgba(231,187,57,0.5)"},
-							{status: "critical", fillColor: "rgba(241,141,73,0.9)", borderColor: "rgba(241,141,73,0.5)"}];
-	var group = [{id: 'small', radius: 15, border: 8}, 
-							{id: 'medium', radius: 30, border: 12}, 
-							{id: 'large', radius: 40, border: 14}, 
-							{id: 'x-large', radius: 60, border: 18}];
-	groupStatus.forEach(function(status) {
+
+	var groupStatus = [{ status: "normal", fillColor: "rgba(149,207,96,0.9)", borderColor: "rgba(149,207,96,0.5)" },
+		{ status: "troubled", fillColor: "rgba(231,187,57,0.9)", borderColor: "rgba(231,187,57,0.5)" },
+		{ status: "critical", fillColor: "rgba(241,141,73,0.9)", borderColor: "rgba(241,141,73,0.5)" }];
+	var group = [{ id: 'small', radius: 15, border: 8 },
+		{ id: 'medium', radius: 30, border: 12 },
+		{ id: 'large', radius: 40, border: 14 },
+		{ id: 'x-large', radius: 60, border: 18 }];
+	groupStatus.forEach(function (status) {
 		var statusImages = {};
-		group.forEach(function(item) {
-		var circle = new ol.style.Circle({
-			radius: item.radius,
-			stroke : new ol.style.Stroke({
-				color: status.borderColor,
-				width: item.border
-			}),
-			fill : new ol.style.Fill({
-				color: status.fillColor
-			})});
+		group.forEach(function (item) {
+			var circle = new ol.style.Circle({
+				radius: item.radius,
+				stroke: new ol.style.Stroke({
+					color: status.borderColor,
+					width: item.border
+				}),
+				fill: new ol.style.Fill({
+					color: status.fillColor
+				})
+			});
 			statusImages[item.id] = circle;
 		});
 		GROUP_IMAGE_MAP[status.status] = statusImages;
-	});						
+	});
 })();
 
 /**
  * Get driver events' style on the map
  */
-var getDrivingEventStyle = (function(){
+var getDrivingEventStyle = (function () {
 	var _cache: ol.style.Style;
 
-	return function(event){
-		if(_cache)
+	return function (event) {
+		if (_cache)
 			return _cache;
 
 		_cache = new ol.style.Style({
@@ -728,7 +731,7 @@ var getDrivingEventStyle = (function(){
 				radius: 9,
 				rotation: 0,
 				snapToPixel: false,
-				fill: new ol.style.Fill({color: 'yellow'}),
+				fill: new ol.style.Fill({ color: 'yellow' }),
 				stroke: new ol.style.Stroke({
 					color: 'black', width: 1
 				}),
