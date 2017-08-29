@@ -60,18 +60,18 @@ _.extend(driverInsightsAlert, {
 	 */
 	_alertTimer: {},
 
-	_init: function(){
+	_init: function () {
 		var self = this;
 
 		this.importAlertRules();
 
-		fs.readdir(ALERT_RULE_TEMPLATE_DIR, function(err, files){
-			if(err){
+		fs.readdir(ALERT_RULE_TEMPLATE_DIR, function (err, files) {
+			if (err) {
 				console.error("Error: Reading alert rules is failed. " + err);
 				return;
 			}
-			files.filter(function(file){return file.endsWith(".js")}).forEach(function(file){
-				fs.realpath(ALERT_RULE_TEMPLATE_DIR + file, function(err, resolvedPath){
+			files.filter(function (file) { return file.endsWith(".js") }).forEach(function (file) {
+				fs.realpath(ALERT_RULE_TEMPLATE_DIR + file, function (err, resolvedPath) {
 					var rule = require(resolvedPath);
 					self.registerAlertRule(rule.name, rule);
 				});
@@ -82,128 +82,128 @@ _.extend(driverInsightsAlert, {
 	/*
 	 * Remove all existing alert rules in iot4a and import alert rules defined as xml in ALERT_RULE_TEMPLATE_DIR again
 	 */
-	importAlertRules: function(){
+	importAlertRules: function () {
 		var self = this;
-		Q.when(this._findAlertRulesRecursive(1), function(rules){
-			if(rules && rules.length > 0){
-				Q.allSettled(rules.map(function(rule){
+		Q.when(this._findAlertRulesRecursive(1), function (rules) {
+			if (rules && rules.length > 0) {
+				Q.allSettled(rules.map(function (rule) {
 					var deferred = Q.defer();
 					rule.status = "inactive";
-					Q.when(iot4aAsset.updateRule(rule.rule_id, rule, null, true), function(updated){
-						Q.when(iot4aAsset.deleteRule(rule.rule_id, true), function(deleted){
+					Q.when(iot4aAsset.updateRule(rule.rule_id, rule, null, true), function (updated) {
+						Q.when(iot4aAsset.deleteRule(rule.rule_id, true), function (deleted) {
 							deferred.resolve(deleted);
-						})["catch"](function(err){
+						})["catch"](function (err) {
 							deferred.reject(err);
 						}).done();
-					})["catch"](function(err){
+					})["catch"](function (err) {
 						deferred.reject(err);
 					}).done();
 					return deferred.promise;
-				})).then(function(deletedRules){
-					if(Array.isArray(deletedRules)){
-						deletedRules.forEach(function(deleted){
-							if(deleted.state === "rejected"){
+				})).then(function (deletedRules) {
+					if (Array.isArray(deletedRules)) {
+						deletedRules.forEach(function (deleted) {
+							if (deleted.state === "rejected") {
 								console.error("Deleting existing alert rules failed.");
 								console.error(deleted.reason.message);
-							}else{
+							} else {
 								debug("Alert rule (" + deleted.value.id + ") is deleted.");
 							}
 						})
 					}
-					Q.when(iot4aAsset.refreshRule(), function(response){
+					Q.when(iot4aAsset.refreshRule(), function (response) {
 						self._addRules();
-					})["catch"](function(err){
+					})["catch"](function (err) {
 						self._addRules();
 					});
-				}, function(err){
+				}, function (err) {
 					console.error("Deleting existing alert rules failed.");
 					console.error(err.message);
 				}).done();
-			}else{
+			} else {
 				self._addRules();
 			}
-		})["catch"](function(err){
+		})["catch"](function (err) {
 			console.error("Importing alert rules failed.");
 			console.error(err.message);
 		}).done();
 	},
-	_addRules: function(){
+	_addRules: function () {
 		var alert_rule_id_offset = 0;
-		fs.readdir(ALERT_RULE_TEMPLATE_DIR, function(err, files){
-			if(err){
+		fs.readdir(ALERT_RULE_TEMPLATE_DIR, function (err, files) {
+			if (err) {
 				console.error("Error: Reading alert rules is failed. " + err);
 				return;
 			}
-			files.filter(function(file){return file.endsWith(".xml")}).forEach(function(file){
-				fs.readFile(ALERT_RULE_TEMPLATE_DIR + file, {encoding: "UTF-8"}, function(err, data){
-					if(err){
+			files.filter(function (file) { return file.endsWith(".xml") }).forEach(function (file) {
+				fs.readFile(ALERT_RULE_TEMPLATE_DIR + file, { encoding: "UTF-8" }, function (err, data) {
+					if (err) {
 						console.error("Error: Reading an alert rule(" + file + ") is failed. " + err);
 					}
 					var alert_rule_id = ALERT_RULE_ID_RANGE_MIN + alert_rule_id_offset++;
-					if(alert_rule_id > ALERT_RULE_ID_RANGE_MAX){
+					if (alert_rule_id > ALERT_RULE_ID_RANGE_MAX) {
 						console.error("Alert rule id cannot be assigned.");
 					}
-					var rule = {description: ALERT_RULE_DESCRIPTION + alert_rule_id, type: "Action", status: "active"};
+					var rule = { description: ALERT_RULE_DESCRIPTION + alert_rule_id, type: "Action", status: "active" };
 					data = data.replace(/\{alert_rule_id\}/g, alert_rule_id);
 					iot4aAsset.addRule(rule, data);
 				})
 			});
 		});
 	},
-	_findAlertRulesRecursive: function(num_page){
+	_findAlertRulesRecursive: function (num_page) {
 		var self = this;
 		var deferred = Q.defer();
-		Q.when(iot4aAsset.getRuleList({num_rec_in_page: MAX_NUM_REC_IN_PAGE, num_page: num_page}), function(result){
+		Q.when(iot4aAsset.getRuleList({ num_rec_in_page: MAX_NUM_REC_IN_PAGE, num_page: num_page }), function (result) {
 			var rules_in_page = (result && result.data) || [];
-			var alert_rules_in_page = rules_in_page.filter(function(rule){return rule.description.startsWith(ALERT_RULE_DESCRIPTION);});
-			if(rules_in_page.length >= MAX_NUM_REC_IN_PAGE){
-				Q.when(self._findAlertRulesRecursive(num_page + 1), function(alert_rules){
+			var alert_rules_in_page = rules_in_page.filter(function (rule) { return rule.description && rule.description.startsWith(ALERT_RULE_DESCRIPTION); });
+			if (rules_in_page.length >= MAX_NUM_REC_IN_PAGE) {
+				Q.when(self._findAlertRulesRecursive(num_page + 1), function (alert_rules) {
 					deferred.resolve(alert_rules.concat(alert_rules_in_page));
-				})["catch"](function(err){
+				})["catch"](function (err) {
 					deferred.reject(err);
 				}).done();
-			}else{
+			} else {
 				deferred.resolve(alert_rules_in_page);
 			}
-		})["catch"](function(err){
-			if(err.response && err.response.statusCode === 404){
+		})["catch"](function (err) {
+			if (err.response && err.response.statusCode === 404) {
 				deferred.resolve([]);
-			}else{
+			} else {
 				deferred.reject(err);
 			}
 		}).done();
 		return deferred.promise;
 	},
 
-	evaluateAlertRule: function(probe){
+	evaluateAlertRule: function (probe) {
 		var self = this;
-		Q.when(this._getVehicle(probe.mo_id), function(vehicle){
+		Q.when(this._getVehicle(probe.mo_id), function (vehicle) {
 			self._evaluateAlertRule(probe, _.clone(vehicle));
 			vehicle.prevProbe = probe;
 		});
 	},
-	_evaluateAlertRule: function(probe, vehicle){
+	_evaluateAlertRule: function (probe, vehicle) {
 		var self = this;
-		_.values(this._alertRules).forEach(function(rule){
-			setImmediate(function(){
+		_.values(this._alertRules).forEach(function (rule) {
+			setImmediate(function () {
 				var alerts = rule.fireRule(probe, vehicle);
-				alerts.forEach(function(alert){
+				alerts.forEach(function (alert) {
 					alertManager.addAlert(alert);
 				});
 			});
 		});
 		var _alertsForVehicle = _.clone(alertManager.getCurrentAlerts(probe.mo_id));
-		Object.keys(_alertsForVehicle).forEach(function(key){
+		Object.keys(_alertsForVehicle).forEach(function (key) {
 			var alert = _alertsForVehicle[key];
-			if(alert && alert.source && alert.source.type === "script"){
-				setImmediate(function(){
+			if (alert && alert.source && alert.source.type === "script") {
+				setImmediate(function () {
 					var rule = self._alertRules[alert.type];
-					if(rule){
+					if (rule) {
 						var closedAlert = rule.closeRule(alert, probe, vehicle);
-						if(closedAlert){
+						if (closedAlert) {
 							alertManager.updateAlert(closedAlert);
 						}
-					}else{
+					} else {
 						alert.closed_ts = probe.ts;
 						alertManager.updateAlert(alert);
 					}
@@ -211,19 +211,19 @@ _.extend(driverInsightsAlert, {
 			}
 		});
 	},
-	_getVehicle: function(mo_id){
+	_getVehicle: function (mo_id) {
 		var self = this;
 		var deferred = Q.defer();
 		var vehicle = this._vehicles[mo_id];
-		if(vehicle){
+		if (vehicle) {
 			deferred.resolve(vehicle);
-		}else{
-			Q.when(iot4aAsset.getVehicle(mo_id), function(vehicleInfo){
+		} else {
+			Q.when(iot4aAsset.getVehicle(mo_id), function (vehicleInfo) {
 				self._vehicles[mo_id] = vehicle = {
 					vehicleInfo: vehicleInfo
 				};
 				deferred.resolve(vehicle);
-			}, function(error){
+			}, function (error) {
 				console.error(error);
 				deferred.reject(error);
 			});
@@ -231,42 +231,42 @@ _.extend(driverInsightsAlert, {
 		return deferred.promise;
 	},
 
-	handleEvents: function(probe, events){
+	handleEvents: function (probe, events) {
 		this.closeAlertFromEvents(probe, events);
 		this.addAlertFromEvents(probe, events);
 	},
-	addAlertFromEvents: function(probe, events){
+	addAlertFromEvents: function (probe, events) {
 		var self = this;
 		var mo_id = probe.mo_id;
 		var ts = probe.ts;
-		(events||[]).forEach(function(event){
+		(events || []).forEach(function (event) {
 			var props = event.props || {}; // A message should have props
 			var source_id = String(event.event_id || props.source_id);
 			var source_type = "";
-			if(event.event_id){
+			if (event.event_id) {
 				source_type = "event";
-			}else if(props.message_type){
+			} else if (props.message_type) {
 				source_type = "message";
 			}
-			if(!source_id){
+			if (!source_id) {
 				return;
 			}
 			var alert = alertManager.getCurrentAlerts(mo_id, source_id);
-			if(alert){
+			if (alert) {
 				// Do nothing during same id/type of events/messages are coming consecutively
-			}else{
-				Q.when(self._getVehicle(mo_id), function(vehicle){
+			} else {
+				Q.when(self._getVehicle(mo_id), function (vehicle) {
 					alert = {
-							source: {type: source_type, id: source_id},
-							type: event.event_type || props.message_type,
-							description: event.event_name || event.message,
-							severity: props.severity || "Info",
-							mo_id: mo_id,
-							ts: ts,
-							latitude: event.s_latitude || event.latitude || props.latitude,
-							longitude: event.s_longitude || event.longitude || props.longitude,
-							simulated: VEHICLE_VENDOR_IBM === vehicle.vehicleInfo.vendor
-						};
+						source: { type: source_type, id: source_id },
+						type: event.event_type || props.message_type,
+						description: event.event_name || event.message,
+						severity: props.severity || "Info",
+						mo_id: mo_id,
+						ts: ts,
+						latitude: event.s_latitude || event.latitude || props.latitude,
+						longitude: event.s_longitude || event.longitude || props.longitude,
+						simulated: VEHICLE_VENDOR_IBM === vehicle.vehicleInfo.vendor
+					};
 					alertManager.addAlert(alert);
 				});
 			}
@@ -274,43 +274,43 @@ _.extend(driverInsightsAlert, {
 
 		var timer = this._alertTimer[mo_id];
 		clearTimeout(timer);
-		this._alertTimer[mo_id] = setTimeout(function(){
+		this._alertTimer[mo_id] = setTimeout(function () {
 			self.closeAlertFromEvents(probe);
 		}, ALERT_LIFE_SPAN);
 	},
-	closeAlertFromEvents: function(probe, events){
+	closeAlertFromEvents: function (probe, events) {
 		var self = this;
 		var mo_id = probe.mo_id;
 		var closed_ts = probe.ts;
 		var _alertsForVehicle = _.clone(alertManager.getCurrentAlerts(mo_id));
-		Object.keys(_alertsForVehicle).forEach(function(key){
+		Object.keys(_alertsForVehicle).forEach(function (key) {
 			var source_type = _alertsForVehicle[key].source && _alertsForVehicle[key].source.type;
-			if(source_type === "script"){
+			if (source_type === "script") {
 				return;
 			}
-			if((events || []).every(function(event){
+			if ((events || []).every(function (event) {
 				// No related event/message is included in events
 				var props = event.props || {}; // A message should have props
 				var source_id = event.event_id || props.source_id;
 				return !source_id || key !== String(source_id);
-			})){
+			})) {
 				var alert = _alertsForVehicle[key];
 				alert.closed_ts = closed_ts;
 				alertManager.updateAlert(alert);
 			}
 		});
 	},
-	getAlertsForVehicleInArea: function(conditions, area, includeClosed, limit){
+	getAlertsForVehicleInArea: function (conditions, area, includeClosed, limit) {
 		return alertManager.getAlertsForVehicleInArea(conditions, area, includeClosed, limit);
 	},
-	getAlertsForVehicles: function(mo_ids, includeClosed, limit){
+	getAlertsForVehicles: function (mo_ids, includeClosed, limit) {
 		return alertManager.getAlertsForVehicles(mo_ids, includeClosed, limit);
 	},
-	getAlerts: function(conditions, includeClosed, limit){
+	getAlerts: function (conditions, includeClosed, limit) {
 		return alertManager.getAlerts(conditions, includeClosed, limit);
 	},
 
-	registerAlertRule: function(/*string*/name, /*function*/rule){
+	registerAlertRule: function (/*string*/name, /*function*/rule) {
 		this._alertRules[name] = rule;
 	}
 });
