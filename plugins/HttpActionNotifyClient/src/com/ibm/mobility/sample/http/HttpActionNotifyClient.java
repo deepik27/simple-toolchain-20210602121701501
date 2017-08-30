@@ -38,12 +38,15 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.xml.bind.DatatypeConverter;
 
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.ibm.mobility.autodrive.client.ClientResponse;
 import com.ibm.mobility.autodrive.client.def.http.IRequestWrapper;
 import com.ibm.mobility.autodrive.client.util.DisplayActionContents;
 import com.ibm.mobility.autodrive.object.Action;
+import com.ibm.mobility.autodrive.object.CarProbe;
 import com.ibm.mobility.autodrive.parameter.Parameter;
 import com.ibm.mobility.dynamicmap.util.LineTooLongException;
 import com.ibm.mobility.dynamicmap.util.ReadLineUtil;
@@ -236,17 +239,7 @@ public class HttpActionNotifyClient extends AbstractClient {
 				connection.setRequestProperty("Authorization", "Basic " + credential);
 			}
 
-			String strContents = (String)action.getContents();
-			DisplayActionContents contents = mapper.readValue(strContents, DisplayActionContents.class);
-			String[] vehicles = action.getTarget_vehicles();
-			if(vehicles == null || vehicles.length <= 0){
-				logger.error("No target vehicles.");
-				return 1;
-			}
-			Map<String, DisplayActionContents> map = new HashMap<String, DisplayActionContents>();
-			map.put(vehicles[0], contents);
-			String body = mapper.writeValueAsString(map);
-
+			String body = (String)action.getContents();
 			connection.setRequestProperty("Content-Type", "application/json");
 			connection.setRequestProperty("Content-Length", String.valueOf(body.length()));
 			
@@ -282,6 +275,17 @@ public class HttpActionNotifyClient extends AbstractClient {
 			}
 		}
 		return 0;
+	}
+
+	@Override
+	protected String createSendCarProbeResultMessage(CarProbe probe, DisplayActionContents contents) throws JsonGenerationException, JsonMappingException, IOException{
+		synchronized (mapper) {
+			Map<String, Map<Long, DisplayActionContents>> byMoid = new HashMap<String, Map<Long, DisplayActionContents>>();
+			Map<Long, DisplayActionContents> byTimestamp = new HashMap<Long, DisplayActionContents>();
+			byTimestamp.put(probe.getPos_updated_time().getTime(), contents);
+			byMoid.put(probe.getVehicle_id(), byTimestamp);
+			return mapper.writeValueAsString(byMoid);
+		}
 	}
 	
 	@Override
