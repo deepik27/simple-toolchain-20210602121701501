@@ -16,6 +16,8 @@ import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.ibm.mobility.autodrive.adapter.Adapter;
@@ -23,6 +25,7 @@ import com.ibm.mobility.autodrive.client.IClient;
 import com.ibm.mobility.autodrive.client.util.DisplayActionContents;
 import com.ibm.mobility.autodrive.client.util.ResultFormatter;
 import com.ibm.mobility.autodrive.object.Action;
+import com.ibm.mobility.autodrive.object.CarProbe;
 import com.ibm.mobility.autodrive.object.Event;
 import com.ibm.mobility.autodrive.object.MessageNotification;
 import com.ibm.mobility.autodrive.object.Tenant;
@@ -58,7 +61,7 @@ public class AbstractClient implements IClient {
 	/**
 	 * payload format. csv, json etc
 	 */
-	private static final String PROP_PAYLOAD_FORMAT = "payloadFormant"; 
+	private static final String PROP_PAYLOAD_FORMAT = "payloadFormat"; 
 	
 	private static final String RET_NO_ERROR = "<retcode>0</retcode>";
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
@@ -289,10 +292,11 @@ public class AbstractClient implements IClient {
 						String message = null;
 						synchronized(mapper) {
 							try {
-								message = mapper.writeValueAsString(cont);
+								CarProbe probe = ((CarProbeParameters)para).getCb();
+								message = createSendCarProbeResultMessage(probe, cont);
 								logger.debug("Message: " + message);
 								String[] target_vehicles = new String[1];
-								target_vehicles[0] = ((CarProbeParameters)para).getCb().getVehicle_id();
+								target_vehicles[0] = probe.getVehicle_id();
 								Action action = new Action();
 								action.setTarget_vehicles(target_vehicles);
 								action.setContents(message);
@@ -335,6 +339,12 @@ public class AbstractClient implements IClient {
 		}
 		// Return as Error
 		return ProcessResult.buildErrorResult(para.getRes_xml());
+	}
+
+	protected String createSendCarProbeResultMessage(CarProbe probe, DisplayActionContents contents) throws JsonGenerationException, JsonMappingException, IOException{
+		synchronized (mapper) {
+			return mapper.writeValueAsString(contents);
+		}
 	}
 
 	protected MobilityConfig getConfig(){

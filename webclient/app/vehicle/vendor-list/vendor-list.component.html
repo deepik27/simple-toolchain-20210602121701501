@@ -6,14 +6,14 @@
 			<span class="row">Vendor List:</span>
 			<span class="row">
 				<select id="new_vendor" class="vendorList" size="10" [ngModel]="selectedVendor" (ngModelChange)="onSelectionChanged($event)">
-						<option *ngFor="let vendor of vendors" [value]="vendor.vendor">{{vendor.vendor}}</option>
+						<option *ngFor="let vendor of vendors" [value]="vendor.vendor">{{vendor.name}}</option>
 				</select>
 			</span>
 		</div>
 		<div class="column-7-lg column-7-med column-7-sm">
 			<div class="row">
 				<label for="vendor_name" class="fieldLabel column-2-lg column-2-med column-2-sm">Name:</label>
-				<input id="vendor_name" class="column-9-lg column-9-med column-9-sm" [(ngModel)]="formVendor.vendor">
+				<input id="vendor_name" class="column-9-lg column-9-med column-9-sm" [(ngModel)]="formVendor.name">
 			</div>
 			<div class="row">
 				<label for="vendor_type" class="fieldLabel column-2-lg column-2-med column-2-sm">Type:</label>
@@ -26,8 +26,8 @@
 			<div class="row">
 				<span class="alignRight column-10-lg column-10-med column-10-sm">
 					<button (click)="onCreateVendor()" [disabled]="requestSending">Create</button>
-					<button (click)="onUpdateVendor(selectedVendor.vendor)" [disabled]="requestSending||!selectedVendor||selectedVendor.vendor==='IBM'">Update</button>
-					<button (click)="onDeleteVendor(selectedVendor.vendor)" [disabled]="requestSending||!selectedVendor||selectedVendor.vendor==='IBM'">Delete</button>
+					<button (click)="onUpdateVendor(selectedVendor.vendor)" [disabled]="requestSending||!selectedVendor||selectedVendor.name==='IBM'">Update</button>
+					<button (click)="onDeleteVendor(selectedVendor.vendor)" [disabled]="requestSending||!selectedVendor||selectedVendor.name==='IBM'">Delete</button>
 				</span>
 			</div>
 		</div>

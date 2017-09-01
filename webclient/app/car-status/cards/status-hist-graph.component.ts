@@ -105,7 +105,7 @@ export class StatusHistoryGrahpComponent implements OnInit, OnDestroy {
   @Input() historyCount = 20;
 
   @Input() value: number;
-  @Input() status: string; // either 'critical', 'troubled', or 'normal'
+  @Input() alertLevel: string; // either 'critical', 'troubled', or 'normal'
 
   private items: BarItem[] = null;
   private lastValue: any = '-';
@@ -113,18 +113,18 @@ export class StatusHistoryGrahpComponent implements OnInit, OnDestroy {
 
   private subscription;
 
-  ngOnInit(){
+  ngOnInit() {
     // initialize items
     this.items = [];
     let now = Date.now();
-    for(let i=0; i <= this.historyCount + 1; i++){
-      this.items.push({ts: now - this.historyCount + i - 1, ratio: 0, value: '-', statusClass: {}, active: i !== 0});
+    for (let i = 0; i <= this.historyCount + 1; i++) {
+      this.items.push({ ts: now - this.historyCount + i - 1, ratio: 0, value: '-', statusClass: {}, active: i !== 0 });
     }
 
     this.subscription = Observable.interval(this.interval).startWith(-1).map(() => {
       var ratio = Math.max(0, Math.min(1, (this.value - this.minValue) / (this.maxValue - this.minValue)));
-      var status = this.status;
-      var statusClass = {red: status==='critical', orange: status==='troubled', green: status==='normal', blue: undefined };
+      var alertLevel = this.alertLevel;
+      var statusClass = { red: alertLevel === 'critical', orange: alertLevel === 'troubled', green: alertLevel === 'normal', blue: undefined };
       statusClass.blue = (!statusClass.red && !statusClass.orange && !statusClass.green);
       let now = Date.now();
       this.lastValue = this.value;
@@ -134,17 +134,17 @@ export class StatusHistoryGrahpComponent implements OnInit, OnDestroy {
       lastItem.value = this.value;
       lastItem.statusClass = statusClass;
       lastItem.active = true;
-      this.items.push({ts: now, ratio: 0, value: 0, statusClass: statusClass, active: false});
+      this.items.push({ ts: now, ratio: 0, value: 0, statusClass: statusClass, active: false });
       let firstItem = this.items[0];
       firstItem.active = false;
       this.items.shift();
-    }).delay(Math.min(this.interval/2, 500)).subscribe(() => {
+    }).delay(Math.min(this.interval / 2, 500)).subscribe(() => {
       // start animation
     })
   }
 
-  ngOnDestroy(){
-    if(this.subscription){
+  ngOnDestroy() {
+    if (this.subscription) {
       this.subscription.unsubscribe();
       this.subscription = null;
     }

@@ -68,7 +68,7 @@ export class StatusMeterComponent implements OnInit, OnDestroy, AfterContentInit
   @Input() graphType = 'gauge'; // gauge or temp-bar
 
   @Input() value: number;
-  @Input() status: string; // either 'critical', 'troubled', or 'normal'
+  @Input() alertLevel: string; // either 'critical', 'troubled', or 'normal'
 
   private barMinMaxAdjust = 2;
   private subject = new Subject<any>();
@@ -86,7 +86,7 @@ export class StatusMeterComponent implements OnInit, OnDestroy, AfterContentInit
 
   ngOnInit() {
     // prepare ticks
-    for(let i=this.minValue; i<=this.maxValue; i+=this.tickStep){
+    for (let i = this.minValue; i <= this.maxValue; i += this.tickStep) {
       this.thermometerTicks.push(i);
     }
   }
@@ -95,20 +95,20 @@ export class StatusMeterComponent implements OnInit, OnDestroy, AfterContentInit
     this.subscription = this.subject.debounceTime(100).distinctUntilChanged().subscribe(value => {
       var gaugeDiv = (this.speedometerDiv && this.speedometerDiv.nativeElement);
       var barDiv = (this.thermometerDiv && this.thermometerDiv.nativeElement);
-      if(gaugeDiv){
+      if (gaugeDiv) {
         let ratio = (value.value - this.minValue) / (this.maxValue - this.minValue);
         ratio = Math.max(0, Math.min(1, ratio));
         this.speedometerDeg = Math.floor(ratio * 180 - 90);
         //gaugeDiv.style.transform = `rotate(${(ratio * 180 - 90).toFixed(0)}deg) !important`;
       }
-      if(barDiv){
+      if (barDiv) {
         let ratio = (value.value - (this.minValue - this.barMinMaxAdjust)) / ((this.maxValue + this.barMinMaxAdjust) - (this.minValue - this.barMinMaxAdjust));
         ratio = Math.max(0, Math.min(1, ratio));
         this.thermometerPercent = Math.floor(ratio * 100);
         //barDiv.style.width = `${(ratio * 100).toFixed(0)}% !important`;
       }
-      var status = value.status;
-      var obj = {red: status==='critical', orange: status==='troubled', green: status==='normal', blue: undefined };
+      var alertLevel = value.alertLevel;
+      var obj = { red: alertLevel === 'critical', orange: alertLevel === 'troubled', green: alertLevel === 'normal', blue: undefined };
       obj.blue = (!obj.red && !obj.orange && !obj.green);
       this.statusClassObj = obj;
     });
@@ -116,22 +116,22 @@ export class StatusMeterComponent implements OnInit, OnDestroy, AfterContentInit
   }
 
   ngOnDestroy() {
-    if(this.subscription) {
+    if (this.subscription) {
       this.subscription.unsubscribe();
       this.subscription = null;
     }
   }
 
-  ngOnChanges(changes: { [key: string]: SimpleChange} ) {
+  ngOnChanges(changes: { [key: string]: SimpleChange }) {
     // translates @Input(s) to observable subjects
     let newValueChange = changes['value'];
-    let newStatusChange = changes['status'];
-    if (newValueChange || newStatusChange){
+    let newStatusChange = changes['alertLevel'];
+    if (newValueChange || newStatusChange) {
       this.fireChange();
     }
   }
 
-  private fireChange(){
-    this.subject.next({value: this.value, status: this.status});
+  private fireChange() {
+    this.subject.next({ value: this.value, alertLevel: this.alertLevel });
   }
 }

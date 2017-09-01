@@ -7,100 +7,100 @@
  *
  * You may not use this file except in compliance with the license.
  */
-(function(scriptBaseUrl){
+(function (scriptBaseUrl) {
 	angular.module('htmlClient').
-	component('clientDrive', {
-		templateUrl: scriptBaseUrl + 'html-client-drive.html',
-		controller: function ClientTop($scope, $http ,$q, $window, $timeout, eventService, geofenceService, simulatedVehicle) {
-			$window.onbeforeunload = function (e) {
-				// stop driving when user closes simulator window
-				simulatedVehicle.setVehicleMonitor();
-//				simulatedVehicle.stopDriving();
-			};
-			
-			// inter frame communication to recieve start/stop all and return status
-			function postStatusMessage(target, requestMessage, requestId, isError) {
-				target = target || $scope.messageTarget;
-				if (!target) {
-					return;
-				}
-				var vehicleId = simulatedVehicle.getVehicleId();
-				var driving = simulatedVehicle.isDriving();
-				var busy = $scope.requestSending;
-				
-				var messageObj = {message: "status", mo_id: vehicleId, driving: driving, busy: busy, requestMessage: requestMessage, requestId: requestId, isError: isError};
-				target.postMessage(JSON.stringify(messageObj), "*");
-			}
-			
-	        $($window).on('message', function(e) {
-	        	if ($window.location.origin !== e.originalEvent.origin, 0) {
-	        		return;
-	        	}
-	        	var message = JSON.parse(e.originalEvent.data);
-	        	if (message.message === "simulator-start-all" || message.message === "simulator-stop-all") {
-	        		$q.when($scope.onDriving(true, message.message === "simulator-start-all"), function() {
-	        			postStatusMessage(e.originalEvent.source, message.message, message.requestId);
-	        		}, function(error) {
-	        			postStatusMessage(e.originalEvent.source, message.message, message.requestId, true);
-	        		});
-	        	} else if (message.message === "simulator-set-message-target") {
-	        		$scope.messageTarget = e.originalEvent.source;
-        			postStatusMessage(e.originalEvent.source, message.message, message.requestId);
-	        	} else if (message.message === "simulator-terminated-all") {
-	        		// terminated
-					$scope.requestSending = true;
-	        		$scope.$apply();
-	        	}
-	        });
-	        
-			$scope.drivingButtonLabel = simulatedVehicle.isDriving() ? "Stop Driving" : "Start Driving";
-			// start driving
-			function startDriving() {
-				return $q.when(simulatedVehicle.startDriving(function() {
-					console.log("vehicle is started.");
-				}));
-			}
-			
-			// stop driving
-			function stopDriving() {
-				return $q.when(simulatedVehicle.stopDriving(), function() {
-					// clear messages
-					updateDrvingEvent();
-					updateVehicle();
-				});
-			}
+		component('clientDrive', {
+			templateUrl: scriptBaseUrl + 'html-client-drive.html',
+			controller: function ClientTop($scope, $http, $q, $window, $timeout, eventService, geofenceService, simulatedVehicle) {
+				$window.onbeforeunload = function (e) {
+					// stop driving when user closes simulator window
+					simulatedVehicle.setVehicleMonitor();
+					//				simulatedVehicle.stopDriving();
+				};
 
-			function updateDrvingEvent(probe) {
-				var event = {props:{}};
-				try {
-					if (probe) {
-						event.latitude = probe.matched_latitude || probe.latitude;
-						event.longitude = probe.matched_longitude || probe.longitude;
-						event.heading = probe.matched_heading || probe.heading;
-						event.speed = probe.speed;
-			        	if (probe.props) {
-			        		event.props = probe.props;
-			        	}
-					} else {
-						var loc = simulatedVehicle.getCurrentPosition();
-						event.latitude = loc.latitude;
-						event.longitude = loc.longitude;
-						event.heading = loc.heading || 0;
-						event.speed = 0;
-			        	if (simulatedVehicle.properties) {
-			        		event.props = simulatedVehicle.properties;
-			        	}
+				// inter frame communication to recieve start/stop all and return status
+				function postStatusMessage(target, requestMessage, requestId, isError) {
+					target = target || $scope.messageTarget;
+					if (!target) {
+						return;
 					}
-		        	$scope.drivingEvent = event;
-		        	if (probe)
-		        		$scope.$apply();
-//		        	$scope.isDriving = simulatedVehicle.isDriving();
-				} catch(e) {
-					console.error(e);
-				}
-			}
+					var vehicleId = simulatedVehicle.getVehicleId();
+					var driving = simulatedVehicle.isDriving();
+					var busy = $scope.requestSending;
 
-			var callbackMethods = {
+					var messageObj = { message: "status", mo_id: vehicleId, driving: driving, busy: busy, requestMessage: requestMessage, requestId: requestId, isError: isError };
+					target.postMessage(JSON.stringify(messageObj), "*");
+				}
+
+				$($window).on('message', function (e) {
+					if ($window.location.origin !== e.originalEvent.origin, 0) {
+						return;
+					}
+					var message = JSON.parse(e.originalEvent.data);
+					if (message.message === "simulator-start-all" || message.message === "simulator-stop-all") {
+						$q.when($scope.onDriving(true, message.message === "simulator-start-all"), function () {
+							postStatusMessage(e.originalEvent.source, message.message, message.requestId);
+						}, function (error) {
+							postStatusMessage(e.originalEvent.source, message.message, message.requestId, true);
+						});
+					} else if (message.message === "simulator-set-message-target") {
+						$scope.messageTarget = e.originalEvent.source;
+						postStatusMessage(e.originalEvent.source, message.message, message.requestId);
+					} else if (message.message === "simulator-terminated-all") {
+						// terminated
+						$scope.requestSending = true;
+						$scope.$apply();
+					}
+				});
+
+				$scope.drivingButtonLabel = simulatedVehicle.isDriving() ? "Stop Driving" : "Start Driving";
+				// start driving
+				function startDriving() {
+					return $q.when(simulatedVehicle.startDriving(function () {
+						console.log("vehicle is started.");
+					}));
+				}
+
+				// stop driving
+				function stopDriving() {
+					return $q.when(simulatedVehicle.stopDriving(), function () {
+						// clear messages
+						updateDrvingEvent();
+						updateVehicle();
+					});
+				}
+
+				function updateDrvingEvent(probe) {
+					var event = { props: {} };
+					try {
+						if (probe) {
+							event.latitude = probe.matched_latitude || probe.latitude;
+							event.longitude = probe.matched_longitude || probe.longitude;
+							event.heading = probe.matched_heading || probe.heading;
+							event.speed = probe.speed;
+							if (probe.props) {
+								event.props = probe.props;
+							}
+						} else {
+							var loc = simulatedVehicle.getCurrentPosition();
+							event.latitude = loc.latitude;
+							event.longitude = loc.longitude;
+							event.heading = loc.heading || 0;
+							event.speed = 0;
+							if (simulatedVehicle.properties) {
+								event.props = simulatedVehicle.properties;
+							}
+						}
+						$scope.drivingEvent = event;
+						if (probe)
+							$scope.$apply();
+						//		        	$scope.isDriving = simulatedVehicle.isDriving();
+					} catch (e) {
+						console.error(e);
+					}
+				}
+
+				var callbackMethods = {
 					initialized: function updateMethod_initialized(b, error) {
 						if (error) {
 							console.log("initialization failed");
@@ -108,8 +108,8 @@
 						}
 						var vehicle = simulatedVehicle.getVehicle();
 						var tank = vehicle.properties && vehicle.properties.fueltank;
-						if(tank){
-							$scope.rules[1].label = "Fuel (Troubled if smaller than " + tank/2 + ", Critical if smaller than " + tank/10 + ")";
+						if (tank) {
+							$scope.rules[1].label = "Fuel (Troubled if smaller than " + tank / 2 + ", Critical if smaller than " + tank / 10 + ")";
 						}
 						postStatusMessage();
 					},
@@ -122,106 +122,107 @@
 						$scope.isDriving = state === 'driving';
 					},
 					position: function updateMethod_position(position, error) {
-		        		if ($scope.traceCurrentLocation) {
-		        			lockPosition = true;
-			        		showLocation(position);
-		        		}
-		    			var loc = [position.longitude||0, position.latitude||0];
+						if ($scope.traceCurrentLocation) {
+							lockPosition = true;
+							showLocation(position);
+						}
+						var loc = [position.longitude || 0, position.latitude || 0];
 						var newPosition = ol.proj.fromLonLat(loc);
-		        		carFeature.getGeometry().setCoordinates(newPosition);
+						carFeature.getGeometry().setCoordinates(newPosition);
 					},
 					probe: function updateMethod_probe(probe, error) {
 						if (probe) {
-			    			var loc = [probe.longitude||0, probe.latitude||0];
+							var loc = [probe.longitude || 0, probe.latitude || 0];
 							var newPosition = ol.proj.fromLonLat(loc);
-			    			plotRoute(newPosition, error ? routeStyle : matchedRouteStyle);
-			    			if (!error) {
-				    			updateDrvingEvent(probe);
+							plotRoute(newPosition, error ? routeStyle : matchedRouteStyle);
+							if (!error) {
+								updateDrvingEvent(probe);
 								updateVehicle(probe, probe.notification);
-			    			}
+							}
 						}
 					}
-			};
-			
-			function vehicleMonitor(type, data, error) {
-				var func = callbackMethods[type];
-				if (func) {
-					func(data, error);
-				}
-			}
+				};
 
-			//////////////////////////////////////////////////////////////////
-			// UI handlers
-			//////////////////////////////////////////////////////////////////
-
-		    // Start/Stop driving button
-		    $scope.onDriving = function(force, drive) {
-		    	var deferred = $q.defer();
-		    	if ($scope.requestSending) {
-		    		deferred.reject("function is busy");
-		    	} else if (simulatedVehicle.isDriving() && (!force || !drive)) {
-					$scope.drivingButtonLabel = "Stopping...";
-					$scope.requestSending = true;
-					!force && postStatusMessage();
-					stopDriving().then(function() {
-						$scope.drivingButtonLabel = "Start Driving";
-						$scope.requestSending = false;
-						deferred.resolve(true);
-						!force && postStatusMessage();
-					}, function(err) {
-						alert((err.data && err.data.message) || err.responseText || err.message || err);
-						$scope.drivingButtonLabel = "Stop Driving";
-						$scope.requestSending = false;
-						deferred.reject(err);
-						!force && postStatusMessage();
-					});
-				} else if (!simulatedVehicle.isDriving() && (!force || drive)) {
-					// clean route dots
-					routeLayer.getSource().clear();
-					$scope.drivingButtonLabel = "Starting...";
-					$scope.requestSending = true;
-					!force && postStatusMessage();
-					startDriving().then(function(tripId) {
-						$scope.drivingButtonLabel = "Stop Driving";
-						$scope.requestSending = false;
-						deferred.resolve(true);
-						!force && postStatusMessage();
-					}, function(err) {
-						alert((err.data && err.data.message) || err.responseText || err.message || err);
-						$scope.drivingButtonLabel = "Start Driving";
-						$scope.requestSending = false;
-						deferred.reject(err);
-						!force && postStatusMessage();
-					});
-				} else {
-					deferred.resolve(false);
+				function vehicleMonitor(type, data, error) {
+					var func = callbackMethods[type];
+					if (func) {
+						func(data, error);
+					}
 				}
-		    	return deferred.promise;
-		    };
-		    
-		    var vehicleData = {};
-				$scope.updateVehicleDataName = function(){
+
+				//////////////////////////////////////////////////////////////////
+				// UI handlers
+				//////////////////////////////////////////////////////////////////
+
+				// Start/Stop driving button
+				$scope.onDriving = function (force, drive) {
+					var deferred = $q.defer();
+					if ($scope.requestSending) {
+						deferred.reject("function is busy");
+					} else if (simulatedVehicle.isDriving() && (!force || !drive)) {
+						$scope.drivingButtonLabel = "Stopping...";
+						$scope.requestSending = true;
+						!force && postStatusMessage();
+						stopDriving().then(function () {
+							$scope.drivingButtonLabel = "Start Driving";
+							$scope.requestSending = false;
+							deferred.resolve(true);
+							!force && postStatusMessage();
+						}, function (err) {
+							alert((err.data && err.data.message) || err.responseText || err.message || err);
+							$scope.drivingButtonLabel = "Stop Driving";
+							$scope.requestSending = false;
+							deferred.reject(err);
+							!force && postStatusMessage();
+						});
+					} else if (!simulatedVehicle.isDriving() && (!force || drive)) {
+						// clean route dots
+						routeLayer.getSource().clear();
+						$scope.drivingButtonLabel = "Starting...";
+						$scope.requestSending = true;
+						!force && postStatusMessage();
+						startDriving().then(function (tripId) {
+							$scope.drivingButtonLabel = "Stop Driving";
+							$scope.requestSending = false;
+							deferred.resolve(true);
+							!force && postStatusMessage();
+						}, function (err) {
+							alert((err.data && err.data.message) || err.responseText || err.message || err);
+							$scope.drivingButtonLabel = "Start Driving";
+							$scope.requestSending = false;
+							deferred.reject(err);
+							!force && postStatusMessage();
+						});
+					} else {
+						deferred.resolve(false);
+					}
+					return deferred.promise;
+				};
+
+				var vehicleData = {};
+				$scope.updateVehicleDataName = function () {
 					var value = vehicleData[$scope.vehicleDataName];
-					if(value){
-						$scope.vehicleDataValue = $scope.vehicleDataName === "engineTemp" ? String(value*9/5 + 32) : value;
-					}else{
+					if (value) {
+						$scope.vehicleDataValue = $scope.vehicleDataName === "engineTemp" ? String(value * 9 / 5 + 32) : value;
+					} else {
 						$scope.vehicleDataValue = "";
 					}
 				};
-				$scope.updateVehicleDataValue = function(){
-					if($scope.vehicleDataName){
+				$scope.updateVehicleDataValue = function () {
+					if ($scope.vehicleDataName) {
 						var value = $scope.vehicleDataValue;
-						if(value){
-							vehicleData[$scope.vehicleDataName] = $scope.vehicleDataName === "engineTemp" ? String((value-32)*5/9) : value;
-							simulatedVehicle.setProperties(vehicleData);
-						}else{
-							vehicleData[$scope.vehicleDataName] = value;
+						if (value) {
+							var property = {};
+							vehicleData[$scope.vehicleDataName] = property[$scope.vehicleDataName] = $scope.vehicleDataName === "engineTemp" ? String((value - 32) * 5 / 9) : value;
+							simulatedVehicle.setProperties(property);
+						} else {
+							delete vehicleData[$scope.vehicleDataName];
 							simulatedVehicle.unsetProperties([$scope.vehicleDataName]);
 						}
 					}
 				};
-		
-				$scope.onChangeSrcDirection = function() {
+
+				$scope.onChangeSrcDirection = function () {
 					var loc = simulatedVehicle.getCurrentPosition();
 					if (!loc) {
 						return;
@@ -229,18 +230,18 @@
 					$scope.requestSending = true;
 					$scope.routeSearching = true;
 					postStatusMessage();
-					simulatedVehicle.setCurrentPosition({latitude: loc.latitude, longitude: loc.longitude, heading: $scope.srcDirection}).then(function(tripRoute){
+					simulatedVehicle.setCurrentPosition({ latitude: loc.latitude, longitude: loc.longitude, heading: $scope.srcDirection }).then(function (tripRoute) {
 						$scope.requestSending = false;
 						$scope.routeSearching = false;
 						postStatusMessage();
-					}, function(error) {
+					}, function (error) {
 						$scope.requestSending = false;
 						$scope.routeSearching = false;
 						postStatusMessage();
 					});
 				};
-			
-				$scope.onChangeDstDirection = function() {
+
+				$scope.onChangeDstDirection = function () {
 					var loc = simulatedVehicle.getDestination();
 					if (!loc) {
 						return;
@@ -248,50 +249,50 @@
 					$scope.requestSending = true;
 					$scope.routeSearching = true;
 					postStatusMessage();
-					simulatedVehicle.setDestination({latitude: loc.latitude, longitude: loc.longitude, heading: $scope.dstDirection}).then(function(tripRoute){
+					simulatedVehicle.setDestination({ latitude: loc.latitude, longitude: loc.longitude, heading: $scope.dstDirection }).then(function (tripRoute) {
 						$scope.requestSending = false;
 						$scope.routeSearching = false;
 						postStatusMessage();
-					}, function(error) {
+					}, function (error) {
 						$scope.requestSending = false;
 						$scope.routeSearching = false;
 						postStatusMessage();
 					});
 				};
-				
-				$scope.onAvoidEventChange = function() {
+
+				$scope.onAvoidEventChange = function () {
 					$scope.requestSending = true;
 					$scope.routeSearching = true;
 					postStatusMessage();
-					simulatedVehicle.setOption("avoid_events", $scope.opt_avoid_events).then(function(tripRoute) {
+					simulatedVehicle.setOption("avoid_events", $scope.opt_avoid_events).then(function (tripRoute) {
 						$scope.requestSending = false;
 						$scope.routeSearching = false;
 						postStatusMessage();
-					}, function(error) {
+					}, function (error) {
 						$scope.requestSending = false;
 						$scope.routeSearching = false;
 						postStatusMessage();
 					});
 				};
-				
-				$scope.onRouteLoop = function() {
+
+				$scope.onRouteLoop = function () {
 					$scope.requestSending = true;
 					$scope.routeSearching = true;
 					postStatusMessage();
-					simulatedVehicle.setOption("route_loop", $scope.opt_route_loop).then(function(tripRoute) {
+					simulatedVehicle.setOption("route_loop", $scope.opt_route_loop).then(function (tripRoute) {
 						$scope.requestSending = false;
 						$scope.routeSearching = false;
 						postStatusMessage();
-					}, function(error) {
+					}, function (error) {
 						$scope.requestSending = false;
 						$scope.routeSearching = false;
 						postStatusMessage();
 					});
 				};
-				
+
 				// device ID
 				$scope.traceCurrentLocation = true;
-				$scope.directions = [{label: "North", value: 0}, {label: "North East", value: 45}, {label: "East", value: 90}, {label: "South East", value: 135}, {label: "South", value: 180}, {label: "South West", value: 225}, {label: "West", value: 270}, {label: "North West", value: 315}];
+				$scope.directions = [{ label: "North", value: 0 }, { label: "North East", value: 45 }, { label: "East", value: 90 }, { label: "South East", value: 135 }, { label: "South", value: 180 }, { label: "South West", value: 225 }, { label: "West", value: 270 }, { label: "North West", value: 315 }];
 				$scope.drivingEvent = {};
 				$scope.isDriving = simulatedVehicle.isDriving();
 				$scope.routeSearching = true;
@@ -301,375 +302,375 @@
 				$scope.opt_avoid_events = simulatedVehicle.getOption("avoid_events");
 				$scope.opt_route_loop = simulatedVehicle.getOption("route_loop");
 
-			// rules
-			// should be synced with rules defined in /driverinsights/fleetalert.js
-			$scope.rules = [
-				{propName: "engineTemp", label: "Engine Temperature (Critical if larger than 248)"},
-				{propName: "fuel", label: "Fuel"}
-			];
-			
-			// vehicle data control panel
-			$scope.fuel = null;
-			$scope.engineTemp = null;
-			
-			//
-			// Compose Map component
-			//
-			var map = null;
-			var carFeature = null;
-			var destFeature = null;
-			var carsLayer = null;
-			var eventLayer = null;
-			var geofenceLayer = null;
-			var routeLayer = null;
-			var tripLayer = null;
-			var routeStyle = null;
-			var matchedRouteStyle = null;
-			var DEFAULT_ZOOM = 16;
-			
-			var mapHelper = null;
-			var eventHelper = null;
-			var geofenceHelper = null;
+				// rules
+				// should be synced with rules defined in /driverinsights/fleetalert.js
+				$scope.rules = [
+					{ propName: "engineTemp", label: "Engine Temperature (Critical if larger than 248)" },
+					{ propName: "fuel", label: "Fuel" }
+				];
 
-			// How the app can determin if a map is panned by the app or by a user. Need to find a smarter way
-			var lockPosition = false;
-			
-			// Show current location on a map
-			$scope.onCurrentLocation = function() {
-				lockPosition = true;
-				$scope.traceCurrentLocation = true;
-				showLocation(simulatedVehicle.getCurrentPosition());
-			};
+				// vehicle data control panel
+				$scope.fuel = null;
+				$scope.engineTemp = null;
 
-			// Show specified location on a map
-			function showLocation(location) {
-				if (!map) return;
-				var view = map.getView();
-				view.setRotation(0);
-				view.setCenter(ol.proj.fromLonLat([location.longitude||0, location.latitude||0]));
-				view.setZoom(DEFAULT_ZOOM);
-			}
+				//
+				// Compose Map component
+				//
+				var map = null;
+				var carFeature = null;
+				var destFeature = null;
+				var carsLayer = null;
+				var eventLayer = null;
+				var geofenceLayer = null;
+				var routeLayer = null;
+				var tripLayer = null;
+				var routeStyle = null;
+				var matchedRouteStyle = null;
+				var DEFAULT_ZOOM = 16;
 
-			// Update UI when car probe date is changed
-			// add start/end icon
-			function plotRoute(position, style, route){
-				if(!routeLayer){
-					return;
+				var mapHelper = null;
+				var eventHelper = null;
+				var geofenceHelper = null;
+
+				// How the app can determin if a map is panned by the app or by a user. Need to find a smarter way
+				var lockPosition = false;
+
+				// Show current location on a map
+				$scope.onCurrentLocation = function () {
+					lockPosition = true;
+					$scope.traceCurrentLocation = true;
+					showLocation(simulatedVehicle.getCurrentPosition());
+				};
+
+				// Show specified location on a map
+				function showLocation(location) {
+					if (!map) return;
+					var view = map.getView();
+					view.setRotation(0);
+					view.setCenter(ol.proj.fromLonLat([location.longitude || 0, location.latitude || 0]));
+					view.setZoom(DEFAULT_ZOOM);
 				}
-				var feature = new ol.Feature({
-					geometry: new ol.geom.Point(position),
-					route : route
-				});
-				feature.setStyle(style);
-				routeLayer.getSource().addFeature(feature);
-			}
-			
-			function updateVehicle(probe, notification) {
-				// affected events
-				var affectedEvents = (notification && notification.affected_events) || [];
-				affectedEvents.forEach(function(event) {
-					console.log("affected event = " + event.event_id);
-				});
-				eventHelper.updateAffectedEvents(affectedEvents);
-				
-				// notifed messages
-				var notifiedMessages = (notification && notification.notified_messages) || [];
-				notifiedMessages.forEach(function(message) {
-//					console.log("notified message = " + message.message);
-				});
-			}
-			
-			function setDestination(location){
-				if(!destFeature){
-					destFeature = new ol.Feature({geometry:new ol.geom.Point(location)});	
-					var destStyle = new ol.style.Style({
+
+				// Update UI when car probe date is changed
+				// add start/end icon
+				function plotRoute(position, style, route) {
+					if (!routeLayer) {
+						return;
+					}
+					var feature = new ol.Feature({
+						geometry: new ol.geom.Point(position),
+						route: route
+					});
+					feature.setStyle(style);
+					routeLayer.getSource().addFeature(feature);
+				}
+
+				function updateVehicle(probe, notification) {
+					// affected events
+					var affectedEvents = (notification && notification.affected_events) || [];
+					affectedEvents.forEach(function (event) {
+						console.log("affected event = " + event.event_id);
+					});
+					eventHelper.updateAffectedEvents(affectedEvents);
+
+					// notifed messages
+					var notifiedMessages = (notification && notification.notified_messages) || [];
+					notifiedMessages.forEach(function (message) {
+						//					console.log("notified message = " + message.message);
+					});
+				}
+
+				function setDestination(location) {
+					if (!destFeature) {
+						destFeature = new ol.Feature({ geometry: new ol.geom.Point(location) });
+						var destStyle = new ol.style.Style({
+							image: new ol.style.Circle({
+								radius: 8,
+								fill: new ol.style.Fill({
+									color: 'rgba(255, 0, 0, 0.7)'
+								})
+							})
+						});
+						destFeature.setStyle(destStyle);
+						carsLayer.getSource().addFeature(destFeature);
+					}
+
+					destFeature.getGeometry().setCoordinates(location);
+				}
+
+				// Start handling move event 
+				function enableMoveListener() {
+					map.on('pointerdrag', function () {
+						// if map is moved by user, disable traceCurrentLocation flag so as not to show car location automatically
+						if ($scope.traceCurrentLocation) {
+							$scope.traceCurrentLocation = false;
+							$scope.$apply();
+						}
+					});
+					map.on("moveend", function (e) {
+						if ($scope.traceCurrentLocation && !lockPosition) {
+							$scope.traceCurrentLocation = false;
+							$scope.$apply();
+						}
+						lockPosition = false;
+					});
+					map.on("click", function (e) {
+						if (!simulatedVehicle.isDriving()) {
+							var loc = ol.proj.toLonLat(e.coordinate);
+							if ($scope.actionMode === "action-car-position") {
+								$scope.requestSending = true;
+								simulatedVehicle.setCurrentPosition({ latitude: loc[1], longitude: loc[0], heading: $scope.srcDirection }).then(function (tripRoute) {
+									$scope.requestSending = false;
+								}, function (error) {
+									$scope.requestSending = false;
+								});
+								carFeature.getGeometry().setCoordinates(e.coordinate);
+							} else if ($scope.actionMode === "action-route") {
+								$scope.requestSending = true;
+								simulatedVehicle.setDestination({ latitude: loc[1], longitude: loc[0], heading: $scope.dstDirection }).then(function (tripRoute) {
+									$scope.requestSending = false;
+								}, function (error) {
+									$scope.requestSending = false;
+								});
+								setDestination(e.coordinate);
+							}
+						}
+					});
+				}
+
+				function _plotTripRoute(tripRoute) {
+					if (!tripLayer) {
+						return;
+					}
+					tripLayer.getSource().clear();
+					if (!tripRoute || tripRoute.length < 2) {
+						return;
+					}
+					var lines = [];
+					for (i = 0; i < (tripRoute.length - 1); i++) {
+						lines.push([ol.proj.fromLonLat([tripRoute[i].lon, tripRoute[i].lat]),
+						ol.proj.fromLonLat([tripRoute[i + 1].lon, tripRoute[i + 1].lat])]);
+					}
+					var lineStrings = new ol.geom.MultiLineString([]);
+					lineStrings.setCoordinates(lines);
+					var feature = new ol.Feature(lineStrings);
+					tripLayer.getSource().addFeature(feature);
+				}
+
+				// Initialize a map
+				var initMap = function initMap(location) {
+					var centerPosition = ol.proj.fromLonLat([location.longitude || 0, location.latitude || 0]);
+					lockPosition = true;
+
+					// Setup current car position
+					carFeature = new ol.Feature({ geometry: new ol.geom.Point(centerPosition) });
+					var carStyle = new ol.style.Style({
+						image: new ol.style.Icon({
+							anchor: [0.5, 0.5],
+							anchorXUnits: 'fraction',
+							anchorYUnits: 'fraction',
+							src: 'images/car.png'
+						})
+					});
+					carsLayer = new ol.layer.Vector({ source: new ol.source.Vector({ features: [carFeature] }), style: carStyle });
+
+					// create route layer
+					routeStyle = new ol.style.Style({
 						image: new ol.style.Circle({
-							radius:8,
-							fill : new ol.style.Fill({
-								color: 'rgba(255, 0, 0, 0.7)'
+							radius: 3,
+							stroke: new ol.style.Stroke({
+								color: 'orange',
+								width: 1
+							}),
+							fill: new ol.style.Fill({
+								color: 'rgba(200, 0, 0, 0.7)'
 							})
 						})
 					});
-					destFeature.setStyle(destStyle);
-					carsLayer.getSource().addFeature(destFeature);
-				}
-				
-				destFeature.getGeometry().setCoordinates(location);
-			}
 
-			// Start handling move event 
-			function enableMoveListener() {
-				map.on('pointerdrag', function() {
-					// if map is moved by user, disable traceCurrentLocation flag so as not to show car location automatically
-					if ($scope.traceCurrentLocation) {
-						$scope.traceCurrentLocation = false;
-						$scope.$apply();
-					}
-				});
-				map.on("moveend", function(e){
-					if ($scope.traceCurrentLocation && !lockPosition) {
-						$scope.traceCurrentLocation = false;
-						$scope.$apply();
-					}
-					lockPosition = false;
-				});
-				map.on("click", function(e){
-					if(!simulatedVehicle.isDriving()) {
-						var loc = ol.proj.toLonLat(e.coordinate);
-						if ($scope.actionMode === "action-car-position") {
-							$scope.requestSending = true;
-							simulatedVehicle.setCurrentPosition({latitude: loc[1], longitude: loc[0], heading: $scope.srcDirection}).then(function(tripRoute){
-								$scope.requestSending = false;
-							}, function(error) {
-								$scope.requestSending = false;
-							});
-							carFeature.getGeometry().setCoordinates(e.coordinate);
-						} else if ($scope.actionMode === "action-route") {
-							$scope.requestSending = true;
-							simulatedVehicle.setDestination({latitude: loc[1], longitude: loc[0], heading: $scope.dstDirection}).then(function(tripRoute){
-								$scope.requestSending = false;
-							}, function(error) {
-								$scope.requestSending = false;
-							});
-							setDestination(e.coordinate);
-						}
-					}
-				});
-			}
-
-			function _plotTripRoute(tripRoute){
-				if(!tripLayer){
-					return;
-				}
-				tripLayer.getSource().clear();
-				if (!tripRoute || tripRoute.length < 2) {
-					return;
-				}
-				var lines = [];
-				for (i=0; i<(tripRoute.length-1); i++) {
-					lines.push([ol.proj.fromLonLat([tripRoute[i].lon, tripRoute[i].lat]), 
-								ol.proj.fromLonLat([tripRoute[i+1].lon, tripRoute[i+1].lat])]);
-				}
-				var lineStrings = new ol.geom.MultiLineString([]);
-				lineStrings.setCoordinates(lines);
-				var feature = new ol.Feature(lineStrings);
-				tripLayer.getSource().addFeature( feature );
-			}
-			
-			// Initialize a map
-			var initMap = function initMap(location){
-				var centerPosition = ol.proj.fromLonLat([location.longitude||0, location.latitude||0]);
-				lockPosition = true;
-				
-				// Setup current car position
-				carFeature = new ol.Feature({geometry: new ol.geom.Point(centerPosition)});
-				var carStyle = new ol.style.Style({
-					image: new ol.style.Icon({
-						anchor: [0.5, 0.5],
-						anchorXUnits: 'fraction',
-						anchorYUnits: 'fraction',
-						src: 'images/car.png'
-					})
-				});
-				carsLayer = new ol.layer.Vector({source: new ol.source.Vector({features: [carFeature]}), style: carStyle});	
-
-				// create route layer
-				routeStyle = new ol.style.Style({
-					image: new ol.style.Circle({
-						radius:3,
-						stroke: new ol.style.Stroke({
-							color: 'orange',
-							width: 1
-						}),
-						fill : new ol.style.Fill({
-							color: 'rgba(200, 0, 0, 0.7)'
+					matchedRouteStyle = new ol.style.Style({
+						image: new ol.style.Circle({
+							radius: 3,
+							stroke: new ol.style.Stroke({
+								color: 'darkgreen',
+								width: 1
+							}),
+							fill: new ol.style.Fill({
+								color: 'rgba(0, 200, 0, 0.7)'
+							})
 						})
-					})
-				});
-				
-				matchedRouteStyle = new ol.style.Style({
-					image: new ol.style.Circle({
-						radius:3,
-						stroke: new ol.style.Stroke({
-							color: 'darkgreen',
-							width: 1
-						}),
-						fill : new ol.style.Fill({
-							color: 'rgba(0, 200, 0, 0.7)'
-						})
-					})
-				});
-				
-				routeLayer = new ol.layer.Vector({
-					source: new ol.source.Vector()
-				});
-				
-				// trip layer
-				var tripStyle = new ol.style.Style({
-					stroke: new ol.style.Stroke({ color: 'rgba(120, 120, 120, 0.7)', width: 3 }),
-				});
-				tripLayer = new ol.layer.Vector({source: new ol.source.Vector(), style: tripStyle});	
-				
-				// event layer
-				eventLayer = new ol.layer.Vector({
-					source: new ol.source.Vector()
-				});
-				
-				// geofence layer
-				geofenceLayer = new ol.layer.Vector({
-					source: new ol.source.Vector()
-				});
-				
-				// create a map
-				map =  new ol.Map({
-					controls: ol.control.defaults({
-						attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
+					});
+
+					routeLayer = new ol.layer.Vector({
+						source: new ol.source.Vector()
+					});
+
+					// trip layer
+					var tripStyle = new ol.style.Style({
+						stroke: new ol.style.Stroke({ color: 'rgba(120, 120, 120, 0.7)', width: 3 }),
+					});
+					tripLayer = new ol.layer.Vector({ source: new ol.source.Vector(), style: tripStyle });
+
+					// event layer
+					eventLayer = new ol.layer.Vector({
+						source: new ol.source.Vector()
+					});
+
+					// geofence layer
+					geofenceLayer = new ol.layer.Vector({
+						source: new ol.source.Vector()
+					});
+
+					// create a map
+					map = new ol.Map({
+						controls: ol.control.defaults({
+							attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
 								collapsible: false
-						})
-					}),
-					target: document.getElementById("locationMap"),
-					layers: [
-						new ol.layer.Tile({source: new ol.source.OSM({}), preload: 4}),  // map layer
-						geofenceLayer,
-						eventLayer,
-						carsLayer,
-						routeLayer,
-						tripLayer
-					],
-					view: new ol.View({
-						center: centerPosition,
-						zoom: DEFAULT_ZOOM
-					}),
-				});
-				
-				eventHelper = new EventHelper(map, eventLayer, $q, eventService);
-				geofenceHelper = new GeofenceHelper(map, geofenceLayer, $q, geofenceService);
-				
-				enableMoveListener();
-				
-				window.onresize = function() {
-					$timeout( function() { 
-						if ($scope.traceCurrentLocation) {
-							lockPosition = true;
-						}
-						map.updateSize();
-					}, 200);
-				};
+							})
+						}),
+						target: document.getElementById("locationMap"),
+						layers: [
+							new ol.layer.Tile({ source: new ol.source.OSM({}), preload: 4 }),  // map layer
+							geofenceLayer,
+							eventLayer,
+							carsLayer,
+							routeLayer,
+							tripLayer
+						],
+						view: new ol.View({
+							center: centerPosition,
+							zoom: DEFAULT_ZOOM
+						}),
+					});
 
-				//
-				// Setup popover
-				//
-				mapHelper = new MapHelper(map);
-				mapHelper.addPopOver({
+					eventHelper = new EventHelper(map, eventLayer, $q, eventService);
+					geofenceHelper = new GeofenceHelper(map, geofenceLayer, $q, geofenceService);
+
+					enableMoveListener();
+
+					window.onresize = function () {
+						$timeout(function () {
+							if ($scope.traceCurrentLocation) {
+								lockPosition = true;
+							}
+							map.updateSize();
+						}, 200);
+					};
+
+					//
+					// Setup popover
+					//
+					mapHelper = new MapHelper(map);
+					mapHelper.addPopOver({
 						elm: document.getElementById('infopopup'),
 						pin: false,
-//						updateInterval: 1000,
-					}, 
-					function showPopOver(elem, feature, pinned, closeCallback){
-						if(!feature) return;
-						var content = getPopOverContent(feature);
-						if(content){
-							var title = '<div>' + (content.title ? _.escape(content.title) : '') + '</div>' + 
+						//						updateInterval: 1000,
+					},
+						function showPopOver(elem, feature, pinned, closeCallback) {
+							if (!feature) return;
+							var content = getPopOverContent(feature);
+							if (content) {
+								var title = '<div>' + (content.title ? _.escape(content.title) : '') + '</div>' +
 									(pinned ? '<div><span class="btn btn-default close">&times;</span></div>' : '');
-							var pop = $(elem).popover({
-								//placement: 'top',
-								html: true,
-								title: title,
-								content: content.content
-							});
-							if(pinned){
-								pop.on('shown.bs.popover', function(){
-									var c = $(elem).parent().find('.popover .close');
-									c.on('click', function(){
-										closeCallback && closeCallback();
-									});
+								var pop = $(elem).popover({
+									//placement: 'top',
+									html: true,
+									title: title,
+									content: content.content
 								});
-							}
-							$(elem).popover('show');
-						}
-					}, 
-					function destroyPopOver(elem, feature, pinned){
-						if(!feature) return;
-						$(elem).popover('destroy');
-					}, 
-					function updatePopOver(elem, feature, pinned){
-						if(!feature) return;
-						var content = getPopOverContent(feature);
-						if(content){
-							var popover = $(elem).data('bs.popover');
-							if(popover.options.content != content.content){
-								popover.options.content = content.content;
+								if (pinned) {
+									pop.on('shown.bs.popover', function () {
+										var c = $(elem).parent().find('.popover .close');
+										c.on('click', function () {
+											closeCallback && closeCallback();
+										});
+									});
+								}
 								$(elem).popover('show');
 							}
-						}
-					});
-				
-				// popover - generate popover content from ol.Feature
-				var getPopOverContent = function getPopOverContent(feature){
-					var content = feature.get('popoverContent');
-					if(content)
-						return {content: '<span style="white-space: nowrap;">' + _.escape(content) + '</span>' };
-					
-					var item = feature.get('item');
-					if(item){
-						if (item.event_id)
-							return eventHelper.createEventDescriptionHTML(item);
-//						else if (item.geometry)
-//							return geofenceHelper.createGeofenceDescriptionHTML(item);
-					} else {
-						var route = feature.get('route');
-						if (route) {
-							var result = { content: '', title: 'Route' };
-							
-							var lat = route.matched_latitude || route.latitude;
-							var lon = route.matched_longitude || route.longitude;
-							var heading = route.matched_heading || route.heading;
-							var speed = route.speed;
-							// location and heading
-							var index = Math.floor(((heading/360 + 1/32) % 1) * 16);
-							var dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-							var dir = dirs[index];
-							result.content = '<table><tbody>' +
-										'<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">LOCATION:</span></th><td style="white-space: nowrap">' + Math.round(lat * 10000000) / 10000000 + ',' + Math.round(lon * 10000000) / 10000000 + '</td></tr>' +
-										'<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">HEADING:</span></th><td>' + Math.round(heading * 10000000) / 10000000 + ' [' + dir + ']' + '</td></td>' +
-										'<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">SPEED:</span></th><td>' + Math.round(speed / 0.01609344) / 100 + 'MPH</td></tr>' +
-										'<tbody><table>'
-							return result;
-						} else if (feature === carFeature) {
-						} else if (feature === destFeature) {
-							var destination = simulatedVehicle.getDestination();
-							if (destination) {
-								var result = { content: '', title: 'Destination' };
+						},
+						function destroyPopOver(elem, feature, pinned) {
+							if (!feature) return;
+							$(elem).popover('destroy');
+						},
+						function updatePopOver(elem, feature, pinned) {
+							if (!feature) return;
+							var content = getPopOverContent(feature);
+							if (content) {
+								var popover = $(elem).data('bs.popover');
+								if (popover.options.content != content.content) {
+									popover.options.content = content.content;
+									$(elem).popover('show');
+								}
+							}
+						});
+
+					// popover - generate popover content from ol.Feature
+					var getPopOverContent = function getPopOverContent(feature) {
+						var content = feature.get('popoverContent');
+						if (content)
+							return { content: '<span style="white-space: nowrap;">' + _.escape(content) + '</span>' };
+
+						var item = feature.get('item');
+						if (item) {
+							if (item.event_id)
+								return eventHelper.createEventDescriptionHTML(item);
+							//						else if (item.geometry)
+							//							return geofenceHelper.createGeofenceDescriptionHTML(item);
+						} else {
+							var route = feature.get('route');
+							if (route) {
+								var result = { content: '', title: 'Route' };
+
+								var lat = route.matched_latitude || route.latitude;
+								var lon = route.matched_longitude || route.longitude;
+								var heading = route.matched_heading || route.heading;
+								var speed = route.speed;
+								// location and heading
+								var index = Math.floor(((heading / 360 + 1 / 32) % 1) * 16);
+								var dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+								var dir = dirs[index];
 								result.content = '<table><tbody>' +
-											'<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">LOCATION:</span></th><td style="white-space: nowrap">' + Math.round(destination.lat * 10000000) / 10000000 + ',' + Math.round(destination.lon * 10000000) / 10000000 + '</td></tr>' +
-											'<tbody><table>'
+									'<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">LOCATION:</span></th><td style="white-space: nowrap">' + Math.round(lat * 10000000) / 10000000 + ',' + Math.round(lon * 10000000) / 10000000 + '</td></tr>' +
+									'<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">HEADING:</span></th><td>' + Math.round(heading * 10000000) / 10000000 + ' [' + dir + ']' + '</td></td>' +
+									'<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">SPEED:</span></th><td>' + Math.round(speed / 0.01609344) / 100 + 'MPH</td></tr>' +
+									'<tbody><table>'
 								return result;
+							} else if (feature === carFeature) {
+							} else if (feature === destFeature) {
+								var destination = simulatedVehicle.getDestination();
+								if (destination) {
+									var result = { content: '', title: 'Destination' };
+									result.content = '<table><tbody>' +
+										'<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">LOCATION:</span></th><td style="white-space: nowrap">' + Math.round(destination.lat * 10000000) / 10000000 + ',' + Math.round(destination.lon * 10000000) / 10000000 + '</td></tr>' +
+										'<tbody><table>'
+									return result;
+								}
 							}
 						}
-					}
-					return null;
+						return null;
+					};
+
 				};
-			
-			};
-			
-			// initializer
-			this.$onInit = function() {
-				initMap(simulatedVehicle.getCurrentPosition());
-				$scope.routeSearching = true;
-				simulatedVehicle.setVehicleMonitor(vehicleMonitor);
-				updateDrvingEvent();
-			};
-		}
-	});
+
+				// initializer
+				this.$onInit = function () {
+					initMap(simulatedVehicle.getCurrentPosition());
+					$scope.routeSearching = true;
+					simulatedVehicle.setVehicleMonitor(vehicleMonitor);
+					updateDrvingEvent();
+				};
+			}
+		});
 
 	/*
 	 * Map helper
 	 */
-	var MapHelper = function(map){
+	var MapHelper = function (map) {
 		// the map
 		this.map = map;
 	};
-	
+
 	/**
 	 * Add popover to the map
 	 * @options
@@ -683,108 +684,108 @@
 	 *         @feature is ol.Feature, @pinned is boolean showing the "pin" state (true is pinned)
 	 * @pdatePopOver a function called on updating popover content: function(elm, feature, pinned)
 	 */
-	MapHelper.prototype.addPopOver = function addPopOver(options, showPopOver, destroyPopOver, updatePopOver){
+	MapHelper.prototype.addPopOver = function addPopOver(options, showPopOver, destroyPopOver, updatePopOver) {
 		// check and normalize arguments
 		var elm = options.elm;
-		if(!options.elm){
+		if (!options.elm) {
 			console.error('Missing popup target element. Skipped to setup popover.');
 		}
-		var nop = function(){};
+		var nop = function () { };
 		showPopOver = showPopOver || nop;
 		destroyPopOver = destroyPopOver || nop;
-		
+
 		// control variables
 		var currentPopoverFeature;
 		var currentPinned;
 		var startUpdateTimer, stopUpdateTimer; // implemented in section below
-		
+
 		// create popover objects
 		var overlay = new ol.Overlay({
 			element: elm,
-			offset: [2,-3],
+			offset: [2, -3],
 			positioning: 'center-right',
 			stopEvent: true
 		});
 		this.map.addOverlay(overlay);
-		
+
 		//
 		// Implement mouse hover popover
 		//
-		this.map.on('pointermove', (function(event){
+		this.map.on('pointermove', (function (event) {
 			// handle dragging
-			if(event.dragging){
-				if(currentPinned)
+			if (event.dragging) {
+				if (currentPinned)
 					return; // don't follow pointer when pinned
-				
+
 				stopUpdateTimer();
 				destroyPopOver(elm, currentPopoverFeature);
 				currentPopoverFeature = null;
 				return;
 			}
-			
-			var feature = this.map.forEachFeatureAtPixel(event.pixel, function(feature, layer){
+
+			var feature = this.map.forEachFeatureAtPixel(event.pixel, function (feature, layer) {
 				return feature;
 			});
 			this.map.getTargetElement().style.cursor = (feature ? 'pointer' : ''); // cursor
-			
+
 			// guard by pin state
-			if(currentPinned)
+			if (currentPinned)
 				return; // don't follow pointer when pinned
-			
-			if(feature)
+
+			if (feature)
 				overlay.setPosition(event.coordinate);
-			
-			if(currentPopoverFeature !== feature){
+
+			if (currentPopoverFeature !== feature) {
 				stopUpdateTimer();
 				destroyPopOver(elm, currentPopoverFeature);
 				currentPopoverFeature = feature;
 				showPopOver(elm, currentPopoverFeature);
 				startUpdateTimer();
 			}
-			
+
 		}).bind(this));
-		
+
 		//
 		// Implement "pin" capability on the popover
 		//
-		if(options.pin){
-			var trackGeometryListener = function(){
+		if (options.pin) {
+			var trackGeometryListener = function () {
 				var coord = currentPopoverFeature.getGeometry().getCoordinates();
 				overlay.setPosition(coord);
 			};
-			var closePinnedPopover = (function closeFunc(){
+			var closePinnedPopover = (function closeFunc() {
 				stopUpdateTimer();
 				destroyPopOver(elm, currentPopoverFeature, currentPinned);
-				if(currentPopoverFeature)
+				if (currentPopoverFeature)
 					currentPopoverFeature.un('change:geometry', trackGeometryListener);
 				currentPinned = false;
 			}).bind(this);
-			var showPinnedPopover = (function showFunc(){
+			var showPinnedPopover = (function showFunc() {
 				currentPinned = true;
 				showPopOver(elm, currentPopoverFeature, currentPinned, closePinnedPopover);
 				startUpdateTimer();
-				if(currentPopoverFeature)
+				if (currentPopoverFeature)
 					currentPopoverFeature.on('change:geometry', trackGeometryListener);
 			}).bind(this);
-			
-			this.map.on('singleclick', (function(event){
-				var feature = this.map.forEachFeatureAtPixel(event.pixel, function(feature, layer){
+
+			this.map.on('singleclick', (function (event) {
+				var feature = this.map.forEachFeatureAtPixel(event.pixel, function (feature, layer) {
 					return feature;
 				});
-				if(!feature) return; // pin feature only works on clicking on a feature
-				
-				if(!currentPinned && feature === currentPopoverFeature){
+				if (!feature) return; // pin feature only works on clicking on a feature
+
+				if (!currentPinned && feature === currentPopoverFeature) {
 					// Pin currently shown popover
 					closePinnedPopover();
 					showPinnedPopover();
-				}else if(!currentPinned && feature !== currentPopoverFeature){
+				} else if (!currentPinned && feature !== currentPopoverFeature) {
 					// Show pinned popover
 					var coord = feature.getGeometry().getCoordinates();
 					overlay.setPosition(coord);
 					// show popover
 					currentPopoverFeature = feature;
 					showPinnedPopover();
-				}else if(currentPinned && currentPopoverFeature !== feature){
+				} else if (currentPinned && currentPopoverFeature !== feature) {
 					// Change pinned target feature
 					closePinnedPopover();
 					currentPopoverFeature = feature;
@@ -793,7 +794,7 @@
 					overlay.setPosition(coord);
 					// show
 					showPinnedPopover();
-				}else if(currentPinned && feature === currentPopoverFeature){
+				} else if (currentPinned && feature === currentPopoverFeature) {
 					// Remove pin
 					closePinnedPopover();
 					//currentPopoverFeature = null;
@@ -801,67 +802,67 @@
 				}
 			}).bind(this));
 		}
-		
+
 		//
 		// Implement periodical content update option
 		//
-		if(options.updateInterval && updatePopOver){
+		if (options.updateInterval && updatePopOver) {
 			var timer = 0;
-			startUpdateTimer = function(){
+			startUpdateTimer = function () {
 				stopUpdateTimer();
 				timer = setTimeout(callUpdate, options.updateInterval);
 			};
-			stopUpdateTimer = function(){
-				if(timer){
+			stopUpdateTimer = function () {
+				if (timer) {
 					clearTimeout(timer);
 					timer = 0;
 				}
 			};
-			var callUpdate = function(){
+			var callUpdate = function () {
 				updatePopOver(elm, currentPopoverFeature, currentPinned);
 				timer = setTimeout(callUpdate, options.updateInterval);
 			};
-		}else {
-			startUpdateTimer = function(){}; // nop
-			stopUpdateTimer = function(){}; // nop
+		} else {
+			startUpdateTimer = function () { }; // nop
+			stopUpdateTimer = function () { }; // nop
 		}
-		
+
 	};
-	
+
 	function SingleRequestQueue() {
 		this.queue = null;
 		this.running = false;
 	}
 
-	SingleRequestQueue.prototype.push = function(request) {
+	SingleRequestQueue.prototype.push = function (request) {
 		this.queue = request;
 		if (!this.running && this.queue.length === 1) {
 			this._run();
 		}
 	};
 
-	SingleRequestQueue.prototype.clear = function(request) {
-		_.each(this.queue, function(request) {
+	SingleRequestQueue.prototype.clear = function (request) {
+		_.each(this.queue, function (request) {
 			request.canceled && request.canceled();
 		});
 		this.queue = [];
 	};
 
-	SingleRequestQueue.prototype._run = function() {
+	SingleRequestQueue.prototype._run = function () {
 		if (this.queue.length === 0) {
 			return;
 		}
-		
+
 		var self = this;
 		this.running = true;
 		var request = this.queue.shift();
-		Q.when(request.run(request.params), function(result) {
+		Q.when(request.run(request.params), function (result) {
 			try {
 				request.done && request.done(result);
 			} finally {
 				self._next();
 			}
-		})["catch"](function(error) {
+		})["catch"](function (error) {
 			try {
 				request.error && request.error(error);
 			} finally {
@@ -870,21 +871,21 @@
 		});
 	};
 
-	SingleRequestQueue.prototype._next = function() {
+	SingleRequestQueue.prototype._next = function () {
 		this.running = false;
 		if (this.queue.length === 0) {
 			return;
 		}
 		var self = this;
-		setTimeout(function() {
+		setTimeout(function () {
 			self._run();
 		}, 10);
 	};
-	
+
 	/*
 	 * Event healer
 	 */
-	var EventHelper = function(map, layer, q, eventService){
+	var EventHelper = function (map, layer, q, eventService) {
 		// the map
 		this.map = map;
 		this.eventLayer = layer;
@@ -894,35 +895,35 @@
 
 		var self = this;
 		this.eventLoadingHandle = null;
-		layer.setStyle(function(feature, resolution) {
+		layer.setStyle(function (feature, resolution) {
 			var eventIcon = new ol.style.Circle({
 				radius: 10,
-				stroke : new ol.style.Stroke({
+				stroke: new ol.style.Stroke({
 					color: "#ffc000",
 					width: 1
 				}),
-				fill : new ol.style.Fill({
+				fill: new ol.style.Fill({
 					color: "yellow"
 				})
 			});
 			var affectedEventIcon = new ol.style.Circle({
 				radius: 10,
-				stroke : new ol.style.Stroke({
+				stroke: new ol.style.Stroke({
 					color: "yellow",
 					width: 3
 				}),
-				fill : new ol.style.Fill({
+				fill: new ol.style.Fill({
 					color: "#ffc000"
 				})
 			});
-			
+
 			var arrowTexts = ["\u2191", "\u2197", "\u2192", "\u2198", "\u2193", "\u2199", "\u2190", "\u2196"];
-			self.styles = arrowTexts.map(function(text) {
+			self.styles = arrowTexts.map(function (text) {
 				rotation = 0; // 3.14 * rotation / 180;
 				return new ol.style.Style({
 					image: eventIcon,
 					text: new ol.style.Text({
-						fill: new ol.style.Fill({color: "#606060"}),
+						fill: new ol.style.Fill({ color: "#606060" }),
 						scale: 1.0,
 						textAlign: "center",
 						textBaseline: "middle",
@@ -932,12 +933,12 @@
 					})
 				});
 			});
-			self.affectedStyles = arrowTexts.map(function(text) {
+			self.affectedStyles = arrowTexts.map(function (text) {
 				rotation = 0; // 3.14 * rotation / 180;
 				return new ol.style.Style({
 					image: affectedEventIcon,
 					text: new ol.style.Text({
-						fill: new ol.style.Fill({color: "#404040"}),
+						fill: new ol.style.Fill({ color: "#404040" }),
 						scale: 1.0,
 						textAlign: "center",
 						textBaseline: "middle",
@@ -948,7 +949,7 @@
 				});
 			});
 
-			return function(feature, resolution) {
+			return function (feature, resolution) {
 				var style = self.getEventStyle(feature);
 				feature.setStyle(style);
 				return style;
@@ -957,14 +958,14 @@
 
 		this.eventListChangedListeners = [];
 		this.eventMap = {};
-		
-		this.map.getView().on('change:center', function() {
+
+		this.map.getView().on('change:center', function () {
 			self.viewChanged();
 		});
-		this.map.getView().on('change:resolution', function() {
+		this.map.getView().on('change:resolution', function () {
 			self.viewChanged();
 		});
-		q.when(this.getEventTypes(), function(eventTypes) {
+		q.when(this.getEventTypes(), function (eventTypes) {
 			self.eventTypes = eventTypes;
 		});
 		this.updateEvents();
@@ -985,25 +986,25 @@
 		var affected = feature.get("affected");
 		return affected ? this.affectedStyles[textIndex] : this.styles[textIndex];
 	};
-	
+
 	EventHelper.prototype.viewChanged = function viewChanged() {
 		if (this.eventLoadingHandle) {
 			clearTimeout(this.eventLoadingHandle);
 			this.eventLoadingHandle = null;
 		}
 		var self = this;
-		this.eventLoadingHandle = setTimeout(function() {
+		this.eventLoadingHandle = setTimeout(function () {
 			self.updateEvents();
 		}, 1000);
 	};
-	
+
 	EventHelper.prototype.addEventChangedListener = function addEventChangedListener(listener) {
 		var index = this.eventListChangedListeners.indexOf(listener);
 		if (index < 0) {
 			this.eventListChangedListeners.push(listener);
 		}
 	};
-	
+
 	EventHelper.prototype.removeEventChangedListener = function removeEventChangedListener(listener) {
 		var index = this.eventListChangedListeners.indexOf(listener);
 		if (index >= 0) {
@@ -1013,18 +1014,18 @@
 
 	EventHelper.prototype.getEventTypes = function getEventTypes() {
 		var deferred = this.q.defer();
-		this.q.when(this.eventService.getEventTypes(), function(events) {
+		this.q.when(this.eventService.getEventTypes(), function (events) {
 			deferred.resolve(events);
 		});
 		return deferred.promise;
 	};
-	
+
 	EventHelper.prototype.updateEvents = function updateEvents(force) {
 		var size = this.map.getSize();
 		if (!size || isNaN(size[0]) || isNaN(size[1])) {
 			return;
 		}
-		
+
 		var self = this;
 		var ext = this.map.getView().calculateExtent(size);
 		var extent = ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326');
@@ -1034,21 +1035,21 @@
 			return;
 		}
 		this.searchArea = {
-				min_longitude: extent[0] - 0.01,
-				min_latitude: extent[1] - 0.01,
-				max_longitude: extent[2] + 0.01,
-				max_latitude: extent[3] + 0.01
+			min_longitude: extent[0] - 0.01,
+			min_latitude: extent[1] - 0.01,
+			max_longitude: extent[2] + 0.01,
+			max_latitude: extent[3] + 0.01
 		};
-		this.q.when(this.eventService.queryEvents(this.searchArea), function(events) {
+		this.q.when(this.eventService.queryEvents(this.searchArea), function (events) {
 			var eventsToAdd = [];
 			var eventsToRemoveMap = {};
 			for (var key in self.eventMap) {
 				eventsToRemoveMap[key] = self.eventMap[key].event;
 			}
-			
-			events.forEach(function(event) {
+
+			events.forEach(function (event) {
 				var event_id = event.event_id;
-				
+
 				if (!self.eventMap[event_id]) {
 					eventsToAdd.push(event);
 				}
@@ -1066,29 +1067,29 @@
 			if (eventsToRemove.length > 0) {
 				self.removeEventsFromView(eventsToRemove);
 			}
-			
+
 			if (eventsToAdd.length > 0 || eventsToRemove.length > 0) {
-				self.eventListChangedListeners.forEach(function(listener) {
+				self.eventListChangedListeners.forEach(function (listener) {
 					listener(events);
 				});
 			}
 		});
 	};
-	
+
 	EventHelper.prototype.createEvent = function createEvent(lat, lon, event_type, eventTypeObj, heading) {
 		var self = this;
 		var date = new Date();
 		var currentTime = date.toISOString();
-//		var endTime = new Date(date.getTime() + 60*1000).toISOString(); 
+		//		var endTime = new Date(date.getTime() + 60*1000).toISOString(); 
 		var params = {
-				event_type: event_type,
-				s_latitude: lat,
-				s_longitude: lon,
-				event_time: currentTime,
-				start_time: currentTime,
-				heading: heading || 0
-//				end_time: endTime
-			};
+			event_type: event_type,
+			s_latitude: lat,
+			s_longitude: lon,
+			event_time: currentTime,
+			start_time: currentTime,
+			heading: heading || 0
+			//				end_time: endTime
+		};
 		if (eventTypeObj) {
 			if (eventTypeObj.description) {
 				params.event_name = eventTypeObj.description;
@@ -1097,8 +1098,8 @@
 				params.event_category = eventTypeObj.category;
 			}
 		}
-		this.q.when(this.eventService.createEvent(params), function(event_id) {
-			self.q.when(self.eventService.getEvent(event_id), function(event) {
+		this.q.when(this.eventService.createEvent(params), function (event_id) {
+			self.q.when(self.eventService.getEvent(event_id), function (event) {
 				if (event && event.event_type) {
 					self.addEventsToView([event]);
 				} else {
@@ -1107,10 +1108,10 @@
 			});
 		});
 	};
-	
+
 	EventHelper.prototype.updateAffectedEvents = function updateAffectedEvents(events) {
 		var updatedFeatures = [];
-		var ids = (events||[]).map(function(e) {return e.event_id;});
+		var ids = (events || []).map(function (e) { return e.event_id; });
 		for (var key in this.eventMap) {
 			var event = this.eventMap[key].event;
 			var feature = this.eventMap[key].feature;
@@ -1126,16 +1127,16 @@
 	EventHelper.prototype.deleteEvents = function deleteEvents(events) {
 		var self = this;
 		var promises = [];
-				events.forEach(function(event) {
-					promises.push(self.eventService.deleteEvent(event.event_id));
-				});
-				if (promises.length > 0) {
-					this.q.all(promises).then(function() {
-						self.updateEvents();
-					});
-				}
-		};
-	
+		events.forEach(function (event) {
+			promises.push(self.eventService.deleteEvent(event.event_id));
+		});
+		if (promises.length > 0) {
+			this.q.all(promises).then(function () {
+				self.updateEvents();
+			});
+		}
+	};
+
 	EventHelper.prototype.addEventsToView = function addEventsToView(events) {
 		for (var i = 0; i < events.length; i++) {
 			var event = events[i];
@@ -1143,11 +1144,11 @@
 			if (!this.eventMap[event_id]) {
 				var feature = this.createEventFeature(event);
 				this.eventLayer.getSource().addFeature(feature);
-				this.eventMap[event_id] = {event: event, feature: feature};
- 			}
+				this.eventMap[event_id] = { event: event, feature: feature };
+			}
 		}
 	};
-	
+
 	EventHelper.prototype.removeEventsFromView = function removeEventsFromView(events) {
 		for (var i = 0; i < events.length; i++) {
 			var event = events[i];
@@ -1159,7 +1160,7 @@
 			}
 		}
 	};
-	
+
 	EventHelper.prototype.getEventForFeature = function getEventForFeature(feature) {
 		for (var key in this.eventMap) {
 			if (this.eventMap[key].feature === feature) {
@@ -1173,11 +1174,11 @@
 		// Setup current event position
 		var coordinates = [event.s_longitude || 0, event.s_latitude || 0];
 		var position = ol.proj.fromLonLat(coordinates, undefined);
-		var feature = new ol.Feature({geometry: new ol.geom.Point(position), item: event, affected: false});
-//		console.log("created an event feature : " + event.event_id);
+		var feature = new ol.Feature({ geometry: new ol.geom.Point(position), item: event, affected: false });
+		//		console.log("created an event feature : " + event.event_id);
 		return feature;
 	};
-	
+
 	EventHelper.prototype.createEventDescriptionHTML = function createEventDescriptionHTML(event) {
 		var eventTypes = this.eventTypes || [];
 		var result = { content: '', title: undefined };
@@ -1196,22 +1197,22 @@
 		if (description) {
 			result.content += '<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">TYPE:</span></th><td>' + _.escape(description) + '</td></tr>';
 		}
-		
+
 		// location and heading
 		var dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-		var index = Math.floor(((event.heading/360 + 1/32) % 1) * 16);
+		var index = Math.floor(((event.heading / 360 + 1 / 32) % 1) * 16);
 		var dir = dirs[index];
 		result.content += '<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">LOCATION:</span></th><td style="white-space: nowrap">' + Math.round(event.s_latitude * 10000000) / 10000000 + ',' + Math.round(event.s_longitude * 10000000) / 10000000 + '</td></tr>' +
-						'<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">HEADING:</span></th><td>' + Math.round(event.heading * 10000000) / 10000000 + ' [' + dir + ']' + '</td></tr>';
+			'<tr><th style="white-space: nowrap;text-align:right;"><span style="margin-right:10px;">HEADING:</span></th><td>' + Math.round(event.heading * 10000000) / 10000000 + ' [' + dir + ']' + '</td></tr>';
 		result.content += '</tbody><table>';
 		return result;
 	};
 
-	
+
 	/*
 	 * Geofence healer
 	 */
-	var GeofenceHelper = function(map, layer, q, geofenceService){
+	var GeofenceHelper = function (map, layer, q, geofenceService) {
 		// the map
 		this.map = map;
 		this.geofenceLayer = layer;
@@ -1221,56 +1222,56 @@
 		this.targetStyle = null;
 
 		var self = this;
-	    layer.setStyle(function(feature, resolution) {
-	        self.styles["out"] = new ol.style.Style({
-	            stroke: new ol.style.Stroke({
-	                color: [255, 0, 128, 0.7],
-	                width: 2
-	            })
-	        });
-	        self.styles["in"] = new ol.style.Style({
-	            fill: new ol.style.Fill({
-	              color: [255, 0, 128, 0.1]
-	            }),
-	            stroke: new ol.style.Stroke({
-	                color: [255, 0, 128, 0.7],
-	                width: 2
-	            })
-	        });
-	        self.targetStyle = new ol.style.Style({
-	            fill: new ol.style.Fill({
-	              color: [100, 100, 100, 0.1]
-	            }),
-	            stroke: new ol.style.Stroke({
-	              color: [100, 100, 100, 0.3],
-	              width: 2
-	            })
-	        });
+		layer.setStyle(function (feature, resolution) {
+			self.styles["out"] = new ol.style.Style({
+				stroke: new ol.style.Stroke({
+					color: [255, 0, 128, 0.7],
+					width: 2
+				})
+			});
+			self.styles["in"] = new ol.style.Style({
+				fill: new ol.style.Fill({
+					color: [255, 0, 128, 0.1]
+				}),
+				stroke: new ol.style.Stroke({
+					color: [255, 0, 128, 0.7],
+					width: 2
+				})
+			});
+			self.targetStyle = new ol.style.Style({
+				fill: new ol.style.Fill({
+					color: [100, 100, 100, 0.1]
+				}),
+				stroke: new ol.style.Stroke({
+					color: [100, 100, 100, 0.3],
+					width: 2
+				})
+			});
 
-		    return function(feature, resolution) {
-		    	var style = self.getFeatureStyle(feature);
-			    feature.setStyle(style);
-			    return style;
+			return function (feature, resolution) {
+				var style = self.getFeatureStyle(feature);
+				feature.setStyle(style);
+				return style;
 
-		    };
-	    }());
+			};
+		}());
 
 		this.loadingHandle = null;
-	    this.geofenceMap = {};
-		
-	    this.map.getView().on('change:center', function() {
-	    	self.viewChanged();
-	    });
-	    this.map.getView().on('change:resolution', function() {
-	    	self.viewChanged();
-	    });
+		this.geofenceMap = {};
+
+		this.map.getView().on('change:center', function () {
+			self.viewChanged();
+		});
+		this.map.getView().on('change:resolution', function () {
+			self.viewChanged();
+		});
 		this.updateGeofences();
 	};
 
 	GeofenceHelper.prototype.getFeatureStyle = function getFeatureStyle(feature) {
 		if (feature.get("area")) {
 			return null;
-//			return this.targetStyle;
+			//			return this.targetStyle;
 		}
 		var geofence = feature.get("item");
 		if (!geofence) {
@@ -1285,49 +1286,49 @@
 			this.loadingHandle = null;
 		}
 		var self = this;
-		this.loadingHandle = setTimeout(function() {
+		this.loadingHandle = setTimeout(function () {
 			self.updateGeofences();
 		}, 1000);
 	};
-	
+
 	GeofenceHelper.prototype.updateGeofences = function updateGeofences() {
 		var size = this.map.getSize();
 		if (!size || isNaN(size[0]) || isNaN(size[1])) {
 			return;
 		}
-		
+
 		var self = this;
-    	var ext = this.map.getView().calculateExtent(size);
-    	var extent = ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326');
-    	if (this.searchArea &&
-        		this.searchArea.min_longitude <= extent[0] && this.searchArea.min_latitude <= extent[1] &&
-        		this.searchArea.max_longitude >= extent[2] && this.searchArea.max_latitude >= extent[3]) {
-        		return;
-    	}
-    	this.searchArea = {
-	    		min_longitude: extent[0] - 0.01,
-	    		min_latitude: extent[1] - 0.01,
-	    		max_longitude: extent[2] + 0.01,
-	    		max_latitude: extent[3] + 0.01
-    	};
-    	this.q.when(this.geofenceService.queryGeofences(this.searchArea), function(geofences) {
+		var ext = this.map.getView().calculateExtent(size);
+		var extent = ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326');
+		if (this.searchArea &&
+			this.searchArea.min_longitude <= extent[0] && this.searchArea.min_latitude <= extent[1] &&
+			this.searchArea.max_longitude >= extent[2] && this.searchArea.max_latitude >= extent[3]) {
+			return;
+		}
+		this.searchArea = {
+			min_longitude: extent[0] - 0.01,
+			min_latitude: extent[1] - 0.01,
+			max_longitude: extent[2] + 0.01,
+			max_latitude: extent[3] + 0.01
+		};
+		this.q.when(this.geofenceService.queryGeofences(this.searchArea), function (geofences) {
 			var geofencesToAdd = [];
 			var geofencesToRemoveMap = {};
 			for (var key in self.geofenceMap) {
 				geofencesToRemoveMap[key] = self.geofenceMap[key].geofence;
 			}
-			
-			geofences.forEach(function(geofence) {
+
+			geofences.forEach(function (geofence) {
 				var geofence_id = geofence.id;
-				
+
 				if (!self.geofenceMap[geofence_id]) {
 					geofencesToAdd.push(geofence);
-	 			}
+				}
 				if (geofencesToRemoveMap[geofence_id])
 					delete geofencesToRemoveMap[geofence_id];
 			});
 			if (geofencesToAdd.length > 0) {
-	    		self.addGeofencesToView(geofencesToAdd);
+				self.addGeofencesToView(geofencesToAdd);
 			}
 
 			var geofencesToRemove = [];
@@ -1335,11 +1336,11 @@
 				geofencesToRemove.push(geofencesToRemoveMap[key]);
 			}
 			if (geofencesToRemove.length > 0) {
-	    		self.removeGeofencesFromView(geofencesToRemove);
+				self.removeGeofencesFromView(geofencesToRemove);
 			}
-    	});
+		});
 	};
-	
+
 	GeofenceHelper.prototype.addGeofencesToView = function addGeofencesToView(geofences) {
 		for (var i = 0; i < geofences.length; i++) {
 			var geofence = geofences[i];
@@ -1347,11 +1348,11 @@
 			if (!this.geofenceMap[geofence_id]) {
 				var features = this.createGeofenceFeatures(geofence);
 				this.geofenceLayer.getSource().addFeatures(features);
-				this.geofenceMap[geofence_id] = {geofence: geofence, features: features};
- 			}
+				this.geofenceMap[geofence_id] = { geofence: geofence, features: features };
+			}
 		}
 	};
-	
+
 	GeofenceHelper.prototype.removeGeofencesFromView = function removeGeofencesFromView(geofences) {
 		for (var i = 0; i < geofences.length; i++) {
 			var geofence = geofences[i];
@@ -1359,7 +1360,7 @@
 			if (this.geofenceMap[geofence_id]) {
 				var self = this;
 				var features = this.geofenceMap[geofence_id].features;
-				_.each(features, function(feature) {
+				_.each(features, function (feature) {
 					self.geofenceLayer.getSource().removeFeature(feature);
 				});
 				delete this.geofenceMap[geofence_id];
@@ -1368,44 +1369,44 @@
 	};
 
 	GeofenceHelper.prototype.createGeofenceFeatures = function createGeofenceFeatures(geofence) {
-	    var features = [];
-	    let target = null;
-	    if (geofence.target && geofence.target.area) {
-	      var polygonCoordinates = this.createGeofenceCoordinate(geofence.target.area);
-	      var polygon = new ol.geom.Polygon([polygonCoordinates]);
-	      var feature = new ol.Feature({geometry: polygon, item: geofence, area: geofence.target.area});
-	      features.push(feature);
-	      target = feature;
-	    }
+		var features = [];
+		let target = null;
+		if (geofence.target && geofence.target.area) {
+			var polygonCoordinates = this.createGeofenceCoordinate(geofence.target.area);
+			var polygon = new ol.geom.Polygon([polygonCoordinates]);
+			var feature = new ol.Feature({ geometry: polygon, item: geofence, area: geofence.target.area });
+			features.push(feature);
+			target = feature;
+		}
 
-	    var geometry = geofence.geometry;
-	    if (geofence.geometry_type === "circle") {
-	      var center = ol.proj.transform([geometry.longitude, geometry.latitude], "EPSG:4326", "EPSG:3857");
-	      var circle = new ol.geom.Circle(center, geometry.radius);
-	      var feature = new ol.Feature({geometry: circle, item: geofence});
-	      features.push(feature);
-	    } else {
-	      var polygonCoordinates = this.createGeofenceCoordinate(geometry);
-	      var polygon = new ol.geom.Polygon([polygonCoordinates]);
-	      var feature = new ol.Feature({geometry: polygon, item: geofence});
-	      features.push(feature);
-	    }
-	    return features;
+		var geometry = geofence.geometry;
+		if (geofence.geometry_type === "circle") {
+			var center = ol.proj.transform([geometry.longitude, geometry.latitude], "EPSG:4326", "EPSG:3857");
+			var circle = new ol.geom.Circle(center, geometry.radius);
+			var feature = new ol.Feature({ geometry: circle, item: geofence });
+			features.push(feature);
+		} else {
+			var polygonCoordinates = this.createGeofenceCoordinate(geometry);
+			var polygon = new ol.geom.Polygon([polygonCoordinates]);
+			var feature = new ol.Feature({ geometry: polygon, item: geofence });
+			features.push(feature);
+		}
+		return features;
 	};
 
 	GeofenceHelper.prototype.createGeofenceCoordinate = function createGeofenceCoordinate(geometry) {
-	    var points = [];
-	    points.push(ol.proj.transform([geometry.max_longitude, geometry.max_latitude], "EPSG:4326", "EPSG:3857"));
-	    points.push(ol.proj.transform([geometry.max_longitude, geometry.min_latitude], "EPSG:4326", "EPSG:3857"));
-	    points.push(ol.proj.transform([geometry.min_longitude, geometry.min_latitude], "EPSG:4326", "EPSG:3857"));
-	    points.push(ol.proj.transform([geometry.min_longitude, geometry.max_latitude], "EPSG:4326", "EPSG:3857"));
-	    points.push(ol.proj.transform([geometry.max_longitude, geometry.max_latitude], "EPSG:4326", "EPSG:3857"));
+		var points = [];
+		points.push(ol.proj.transform([geometry.max_longitude, geometry.max_latitude], "EPSG:4326", "EPSG:3857"));
+		points.push(ol.proj.transform([geometry.max_longitude, geometry.min_latitude], "EPSG:4326", "EPSG:3857"));
+		points.push(ol.proj.transform([geometry.min_longitude, geometry.min_latitude], "EPSG:4326", "EPSG:3857"));
+		points.push(ol.proj.transform([geometry.min_longitude, geometry.max_latitude], "EPSG:4326", "EPSG:3857"));
+		points.push(ol.proj.transform([geometry.max_longitude, geometry.max_latitude], "EPSG:4326", "EPSG:3857"));
 
-	    var polygonCoordinates = [];
-	    for (var i = 0; i < points.length; i++) {
-	      polygonCoordinates.push([points[i][0], points[i][1]]);
-	    }
-	    return polygonCoordinates;
+		var polygonCoordinates = [];
+		for (var i = 0; i < points.length; i++) {
+			polygonCoordinates.push([points[i][0], points[i][1]]);
+		}
+		return polygonCoordinates;
 	};
 
 	GeofenceHelper.prototype.createGeofenceDescriptionHTML = function createGeofenceDescriptionHTML(geofence) {
@@ -1417,7 +1418,7 @@
 		return result;
 	};
 
-})((function(){
+})((function () {
 	// tweak to use script-relative path
 	var scripts = document.getElementsByTagName('script');
 	var scriptUrl = scripts[scripts.length - 1].src;

@@ -31,45 +31,82 @@ _.extend(simulatedVehicleManager, {
 		
 		var deferred = Q.defer();
 		var self = this;
-		Q.when(iot4aAsset.getVendor(VENDOR_NAME), function(response) {
-			debug("There is vendor: " + VENDOR_NAME);
-			Q.when(self._getVehicleList('inactive', excludes), function(vehicles) {
-				if (vehicles.length < numVehicles) {
-					// create additional vehicles
-					deferred.resolve(self._getAvailableVehicles(numVehicles, vehicles, excludes));
-				} else if (vehicles.length > numVehicles) {
-					deferred.resolve({data: vehicles.slice(0, numVehicles)});
-				}else{
-					deferred.resolve({data: vehicles});
-				}
-			})["catch"](function(err){
-				var status = (err.response && (err.response.status||err.response.statusCode)) || 500;
-				if(status === 404){
-					// assume vehicle is not available 
-					deferred.resolve(self._getAvailableVehicles(numVehicles, null, excludes));
-				} else {
-					deferred.reject(self._getError(err));
-				}
-			}).done();
-		})["catch"](function(err){
-			var status = (err.response && (err.response.status||err.response.statusCode)) || 500;
-			if(status === 404){
+		Q.when(this._getSimulationVendor(VENDOR_NAME), function(vendor){
+			if (vendor) {
+				debug("There is vendor: " + VENDOR_NAME);
+				Q.when(self._getVehicleList('inactive', excludes, vendor), function(vehicles) {
+					if (vehicles.length < numVehicles) {
+						// create additional vehicles
+						deferred.resolve(self._getAvailableVehicles(numVehicles, vehicles, excludes, vendor));
+					} else if (vehicles.length > numVehicles) {
+						deferred.resolve({data: vehicles.slice(0, numVehicles)});
+					}else{
+						deferred.resolve({data: vehicles});
+					}
+				})["catch"](function(err){
+					var status = (err.response && (err.response.status||err.response.statusCode)) || 500;
+					if(status === 404){
+						// assume vehicle is not available 
+						deferred.resolve(self._getAvailableVehicles(numVehicles, null, excludes, vendor));
+					} else {
+						deferred.reject(self._getError(err));
+					}
+				}).done();
+			} else {
 				debug("Create a vendor for simulator");
-				Q.when(iot4aAsset.addVendor({"vendor": VENDOR_NAME, "type": "Vendor", "status":"Active"}), function(response){
+				var params = {"type": "Vendor", "status":"Active"};
+				if (iot4aAsset.isSaaS()) {
+					var chance = new Chance();
+					vendor =  chance.hash({length: 12});
+					params["vendor"] = vendor;
+					params["name"] = VENDOR_NAME;
+				} else {
+					vendor = VENDOR_NAME;
+					params["vendor"] = VENDOR_NAME;
+				}
+				Q.when(iot4aAsset.addVendor(params), function(response){
 					debug("A vendor for simulator is created");
-					deferred.resolve(self._getAvailableVehicles(numVehicles, null, excludes));
+					deferred.resolve(self._getAvailableVehicles(numVehicles, null, excludes, vendor));
 				})["catch"](function(err){
 					deferred.reject(self._getError(err));
 				}).done();
-			}else{
-				deferred.reject(self._getError(err));
 			}
+		})["catch"](function(err){
+			var status = (err.response && (err.response.status||err.response.statusCode)) || 500;
+			deferred.reject(self._getError(err));
 		}).done();		
 		return deferred.promise;
 	},
 
-	_getVehicleList: function(status, excludes) {
-		return Q.when(iot4aAsset.getVehicleList({"vendor": VENDOR_NAME, "status": status}), function(response) {
+	_getSimulationVendor: function() {
+		var deferred = Q.defer();
+		if (iot4aAsset.isSaaS()) {
+			Q.when(iot4aAsset.getVendorList({name: VENDOR_NAME}), function(response) {
+				if (response && response.data && response.data.length > 0) {
+					deferred.resolve(response.data[0].vendor);
+				} else {
+					deferred.resolve();
+				}
+			})["catch"](function(err){
+				deferred.reject(err);
+			});
+		} else {
+			Q.when(iot4aAsset.getVendor(VENDOR_NAME), function(response) {
+				deferred.resolve(VENDOR_NAME);
+			})["catch"](function(err){
+				var status = (err.response && (err.response.status||err.response.statusCode)) || 500;
+				if(status === 404){
+					deferred.resolve();
+				} else {
+					deferred.reject(err);
+				}
+			});
+		}
+		return deferred.promise;
+	},
+
+	_getVehicleList: function(status, excludes, vendor) {
+		return Q.when(iot4aAsset.getVehicleList({"vendor": vendor, "status": status}), function(response) {
 			var vehicles = response && response.data || [];
 			if (excludes && excludes.length > 0) {
 				vehicles = _.filter(vehicles, function(vehicle) { return !_.contains(excludes, vehicle.mo_id); });
@@ -86,34 +123,34 @@ _.extend(simulatedVehicleManager, {
 		return {statusCode: status, message: message};
 	},
 	
-	_getAvailableVehicles: function(numVehicles, exsiting_vehicles, excludes) {
+	_getAvailableVehicles: function(numVehicles, exsiting_vehicles, excludes, vendor) {
 		var self = this;
-		return Q.when(this._createSimulatedVehicles(numVehicles, exsiting_vehicles, excludes))
+		return Q.when(this._createSimulatedVehicles(numVehicles, exsiting_vehicles, excludes, vendor))
 		.then(function(){
 			debug("get inactive cars again");
-			return self._getVehicleList('inactive', excludes);
+			return self._getVehicleList('inactive', excludes, vendor);
 		}).then(function(response){
 			debug("_getAvailableVehicles: " + response);
 			return {data: response};
 		});
 	},
 
-	_createSimulatedVehicles: function(numVehicles, exsiting_vehicles, excludes){
+	_createSimulatedVehicles: function(numVehicles, exsiting_vehicles, excludes, vendor){
 		var num = exsiting_vehicles ? (numVehicles - exsiting_vehicles.length) : numVehicles;
 		debug("Get inactive simulated cars [" + num + "]");
 		if(num === 0){
 			return Q();
 		}
 		var self = this;
-		return Q.when(self._deactivateFleeSimulatedVehicles(num, excludes)).then(function(num){
-			return self._createNewSimulatedVehicles(num);
+		return Q.when(self._deactivateFleeSimulatedVehicles(num, excludes, vendor)).then(function(num){
+			return self._createNewSimulatedVehicles(num, vendor);
 		});
 	},
 
-	_deactivateFleeSimulatedVehicles: function(num, excludes){
+	_deactivateFleeSimulatedVehicles: function(num, excludes, vendor){
 		var deferred = Q.defer();
 		debug("Try to find free active simulated cars [" + num + "]");
-		Q.when(this._getVehicleList('active', excludes), function(vehicles){
+		Q.when(this._getVehicleList('active', excludes, vendor), function(vehicles){
 			debug("Active vehicles: " + JSON.stringify(vehicles));
 			var defList = [];
 			for(var i=0; i<vehicles.length && num > 0; i++){
@@ -134,14 +171,14 @@ _.extend(simulatedVehicleManager, {
 		return deferred.promise;
 	},
 
-	_createNewSimulatedVehicles: function(num){
+	_createNewSimulatedVehicles: function(num, vendor){
 		debug("Simulated car will be created [" + num + "]");
 		var chance = new Chance();
 		var deferred = Q.defer();
 		var defList = [];
 		for(var i=0; i < num; i++){
 			var vehicle = {
-				"vendor": VENDOR_NAME, 
+				"vendor": vendor, 
 				"serial_number": "s-" + chance.hash({length: 6})
 			};
 			var properties = this._getDeviceModelInfo();
@@ -181,7 +218,10 @@ _.extend(simulatedVehicleManager, {
 	
 	_createSimulatedDriver: function(){
 		var deferred = Q.defer();
-		var promise = iot4aAsset.addDriver({"name": DRIVER_NAME, "driver_id": DRIVER_NAME, "status":"Active"});
+		var chance = new Chance();
+		var driver_id =  chance.hash({length: 12});
+
+		var promise = iot4aAsset.addDriver({"name": DRIVER_NAME, "driver_id": driver_id, "status":"Active"});
 		Q.when(promise, function(response){
 			var data = {driver_id: response.id, name: DRIVER_NAME};
 			debug("Simulated driver was created");

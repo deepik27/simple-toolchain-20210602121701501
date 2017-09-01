@@ -44,18 +44,26 @@ export class VendorListComponent {
 
       // Create or update a vendor
   onCreateVendor() {
-    if (!this.formVendor.vendor) {
+    if (!this.formVendor.name) {
       alert("The vendor name cannot be empty.");
       return;
-    } else if (this._getVendor(this.formVendor.vendor)) {
+    } else if (this._getVendorByName(this.formVendor.name)) {
       alert("The vendor already exists.");
       return;
     }
+    this.formVendor.vendor = this._generateVendorId();
     this._createNewVendor(this.formVendor);
   }
 
     // Create or update a vendor
   onUpdateVendor(id: string) {
+    if (!this.formVendor.name) {
+      alert("The vendor name cannot be empty.");
+      return;
+    } else if (this._getVendorByName(this.formVendor.name, this.formVendor.vendor)) {
+      alert("The vendor already exists.");
+      return;
+    }
     this._updateVendor(id, this.formVendor);
   }
 
@@ -97,6 +105,16 @@ export class VendorListComponent {
     return null;
   }
 
+  // find a vendor from list
+  private _getVendorByName(name: string, excludeId: string = null): Vendor {
+    for (let i = 0; i < this.vendors.length; i++) {
+      if (this.vendors[i].name === name && (!excludeId || (this.vendors[i].vendor !== excludeId))) {
+        return this.vendors[i];
+      }
+    }
+    return null;
+  }
+
   // Get vendor list
   private _getVendors() {
     let isRequestOwner = !this.requestSending;
@@ -112,96 +130,143 @@ export class VendorListComponent {
     });
   }
 
-    // Create a vendor with given data
-    private _createNewVendor(vendor: Vendor) {
-      // remove internally used property
-      let url = "/user/vendor";
-      let body = JSON.stringify({vendor: vendor.getData()});
-      let headers = new Headers({"Content-Type": "application/json"});
-      let options = new RequestOptions({headers: headers});
+  // Create a vendor with given data
+  private _createNewVendor(vendor: Vendor) {
+    // remove internally used property
+    let url = "/user/vendor";
+    let body = JSON.stringify({vendor: vendor.getData()});
+    let headers = new Headers({"Content-Type": "application/json"});
+    let options = new RequestOptions({headers: headers});
 
-      let isRequestOwner = !this.requestSending;
-      this.requestSending = true;
-      this.errorMessage = null;
-      this.http.post(url, body, options)
-      .subscribe((response: Response) => {
-        // Update vehicle list when succeeded
-        this._updateVendorList();
-        if (isRequestOwner) {
-          this.requestSending = false;
+    let isRequestOwner = !this.requestSending;
+    this.requestSending = true;
+    this.errorMessage = null;
+    this.http.post(url, body, options)
+    .subscribe((response: Response) => {
+      // Update vehicle list when succeeded
+      this._updateVendorList();
+      if (isRequestOwner) {
+        this.requestSending = false;
+      }
+    }, (error: any) => {
+      this.errorMessage = error.message || error._body || error;
+      if (isRequestOwner) {
+        this.requestSending = false;
+      }
+    });
+  }
+
+  // update a vendor with given data
+  private _updateVendor(id: string, vendor: Vendor) {
+    let url = "/user/vendor/" + id;
+    let body = JSON.stringify(vendor.getData());
+    let headers = new Headers({"Content-Type": "application/json"});
+    let options = new RequestOptions({headers: headers});
+
+    let isRequestOwner = !this.requestSending;
+    this.requestSending = true;
+    this.errorMessage = null;
+    this.http.put(url, body, options)
+    .subscribe((response: Response) => {
+      // Update vendor list when succeeded
+      this._updateVendorList();
+      if (isRequestOwner) {
+        this.requestSending = false;
+      }
+    }, (error: any) => {
+      this.errorMessage = error.message || error._body || error;
+      if (isRequestOwner) {
+        this.requestSending = false;
+      }
+    });
+  }
+
+  // delete a vendor
+  private _deleteVendor(id: string) {
+    let isRequestOwner = !this.requestSending;
+    this.requestSending = true;
+    this.errorMessage = null;
+    this.http.delete("/user/vendor/" + id)
+    .subscribe((response: Response) => {
+      // Update vehicle list when succeeded
+      this._updateVendorList();
+      if (isRequestOwner) {
+        this.requestSending = false;
+      }
+    }, (error: any) => {
+      this.errorMessage = error.message || error._body || error;
+      if (isRequestOwner) {
+        this.requestSending = false;
+      }
+    });
+  }	
+  
+  private _generateVendorId(){
+    var newId = function() {
+      var mac = Math.floor(Math.random() * 16).toString(16) +
+      Math.floor(Math.random() * 16).toString(16) +
+      Math.floor(Math.random() * 16).toString(16) +
+      Math.floor(Math.random() * 16).toString(16) +
+      Math.floor(Math.random() * 16).toString(16) +
+      Math.floor(Math.random() * 16).toString(16) +
+      Math.floor(Math.random() * 16).toString(16) +
+      Math.floor(Math.random() * 16).toString(16) +
+      Math.floor(Math.random() * 16).toString(16) +
+      Math.floor(Math.random() * 16).toString(16) +
+      Math.floor(Math.random() * 16).toString(16) +
+      Math.floor(Math.random() * 16).toString(16);
+      var macStr = mac[0].toUpperCase() + mac[1].toUpperCase() + mac[2].toUpperCase() + mac[3].toUpperCase() +
+      mac[4].toUpperCase() + mac[5].toUpperCase() + mac[6].toUpperCase() + mac[7].toUpperCase() +
+      mac[8].toUpperCase() + mac[9].toUpperCase() + mac[10].toUpperCase() + mac[11].toUpperCase();
+      return macStr;
+    };
+
+    var id = null;
+    while(!id) {
+      id = newId();
+      if (this.vendors) {
+        for (let key in this.vendors) {
+          if (this.vendors[key].vendor === id) {
+            id = null;
+            break;
+          }
         }
-      }, (error: any) => {
-        this.errorMessage = error.message || error._body || error;
-        if (isRequestOwner) {
-          this.requestSending = false;
-        }
-      });
+      }
     }
-
-    // update a vendor with given data
-    private _updateVendor(id: string, vendor: Vendor) {
-      let url = "/user/vendor/" + id;
-      let body = JSON.stringify(vendor.getData());
-      let headers = new Headers({"Content-Type": "application/json"});
-      let options = new RequestOptions({headers: headers});
-
-      let isRequestOwner = !this.requestSending;
-      this.requestSending = true;
-      this.errorMessage = null;
-      this.http.put(url, body, options)
-      .subscribe((response: Response) => {
-        // Update vendor list when succeeded
-        this._updateVendorList();
-        if (isRequestOwner) {
-          this.requestSending = false;
-        }
-      }, (error: any) => {
-        this.errorMessage = error.message || error._body || error;
-        if (isRequestOwner) {
-          this.requestSending = false;
-        }
-      });
-    }
-
-    // delete a vendor
-    private _deleteVendor(id: string) {
-      let isRequestOwner = !this.requestSending;
-      this.requestSending = true;
-      this.errorMessage = null;
-      this.http.delete("/user/vendor/" + id)
-      .subscribe((response: Response) => {
-        // Update vehicle list when succeeded
-        this._updateVendorList();
-        if (isRequestOwner) {
-          this.requestSending = false;
-        }
-      }, (error: any) => {
-        this.errorMessage = error.message || error._body || error;
-        if (isRequestOwner) {
-          this.requestSending = false;
-        }
-      });
-    }
+    return id;
+	}  
 }
 
-// Vehicle definition
+// Vendor definition
 class Vendor {
   vendor: string; // The ID of the vendor.
+  name: string; // Name of the vendor.
   description: string; // Description of the vendor.
   type: string = "Manufacturer"; // Type of vendor. = [Manufacturer,Vendor,Caurier]
   website: string; // Vendors website URL.
   status: string = "Active";
+  __noname: boolean = false;
 
   constructor(props) {
     for (let key in props) {
       this[key] = props[key];
+    }
+    if (!this.name) {
+      this.__noname = true;
+      this.name = this.vendor;
     }
   }
 
   getData() {
     let data:any = {};
     for (let key in this) {
-      data[key] = this[key];
+      if (key.lastIndexOf("__", 0) !== 0) {
+        data[key] = this[key];
+      }
+    }
+    if (this.__noname) {
+      data.vendor = data.name;
+      delete data.name;
     }
     return data;
   }
