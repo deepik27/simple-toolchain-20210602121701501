@@ -584,12 +584,17 @@ var maximoAssetApi = {
 			var idname = attributesMap[context] ? attributesMap[context].id : null;
 			where.push(idname + '="' + id + '"');
 		}
+<<<<<<< HEAD
 		if (attributesMap[context] && attributesMap[context].tenant) {
 			if (!this.assetConfig.tenant_id || this.assetConfig.tenant_id === 'public') {
 				where.push(attributesMap[context].tenant + '!="*"');
 			} else {
 				where.push(attributesMap[context].tenant + '="' + this.assetConfig.tenant_id.toUpperCase() + '"');
 			}
+=======
+		if (this.assetConfig.tenant_id && attributesMap[context] && attributesMap[context].tenant) {
+			where.push(attributesMap[context].tenant + '="' + this.assetConfig.tenant_id.toUpperCase() + '"');
+>>>>>>> branch 'master' of https://github.ibm.com/Watson-IoT/iota-starter-server-fleetmanagement.git
 		}
 		where = _.uniq(where);
 		
