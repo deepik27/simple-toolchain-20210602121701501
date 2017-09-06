@@ -245,7 +245,9 @@ var maximoAssetApi = {
 
 		// Set tenant id. Maximo returns an error when tenant is specified for updating.
 		if (tenantAware && this.assetConfig.tenant_id && attributesMap[context] && attributesMap[context].tenant) {
-			maximoAsset[attributesMap[context].tenant] = this.assetConfig.tenant_id.toUpperCase();
+			var tenant = this.assetConfig.tenant_id.toUpperCase();
+			if (tenant !== 'PUBLIC')
+				maximoAsset[attributesMap[context].tenant] = tenant;
 		}
 		return maximoAsset;
 	},
@@ -585,7 +587,7 @@ var maximoAssetApi = {
 			where.push(idname + '="' + id + '"');
 		}
 		if (attributesMap[context] && attributesMap[context].tenant) {
-			if (!this.assetConfig.tenant_id || this.assetConfig.tenant_id === 'public') {
+			if (!this.assetConfig.tenant_id || this.assetConfig.tenant_id.toUpperCase() === 'PUBLIC') {
 				where.push(attributesMap[context].tenant + '!="*"');
 			} else {
 				where.push(attributesMap[context].tenant + '="' + this.assetConfig.tenant_id.toUpperCase() + '"');

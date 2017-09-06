@@ -41,7 +41,7 @@ _.extend(contextMapping, {
 			options.qs.tenant_id = config.tenant_id;
 			
 			// Workaround for DMM SaaS. DMM SaaS API needs internal_tenant_id
-			if (config.internal_tenant_id) {
+			if (config.internal_tenant_id !== undefined) {
 				if (!options.qs) options.qs = {};
 				options.qs.internal_tenant_id = config.internal_tenant_id;
 			}
