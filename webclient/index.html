@@ -9,42 +9,62 @@
    You may not use this file except in compliance with the license.
 -------------------------------------------------------------------------------------------------->
 <html>
-  <head>
-    <base href="/webclient/">
-    <title>IBM IoT for Automotive - Fleet Management Starter Application - Monitoring</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
 
-    <link rel="stylesheet" href="css/style.css" type="text/css" media="all">
+<head>
+  <base href="/webclient/">
+  <title>IBM IoT for Automotive - Fleet Management Starter Application - Monitoring</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Fonts should be included only in index.html but not in index-prod.html because those fonts are permitted only for IBM-->
-    <link rel="stylesheet" href="css/font--light-medium.css" type="text/css" media-"all">
-    <link rel="stylesheet" href="css/font--medium-bold.css" type="text/css" media-"all">
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
 
-    <!-- 0. jQ and bootstrap -->
+  <link rel="stylesheet" href="css/style.css" type="text/css" media="all">
+
+  <!-- Fonts should be included only in index.html but not in index-prod.html because those fonts are permitted only for IBM-->
+  <link rel="stylesheet" href="css/font--light-medium.css" type="text/css" media- "all">
+  <link rel="stylesheet" href="css/font--medium-bold.css" type="text/css" media- "all">
+
+  <!-- 0. jQ and bootstrap -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js" integrity="sha256-I1nTg78tSrZev3kjvfdM5A5Ak/blglGzlaZANLPDl3I=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.1.1/js/bootstrap.min.js" integrity="sha256-iY0FoX8s/FEg3c26R6iFw3jAtGbzDwcA5QJ1fiS0A6E=" crossorigin="anonymous"></script>
-    <!-- Polyfill(s) for older browsers -->
-    <script src="node_modules/core-js/client/shim.min.js"></script>
-    <script src="node_modules/zone.js/dist/zone.js"></script>
-    <script src="node_modules/reflect-metadata/Reflect.js"></script>
-    <script src="node_modules/systemjs/dist/system.src.js"></script>
-    <!-- 2. Configure SystemJS -->
-    <script src="systemjs.config.js"></script>
-    <script>
-      System.import('app').catch(function(err){ console.error(err); });
-    </script>
-  </head>
-  <!-- 3. Display the application -->
-  <body>
-    <fmdash-app>
-      <div class="loadingModal">
-        <div class="loadingSpinner loadingSpinner-inner center"></div>
-        <div class="loadingSpinner loadingSpinner-outter center"></div>
-      </div>
-    </fmdash-app>
-  </body>
+  <!-- Polyfill(s) for older browsers -->
+  <script src="node_modules/core-js/client/shim.min.js"></script>
+  <script src="node_modules/zone.js/dist/zone.js"></script>
+  <script src="node_modules/reflect-metadata/Reflect.js"></script>
+  <script src="node_modules/systemjs/dist/system.src.js"></script>
+  <!-- 2. Configure SystemJS -->
+  <script src="systemjs.config.js"></script>
+  <script>
+    System.import('app').catch(function (err) { console.error(err); });
+  </script>
+</head>
+<!-- 3. Display the application -->
+
+<body>
+  <fmdash-app>
+    <div class="loadingModal">
+      <div class="loadingSpinner loadingSpinner-inner center"></div>
+      <div class="loadingSpinner loadingSpinner-outter center"></div>
+    </div>
+  </fmdash-app>
+  <script>
+    $.getJSON("/admin/nps", (data, textStatus, jqXHR) => {
+      window.IBM_Meta = $.extend(window.IBM_Meta || {}, data, getLanguage());
+      injectMedalliaScript();
+    });
+    function getLanguage() {
+      const locale = (window.navigator.languages && window.navigator.languages[0]) || window.navigator.language || window.navigator.userLanguage || window.navigator.browserLanguage;
+      const lang = (locale || "en").split("-");
+      const language = { language: lang[0] };
+      if (lang.length === 2) {
+        language.country = lang[1];
+      }
+      return language;
+    }
+    function injectMedalliaScript() {
+      $("<script/>").attr("src", "https://nebula-cdn.kampyle.com/we/28600/onsite/embed.js").appendTo("body");
+    }
+  </script>
+</body>
 </html>

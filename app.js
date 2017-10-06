@@ -21,25 +21,26 @@ if (fs.existsSync(VCAP_SERVICES_PATH)) {
 /**
  * Utility method to load application specific modules
  */
-global.app_module_require = function(name) {
-    return require(__dirname + '/app_modules/' + name);
+global.app_module_require = function (name) {
+	return require(__dirname + '/app_modules/' + name);
 };
 
 /**
  * Module dependencies.
  */
 var express = require('express')
-  , auth = require('./routes/user/auth.js')
-  , user = require('./routes/user')
-  , http = require('http')
-  , cors = require('cors')
-  , path = require('path')
-  , fs = require('fs-extra')
-  , helmet = require('helmet')
-  , logger = require('morgan')
-  , cookieParser = require('cookie-parser')
-  , bodyParser = require('body-parser')
-  , methodOverride = require('method-override');
+	, auth = require('./routes/user/auth.js')
+	, user = require('./routes/user')
+	, nps = require("./nps.js")
+	, http = require('http')
+	, cors = require('cors')
+	, path = require('path')
+	, fs = require('fs-extra')
+	, helmet = require('helmet')
+	, logger = require('morgan')
+	, cookieParser = require('cookie-parser')
+	, bodyParser = require('body-parser')
+	, methodOverride = require('method-override');
 var appEnv = require("cfenv").getAppEnv();
 
 //Deployment tracker code snippet
@@ -62,9 +63,9 @@ app.use(cors());
 
 //force https for all requests
 app.use(function (req, res, next) {
-	if(req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] === 'http'){
+	if (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] === 'http') {
 		res.redirect('https://' + req.headers.host + req.url);
-	} else{
+	} else {
 		next();
 	}
 });
@@ -77,14 +78,15 @@ app.use(auth.eula);
 //access to server contents
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/user', user);
+app.use('/admin', nps)
 
 var webClientModulePath = 'webclient';
 var webClientTop = path.join(__dirname, webClientModulePath + '/index.html');
-if ('development' === app.get('env')){
+if ('development' === app.get('env')) {
 	console.log('Settig up the webclient for DEVELOPMENT mode..., which uses all the resources under webclient');
 	// add the base path
 	app.use('/webclient', express.static(path.join(__dirname, 'webclient')));
-}else{
+} else {
 	console.log('Settig up the webclient for NON-DEVELOPMENT mode...');
 	webClientTop = path.join(__dirname, webClientModulePath + '/dist/index.html');
 	app.use('/webclient', express.static(path.join(__dirname, webClientModulePath + '/dist')));
@@ -99,7 +101,7 @@ app.get('/webclient/tool*', function (req, res) { res.status(200).sendFile(webCl
 
 // development only
 if ('development' === app.get('env')) {
-	app.use(function(req, res, next) {
+	app.use(function (req, res, next) {
 		var err = new Error('Not Found');
 		err.status = 404;
 		next(err);
@@ -107,6 +109,6 @@ if ('development' === app.get('env')) {
 }
 
 app.server = http.createServer(app);
-app.server.listen(app.get('port'), function(){
-  console.log('Express server listening on port ' + app.get('port'));
+app.server.listen(app.get('port'), function () {
+	console.log('Express server listening on port ' + app.get('port'));
 });
