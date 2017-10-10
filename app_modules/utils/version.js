@@ -32,8 +32,8 @@ class Version {
 			}
 			return v;
 		}
-		let v1 = version1.split(".");
-		let v2 = version2.split(".");
+		let v1 = (version1 || "").split(".");
+		let v2 = (version2 || "").split(".");
 		const digit = Math.max(v1.length, v2.length);
 		v1 = addZero(v1, digit);
 		v2 = addZero(v2, digit);
@@ -55,6 +55,10 @@ class Version {
 
 	laterOrEqual(version) {
 		let laterOrEqual;
+		if (this.version === undefined) {
+			// Version is not specified. Run as latest
+			return true;
+		}
 		try {
 			laterOrEqual = this.compare(this.version, version) >= 0;
 		} catch (err) {
