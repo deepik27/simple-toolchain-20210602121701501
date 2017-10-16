@@ -33,12 +33,10 @@ const getNPSVariables = function () {
 		return "none";
 	})();
 
-	return {
+	let IBM_Meta = {
 		"offeringId": "5737-B44",
 		"highLevelOfferingName": "Watson IoT",
 		"offeringName": "IoT for Auto",
-		// "noQuarantine": "yes",
-		// "testData": true,
 		"language": "en",
 		"otherAccountId": accountId,
 		"otherAccountIdType": "IoT4A Tenant ID",
@@ -46,4 +44,11 @@ const getNPSVariables = function () {
 		"quarterlyIntercept": "heavy",
 		"trigger1": false
 	};
+
+	if (process.env.NPS_TEST) {
+		IBM_Meta.noQuarantine = "yes";
+		IBM_Meta.testData = true;
+	}
+
+	return IBM_Meta;
 }
