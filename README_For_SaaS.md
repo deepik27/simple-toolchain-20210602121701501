@@ -1,6 +1,6 @@
 # IBM IoT for Automotive (SaaS) - Fleet Management Starter Application
 
-The Fleet Management Starter Application for the IBM IoT for Automotive SaaS offering demonstrates how quickly you can build an app on IBM Bluemix to manage and monitor a fleet of vehicles in real time.
+The Fleet Management Starter Application for the IBM® IoT for Automotive SaaS offering demonstrates how quickly you can build an app on IBM Bluemix to manage and monitor a fleet of vehicles in real time.
 
 ## Overview
 
@@ -119,27 +119,26 @@ To build and deploy the plugins, complete the following steps:
     ```
 
 ### Import custom plugin projects to your eclipse IDE
-1. Launch the eclipse that contains IoT for Automotive Plugin Development Tool
-1. Open Git perspective (**Window > Perspective > Open Perspective > Other...**)
-1. Click **Add an existing local Git repository** link on Git Repositories view
-   (You can also clone the repository by selecting **Clone a Git repository**)
-1. Specify a directory that contains the Fleet Management Starter Application Git repository
-1. Select the Fleet Management Starter Application Git repository and click **Finish**
-1. Right click the added repository on Git Repositories view and select **Import Projects...**
-1. Select **Import existing Eclipse projects** and click **Next**
-1. Select `FleetAlert` and `HttpActionNotifyClient` and click **Finish**
+1. Launch the eclipse that contains IoT for Automotive Plugin Development Tool.
+1. Open Git perspective (**Window > Perspective > Open Perspective > Other...**).
+1. From the **Git Repositories** view, click **Add an existing local Git repository**. Alternatively, you can also clone the repository by selecting **Clone a Git repository**.
+1. Specify a directory that contains the Fleet Management Starter Application Git repository.
+1. Select the Fleet Management Starter Application Git repository and click **Finish**.
+1. Right click the added repository on Git Repositories view and select **Import Projects...**.
+1. Select **Import existing Eclipse projects** and click **Next**.
+1. Select `FleetAlert` and `HttpActionNotifyClient` and click **Finish**.
 
 ### Export custom plugin jars
-1. Open Java perspective (**WIndow > Perspective > Open Perspective > Other...**) in your eclipse
-1. Right click the `HttpActionNotifyClient` project in **Package Explorer** view and select **Export...**
-1. Select **Java > JAR file** and click **Next**
-1. Input a file name in the **JAR file** field and click **Finish**
-1. In the same manner, export the `FleetAlert` project as a jar file
+1. Open Java perspective (**WIndow > Perspective > Open Perspective > Other...**) in your eclipse.
+1. Right click the `HttpActionNotifyClient` project in **Package Explorer** view and select **Export...**.
+1. Select **Java > JAR file** and click **Next**.
+1. Input a file name in the **JAR file** field and click **Finish**.
+1. In the same manner, export the `FleetAlert` project as a JAR file.
 
 ### Update a VDH configuration file (gatway.properties)
-1. Download a copy of gateway.properties that has been deployed on VDH server using IoT for Automotive Plugin Deploy Tool
-1. Open the gateway.properties file with a text editor
-1. Increment `client.num` in the gateway.properties
+1. Download a copy of gateway.properties that has been deployed on VDH server by using IoT for Automotive Plugin Deploy Tool.
+1. Open the gateway.properties file with a text editor.
+1. Increment `client.num` in the gateway.properties.
 1. Insert the following two lines before the DefaultHTTPClient client definition.
    ```
    client.client1=com.ibm.mobility.sample.http.HttpActionNotifyClient
@@ -151,21 +150,22 @@ To build and deploy the plugins, complete the following steps:
    client.client2.protocol=http
    client.client2.agent=SM_API
    ```
-1. Insert the following client unique properties
+1. Insert the following client unique properties:
    ```
    HttpActionNotifyClient.postUrl=https://<your-iota-starter-fleetmanagement>.mybluemix.net
    HttpActionNotifyClient.postUser=starter
    HttpActionNotifyClient.postPassword=Starter4Iot
    ```
-   Replace `postUrl` with your Fleet Management app URL, and replace postUser and postPassword with the right credentials if you have changed them.
-1. Save the changes and close the editor
+   1. Replace `postUrl` with your Fleet Management app URL.
+   2. Replace postUser and postPassword with the right credentials if you have changed them.
+   3. Save the changes and close the editor.
 
 A fragment of the gateway.properties file exists under `conf` folder of the `HttpActionNotifyClient` project. You can copy contents from the file.
 
-### Deploy custom plugins to IoT for Automotive
-1. Deploy exported `HttpActionNotifyClient` jar and updated gateway.properties to a VDH server using IoT for Automotive Plugin Deploy Tool
-1. Deploy export the `FleetAlert` jar to an Agent server
-1. Restart IoT for Automotive components using IoT for Automotive Plugin Deploy Tool as needed
+### Deploy custom plugins to IBM IoT for Automotive
+1. Deploy exported `HttpActionNotifyClient` jar and updated gateway.properties to a VDH server using IoT for Automotive Plugin Deploy Tool.
+1. Deploy export the `FleetAlert` jar to an Agent server.
+1. Restart IoT for Automotive components using IoT for Automotive Plugin Deploy Tool as needed.
 
 ## <a id="connect2iot4a"></a> Connecting the app to your IBM IoT for Automotive service
 
@@ -184,7 +184,7 @@ To connect to your IBM IoT for Automotive service instance, the starter app read
 ```
 USER_PROVIDED_VCAP_SERVICES = <endpoint definition in JSON format>
 ```
-Define the endpoints in the following JSON format. Note that you must remove any line breaks at the end of each line to set to the environment value on Bluemix.
+Define the endpoints in the following JSON format. Note that you must remove any line breaks that are at the end of each line to set to the environment value on Bluemix.
 ```
 {
     "iotforautomotive": [
@@ -211,10 +211,10 @@ Key | Description of Value
 api | A URL to call the REST API for IoT for Automotive, which must end with a forward slash character (/) 
 username | User name for accessing the Vehicle Data Hub (VDH) and other IoT for Automotive endpoints
 password | Password for accessing the VDH and other IoT for Automotive endpoints
-maximo/orgid | IBM IoT for Automotive Organization specified in Maximo
-maximo/classificationid | Classification for vehicle data defined in Maximo
-maximo/username | User name for accessing the Maximo API
-maximo/password | Password for accessing the Maximo API
+maximo/orgid | IBM IoT for Automotive Organization specified in IBM Maximo Asset Management 
+maximo/classificationid | Classification for vehicle data defined in Maximo Asset Management
+maximo/username | User name for accessing the Maximo Asset Management API
+maximo/password | Password for accessing the Maximo Asset Management API
 
 ### (Optional) Securing the connection to the IBM IoT for Automotive service
 The IBM Secure Gateway service provides secure connectivity and establishes a tunnel between your Bluemix organization and the remote location that you want to connect to. Before you use the Secure Gateway service, contact your IBM IoT for Automotive system administrator. For more information, see [Secure Gateway](https://console.ng.bluemix.net/catalog/services/secure-gateway/).
@@ -296,31 +296,6 @@ To debug problems, check the Bluemix app logs. To view the logs, run the followi
   ```
 For more information about how to troubleshoot your application, see the [Troubleshooting section](https://www.ng.bluemix.net/docs/troubleshoot/tr.html) in the Bluemix documentation.
 
-## Tell IBM what you think of IBM IoT for Automotive
-
-Thank you for using our IBM® IoT for Automotive SaaS service and starter apps. We'd like to know what you think about our service offering.
-
-### The Net Promoter Score widget
-
-The IBM IoT for Automotive Fleet Management starter application sample also includes the [Medallia](http://www.medallia.com/) Net Promoter Score (NPS) widget code that you can optionally choose to deploy when you develop apps that integrate with your service instance.
-
-The NPS widget provides a mechanism for you and your app users to rate your overall experience with the IBM IoT for Automotive SaaS service and to provide specific feedback comments to help us to continually improve the quality of the service offering and to increase your satisfaction. When you build an application by using our sample code, the NPS widget is automatically included in your app and provides the following user interface for providing feedback to IBM:
-
-![NPS Widget](./nps_widget.gif)
-
-When you or your app users rate the IBM IoT for Automotive service by completing the survey in the NPS widget, the rating score, feedback comments, and your customer ID are automatically submitted back to IBM.
-
-### Disabling the NPS widget
-
-By default, when you build an app by using our starter app sample code, the NPS widget is enabled. If you would like to remove the NPS widget from the user interface of your apps, complete the following steps:
-
-1.  Go to the following location: webclient
-1.  Then remove from ```<!-- NPS Widget BEGIN -->``` to ``` <!-- NPS Widget END -->``` in index.html and index-prod.html
-
-### More information
-
-The IBM NPS widget is produced in partnership with [Medallia](http://www.medallia.com/). For information about the widget and the data that it collects,  see [Privacy Policy - Medallia](http://www.medallia.com/privacy/).
-
 ## Privacy Notice
 
 The IoT for Automotive - Fleet Management Starter Application includes code to track deployments to [IBM Bluemix](https://www.bluemix.net/) and other Cloud Foundry platforms.
@@ -339,6 +314,31 @@ The tracked data is collected from the `VCAP_APPLICATION` and `VCAP_SERVICES` en
 ### Disabling deployment tracking
 
 You can disable the Deployment Tracker service by removing `require("cf-deployment-tracker-client").track();` from the beginning of the `app.js` server file.
+
+## Providing feedback to IBM
+
+Thank you for using our IBM® IoT for Automotive SaaS service and starter apps. As well as providing samples to help you get started, we'd like to know what you and your users think about our service offering. 
+
+The IBM IoT for Automotive Fleet Management starter application sample also includes the [Medallia](http://www.medallia.com/) Net Promoter Score (NPS) widget code, which you can choose to deploy with the apps that you develop to integrate with the service.
+
+### The Net Promoter Score widget
+The NPS widget provides a mechanism for you and your app users to rate your overall experience with the IBM IoT for Automotive service and to provide specific feedback comments to help us to continually improve the quality of the service offering and to increase your satisfaction. When you build an application by using our sample code, the NPS widget is automatically included in your app and provides the following user interface for providing feedback to IBM:
+
+![NPS Widget](./nps_widget.gif)
+
+When you or your app users rate the IBM IoT for Automotive service by completing the survey in the NPS widget, the rating score, feedback comments, and customer ID are automatically submitted back to IBM.
+
+### Disabling the NPS widget
+
+By default, when you build an app by using the Fleet Management starter app sample code that is in this repository, the NPS widget is enabled. If you would like to remove the NPS widget from the user interface of your apps, complete the following steps:
+
+1.  In this repository. go to the `/webclient` folder.
+1.  Edit both the `index.html` and `index-prod.html`files and remove all of the code from ```<!-- NPS Widget BEGIN --> ``` to ``` <!-- NPS Widget END -->```.
+1.  Save your changes.
+
+### More information about the NPS widget
+
+The IBM NPS widget is produced in partnership with [Medallia](http://www.medallia.com/). For information about the widget and the data that it collects, see [Privacy Policy - Medallia](http://www.medallia.com/privacy/).
 
 ## Useful links
 - [IBM Bluemix](https://bluemix.net/)
