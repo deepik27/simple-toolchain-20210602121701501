@@ -296,6 +296,31 @@ To debug problems, check the Bluemix app logs. To view the logs, run the followi
   ```
 For more information about how to troubleshoot your application, see the [Troubleshooting section](https://www.ng.bluemix.net/docs/troubleshoot/tr.html) in the Bluemix documentation.
 
+## Tell IBM what you think of IBM IoT for Automotive
+
+Thank you for using our IBM® IoT for Automotive SaaS service and starter apps. We'd like to know what you think about our service offering.
+
+### The Net Promoter Score widget
+
+The IBM IoT for Automotive Fleet Management starter application sample also includes the [Medallia](http://www.medallia.com/) Net Promoter Score (NPS) widget code that you can optionally choose to deploy when you develop apps that integrate with your service instance.
+
+The NPS widget provides a mechanism for you and your app users to rate your overall experience with the IBM IoT for Automotive SaaS service and to provide specific feedback comments to help us to continually improve the quality of the service offering and to increase your satisfaction. When you build an application by using our sample code, the NPS widget is automatically included in your app and provides the following user interface for providing feedback to IBM:
+
+![NPS Widget](./nps_widget.gif)
+
+When you or your app users rate the IBM IoT for Automotive service by completing the survey in the NPS widget, the rating score, feedback comments, and your customer ID are automatically submitted back to IBM.
+
+### Disabling the NPS widget
+
+By default, when you build an app by using our starter app sample code, the NPS widget is enabled. If you would like to remove the NPS widget from the user interface of your apps, complete the following steps:
+
+1.  Go to the following location: webclient
+1.  Then remove from ```<!-- NPS Widget BEGIN -->``` to ``` <!-- NPS Widget END -->``` in index.html and index-prod.html
+
+### More information
+
+The IBM NPS widget is produced in partnership with [Medallia](http://www.medallia.com/). For information about the widget and the data that it collects,  see [Privacy Policy - Medallia](http://www.medallia.com/privacy/).
+
 ## Privacy Notice
 
 The IoT for Automotive - Fleet Management Starter Application includes code to track deployments to [IBM Bluemix](https://www.bluemix.net/) and other Cloud Foundry platforms.
