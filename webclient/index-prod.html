@@ -43,6 +43,12 @@
 
 <body>
   <fmdash-app>Loading...</fmdash-app>
+
+<!-- NPS Widget BEGIN -->
+<!--
+  The NPS widget provides a mechanism for you and your app users to rate your overall experience with the IBM IoT for Automotive SaaS service and to provide specific feedback comments to help us to continually improve the quality of the service offering and to increase your satisfaction.
+  Remove here if you would like to remove the NPS widget from the user interface of your apps.
+-->
   <script>
     $.getJSON("/admin/nps", (data, textStatus, jqXHR) => {
       window.IBM_Meta = $.extend(window.IBM_Meta || {}, data, getLanguage());
@@ -61,6 +67,7 @@
       $("<script/>").attr("src", "https://nebula-cdn.kampyle.com/we/28600/onsite/embed.js").appendTo("body");
     }
   </script>
+<!-- NPS Widget END -->
 </body>
 
 </html>
