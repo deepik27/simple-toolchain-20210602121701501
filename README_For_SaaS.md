@@ -111,9 +111,9 @@ To run the Fleet Management Starter Application with your IoT for Automotive ins
 To build and deploy the plugins, complete the following steps:
 
 ### Prerequisites
-1. IoT for Automotive Plugin Deployment Tool has been installed on your IoT for Automotive SaaS instance. Ask an administrator of the IoT for Automotive SaaS offering if it has not been done.
-1. IoT for Automotive Plugin Development Tool has been installed on your eclipse IDE according to <u>IoT for Automotive Plug-In Programmer's Guide</u>. Ask an administrator of your IoT for Automotive SaaS offering to get the guide and tool.
-1. The Fleet Management Starter Application Git repository exists on your local environment. If you don't have, clone it by using the following console command.
+1. The IoT for Automotive Plugin Deployment Tool must be installed on your IoT for Automotive SaaS instance. Contact the system administrator for your IoT for Automotive SaaS service to make a request to install it.
+1. The IoT for Automotive Plugin Development Tool must be installed on your eclipse IDE, as outlined in the <u>IoT for Automotive Plug-In Programmer's Guide</u>. To get access to the guide and the tool, contact your IBM IoT for Automotive system administrator.
+1. The Fleet Management Starter Application Git repository must be downloaded on your local environment. If you need to download the repository, you can clone it by using the following console command:
     ```
     git clone https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git
     ```
@@ -136,15 +136,15 @@ To build and deploy the plugins, complete the following steps:
 1. In the same manner, export the `FleetAlert` project as a JAR file.
 
 ### Update a VDH configuration file (gatway.properties)
-1. Download a copy of gateway.properties that has been deployed on VDH server by using IoT for Automotive Plugin Deploy Tool.
-1. Open the gateway.properties file with a text editor.
-1. Increment `client.num` in the gateway.properties.
+1. Download a copy of the `gateway.properties` file that you deployed on the VDH server by using IoT for Automotive Plugin Deploy Tool.
+1. Open the `gateway.properties` file with a text editor.
+1. Increment `client.num` in the `gateway.properties` file.
 1. Insert the following two lines before the DefaultHTTPClient client definition.
    ```
    client.client1=com.ibm.mobility.sample.http.HttpActionNotifyClient
    client.client1.protocol=http
    ```
-1. Renumber all the existing client definition keys so as not to conflict with each other. For instance:
+1. Renumber all the existing client definition keys so that they do not conflict with each other, for example:
    ```
    client.client2=com.ibm.mobility.autodrive.client.def.DefaultHTTPClient
    client.client2.protocol=http
@@ -156,8 +156,8 @@ To build and deploy the plugins, complete the following steps:
    HttpActionNotifyClient.postUser=starter
    HttpActionNotifyClient.postPassword=Starter4Iot
    ```
-   1. Replace `postUrl` with your Fleet Management app URL.
-   2. Replace postUser and postPassword with the right credentials if you have changed them.
+   1. For `postUrl`, replace the example URL with your Fleet Management app URL.
+   2. If you modified the default `postUser` and `postPassword` credentials, replace the values that are specified in the properties file.
    3. Save the changes and close the editor.
 
 A fragment of the gateway.properties file exists under `conf` folder of the `HttpActionNotifyClient` project. You can copy contents from the file.
