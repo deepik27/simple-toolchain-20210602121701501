@@ -362,7 +362,7 @@ var maximoAssetApi = {
 				}
 				Q.when(self._request(url, 'POST', method_override, maximoAsset), function (result) {
 					if (!result) {
-						result = { id: asset.mo_id, siteid: asset.siteid };
+						result = { id: maximoAsset[attributesMap[context].id], siteid: asset.siteid };
 					}
 					if (refresh) {
 						Q.when(self._refreshAsset(context), function (refreshed) {
