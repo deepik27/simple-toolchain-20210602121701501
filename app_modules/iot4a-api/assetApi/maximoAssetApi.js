@@ -199,6 +199,7 @@ var maximoAssetApi = {
 				var assetCreds = iot4a_cred.maximo;
 				var maximoCreds = {
 					baseURL: assetCreds.api ? assetCreds.api : (iot4a_cred.api + "maximo"),
+					restURL: iot4a_cred.api + "maxrest/oslc",
 					internalURL: assetCreds.internalURL,
 					orgid: assetCreds.orgid,
 					classificationid: assetCreds.classificationid,
@@ -390,15 +391,15 @@ var maximoAssetApi = {
 	 */
 	refreshAsset: function (context) {
 		var deferred = Q.defer();
-		var config = this.assetConfig.vdh;
-		var url = config.baseURL;
-		var assettype = context == "eventtype" ? "event_type" : context;
-		url += "/refresh?asset=" + assettype;
+		var config = this.assetConfig.maximo;
+		var url = config.restURL;
+		var assettype = (context == "vehicle" || context == "driver") ? (context + "_update") : context;
+		url += "/script/REFRESHASSETS?asset=" + assettype;
 		if (this.assetConfig.tenant_id) {
 			url += '&tenant_id=' + this.assetConfig.tenant_id;
 		}
 
-		Q.when(this._request(url, 'POST', null, null, config), function (result) {
+		Q.when(this._request(url, 'GET'), function (result) {
 			deferred.resolve(result);
 		})["catch"](function (err) {
 			deferred.reject(err);
