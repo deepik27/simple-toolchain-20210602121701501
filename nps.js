@@ -15,6 +15,9 @@ router.get("/nps", function (req, res) {
 	const npsVar = getNPSVariables();
 	res.send(npsVar);
 });
+router.get("/capability/nps", function(req, res){
+	res.send({available: process.env.NPS_ENABLED != "false"});
+});
 
 const getNPSVariables = function () {
 	// NPS

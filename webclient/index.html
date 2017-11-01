@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <!------------------------------------------------------------------------------------------------
    Copyright 2016 IBM Corp. All Rights Reserved.
-   
+
    Licensed under the IBM License, a copy of which may be obtained at:
-   
+
    http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
-   
+
    You may not use this file except in compliance with the license.
 -------------------------------------------------------------------------------------------------->
 <html>
@@ -55,9 +55,13 @@
   Remove here if you would like to remove the NPS widget from the user interface of your apps.
 -->
   <script>
-    $.getJSON("/admin/nps", (data, textStatus, jqXHR) => {
-      window.IBM_Meta = $.extend(window.IBM_Meta || {}, data, getLanguage());
-      injectMedalliaScript();
+    $.getJSON("/admin/capability/nps", (data, textStatus, jqXHR) => {
+      if(data.available){
+        $.getJSON("/admin/nps", (data, textStatus, jqXHR) => {
+          window.IBM_Meta = $.extend(window.IBM_Meta || {}, data, getLanguage());
+          injectMedalliaScript();
+        });
+      }
     });
     function getLanguage() {
       const locale = (window.navigator.languages && window.navigator.languages[0]) || window.navigator.language || window.navigator.userLanguage || window.navigator.browserLanguage;
