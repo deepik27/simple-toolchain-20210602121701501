@@ -45,7 +45,8 @@ const getNPSVariables = function () {
 		"otherAccountIdType": "IoT4A Tenant ID",
 		"daysSinceFirstLogin": 31,
 		"quarterlyIntercept": "heavy",
-		"trigger1": false
+		"trigger1": false,
+		"testData": false
 	};
 
 	if (process.env.NPS_TEST) {
