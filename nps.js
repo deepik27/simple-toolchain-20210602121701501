@@ -8,18 +8,25 @@
  * You may not use this file except in compliance with the license.
  */
 const router = module.exports = require('express').Router();
+const fs = require("fs-extra");
+const moment = require("moment");
 
 USER_PROVIDED_VCAP_SERVICES = JSON.parse(process.env.USER_PROVIDED_VCAP_SERVICES || '{}');
+const firstAccessDateCookie = "iota-fleetmanagement-first-access-date";
 
 router.get("/nps", function (req, res) {
-	const npsVar = getNPSVariables();
+	let firstAccessDate = req.cookies[firstAccessDateCookie];
+	if(!firstAccessDate){
+		res.cookie(firstAccessDateCookie, moment().valueOf(), {maxAge: 1000*60*60*24});
+	}
+	const npsVar = getNPSVariables(firstAccessDate);
 	res.send(npsVar);
 });
 router.get("/capability/nps", function(req, res){
 	res.send({available: process.env.NPS_ENABLED != "false"});
 });
 
-const getNPSVariables = function () {
+const getNPSVariables = function (firstAccessDate) {
 	// NPS
 	const iotaCreds = USER_PROVIDED_VCAP_SERVICES.iotforautomotive || VCAP_SERVICES.iotforautomotive;
 	let accountId = (function () {
@@ -36,6 +43,13 @@ const getNPSVariables = function () {
 		return "none";
 	})();
 
+	const username = fs.readFileSync("bmx_username.txt", "utf8") || "NA";
+	let daysSinceFirstLogin = 0;
+	if(firstAccessDate){
+		const durationInMill = moment().valueOf() - firstAccessDate;
+		daysSinceFirstLogin = Math.floor(moment.duration(durationInMill).asDays());
+	}
+
 	let IBM_Meta = {
 		"offeringId": "5737-B44",
 		"highLevelOfferingName": "Watson IoT",
@@ -43,9 +57,14 @@ const getNPSVariables = function () {
 		"language": "en",
 		"otherAccountId": accountId,
 		"otherAccountIdType": "IoT4A Tenant ID",
-		"daysSinceFirstLogin": 31,
+		"daysSinceFirstLogin": daysSinceFirstLogin,
 		"quarterlyIntercept": "heavy",
-		"trigger1": false,
+		"userEmail": username,
+		"userFirstName": "NA",
+		"userLastName": "NA",
+		"customerName": "NA",
+		"userId": username,
+		"userIdType": "NA",
 		"testData": false
 	};
 
