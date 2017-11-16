@@ -17,7 +17,7 @@ const firstAccessDateCookie = "iota-fleetmanagement-first-access-date";
 router.get("/nps", function (req, res) {
 	let firstAccessDate = req.cookies[firstAccessDateCookie];
 	if(!firstAccessDate){
-		res.cookie(firstAccessDateCookie, moment().valueOf(), {maxAge: 1000*60*60*24});
+		res.cookie(firstAccessDateCookie, moment().valueOf(), {maxAge: 1000*60*60*24*365});
 	}
 	const npsVar = getNPSVariables(firstAccessDate);
 	res.send(npsVar);
