@@ -74,7 +74,7 @@ const getNPSVariables = function (firstAccessDate) {
 	};
 
 	if (process.env.NPS_TEST) {
-		IBM_Meta.daysSinceFirstLogin = 31;
+		IBM_Meta.daysSinceFirstLogin += 30;
 		IBM_Meta.noQuarantine = "yes";
 		IBM_Meta.testData = true;
 	}

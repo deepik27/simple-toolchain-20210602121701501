@@ -32,10 +32,6 @@ stages:
         rm -Rf ./node_modules
         popd
       fi
-
-      # Store username to send with NPS feedback
-      cf target | awk '/User:\s(.*)/ { print $2 }' > bmx_username.txt
-
       # if necessary
       #npm install
 - name: Deploy Stage
@@ -55,6 +51,9 @@ stages:
        application: ${CF_APP}
     script: |
       #!/bin/bash
+
+      # Store username to send with NPS feedback
+      cf o|grep "Getting"|sed -e "s/Getting orgs as \(.*\)\.\.\./\1/" > bmx_username.txt
 
       if [ ! -f _generate_deploy_files.sh ]; then
         echo "The _generate_deploy_files.sh is missing. Using the default..."
