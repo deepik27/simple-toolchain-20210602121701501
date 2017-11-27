@@ -43,9 +43,9 @@ const getNPSVariables = function (firstAccessDate) {
 		return "none";
 	})();
 
-	let username = "NA";
+	let username = " ";
 	if(fs.existsSync("bmx_username.txt")){
-		username = fs.readFileSync("bmx_username.txt", "utf8") || "NA";
+		username = fs.readFileSync("bmx_username.txt", "utf8") || " ";
 	}
 	let daysSinceFirstLogin = 0;
 	if(firstAccessDate){
@@ -58,13 +58,13 @@ const getNPSVariables = function (firstAccessDate) {
 		"language": "en",
 		"offeringId": "5737-B44",
 		"highLevelOfferingName": "Watson IoT",
-		"userFirstName": "NA",
-		"userLastName": "NA",
+		"userFirstName": " ",
+		"userLastName": " ",
 		"userEmail": username,
 		"userId": username,
-		"userIdType": "NA",
+		"userIdType": " ",
 		"country": "US",
-		"customerName": "NA",
+		"customerName": " ",
 		"testData": false,
 		"trialUser": "no",
 		"otherAccountId": accountId,
