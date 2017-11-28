@@ -14,6 +14,13 @@ const moment = require("moment");
 USER_PROVIDED_VCAP_SERVICES = JSON.parse(process.env.USER_PROVIDED_VCAP_SERVICES || '{}');
 const firstAccessDateCookie = "iota-fleetmanagement-first-access-date";
 
+const username = (function(){
+	let username;
+	if(fs.existsSync("bmx_username.txt")){
+		return fs.readFileSync("bmx_username.txt", "utf8");
+	}
+})();
+
 router.get("/nps", function (req, res) {
 	let firstAccessDate = req.cookies[firstAccessDateCookie];
 	if(!firstAccessDate){
@@ -23,7 +30,7 @@ router.get("/nps", function (req, res) {
 	res.send(npsVar);
 });
 router.get("/capability/nps", function(req, res){
-	res.send({available: process.env.NPS_ENABLED != "false"});
+	res.send({available: process.env.NPS_ENABLED != "false" && username});
 });
 
 const getNPSVariables = function (firstAccessDate) {
@@ -43,10 +50,6 @@ const getNPSVariables = function (firstAccessDate) {
 		return "none";
 	})();
 
-	let username = " ";
-	if(fs.existsSync("bmx_username.txt")){
-		username = fs.readFileSync("bmx_username.txt", "utf8") || " ";
-	}
 	let daysSinceFirstLogin = 0;
 	if(firstAccessDate){
 		const durationInMill = moment().valueOf() - firstAccessDate;
@@ -60,8 +63,8 @@ const getNPSVariables = function (firstAccessDate) {
 		"highLevelOfferingName": "Watson IoT",
 		"userFirstName": " ",
 		"userLastName": " ",
-		"userEmail": username,
-		"userId": username,
+		"userEmail": username || " ",
+		"userId": username || " ",
 		"userIdType": " ",
 		"country": "US",
 		"customerName": " ",
