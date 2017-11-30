@@ -17,7 +17,7 @@ stages:
       #export PATH=/opt/IBM/node-v0.12/bin:$PATH
       # To use Node.js 4.2.2, uncomment the following line:
       export PATH=/opt/IBM/node-v4.2/bin:$PATH
-      
+
       # Build web client
       if [ -d ./webclient ]; then
         pushd .
@@ -51,7 +51,10 @@ stages:
        application: ${CF_APP}
     script: |
       #!/bin/bash
-      
+
+      # Store username to send with NPS feedback
+      cf o|grep "Getting"|sed -e "s/Getting orgs as \(.*\)\.\.\./\1/" > bmx_username.txt
+
       if [ ! -f _generate_deploy_files.sh ]; then
         echo "The _generate_deploy_files.sh is missing. Using the default..."
       else
@@ -73,7 +76,7 @@ stages:
         cat manifest.yml
         echo "--"
       fi
-      
+
       # create services
       [ -f "_deploy_create_services.sh" ] && source _deploy_create_services.sh || echo "no create services script"
       cf push "${CF_APP}"
