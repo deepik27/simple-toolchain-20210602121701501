@@ -29,7 +29,7 @@ Deploy the Fleet Management Starter Application on IBM Cloud either automaticall
 
 ### Automatically deploy the starter app on IBM Cloud
 
-To automatically deploy the Fleet Management Starter Application on IBM Cloud, click [![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git).
+To automatically deploy the Fleet Management Starter Application on IBM Cloud, click [![Deploy to IBM Cloud](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git).
 
 The automatic deployment option creates an instance of the app and the required IBM Cloud services, and also binds the services to the starter app automatically. After the automated deployment, complete the following steps to configure the app to manually to connect to your IBM IoT for Automotive SaaS service.
 
