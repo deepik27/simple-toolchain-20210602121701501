@@ -1,5 +1,21 @@
 # IBM IoT for Automotive (IBM Cloud) - Fleet Management Starter Application
 
+
+<br/><br/><br/>
+
+
+<span style="color:red">
+This repository is no longer supported because of the withdrawal of IBM Watson IoT for Automotive Experimental Bluemix service.
+</span>
+
+For more Information, see [this page](https://www.ibm.com/blogs/bluemix/2017/10/ibm-watson-iot-automotive-experimental-bluemix-service-will-withdrawing/?cm_mmc=Email_Nurture-_-Cloud_Platform-_-WW_WW-_-Lifecycle58IoTAuto&cm_mmca1=000002FP&cm_mmca2=10001675&cm_mmca3=M00006664&cvosrc=email.Nurture.M00006664&cvo_campaign=000002FP).
+
+You can use the Fleet Management Starter Application together with an instance of the IBM IoT for Automotive SaaS offering on IBM SoftLayer. See [IBM for Automotive (SaaS) - Fleet Management Starter Application](https://github.com/ibm-watson-iot/iota-starter-server-fm-saas ).
+
+<br/><br/><br/>
+
+----
+
 The IBM IoT for Automotive - Fleet Management Starter Application demonstrates how quickly you can build an app on IBM Cloud to manage and monitor a fleet of vehicles in real time.
 
 ## Overview
@@ -23,7 +39,7 @@ You can also use the Fleet Management Starter Application together with an insta
 
 ## Deploying the app on IBM Cloud
 
-You can automatically deploy an instance of the Fleet Management Starter Application on IBM Cloud by clicking [![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm.git). You can also deploy the app manually. Note that you have to do the service activation step mentioned below after the automatic or manual deployment.
+You can automatically deploy an instance of the Fleet Management Starter Application on IBM Cloud by clicking [![Deploy to IBM Cloud](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm.git). You can also deploy the app manually. Note that you have to do the service activation step mentioned below after the automatic or manual deployment.
 
 To manually deploy your own instance of the Fleet Management Starter Application on IBM Cloud, complete all of the following steps:
 
