@@ -44,7 +44,7 @@ var express = require('express')
 var appEnv = require("cfenv").getAppEnv();
 
 //Deployment tracker code snippet
-require("cf-deployment-tracker-client").track();
+require("metrics-tracker-client").track();
 
 var app = express();
 

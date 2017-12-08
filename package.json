@@ -7,8 +7,8 @@
   },
   "dependencies": {
     "basic-auth": "1.0.3",
+    "bluemix-secure-gateway": "3.2.0",
     "body-parser": "1.15.0",
-    "cf-deployment-tracker-client": "0.0.x",
     "cfenv": "1.0.3",
     "chance": "0.8.0",
     "cloudant": "1.5.1",
@@ -24,6 +24,7 @@
     "helmet": "1.1.0",
     "ibmiotf": "^0.2.25",
     "method-override": "2.3.6",
+    "metrics-tracker-client": "^0.2.3",
     "moment": "2.8.3",
     "morgan": "1.6.0",
     "node-uuid": "1.4.1",
@@ -31,8 +32,7 @@
     "q": "2.0.3",
     "request": "2.69.0",
     "underscore": "1.8.3",
-    "ws": "0.8.0",
-    "bluemix-secure-gateway": "3.2.0"
+    "ws": "0.8.0"
   },
   "repository": {
     "type": "git",

@@ -1,0 +1,9 @@
+id: https://github.com/ibm-watson-iot/iota-starter-server-fm-saas
+runtimes:
+ - Cloud Foundry
+services:
+ - Cloudant NoSQL DB
+# - Internet of Things Platform
+event_id: web
+event_organizer: dev-journeys
+language: nodejs
