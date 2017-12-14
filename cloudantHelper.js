@@ -19,6 +19,11 @@ var Q = require("q");
 
 var cloudantHelper = exports;
 var cloudantCreds = VCAP_SERVICES.cloudantNoSQLDB[0].credentials;
+var userVcapSvc = JSON.parse(process.env.USER_PROVIDED_VCAP_SERVICES || '{}');
+if (userVcapSvc.cloudantNoSQLDB) {
+	cloudantCreds = userVcapSvc.cloudantNoSQLDB[0].credentials;
+}
+
 var Cloudant = require('cloudant');
 
 /*
