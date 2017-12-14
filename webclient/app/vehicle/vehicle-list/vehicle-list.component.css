@@ -43,3 +43,19 @@
 .statusCircle {
   cursor: pointer;
 }
+
+.statusColumn {
+  width: 90px;
+}
+
+.actionColumn {
+  width: 140px;
+}
+
+.dataTableCel {
+  vertical-align: middle;
+}
+
+.statusCel {
+  margin-left: 15px;
+}
