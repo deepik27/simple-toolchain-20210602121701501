@@ -43,7 +43,10 @@ const getNPSVariables = function (firstAccessDate) {
 		return "none";
 	})();
 
-	const username = fs.readFileSync("bmx_username.txt", "utf8") || "NA";
+	let username = "NA";
+	if(fs.existsSync("bmx_username.txt")){
+		username = fs.readFileSync("bmx_username.txt", "utf8") || "NA";
+	}
 	let daysSinceFirstLogin = 0;
 	if(firstAccessDate){
 		const durationInMill = moment().valueOf() - firstAccessDate;
@@ -51,24 +54,27 @@ const getNPSVariables = function (firstAccessDate) {
 	}
 
 	let IBM_Meta = {
-		"offeringId": "5737-B44",
-		"highLevelOfferingName": "Watson IoT",
 		"offeringName": "IoT for Auto",
 		"language": "en",
+		"offeringId": "5737-B44",
+		"highLevelOfferingName": "Watson IoT",
+		"userFirstName": "NA",
+		"userLastName": "NA",
+		"userEmail": username,
+		"userId": username,
+		"userIdType": "NA",
+		"country": "US",
+		"customerName": "NA",
+		"testData": false,
+		"trialUser": "no",
 		"otherAccountId": accountId,
 		"otherAccountIdType": "IoT4A Tenant ID",
 		"daysSinceFirstLogin": daysSinceFirstLogin,
-		"quarterlyIntercept": "heavy",
-		"userEmail": username,
-		"userFirstName": "NA",
-		"userLastName": "NA",
-		"customerName": "NA",
-		"userId": username,
-		"userIdType": "NA",
-		"testData": false
+		"quarterlyIntercept": "heavy"
 	};
 
 	if (process.env.NPS_TEST) {
+		IBM_Meta.daysSinceFirstLogin = 31;
 		IBM_Meta.noQuarantine = "yes";
 		IBM_Meta.testData = true;
 	}
