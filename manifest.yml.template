@@ -2,17 +2,13 @@ declared-services:
   FleetCloudantDB-SUFFIX-: 
     label: cloudantNoSQLDB 
     plan: Lite
-  FleetIoTForAuto-SUFFIX-:
-    label: iotforautomotive
-    plan: free_shared
 
 applications:
   - services:
       - FleetCloudantDB-SUFFIX-
-      - FleetIoTForAuto-SUFFIX-
-    name: iota-starter-server-fleetmanagement-SUFFIX-
+    name: iota-starter-server-fleetmgmt-SUFFIX-
     memory: 512M
-#    host: iota-starter-server-fleetmanagement-SUFFIX-
+#    host: iota-starter-server-fleetmgmt-SUFFIX-
 #    domain: stage1.mybluemix.net
     path: .
     instances: 1

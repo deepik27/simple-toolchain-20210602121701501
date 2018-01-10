@@ -37,15 +37,6 @@
 	<!-- ================================= 
           target: main              
          ================================= -->
-	<target name="main-saas" depends="" description="copy source to mirror for saas">
-		<echo>Start copying repo for SaaS environment...</echo>
-		<antcall target="main">
-			<param name="src.clone" location="_tmp.src_clone.saas.${TAG_NAME}"/>
-		    <param name="dest.opts" value="-b mirror-saas --single-branch" />
-		    <param name="dest.clone" value="_tmp.dest_clone.saas.${TAG_NAME}" />
-			<param name="env.saas" value="true"/>
-		</antcall>
-	</target>
 	<target name="main" depends="" description="description">
 		<echo>Start copying repo w/ tag ${TAG_NAME}...</echo>
 		<antcall target="git.clone">
@@ -153,34 +144,15 @@
 				<!-- exclude fonts for monitoring console -->
 				<exclude name="webclient/css/font--*"/>
 				<exclude name="webclient/fonts/*/*"/>
-				<!-- exclude saas files -->
-				<exclude name="**/manifest_For_SaaS.yml"/>
-				<exclude name="**/README_For_SaaS.md"/>
-				<exclude name="**/_deploy_create_services_For_SaaS.sh"/>
-				<exclude name="**/plugins" unless="env.saas"/>
-				<exclude name="**/plugins/**/*" unless="env.saas"/>
-				<exclude name="**/driverInsights/alertrules/*.xml" unless="env.saas"/>
- 				<exclude name="**/driverInsights/alertrules/*.js" if="env.saas"/>
 			</fileset>
 			<fileset dir="${src.clone}" defaultexcludes="no">
 				<!-- include files from default excludes (? .gitattributes, .gitmodules)
     				@see https://ant.apache.org/manual/dirtasks.html
     			 -->
 				<include name="**/.gitignore"/>
-				<include name="**/plugins/**/.project" if="env.saas"/>
-				<exclude name="**/plugins" unless="env.saas"/>
-				<exclude name="**/plugins/**/*" unless="env.saas"/>
+				<include name="**/plugins/**/.project"/>
 			</fileset>
 		</copy>
-		
-		<antcall target="copy_env_specific_contents" />
-	</target>
-
-	<target name="copy_env_specific_contents" depends="" if="env.saas">
-		<!-- copy saas specific files --> 
-		<copy tofile="${dest.clone}/manifest.yml" overwrite="true" file="manifest_For_SaaS.yml" />
-		<copy tofile="${dest.clone}/README.md" overwrite="true" file="README_For_SaaS.md" />
-		<copy tofile="${dest.clone}/_deploy_create_services.sh" overwrite="true" file="_deploy_create_services_For_SaaS.sh" />
 	</target>
 
 	<!-- check if "repo.clone" is a valid clone repo -->
