@@ -543,7 +543,8 @@ _.extend(iotpPdapterAsset, {
 					var assetInfo = {
 						deviceId: device.deviceId,
 						deviceType: device.typeId,
-						vehicleId: vehicle.mo_id
+						vehicleId: vehicle.mo_id,
+						siteId: vehicle.siteid
 					};
 					deferred.resolve({_id: docName, assetInfo: assetInfo});
 				})["catch"](function(error) {

@@ -299,20 +299,26 @@ For more information about how to troubleshoot your application, see the [Troubl
 
 The IoT for Automotive - Fleet Management Starter Application includes code to track deployments to [IBM Cloud](https://www.bluemix.net/) and other Cloud Foundry platforms.
 
-For each instance that you deploy, the following information is sent to a [Deployment Tracker](https://github.com/cloudant-labs/deployment-tracker) service:
+For each instance that you deploy, the following information is sent to a [Deployment Tracker](https://github.com/IBM/metrics-collector-service) service on each deployment:
 
-* Application name (`application_name`)
-* Space ID (`space_id`)
-* Application version (`application_version`)
+* Node.js package version
+* Node.js repository URL
+* Application Name (`application_name`)
+* Application GUID (`application_id)`
+* Application instance index number (`instance_index`)
+* Space ID (`space_id`) or OS username
+* Application Version (`application_version`)
 * Application URIs (`application_uris`)
+* Cloud Foundry API (`cf_api`)
 * Labels of bound services
-* Number of instances for each bound service
+* Number of instances for each bound service and associated plan information
+* Metadata in the repository.yaml file
 
-The tracked data is collected from the `VCAP_APPLICATION` and `VCAP_SERVICES` environment variables in IBM Cloud and other Cloud Foundry platforms. We use the data to track metrics around deployments of sample applications to IBM Cloud to measure the usefulness of our examples so that we can continuously improve the content that we offer to you. Only deployments of sample applications that include code to ping the Deployment Tracker service are tracked.
+This data is collected from the `package.json` and `repository.yaml` file in the sample application and the `VCAP_APPLICATION` and `VCAP_SERVICES` environment variables in IBM Cloud and other Cloud Foundry platforms. This data is used by IBM to track metrics around deployments of sample applications to IBM Cloud to measure the usefulness of our examples, so that we can continuously improve the content we offer to you. Only deployments of sample applications that include code to ping the Deployment Tracker service will be tracked.
 
 ### Disabling deployment tracking
 
-You can disable the Deployment Tracker service by removing `require("cf-deployment-tracker-client").track();` from the beginning of the `app.js` server file.
+You can disable the Deployment Tracker service by removing `require("metrics-tracker-client").track();` from the beginning of the `app.js` server file.
 
 ## Providing feedback to IBM
 

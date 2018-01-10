@@ -34,10 +34,41 @@ var attributesMap = {
 			"iotcvheight": "height",
 			"iotcvtype": "type",
 			"iotcvusage": "usage",
-			"personid": "driver_id",
 			"description": "description",
 			"siteid": "siteid",
 			"classstructureid": "classstructureid",
+			"assetusercust": {
+				"name": "driver", "value": function(val) {
+					var driver = null;
+					_.each(val, function (obj) {
+						if (obj.isprimary && obj.isuser && obj.personid) {
+							driver = {};
+							if (obj.person && obj.person.length > 0) {
+								for (let i = 0; i < obj.person.length > 0; i++) {
+									let d = maximoAssetApi._getAssetObject("driver", obj.person[i]);
+									if (d.status === 'active') {
+										driver = d;
+										break;
+									}
+								}
+							}
+							driver.driver_id = obj.personid;
+						}
+					});
+					return driver;
+				}, "rvalue": function(val) {
+					var assetusercust = [];
+					if (val && val.driver_id) {
+						let usercust = {
+							orgid: maximoAssetApi.assetConfig.maximo.orgid,
+							isprimary: true, 
+							isuser: true, 
+							personid: val.driver_id};
+						assetusercust.push(usercust);
+					}
+					return assetusercust;
+				}
+			},
 			"assetspec": {
 				"name": "properties", "value": function (val) {
 					var props = {};
@@ -242,6 +273,11 @@ var maximoAssetApi = {
 		var makeCondition = function (value, key) {
 			if (_.isString(value)) {
 				return key + '=' + '"' + value + '"';
+			} else if (_.isArray(value)) {
+				var arrayValue = _.map(value, function(v) {
+					return _.isString(v) ? '"' + v + '"' : v;
+				}).join();
+				return key + ' in' + '[' + arrayValue + ']';
 			} else {
 				return key + '=' + value;
 			}

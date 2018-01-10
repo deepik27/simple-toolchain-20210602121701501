@@ -44,19 +44,19 @@
 		</thead>
 		<tbody>
 			<tr *ngFor="let vehicle of (vehicles|orderBy:orderByKey:!ascendingOrder); let i = index">
-				<td class="firstRow">
+				<td class="firstRow dataTableCel">
 					<span title="mo_id:{{vehicle.mo_id}}">{{numRecInPage * (pageNumber - 1) + i + 1}}</span>
 				</td>
-				<td>{{vehicle.__id||'-'}}</td>
-				<td>{{vehicle.__vendorname||'-'}}</td>
-				<td>{{vehicle.model||'-'}}</td>
-				<td>
-					<div class="radarCircles">
+				<td class="dataTableCel">{{vehicle.__id||'-'}}</td>
+				<td class="dataTableCel">{{vehicle.__vendorname||'-'}}</td>
+				<td class="dataTableCel">{{vehicle.model||'-'}}</td>
+				<td class="dataTableCel">
+					<div class="radarCircles statusCel">
 						<span [attr.aria-label]="vehicle.status === 'active' ? 'active' : 'inactive'" class="statusCircle" [ngClass]="vehicle.status === 'active' ? 'greenStatus' : 'redStatus'" (click)="onToggleStatus(vehicle.mo_id)"></span>
 						<span [attr.aria-label]="vehicle.status === 'active' ? 'active' : 'inactive'" class="statusCircle" [ngClass]="vehicle.status === 'active' ? 'greenStatus greenStatusZoom' : ''" (click)="onToggleStatus(vehicle.mo_id)"></span>
 					</div>
 				</td>
-				<td class="alignCenter actionTD">
+				<td class="alignCenter actionTD dataTableCel">
 					<a class="icon-edit" (click)="selected_mo_id=null;onUpdate(vehicle.mo_id)" href="javascript:void(0)" title="Update"></a>
 					<a class="icon-delete" [ngClass]="vehicle.status != 'active' ? '' : 'hidden'" (click)="selected_mo_id=null;onDelete(vehicle.mo_id)" title="Delete"></a>
 					<a class="icon-status" [routerLink]="['/carStatus', ''+vehicle.__mo_id]" title="Show Status"></a>
