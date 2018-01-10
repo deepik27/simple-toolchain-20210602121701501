@@ -1,4 +1,4 @@
-# IBM IoT for Automotive (SaaS) - Fleet Management Starter Application
+# IBM IoT for Automotive - Fleet Management Starter Application
 
 The Fleet Management Starter Application for the IBM® IoT for Automotive SaaS offering demonstrates how quickly you can build an app on IBM Cloud to manage and monitor a fleet of vehicles in real time.
 
