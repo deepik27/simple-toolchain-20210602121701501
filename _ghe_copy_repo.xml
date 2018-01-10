@@ -31,7 +31,7 @@
 	<property name="src.clone" location="_tmp.src_clone.${TAG_NAME}"/>
 	
 	<property name="dest.url" value="https://github.ibm.com/Watson-IoT/iota-starter-server-fleetmanagement"/>
-	<property name="dest.opts" value="-b mirror --single-branch"/>
+	<property name="dest.opts" value="-b mirror-saas --single-branch"/>
 	<property name="dest.clone" location="_tmp.dest_clone.${TAG_NAME}"/>
 	
 	<!-- ================================= 
