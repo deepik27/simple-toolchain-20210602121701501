@@ -38,7 +38,7 @@ var attributesMap = {
 			"siteid": "siteid",
 			"classstructureid": "classstructureid",
 			"assetusercust": {
-				"name": "driver", "value": function(val) {
+				"name": "driver", "value": function (val) {
 					var driver = null;
 					_.each(val, function (obj) {
 						if (obj.isprimary && obj.isuser && obj.personid) {
@@ -56,14 +56,15 @@ var attributesMap = {
 						}
 					});
 					return driver;
-				}, "rvalue": function(val) {
+				}, "rvalue": function (val) {
 					var assetusercust = [];
 					if (val && val.driver_id) {
 						let usercust = {
 							orgid: maximoAssetApi.assetConfig.maximo.orgid,
-							isprimary: true, 
-							isuser: true, 
-							personid: val.driver_id};
+							isprimary: true,
+							isuser: true,
+							personid: val.driver_id
+						};
 						assetusercust.push(usercust);
 					}
 					return assetusercust;
@@ -274,7 +275,7 @@ var maximoAssetApi = {
 			if (_.isString(value)) {
 				return key + '=' + '"' + value + '"';
 			} else if (_.isArray(value)) {
-				var arrayValue = _.map(value, function(v) {
+				var arrayValue = _.map(value, function (v) {
 					return _.isString(v) ? '"' + v + '"' : v;
 				}).join();
 				return key + ' in' + '[' + arrayValue + ']';
@@ -428,14 +429,21 @@ var maximoAssetApi = {
 	refreshAsset: function (context) {
 		var deferred = Q.defer();
 		var config = this.assetConfig.maximo;
-		var url = config.restURL;
 		var assettype = (context == "vehicle" || context == "driver") ? (context + "_update") : context;
-		url += "/script/REFRESHASSETS?asset=" + assettype;
-		if (this.assetConfig.tenant_id) {
-			url += '&tenant_id=' + this.assetConfig.tenant_id;
+		let url, method, body;
+		if (version.laterOrEqual("2.4")) {
+			method = "POST";
+			url = config.baseURL + "/oslc/issueassetrefresh?lean=1";
+			body = { "type": assettype };
+		} else {
+			method = "GET";
+			url = config.restURL + "/script/REFRESHASSETS?asset=" + assettype;
+			if (this.assetConfig.tenant_id) {
+				url += '&tenant_id=' + this.assetConfig.tenant_id;
+			}
 		}
 
-		Q.when(this._request(url, 'GET'), function (result) {
+		Q.when(this._request(url, method, null, body), function (result) {
 			deferred.resolve(result);
 		})["catch"](function (err) {
 			deferred.reject(err);
