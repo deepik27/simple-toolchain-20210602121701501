@@ -26,7 +26,7 @@ import { AlertService } from './shared/alert.service';
   providers: [HttpClient, RealtimeDeviceDataProviderService, LocationService, EventService, GeofenceService, DriverBehaviorService, AlertService]
 })
 export class AppComponent {
-  title = "IBM IoT for Automotive - Fleet Management Starter Application - Monitoring";
+  title = "IBM IoT Connected Vehicle Insights - Fleet Management Starter Application - Monitoring";
   sidebarItems = [
            { title: "Map", route: "map", icon: 'icon-location', active: false },
            { title: "Car Status", route: "carStatus", icon: "icon-car", active: false},

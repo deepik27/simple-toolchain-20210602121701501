@@ -47,7 +47,7 @@ process.env.APP_PASSWORD = 'none';
 
 // VCAP_SERVICES
 process.env.VCAP_SERVICES = JSON.stringify(
-  // PUT YOUR BLUEMIX VCAP_SERVICES ENVIRONMENT VARIABLE HERE
+  // PUT YOUR IBM Cloud VCAP_SERVICES ENVIRONMENT VARIABLE HERE
   // { ... }
 );
 // delegate to the original app
@@ -65,7 +65,7 @@ require('./app.js');
   - The `./webclient` is mapped to `/webclient`
   - The `./webclient/npm_modules` is mapped to `/webclient/npm_modules`
 
-#### Bluemix
+#### IBM Cloud
 
 - Build process (at the DevOps services)
   - Builds the WebClient by `cd ./webclient && npm run tsc && npm run gulp`

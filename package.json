@@ -1,6 +1,6 @@
 {
   "name": "iota-starter-server-fleetmanagement",
-  "description": "IBM IoT for Automotive - Fleet Management Starter Application",
+  "description": "IBM IoT Connected Vehicle Insights - Fleet Management Starter Application",
   "version": "1.0.0-M1",
   "scripts": {
     "start": "node app.js"

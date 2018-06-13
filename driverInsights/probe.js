@@ -71,7 +71,7 @@ _.extend(driverInsightsProbe, {
 				var probe = null;
 				if(result && result.length > 0){
 					// Workaround:
-					//   IoT for Automotive service returns probes of multiple vehicle in the area for now
+					//   IBM IoT Connected Vehicle Insights service returns probes of multiple vehicle in the area for now
 					//   even if the request specifies only one mo_id
 					for(var i=0; i<result.length; i++){
 						if(result[i].mo_id === payload.mo_id){
