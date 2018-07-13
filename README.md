@@ -1,10 +1,10 @@
-# IBM IoT for Automotive (SaaS) - Fleet Management Starter Application
+# IBM IoT Connected Vehicle Insights - Fleet Management Starter Application
 
-The Fleet Management Starter Application for the IBM® IoT for Automotive SaaS offering demonstrates how quickly you can build an app on IBM Cloud to manage and monitor a fleet of vehicles in real time.
+The Fleet Management Starter Application for the IBM® IoT Connected Vehicle Insights SaaS offering demonstrates how quickly you can build an app on IBM Cloud to manage and monitor a fleet of vehicles in real time.
 
 ## Overview
 
-The Fleet Management Starter Application uses the IBM IoT for Automotive SaaS offering together with IBM Cloud services to provide a sample solution for fleet operation management and personnel. By using the application,  you can easily track and view the following information:
+The Fleet Management Starter Application uses the IBM IoT Connected Vehicle Insights SaaS offering together with IBM Cloud services to provide a sample solution for fleet operation management and personnel. By using the application,  you can easily track and view the following information:
 
 - Availability of a fleet of cars on a map
 - Location of vehicles
@@ -21,7 +21,7 @@ The Fleet Management Starter Application uses the following IBM Cloud services:
 - [IBM Watson IoT Platform (Optional)](https://console.ng.bluemix.net/catalog/services/internet-of-things-platform/)
 
 ## Prerequisites
-To deploy and use the Fleet Management Starter Application, you need an instance of IBM IoT for Automotive that is deployed and running on either IBM SaaS.
+To deploy and use the Fleet Management Starter Application, you need an instance of IBM IoT Connected Vehicle Insights that is deployed and running on either IBM SaaS.
 
 ## Deploying the app
 
@@ -31,12 +31,12 @@ Deploy the Fleet Management Starter Application on IBM Cloud either automaticall
 
 To automatically deploy the Fleet Management Starter Application on IBM Cloud, click [![Deploy to IBM Cloud](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git).
 
-The automatic deployment option creates an instance of the app and the required IBM Cloud services, and also binds the services to the starter app automatically. After the automated deployment, complete the following steps to configure the app to manually to connect to your IBM IoT for Automotive SaaS service.
+The automatic deployment option creates an instance of the app and the required IBM Cloud services, and also binds the services to the starter app automatically. After the automated deployment, complete the following steps to configure the app to manually to connect to your IBM IoT Connected Vehicle Insights SaaS service.
 
 1. Open the IBM Cloud dashboard in your browser.
 2. To stop the app, click **ACTIONS** > **Stop App**.
 
-Next: Go to [Connecting to IoT for Automotive service](#connect2iot4a).
+Next: Go to [Connecting to IBM IoT Connected Vehicle Insights service](#connect2iot4a).
 
 ### Manually deploy the starter app on IBM Cloud
 
@@ -97,10 +97,10 @@ To manually deploy the Fleet Management Starter Application on IBM Cloud, comple
   ```
   **Important:** When you run the `push` command, you must include the `--no-start` option as you must complete further steps manually before you start the app.
 
-**Result:** Your very own instance of the IBM IoT for Automotive - Fleet Management Starter Application is now deployed on IBM Cloud.
+**Result:** Your very own instance of the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application is now deployed on IBM Cloud.
 
-## Deploying custom plugins to your IoT for Automotive instance
-To run the Fleet Management Starter Application with your IoT for Automotive instance, the following two custom plugins must be deployed to your IoT for Automotive instance. The source code of the plugins is contained in `plugins` folder under the Fleet Management Starter Application repository.
+## Deploying custom plugins to your IBM IoT Connected Vehicle Insights instance
+To run the Fleet Management Starter Application with your IBM IoT Connected Vehicle Insights instance, the following two custom plugins must be deployed to your IBM IoT Connected Vehicle Insights instance. The source code of the plugins is contained in `plugins` folder under the Fleet Management Starter Application repository.
 
 |          Plugin        | Component              | Description                          |
 |------------------------|------------------------|--------------------------------------|
@@ -110,15 +110,15 @@ To run the Fleet Management Starter Application with your IoT for Automotive ins
 To build and deploy the plugins, complete the following steps:
 
 ### Prerequisites
-1. The IoT for Automotive Plugin Deployment Tool must be installed on your IoT for Automotive SaaS instance. Contact the system administrator for your IoT for Automotive SaaS service to make a request to install it.
-1. The IoT for Automotive Plugin Development Tool must be installed on your eclipse IDE, as outlined in the <u>IoT for Automotive Plug-In Programmer's Guide</u>. To get access to the guide and the tool, contact your IBM IoT for Automotive system administrator.
+1. The IBM IoT Connected Vehicle Insights Plugin Deployment Tool must be installed on your IBM IoT Connected Vehicle Insights SaaS instance. Contact the system administrator for your IBM IoT Connected Vehicle Insights SaaS service to make a request to install it.
+1. The IBM IoT Connected Vehicle Insights Plugin Development Tool must be installed on your eclipse IDE, as outlined in the <u>IBM IoT Connected Vehicle Insights Plug-In Programmer's Guide</u>. To get access to the guide and the tool, contact your IBM IoT Connected Vehicle Insights system administrator.
 1. The Fleet Management Starter Application Git repository must be downloaded on your local environment. If you need to download the repository, you can clone it by using the following console command:
     ```
     git clone https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git
     ```
 
 ### Import custom plugin projects to your eclipse IDE
-1. Launch the eclipse that contains IoT for Automotive Plugin Development Tool.
+1. Launch the eclipse that contains IBM IoT Connected Vehicle Insights Plugin Development Tool.
 1. Open Git perspective (**Window > Perspective > Open Perspective > Other...**).
 1. From the **Git Repositories** view, click **Add an existing local Git repository**. Alternatively, you can also clone the repository by selecting **Clone a Git repository**.
 1. Specify a directory that contains the Fleet Management Starter Application Git repository.
@@ -135,7 +135,7 @@ To build and deploy the plugins, complete the following steps:
 1. In the same manner, export the `FleetAlert` project as a JAR file.
 
 ### Update a VDH configuration file (gatway.properties)
-1. Download a copy of the `gateway.properties` file that you deployed on the VDH server by using IoT for Automotive Plugin Deploy Tool.
+1. Download a copy of the `gateway.properties` file that you deployed on the VDH server by using IBM IoT Connected Vehicle Insights Plugin Deploy Tool.
 1. Open the `gateway.properties` file with a text editor.
 1. Increment `client.num` in the `gateway.properties` file.
 1. Insert the following two lines before the DefaultHTTPClient client definition.
@@ -161,21 +161,21 @@ To build and deploy the plugins, complete the following steps:
 
 A fragment of the gateway.properties file exists under `conf` folder of the `HttpActionNotifyClient` project. You can copy contents from the file.
 
-### Deploy custom plugins to IBM IoT for Automotive
-1. Deploy exported `HttpActionNotifyClient` jar and updated gateway.properties to a VDH server using IoT for Automotive Plugin Deploy Tool.
+### Deploy custom plugins to IBM IoT Connected Vehicle Insights
+1. Deploy exported `HttpActionNotifyClient` jar and updated gateway.properties to a VDH server using IBM IoT Connected Vehicle Insights Plugin Deploy Tool.
 1. Deploy export the `FleetAlert` jar to an Agent server.
-1. Restart IoT for Automotive components using IoT for Automotive Plugin Deploy Tool as needed.
+1. Restart IBM IoT Connected Vehicle Insights components using IBM IoT Connected Vehicle Insights Plugin Deploy Tool as needed.
 
-## <a id="connect2iot4a"></a> Connecting the app to your IBM IoT for Automotive service
+## <a id="connect2iot4a"></a> Connecting the app to your IBM IoT Connected Vehicle Insights service
 
-After deploying the app on IBM Cloud, you must configure the app to connect to your IBM IoT for Automotive SaaS service instance.
+After deploying the app on IBM Cloud, you must configure the app to connect to your IBM IoT Connected Vehicle Insights SaaS service instance.
 
-### Configuring IBM IoT for Automotive endpoints and credentials
+### Configuring IBM IoT Connected Vehicle Insights endpoints and credentials
 {: #config_endpoints}
-To connect to your IBM IoT for Automotive service instance, the starter app reads the REST API endpoints and credentials from an environment variable on IBM Cloud. Configure the environment variables as follows:
+To connect to your IBM IoT Connected Vehicle Insights service instance, the starter app reads the REST API endpoints and credentials from an environment variable on IBM Cloud. Configure the environment variables as follows:
 
 1. Open the [IBM Cloud dashboard][bluemix_dashboard_url] in your browser.
-1. Open the IBM IoT for Automotive service.
+1. Open the IBM IoT Connected Vehicle Insights service.
 1. Select **Runtime** tab at the left navigation bar.
 1. Click **Environment variables**.
 1. Add the following environment variable:
@@ -189,11 +189,11 @@ Define the endpoints in the following JSON format. Note that you must remove any
     "iotforautomotive": [
         {
             "credentials": {
-                "api": <IoT for Automotive endpoint>,
+                "api": <IBM IoT Connected Vehicle Insights endpoint>,
                 "username": <user name>,
                 "password": <passsword>,
                 "maximo": {
-                  "orgid": <organization for IoT for Automotive>
+                  "orgid": <organization for IBM IoT Connected Vehicle Insights>
                   "classificationid": <classification for Vehicle Data>
                   "username": <user name for Maximo API >,
                   "password": <passsword for Maximo API >
@@ -207,21 +207,21 @@ To obtain the correct values, contact your system administrator.
 
 Key | Description of Value
 ----- | -----
-api | A URL to call the REST API for IoT for Automotive, which must end with a forward slash character (/)
-username | User name for accessing the Vehicle Data Hub (VDH) and other IoT for Automotive endpoints
-password | Password for accessing the VDH and other IoT for Automotive endpoints
-maximo/orgid | IBM IoT for Automotive Organization specified in IBM Maximo Asset Management
+api | A URL to call the REST API for IBM IoT Connected Vehicle Insights, which must end with a forward slash character (/)
+username | User name for accessing the Vehicle Data Hub (VDH) and other IBM IoT Connected Vehicle Insights endpoints
+password | Password for accessing the VDH and other IBM IoT Connected Vehicle Insights endpoints
+maximo/orgid | IBM IoT Connected Vehicle Insights Organization specified in IBM Maximo Asset Management
 maximo/classificationid | Classification for vehicle data defined in Maximo Asset Management
 maximo/username | User name for accessing the Maximo Asset Management API
 maximo/password | Password for accessing the Maximo Asset Management API
 
-### (Optional) Securing the connection to the IBM IoT for Automotive service
-The IBM Secure Gateway service provides secure connectivity and establishes a tunnel between your IBM Cloud organization and the remote location that you want to connect to. Before you use the Secure Gateway service, contact your IBM IoT for Automotive system administrator. For more information, see [Secure Gateway](https://console.ng.bluemix.net/catalog/services/secure-gateway/).
+### (Optional) Securing the connection to the IBM IoT Connected Vehicle Insights service
+The IBM Secure Gateway service provides secure connectivity and establishes a tunnel between your IBM Cloud organization and the remote location that you want to connect to. Before you use the Secure Gateway service, contact your IBM IoT Connected Vehicle Insights system administrator. For more information, see [Secure Gateway](https://console.ng.bluemix.net/catalog/services/secure-gateway/).
 
 
 ## Configuring authentication
 
-To secure the app, authentication is enabled by default for the IoT for Automotive - Fleet Management Starter Application. The default user credentials are as follows:
+To secure the app, authentication is enabled by default for the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application. The default user credentials are as follows:
 
 User name | Password
 ----- | -----
@@ -235,7 +235,7 @@ starter | Starter4Iot
 
 - To start the Fleet Management Starter Application, open the [IBM Cloud dashboard][bluemix_dashboard_url] and start the app.
 
-Congratulations! You are now ready to use your own instance of the IBM IoT for Automotive - Fleet Management Starter Application. To connect to the app, enter the following URL in your browser:
+Congratulations! You are now ready to use your own instance of the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application. To connect to the app, enter the following URL in your browser:
 `http://<host>.mybluemix.net` in your browser.
 
 ## (Optional) Connecting to an OBDII dongle that is plugged in to your car
@@ -245,7 +245,7 @@ The starter app also provides a mobile app to connect to an OBDII dongle plugged
 ### Bind the Watson IoT Platform service to the app
 
 1. Open the [IBM Cloud dashboard][bluemix_dashboard_url] in your browser.
-1. Open the IBM IoT for Automotive service.
+1. Open the IBM IoT Connected Vehicle Insights service.
 1. Select **Connections** tab at the left navigation bar.
 1. Click **Connect New**.
 1. Select *IBM Watson IoT Platform* service, and then click **Create** to bind the service.
@@ -265,18 +265,18 @@ When you start the OBDII Fleet Management App for the first time, your device is
 ### Set up the OBDII Fleet Management App
 
 To build and install the OBDII Fleet Management App on an Android phone, see the following repository.
- - For Android phone : [IBM IoT for Automotive - OBDII Fleet Management App for Android](https://github.com/ibm-watson-iot/iota-starter-obd-android).
- - For iOS phone :  [IBM IoT for Automotive - OBDII Fleet Management App for iOS](https://github.com/ibm-watson-iot/iota-starter-obd-ios).
+ - For Android phone : [IBM IoT Connected Vehicle Insights - OBDII Fleet Management App for Android](https://github.com/ibm-watson-iot/iota-starter-obd-android).
+ - For iOS phone :  [IBM IoT Connected Vehicle Insights - OBDII Fleet Management App for iOS](https://github.com/ibm-watson-iot/iota-starter-obd-ios).
 
  After deploying the Fleet Management Starter Application, start OBDII Fleet Management App on your phone.
 
-### Connect the device to the IoT for Automotive service
+### Connect the device to the IBM IoT Connected Vehicle Insights service
 
 When you start the OBDII Fleet Management App for the first time, your device is registered automatically to the IoT Platform service that you have specified in the mobile app, and a corresponding vehicle is created automatically when you connect your device to the IoT Platform.
 
 Now that your device is connected to the Watson IoT Platform, go to the  **Map** or **Car Status** page in the app and see the status.
 
-If you no longer need a device, go to the Watson IoT Platform dashboard and delete your device manually. After you delete a device, update the vehicles in the IBM IoT for Automotive service, as follows:
+If you no longer need a device, go to the Watson IoT Platform dashboard and delete your device manually. After you delete a device, update the vehicles in the IBM IoT Connected Vehicle Insights service, as follows:
 
 1. Open the Fleet Management Starter Application on your browser.
 1. On the left navigation bar, click **Vehicle**.
@@ -285,7 +285,7 @@ If you no longer need a device, go to the Watson IoT Platform dashboard and dele
 A vehicle corresponding to deleted device must be removed from a table. Also, if you have added a device to the Watson IoT Platform manually, the vehicle is added to the table.
 
 ## Reporting defects
-To report a defect with the IoT for Automotive - Fleet Management Starter Application, go to the [Issues section](https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/issues) section.
+To report a defect with the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application, go to the [Issues section](https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/issues) section.
 
 ## Troubleshooting
 To debug problems, check the IBM Cloud app logs. To view the logs, run the following command from the Cloud Foundry CLI:
@@ -297,7 +297,7 @@ For more information about how to troubleshoot your application, see the [Troubl
 
 ## Privacy Notice
 
-The IoT for Automotive - Fleet Management Starter Application includes code to track deployments to [IBM Cloud](https://www.bluemix.net/) and other Cloud Foundry platforms.
+The IBM IoT Connected Vehicle Insights - Fleet Management Starter Application includes code to track deployments to [IBM Cloud](https://www.bluemix.net/) and other Cloud Foundry platforms.
 
 For each instance that you deploy, the following information is sent to a [Deployment Tracker](https://github.com/IBM/metrics-collector-service) service on each deployment:
 
@@ -322,16 +322,16 @@ You can disable the Deployment Tracker service by removing `require("metrics-tra
 
 ## Providing feedback to IBM
 
-Thank you for using our IBM® IoT for Automotive SaaS service and starter apps. As well as providing samples to help you get started, we'd like to know what you and your users think about our service offering.
+Thank you for using our IBM® IoT Connected Vehicle Insights SaaS service and starter apps. As well as providing samples to help you get started, we'd like to know what you and your users think about our service offering.
 
-The IBM IoT for Automotive Fleet Management starter application sample also includes the [Medallia](http://www.medallia.com/) Net Promoter Score (NPS) widget code, which you can choose to deploy with the apps that you develop to integrate with the service.
+The IBM IoT Connected Vehicle Insights Fleet Management starter application sample also includes the [Medallia](http://www.medallia.com/) Net Promoter Score (NPS) widget code, which you can choose to deploy with the apps that you develop to integrate with the service.
 
 ### The Net Promoter Score widget
-The NPS widget provides a mechanism for you and your app users to rate your overall experience with the IBM IoT for Automotive service and to provide specific feedback comments to help us to continually improve the quality of the service offering and to increase your satisfaction. When you build an application by using our sample code, the NPS widget is automatically included in your app and provides the following user interface for providing feedback to IBM:
+The NPS widget provides a mechanism for you and your app users to rate your overall experience with the IBM IoT Connected Vehicle Insights service and to provide specific feedback comments to help us to continually improve the quality of the service offering and to increase your satisfaction. When you build an application by using our sample code, the NPS widget is automatically included in your app and provides the following user interface for providing feedback to IBM:
 
 ![NPS Widget](./nps_widget.gif)
 
-When you or your app users rate the IBM IoT for Automotive service by completing the survey in the NPS widget, the rating score, feedback comments, and customer ID are automatically submitted back to IBM.
+When you or your app users rate the IBM IoT Connected Vehicle Insights service by completing the survey in the NPS widget, the rating score, feedback comments, and customer ID are automatically submitted back to IBM.
 
 ### Disabling the NPS widget
 
@@ -353,7 +353,7 @@ The IBM NPS widget is produced in partnership with [Medallia](http://www.medalli
 - [IBM Watson IoT Platform](http://www.ibm.com/internet-of-things/iot-solutions/watson-iot-platform/)
 - [IBM Watson IoT Platform Developers Community](https://developer.ibm.com/iotplatform/)
 - [IBM Secure Gateway](https://console.ng.bluemix.net/docs/services/SecureGateway/secure_gateway.html)
-- [IBM Marketplace: IoT for Automotive](https://www.ibm.com/us-en/marketplace/iot-automotive-industry)
+- [IBM Marketplace: IBM IoT Connected Vehicle Insights](https://www.ibm.com/us-en/marketplace/iot-automotive-industry)
 
 [bluemix_dashboard_url]: https://console.ng.bluemix.net/dashboard/
 [bluemix_signup_url]: https://console.ng.bluemix.net/registration/

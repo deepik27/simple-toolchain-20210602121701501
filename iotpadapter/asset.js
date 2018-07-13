@@ -22,7 +22,7 @@ var DEFAULT_DRIVER_NAME = "OBDII Driver";
 var DEFAULT_DEVICE_TYPE = "OBDII";
 
 /*
- * Module to manage pairs of IoT Platform device and IoT for Automotive asset 
+ * Module to manage pairs of IoT Platform device and IBM IoT Connected Vehicle Insights asset 
  * The pairs are stored in cloudant DB
  */
 _.extend(iotpPdapterAsset, {
@@ -149,7 +149,7 @@ _.extend(iotpPdapterAsset, {
 		return deferred.promise;
 	},
 	/*
-	 * Get IoT for Automotive asset information corresponding to given IoT Platform deviceId
+	 * Get IBM IoT Connected Vehicle Insights asset information corresponding to given IoT Platform deviceId
 	 */
 	getAssetInfo: function(deviceId, deviceType) {
 		deviceType = deviceType || this.deviceType || DEFAULT_DEVICE_TYPE;
@@ -171,7 +171,7 @@ _.extend(iotpPdapterAsset, {
 		return deferred.promise;
 	},
 	/*
-	 * Create IoT for Automotive asset information corresponding to given IoT Platform deviceId
+	 * Create IBM IoT Connected Vehicle Insights asset information corresponding to given IoT Platform deviceId
 	 */
 	createAssetInfo: function(deviceId, deviceType, isActive) {
 		var self = this;
@@ -217,7 +217,7 @@ _.extend(iotpPdapterAsset, {
 		return deferred.promise;
 	},
 	/*
-	 * Update IoT for Automotive asset information corresponding to given IoT Platform deviceId
+	 * Update IBM IoT Connected Vehicle Insights asset information corresponding to given IoT Platform deviceId
 	 */
 	updateAssetInfo: function(deviceId, deviceType) {
 		var deferred = Q.defer();
@@ -244,7 +244,7 @@ _.extend(iotpPdapterAsset, {
 		return deferred.promise;
 	},
 	/*
-	 * Queue a job to read all devices associated with given deviceType and create or update all asset in IoT for Automotive
+	 * Queue a job to read all devices associated with given deviceType and create or update all asset in IBM IoT Connected Vehicle Insights
 	 */
 	synchronizeAllAsset: function(deviceType) {
 		var self = this;
@@ -274,7 +274,7 @@ _.extend(iotpPdapterAsset, {
 	},
 	
 	/*
-	 * Read all devices associated with given deviceType and create or update all asset in IoT for Automotive
+	 * Read all devices associated with given deviceType and create or update all asset in IBM IoT Connected Vehicle Insights
 	 */
 	_synchronizeAllAsset: function(deviceType) {
 		var self = this;
@@ -308,7 +308,7 @@ _.extend(iotpPdapterAsset, {
 		return deferred.promise;
 	},
 	/*
-	 * Delete IoT for Automotive asset information corresponding to given IoT Platform deviceId
+	 * Delete IBM IoT Connected Vehicle Insights asset information corresponding to given IoT Platform deviceId
 	 */
 	deleteAssetInfo: function(deviceId, deviceType) {
 		deviceType = deviceType || this.deviceType || DEFAULT_DEVICE_TYPE;
@@ -346,7 +346,7 @@ _.extend(iotpPdapterAsset, {
 	},
 	
 	/*
-	 * Delete IoT for Automotive assets corresponding to given IoT Platform devicees
+	 * Delete IBM IoT Connected Vehicle Insights assets corresponding to given IoT Platform devicees
 	 */
 	deleteAssetInfos: function(assetInfos) {
 		var self = this;
@@ -470,7 +470,7 @@ _.extend(iotpPdapterAsset, {
 				}).done(function() {
 					iot4aAsset.refreshVehicle();
 					
-					// Add assetInfo documents to cloudant DB when new assets are added to IoT for Automotive
+					// Add assetInfo documents to cloudant DB when new assets are added to IBM IoT Connected Vehicle Insights
 					var assetInfoDocs = [];
 					_.each(results, function(doc, index) {
 						if (!doc.update) {
@@ -520,7 +520,7 @@ _.extend(iotpPdapterAsset, {
 	_addOrUpdateAsset: function(device, existingIds, existingAssetInfos, vendors, noRefresh) {
 		var self = this;
 		var deferred = Q.defer();
-		// Update existing asset in IoT for Automotive when there is a document corresponding to the device in cloudant DB
+		// Update existing asset in IBM IoT Connected Vehicle Insights when there is a document corresponding to the device in cloudant DB
 		var info = _.find(existingAssetInfos, function(assetInfo) {return assetInfo.deviceId === device.deviceId && assetInfo.deviceType === device.typeId;});
 		var isNew = !info;
 		Q.when(isNew || self._updateVehicleInIoTAAsset(info.deviceId, info.deviceType, info.vehicleId, vendors, noRefresh), function() {
@@ -536,7 +536,7 @@ _.extend(iotpPdapterAsset, {
 			}
 		}).done(function() {
 			if (isNew) {
-				// Add new asset to IoT for Automotive when there is no document corresponding to the device in cloudant DB
+				// Add new asset to IBM IoT Connected Vehicle Insights when there is no document corresponding to the device in cloudant DB
 				Q.when(self._addVehicleToIoTAAsset(device.deviceId, device.typeId, false, vendors, noRefresh), function(vehicle) {
 					// If the asset is successfully added, prepare new assetInfo doc that will be created in cloudant DB later
 					var docName = self._documentName(device.deviceId, device.typeId);
@@ -555,8 +555,8 @@ _.extend(iotpPdapterAsset, {
 		return deferred.promise;
 	},
 	/*
-	 * Check if the asset corresponding to given device really exists in IoT for Automotive or not
-	 * In case user intentionally remove the asset directly using IoT for Automotive API, 
+	 * Check if the asset corresponding to given device really exists in IBM IoT Connected Vehicle Insights or not
+	 * In case user intentionally remove the asset directly using IBM IoT Connected Vehicle Insights API, 
 	 * corresponding asset does not exist while corresponding document exists in cloudant DB
 	 */
 	_isAssetRegistered: function(device, existingIds, existingAssetInfos) {
@@ -605,7 +605,7 @@ _.extend(iotpPdapterAsset, {
 		return deferred.promise;
 	},
 	/*
-	 * Add a vehicle to IoT for Automotive Asset
+	 * Add a vehicle to IBM IoT Connected Vehicle Insights Asset
 	 */
 	_addVehicleToIoTAAsset: function(deviceId, deviceType, isActive, vendors, noRefresh) {
 		var deferred = Q.defer();
@@ -652,7 +652,7 @@ _.extend(iotpPdapterAsset, {
 		return deferred.promise;
 	},
 	/*
-	 * Update a vehicle to IoT for Automotive Asset
+	 * Update a vehicle to IBM IoT Connected Vehicle Insights Asset
 	 */
 	_updateVehicleInIoTAAsset: function(deviceId, deviceType, vehicleId, vendors, noRefresh) {
 		var deferred = Q.defer();
@@ -669,7 +669,7 @@ _.extend(iotpPdapterAsset, {
 		return deferred.promise;
 	},
 	/*
-	 * Create a vendor with given id in IoT for Automotive asset when it does not exist
+	 * Create a vendor with given id in IBM IoT Connected Vehicle Insights asset when it does not exist
 	 */
 	_createVendorIfNotExist: function(vendor, vendors) {
 		var deferred = Q.defer();
@@ -704,7 +704,7 @@ _.extend(iotpPdapterAsset, {
 		return deferred.promise;
 	},
 	/*
-	 * Create a driver with given id in IoT for Automotive asset when it does not exist
+	 * Create a driver with given id in IBM IoT Connected Vehicle Insights asset when it does not exist
 	 */
 	_createDriverIfNotExist: function() {
 		var self = this;

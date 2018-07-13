@@ -233,7 +233,7 @@ _.extend(driverInsightsGeofence, {
 				rule_id: rule_xml_id,
 				rule_type: GEOFENCE_RULE_TYPE,
 				name: "Geofence Rule",
-				description: "Geofence rule created by iota starter app rule engine.",
+				description: "Geofence rule created by IBM IoT Connected Vehicle Insights Starter App rule engine.",
 				condition: {
 					pattern: "geofence"
 				},
