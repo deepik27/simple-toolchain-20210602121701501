@@ -16,6 +16,7 @@ var moment = require("moment");
 var dbClient = require('./../cloudantHelper.js');
 var ruleGenerator = require('./ruleGenerator.js');
 var iot4aAsset = app_module_require('iot4a-api/asset.js');
+var version = app_module_require('utils/version.js');
 
 var debug = require('debug')('geofence');
 debug.log = console.log.bind(console);
@@ -69,6 +70,10 @@ _.extend(driverInsightsGeofence, {
 		return iot4aAsset.isSaaS();
 	},
 	
+	getSupportInfo: function() {
+		return {available: this.isAvailable(), useTargetArea: !version.laterOrEqual("2.4")};
+	},
+
 	queryGeofence: function(min_latitude, min_longitude, max_latitude, max_longitude) {
 		var deferred = Q.defer();
 		Q.when(this._queryGeofenceDoc(min_longitude, min_latitude, max_longitude, max_latitude), function(response) {
@@ -270,9 +275,12 @@ _.extend(driverInsightsGeofence, {
 			};
 		}
 		if (geofenceJson.target) {
-			ruleJson.target = {};
-			if (geofenceJson.target.area) {
-				ruleJson.target.areas = [geofenceJson.target.area];
+			var supportInfo = this.getSupportInfo();
+			if (supportInfo.useTargetArea) {
+				ruleJson.target = {};
+				if (geofenceJson.target.area) {
+					ruleJson.target.areas = [geofenceJson.target.area];
+				}
 			}
 		}
 		var message = geofenceJson.message || (range === "out" ? "Vehicle is out of the region" : "Vehicle is in the region");

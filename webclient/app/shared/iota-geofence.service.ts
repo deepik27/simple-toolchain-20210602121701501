@@ -42,10 +42,10 @@ export class GeofenceService {
 	 * }
 	 */
 
-   public isAvailable() {
+   public getCapability() {
     return this.http.get("/user/capability/geofence").map(data => {
         let resJson = data.json();
-        return resJson.available;
+        return resJson;
     });
    }
 

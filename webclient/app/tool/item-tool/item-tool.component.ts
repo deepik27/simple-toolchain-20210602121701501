@@ -27,6 +27,7 @@ export class ItemToolComponent implements OnInit {
   geofenceType: string = "rectangle";
   geofenceDirections =  [{label: "OUT", value: "out"}, {label: "IN", value: "in"}];
   geofenceDirection: string = "out";
+  geofenceUseTargetArea: boolean = false;
   creationMode: string = "none";
 
   constructor(
@@ -45,9 +46,12 @@ export class ItemToolComponent implements OnInit {
         this.selectedEventType = data[0];
       }
     });
-    this.geofenceService.isAvailable().subscribe(data => {
+    this.geofenceService.getCapability().subscribe(data => {
       if (data) {
-        this.supportedItems.push("geofence");
+        if (data.available) {
+          this.supportedItems.push("geofence");
+        }
+        this.geofenceUseTargetArea = data.useTargetArea;
       }
     });
   }
@@ -85,7 +89,7 @@ export class ItemToolComponent implements OnInit {
     let commandId = helper.addTentativeItem({geometry_type: this.geofenceType, geometry: range});
 
     return new Promise((resolve, reject) => {
-      let target = {area: helper.createTargetArea(this.geofenceType, range, this.geofenceDirection)};
+      let target = this.geofenceUseTargetArea ? {area: helper.createTargetArea(this.geofenceType, range, this.geofenceDirection)} : null;
       return this.execute(new CreateGeofenceCommand(this.geofenceService, range, this.geofenceDirection, target)).then(function(result: any) {
         helper.setTentativeItemId(commandId, result.data.id, false);
         resolve(result);

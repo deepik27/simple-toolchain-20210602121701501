@@ -17,6 +17,7 @@ import{ Item } from "./map-item-helper";
 @Injectable()
 export class MapGeofenceHelper extends MapItemHelper<Geofence> {
   isAvailable: boolean = false;
+  useTargetArea: boolean = false;
   targetStyle: ol.style.Style;
   geometryBorderStyle: ol.style.Style;
   tentativeStyle: ol.style.Style;
@@ -24,9 +25,10 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
   constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public geofenceService: GeofenceService, options: any = {}) {
     super(map, itemLayer);
 
-    this.geofenceService.isAvailable().subscribe(data => {
+    this.geofenceService.getCapability().subscribe(data => {
       if (data) {
-        this.isAvailable = true;
+        this.isAvailable = data.available;
+        this.useTargetArea = data.useTargetArea;
       }
     });
     options = options || {};
@@ -263,7 +265,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
 
   public createItemFeatures(geofence: Geofence) {
     let features = [];
-    let polygon = this.createPolygonFeature(geofence.geometry_type, geofence.geometry, geofence.target.area, geofence.direction);
+    let polygon = this.createPolygonFeature(geofence.geometry_type, geofence.geometry, geofence.target ? geofence.target.area : null, geofence.direction);
     let feature = new ol.Feature({geometry: polygon, item: geofence});
     features.push(feature);
 
@@ -400,14 +402,13 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
   }
 
   public hitTest(geofence, feature, position) {
-    let area = geofence.target && geofence.target.area;
-    if (!area) {
-      return false;
-    }
     let longitude = position[0];
     let latitude = position[1];
-    if (area.min_longitude > longitude || longitude > area.max_longitude || area.min_latitude > latitude || latitude > area.max_latitude) {
-      return false;
+    let area = geofence.target && geofence.target.area;
+    if (area) {
+      if (area.min_longitude > longitude || longitude > area.max_longitude || area.min_latitude > latitude || latitude > area.max_latitude) {
+        return false;
+      }
     }
 
     if (geofence.direction === "in") {
@@ -418,7 +419,13 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
     if (geofence.geometry_type === "circle") {
       return this.calcDistance([geometry.longitude, geometry.latitude], position) >= geometry.radius;
     } else {
-      return geometry.min_longitude > longitude || longitude > geometry.max_longitude || geometry.min_latitude > latitude || latitude > geometry.max_latitude;
+      let dlon = Math.max((geometry.max_longitude - geometry.min_longitude) / 20, 0.0001);
+      let dlat = Math.max((geometry.max_latitude - geometry.min_latitude) / 20, 0.0001);
+      let min_longitude = geometry.min_longitude + dlon;
+      let max_longitude = geometry.max_longitude - dlon;
+      let min_latitude = geometry.min_latitude + dlat;
+      let max_latitude = geometry.max_latitude - dlat;
+      return min_longitude > longitude || longitude > max_longitude || min_latitude > latitude || latitude > max_latitude;
     }
   }
 

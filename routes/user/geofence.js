@@ -30,7 +30,7 @@ function handleAssetError(res, err) {
 }
 
 router.get("/capability/geofence", authenticate, function(req, res) {
-	res.send({available: driverInsightsGeofence.isAvailable()});
+	res.send({available: driverInsightsGeofence.getSupportInfo()});
 });
 
 router.post("/geofence", authenticate, function(req, res){
