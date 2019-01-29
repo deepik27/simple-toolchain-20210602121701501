@@ -14,7 +14,7 @@ var Q = require("q");
 var cfenv = require("cfenv");
 var moment = require("moment");
 var fs = require("fs-extra");
-var iot4aAsset = app_module_require('iot4a-api/asset.js');
+const iot4aAsset = app_module_require("iot4a-node-lib").asset;
 var alertManager = require("./alertManager.js");
 
 var debug = require('debug')('alert');
@@ -31,7 +31,7 @@ var ALERT_LIFE_SPAN = process.env.ALERT_LIFE_SPAN || 3000;
 _.extend(driverInsightsAlert, {
 	/*
 	 * Vehicle information accessible in alert rules defined by JS
-	 * 
+	 *
 	 * {mo_id: {
 	 * 	vehicleInfo: {status: "Active", properties: {fueltank: 60}},
 	 * 	prevProbe: {ts: xxxxxxxxx, ...., props: {fuel: 49.1, engineTemp: 298.2}}
@@ -41,7 +41,7 @@ _.extend(driverInsightsAlert, {
 
 	/*
 	 * Alert rules defined by JS is required to be implemented as following in ALERT_RULE_TEMPLATE_DIR
-	 * 
+	 *
 	 * module.exports = {
 	 * 	name: "rule name",
 	 * 	description: "rule description",
@@ -53,7 +53,7 @@ _.extend(driverInsightsAlert, {
 
 	/*
 	 * Timer for each mo_id to close alerts created from notified actions
-	 * 
+	 *
 	 * {
 	 * 	mo_id: timer_id
 	 * }

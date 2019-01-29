@@ -20,8 +20,8 @@ var authenticate = require('./auth.js').authenticate;
 var driverInsightsProbe = require('../../driverInsights/probe');
 var driverInsightsAlert = require('../../driverInsights/fleetalert.js');
 var driverInsightsAnalysis = require('../../driverInsights/analysis.js');
-var iot4aContextMapping = app_module_require('iot4a-api/contextMapping');
-var iot4aVehicleDataHub = app_module_require('iot4a-api/vehicleDataHub');
+const iot4aContextMapping = app_module_require("iot4a-node-lib").contextMapping;
+const iot4aVehicleDataHub = app_module_require('iot4a-node-lib').vehicleDataHub;
 var dbClient = require('../../cloudantHelper.js');
 var probeAggregator = require('./aggregator.js');
 
@@ -33,7 +33,7 @@ var AGGREGATION_THRESHOLD = isNaN(process.env.AGGREGATION_THRESHOLD) ? 500 : pro
 function handleAssetError(res, err) {
 	//{message: msg, error: error, response: response}
 	console.error('error: ' + JSON.stringify(err));
-	var status = (err && (err.status||err.statusCode)) || 500;
+	var status = (err && (err.status || err.statusCode)) || 500;
 	var message = err.message || (err.data && err.data.message) || err;
 	return res.status(status).send(message);
 }
@@ -77,27 +77,27 @@ function handleAssetError(res, err) {
  * 	"mo_id2": {...}
  * }
  */
-router.post('/notifiedActions', authenticate, function(req, res){
-	try{
-			var affected_events = null;
-			var notified_messages = null;
-			if(req.body){
-				debug("notifiedActions req.body: " + JSON.stringify(req.body));
-				Object.keys(req.body).forEach(function(mo_id){
-					var byMoid = req.body[mo_id];
-					Object.keys(byMoid).forEach(function(ts){
-						var byTimestamp = byMoid[ts];
-						affected_events = byTimestamp.affectedEvents;
-						notified_messages = byTimestamp.notifiedMessages;
-						driverInsightsAlert.handleEvents(
-							{mo_id: mo_id, ts: Number(ts)},
-							(affected_events||[]).concat(notified_messages||[])
-						);
-					});
+router.post('/notifiedActions', authenticate, function (req, res) {
+	try {
+		var affected_events = null;
+		var notified_messages = null;
+		if (req.body) {
+			debug("notifiedActions req.body: " + JSON.stringify(req.body));
+			Object.keys(req.body).forEach(function (mo_id) {
+				var byMoid = req.body[mo_id];
+				Object.keys(byMoid).forEach(function (ts) {
+					var byTimestamp = byMoid[ts];
+					affected_events = byTimestamp.affectedEvents;
+					notified_messages = byTimestamp.notifiedMessages;
+					driverInsightsAlert.handleEvents(
+						{ mo_id: mo_id, ts: Number(ts) },
+						(affected_events || []).concat(notified_messages || [])
+					);
 				});
-			}
-			res.status(200).send("");
-	}catch(error){
+			});
+		}
+		res.status(200).send("");
+	} catch (error) {
 		handleAssetError(res, error);
 	}
 });
@@ -107,10 +107,10 @@ router.post('/notifiedActions', authenticate, function(req, res){
  *  List all the cars
  *   http://localhost:6003/monitoring/cars/query?min_lat=-90&max_lat=90&min_lng=-180&max_lng=180
  */
-router.get('/carProbe', authenticate, function(req, res) {
+router.get('/carProbe', authenticate, function (req, res) {
 	// get extent
 	var extent = normalizeExtent(req.query);
-	if ([extent.max_lat, extent.max_lng, extent.min_lat, extent.min_lng].some(function(v){ return isNaN(v); })){
+	if ([extent.max_lat, extent.max_lng, extent.min_lat, extent.min_lng].some(function (v) { return isNaN(v); })) {
 		return res.status(400).send('One or more of the parameters are undefined or not a number'); // FIXME response code
 	}
 	// query by extent
@@ -121,7 +121,7 @@ router.get('/carProbe', authenticate, function(req, res) {
 		max_latitude: extent.max_lat,
 	};
 	// add vehicleId query
-	if(req.query.vehicleId){
+	if (req.query.vehicleId) {
 		qs.mo_id = req.query.vehicleId;
 	}
 
@@ -134,7 +134,7 @@ router.get('/carProbe', authenticate, function(req, res) {
 		initWebSocketServer(req.app.server, wssUrl);
 	}
 
-	getCarProbe(qs, true).then(function(probes){
+	getCarProbe(qs, true).then(function (probes) {
 		// send normal response
 		var ts;
 		var count;
@@ -145,7 +145,7 @@ router.get('/carProbe', authenticate, function(req, res) {
 			count = deviceInfo.count;
 			devices = deviceInfo.devices;
 		} else {
-			ts = _.max(_.map(probes, function(d){ return d.lastEventTime || d.t || d.ts; }));
+			ts = _.max(_.map(probes, function (d) { return d.lastEventTime || d.t || d.ts; }));
 			count = probes.length;
 			devices = probes;
 		}
@@ -157,17 +157,17 @@ router.get('/carProbe', authenticate, function(req, res) {
 			serverTime: (isNaN(ts) || !isFinite(ts)) ? Date.now() : ts,
 			wssPath: wssUrl + '?' + "region=" + encodeURI(JSON.stringify(extent))
 		});
-	})["catch"](function(error){
+	})["catch"](function (error) {
 		res.send(error);
 	}).done();
 });
 
-router.get('/carProbeMonitor', authenticate, function(req, res) {
+router.get('/carProbeMonitor', authenticate, function (req, res) {
 	var qs = req.url.substring('/carProbeMonitor?'.length);
 	res.render('carProbeMonitor', { appName: appEnv.name, qs: qs });
 });
 
-router.get("/routesearch", function(req, res){
+router.get("/routesearch", function (req, res) {
 	var q = req.query;
 	iot4aContextMapping.routeSearch(
 		q.orig_latitude,
@@ -177,26 +177,26 @@ router.get("/routesearch", function(req, res){
 		q.dest_longitude,
 		q.dest_heading || 0,
 		q.option
-	).then(function(msg){
+	).then(function (msg) {
 		res.send(msg);
-	})["catch"](function(error){
+	})["catch"](function (error) {
 		handleAssetError(res, error);
 	});
 });
 
-router.get("/alert", function(req, res){
+router.get("/alert", function (req, res) {
 	var q = req.query;
 	var conditions = [];
-	if(q.type){
+	if (q.type) {
 		conditions.push("type:\"" + q.type + "\"");
 	}
-	if(q.severity){
+	if (q.severity) {
 		conditions.push("severity:\"" + q.severity + "\"");
 	}
-	if(q.mo_id){
+	if (q.mo_id) {
 		conditions.push("mo_id:\"" + q.mo_id + "\"");
 	}
-	if(q.from || q.to){
+	if (q.from || q.to) {
 		conditions.push("ts:[" + (q.from || "0") + " TO " + (q.to || "Infinity") + "]");
 	}
 	var includeClosed = q.includeClosed === "true";
@@ -204,26 +204,26 @@ router.get("/alert", function(req, res){
 
 	var extent = normalizeExtent(q);
 	var extentAsArray = [extent.max_lat, extent.max_lng, extent.min_lat, extent.min_lng];
-	if (extentAsArray.every(function(v){ return isNaN(v); })){
-		Q.when(driverInsightsAlert.getAlerts(conditions, includeClosed, limit), function(docs){
+	if (extentAsArray.every(function (v) { return isNaN(v); })) {
+		Q.when(driverInsightsAlert.getAlerts(conditions, includeClosed, limit), function (docs) {
 			res.send(docs);
 		});
-	}else if(extentAsArray.every(function(v){ return !isNaN(v); })){
+	} else if (extentAsArray.every(function (v) { return !isNaN(v); })) {
 		var qs = {
-				min_longitude: extent.min_lng,
-				min_latitude: extent.min_lat,
-				max_longitude: extent.max_lng,
-				max_latitude: extent.max_lat,
-			};
-		Q.when(driverInsightsAlert.getAlertsForVehicleInArea(conditions, qs, includeClosed, limit), function(docs){
+			min_longitude: extent.min_lng,
+			min_latitude: extent.min_lat,
+			max_longitude: extent.max_lng,
+			max_latitude: extent.max_lat,
+		};
+		Q.when(driverInsightsAlert.getAlertsForVehicleInArea(conditions, qs, includeClosed, limit), function (docs) {
 			res.send(docs);
 		});
-	}else if(extentAsArray.some(function(v){ return isNaN(v); })){
+	} else if (extentAsArray.some(function (v) { return isNaN(v); })) {
 		res.status(400).send('One or more of the parameters are undefined or not a number')
 	}
 });
 
-router.get("/event/query", function(req, res){
+router.get("/event/query", function (req, res) {
 	var q = req.query;
 	iot4aContextMapping.queryEvent(
 		q.min_latitude,
@@ -232,62 +232,62 @@ router.get("/event/query", function(req, res){
 		q.max_longitude,
 		q.event_type,
 		q.status
-	).then(function(msg){
+	).then(function (msg) {
 		res.send(msg);
-	})["catch"](function(error){
+	})["catch"](function (error) {
 		handleAssetError(res, error);
 	});
 });
 
-router.get("/event", function(req, res){
+router.get("/event", function (req, res) {
 	var q = req.params.event_id;
-	iot4aContextMapping.getEvent(req.query.event_id).then(function(msg){
+	iot4aContextMapping.getEvent(req.query.event_id).then(function (msg) {
 		res.send(msg);
-	})["catch"](function(error){
+	})["catch"](function (error) {
 		handleAssetError(res, error);
 	});
 });
 
-router.post("/event", function(req, res){
-	iot4aVehicleDataHub.createEvent(req.body, "sync").then(function(msg){
+router.post("/event", function (req, res) {
+	iot4aVehicleDataHub.createEvent(req.body, "sync").then(function (msg) {
 		res.send(msg);
-	})["catch"](function(error){
+	})["catch"](function (error) {
 		handleAssetError(res, error);
 	});
 });
 
-router["delete"]("/event", function(req, res){
-	iot4aContextMapping.deleteEvent(req.query.event_id).then(function(msg){
+router["delete"]("/event", function (req, res) {
+	iot4aContextMapping.deleteEvent(req.query.event_id).then(function (msg) {
 		res.send(msg);
-	})["catch"](function(error){
+	})["catch"](function (error) {
 		handleAssetError(res, error);
 	});
 });
 
-router.get("/capability/analysis", authenticate, function(req, res) {
-	res.send({available: driverInsightsAnalysis.isAvailable()});
+router.get("/capability/analysis", authenticate, function (req, res) {
+	res.send({ available: driverInsightsAnalysis.isAvailable() });
 });
 
-router.get('/analysis/trip/:mo_id', authenticate, function(req, res) {
-	Q.when(driverInsightsAnalysis.getTrips(req.params.mo_id, req.query.limit), function(msg){
+router.get('/analysis/trip/:mo_id', authenticate, function (req, res) {
+	Q.when(driverInsightsAnalysis.getTrips(req.params.mo_id, req.query.limit), function (msg) {
 		res.send(msg);
-	})["catch"](function(error){
+	})["catch"](function (error) {
 		handleAssetError(res, error);
 	});
 });
 
-router.get('/analysis/behaviors/:mo_id', authenticate, function(req, res) {
-	Q.when(driverInsightsAnalysis.getTripBehavior(req.params.mo_id, req.query.trip_id, req.query.lastHours), function(msg){
+router.get('/analysis/behaviors/:mo_id', authenticate, function (req, res) {
+	Q.when(driverInsightsAnalysis.getTripBehavior(req.params.mo_id, req.query.trip_id, req.query.lastHours), function (msg) {
 		res.send(msg);
-	})["catch"](function(error){
+	})["catch"](function (error) {
 		handleAssetError(res, error);
 	});
 });
 
-router.get("/analysis/triproutes/:mo_id", function(req, res){
-	Q.when(driverInsightsAnalysis.getTripRoute(req.params.mo_id, req.query.trip_id, req.query.lastHours), function(msg){
+router.get("/analysis/triproutes/:mo_id", function (req, res) {
+	Q.when(driverInsightsAnalysis.getTripRoute(req.params.mo_id, req.query.trip_id, req.query.lastHours), function (msg) {
 		res.send(msg);
-	})["catch"](function(error){
+	})["catch"](function (error) {
 		handleAssetError(res, error);
 	});
 });
@@ -300,32 +300,34 @@ router.wsServer = null;
 /*
  * Create WebSocket server
  */
-var initWebSocketServer = function(server, path){
-	if (router.wsServer !== null){
+var initWebSocketServer = function (server, path) {
+	if (router.wsServer !== null) {
 		return; // already created
 	}
 
 	var TIMEOUT = 1000;
-	var timerWebSockEmitFunc = function() {
+	var timerWebSockEmitFunc = function () {
 		//
 		// This is invoked every TIMEOUT milliseconds to send the latest car probes to server
 		//
-		Q.allSettled(router.wsServer.clients.map(function(client){
-			function getQs(){
+		Q.allSettled(router.wsServer.clients.map(function (client) {
+			function getQs() {
 				var e = client.extent;
-				if(e){
+				if (e) {
 					return {
 						min_latitude: e.min_lat, min_longitude: e.min_lng,
 						max_latitude: e.max_lat, max_longitude: e.max_lng
 					};
 				}
-				return { min_latitude: -90, min_longitude: -180,
-						 max_latitude:  90, max_longitude:  180 };
+				return {
+					min_latitude: -90, min_longitude: -180,
+					max_latitude: 90, max_longitude: 180
+				};
 			}
-			if(client.aggregationNeeded){
+			if (client.aggregationNeeded) {
 				return Q();
 			}
-			return getCarProbe(getQs(), true).then(function(probes){
+			return getCarProbe(getQs(), true).then(function (probes) {
 				var count;
 				var devices;
 				var aggregated = !!probes.aggregated;
@@ -341,21 +343,21 @@ var initWebSocketServer = function(server, path){
 
 				// construct message
 				var msgs = JSON.stringify({
-						aggregated: aggregated,
-						count: (count),
-						devices: (devices),
-						deleted: undefined,
-					});
+					aggregated: aggregated,
+					count: (count),
+					devices: (devices),
+					deleted: undefined,
+				});
 				try {
 					client.send(msgs);
 					debug('  sent WSS message. ' + msgs);
 				} catch (e) {
 					console.error('Failed to send wss message: ', e);
 				}
-			})['catch'](function(err){
+			})['catch'](function (err) {
 				console.error('Failed to get car probe', err);
 			});
-		})).done(function(){
+		})).done(function () {
 			// re-schedule once all the wss.send has been completed
 			setTimeout(timerWebSockEmitFunc, TIMEOUT);
 		});
@@ -368,30 +370,30 @@ var initWebSocketServer = function(server, path){
 	var wss = router.wsServer = new WebSocketServer({
 		server: server,
 		path: path,
-		verifyClient : function (info, callback) { //only allow internal clients from the server origin
+		verifyClient: function (info, callback) { //only allow internal clients from the server origin
 			var isLocal = appEnv.url.toLowerCase().indexOf('://localhost') !== -1;
 			var allow = isLocal || (info.origin.toLowerCase() === appEnv.url.toLowerCase());
-			if(!allow){
+			if (!allow) {
 				console.error("rejected web socket connection form external origin " + info.origin + " only connection form internal origin " + appEnv.url + " are accepted");
 			}
-			if(!callback){
+			if (!callback) {
 				return allow;
 			}
 			var statusCode = (allow) ? 200 : 403;
-			callback (allow, statusCode);
+			callback(allow, statusCode);
 		}
 	});
 
 	//
 	// Assign "extent" to the client for each connection
 	//
-	wss.on('connection', function(client){
+	wss.on('connection', function (client) {
 		debug('got wss connectoin at: ' + client.upgradeReq.url);
 		// assign extent obtained from the web sock request URL, to this client
 		var url = client.upgradeReq.url;
 		var qsIndex = url.lastIndexOf('?region=');
-		if(qsIndex >= 0){
-			try{
+		if (qsIndex >= 0) {
+			try {
 				var j = decodeURI(url.substr(qsIndex + 8)); // 8 is length of "?region="
 				var extent = JSON.parse(j);
 				client.extent = normalizeExtent(extent);
@@ -401,24 +403,24 @@ var initWebSocketServer = function(server, path){
 					client.extent.max_lng,
 					client.extent.max_lat);
 				client.aggregationNeeded = !!regions;
-			}catch(e){
+			} catch (e) {
 				console.error('Error on parsing extent in wss URL', e);
 			}
 		}
 	});
 }
 
-function getCarProbe(qs, addAlerts){
+function getCarProbe(qs, addAlerts) {
 	var regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude, qs.max_latitude);
-	var probes = Q(iot4aVehicleDataHub.getCarProbe(qs).then(function(probes){
+	var probes = Q(iot4aVehicleDataHub.getCarProbe(qs).then(function (probes) {
 		// send normal response
-		(probes||[]).forEach(function(p){
-			if(p.timestamp){
+		(probes || []).forEach(function (p) {
+			if (p.timestamp) {
 				p.ts = Date.parse(p.timestamp);
 				p.deviceID = p.mo_id;
 			}
 		});
-		if(!regions && AGGREGATION_THRESHOLD > 1 && probes.length > AGGREGATION_THRESHOLD){
+		if (!regions && AGGREGATION_THRESHOLD > 1 && probes.length > AGGREGATION_THRESHOLD) {
 			regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude, qs.max_latitude, -1);
 		}
 		if (regions) {
@@ -426,33 +428,33 @@ function getCarProbe(qs, addAlerts){
 		}
 		return probes;
 	}));
-	if(addAlerts) {
-		probes = Q(probes.then(function(result){
+	if (addAlerts) {
+		probes = Q(probes.then(function (result) {
 			if (result.summary) {
 				return result;
 			}
 			var probes = result;
-			if(!probes || probes.length == 0)
+			if (!probes || probes.length == 0)
 				return probes;
 
-			var mo_ids = probes.map(function(probe){return probe.mo_id;});
-			return driverInsightsAlert.getAlertsForVehicles(mo_ids, /*includeClosed*/false, 200).then(function(result){
+			var mo_ids = probes.map(function (probe) { return probe.mo_id; });
+			return driverInsightsAlert.getAlertsForVehicles(mo_ids, /*includeClosed*/false, 200).then(function (result) {
 				// result: { alerts: [ { closed_ts: n, description: s, mo_id: s, severity: s, timestamp: s, ts: n, type: s }, ...] }
-				var alertsByMoId = _.groupBy(result.alerts || [], function(alert){ return alert.mo_id; });
-				probes.forEach(function(probe){
+				var alertsByMoId = _.groupBy(result.alerts || [], function (alert) { return alert.mo_id; });
+				probes.forEach(function (probe) {
 					var alertsForMo = alertsByMoId[probe.mo_id] || {}; // lookup
-					if(alertsForMo){ // list of alerts
-						var alertCounts = _.countBy(alertsForMo, function(alert){
+					if (alertsForMo) { // list of alerts
+						var alertCounts = _.countBy(alertsForMo, function (alert) {
 							return alert.severity;
 						});
 						alertCounts.items = alertsForMo; // details if needed
-						
+
 						// calculate summary
-						var alertsByType = _.groupBy(alertsForMo, function(alert) { return alert.type; });
+						var alertsByType = _.groupBy(alertsForMo, function (alert) { return alert.type; });
 						// severity: High: 100, Medium: 10, Low: 1, None: 0 for now
-						var severityByType = _.mapObject(alertsByType, function(alerts, type){
-							if(alerts && alerts.length === 0) return undefined;
-							return _.max(alerts, function(alert){
+						var severityByType = _.mapObject(alertsByType, function (alerts, type) {
+							if (alerts && alerts.length === 0) return undefined;
+							return _.max(alerts, function (alert) {
 								var s = alerts.severity && alerts.severity.toLowerCase();
 								return s === 'high' ? 100 : (s === 'medium' ? 10 : (s === 'low' ? 1 : 0));
 							}).severity;
@@ -470,16 +472,16 @@ function getCarProbe(qs, addAlerts){
 }
 
 
-function normalizeExtent(min_lat_or_extent, min_lng, max_lat, max_lng){
+function normalizeExtent(min_lat_or_extent, min_lng, max_lat, max_lng) {
 	// convert one when the object is passed
 	var min_lat;
-	if(min_lat_or_extent && min_lat_or_extent.min_lat){
+	if (min_lat_or_extent && min_lat_or_extent.min_lat) {
 		var e = min_lat_or_extent;
 		min_lat = e.min_lat;
 		min_lng = e.min_lng;
 		max_lat = e.max_lat;
 		max_lng = e.max_lng;
-	}else{
+	} else {
 		min_lat = min_lat_or_extent;
 	}
 
@@ -492,8 +494,8 @@ function normalizeExtent(min_lat_or_extent, min_lng, max_lat, max_lng){
 	// normalize
 	var whole_lng = ((max_lng - min_lng) > 359.9);
 	min_lng = whole_lng ? -180 : ((min_lng + 180) % 360) - 180;
-	max_lng = whole_lng ?  180 : ((max_lng + 180) % 360) - 180;
-	var extent = {min_lng: min_lng, min_lat: min_lat, max_lng: max_lng, max_lat: max_lat, whole_lng: whole_lng};
+	max_lng = whole_lng ? 180 : ((max_lng + 180) % 360) - 180;
+	var extent = { min_lng: min_lng, min_lat: min_lat, max_lng: max_lng, max_lat: max_lat, whole_lng: whole_lng };
 
 	return extent;
 }

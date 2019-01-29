@@ -12,45 +12,45 @@ var driverInsightsAnalysis = module.exports = {};
 var _ = require("underscore");
 var Q = new require('q');
 var moment = require("moment");
-var iot4aDriverBehavior = app_module_require('iot4a-api/driverBehavior');
-var iot4aAsset = app_module_require('iot4a-api/asset.js');
+const iot4aDriverBehavior = app_module_require("iot4a-node-lib").driverBehavior;
+const iot4aAsset = app_module_require("iot4a-node-lib").asset;
 
 var debug = require('debug')('analysis');
 debug.log = console.log.bind(console);
 
 _.extend(driverInsightsAnalysis, {
 
-	isAvailable: function() {
+	isAvailable: function () {
 		return iot4aAsset.isSaaS();
 	},
-	
-	getTrips: function(mo_id, limit) {
+
+	getTrips: function (mo_id, limit) {
 		var deferred = Q.defer();
-		var params = {mo_id: mo_id};
+		var params = { mo_id: mo_id };
 		if (limit) {
 			params.limit = limit;
 		}
-		Q.when(iot4aDriverBehavior.getTrip(params), function(response) {
+		Q.when(iot4aDriverBehavior.getTrip(params), function (response) {
 			if (response && response.length > 0) {
 				deferred.resolve(response);
 			}
-		})["catch"](function(err){
+		})["catch"](function (err) {
 			deferred.reject(err);
 		}).done();
 		return deferred.promise;
 	},
 
-	getTripBehavior: function(mo_id, trip_id, lastHours) {
-		var params = {mo_id: mo_id, trip_id: trip_id};
+	getTripBehavior: function (mo_id, trip_id, lastHours) {
+		var params = { mo_id: mo_id, trip_id: trip_id };
 		if (lastHours > 0) {
 			params.from = moment().subtract(1, 'hours').toISOString();
 			params.to = moment().toISOString();
 		}
 		return iot4aDriverBehavior.requestOnlineJobPerTrip(params);
 	},
-	
-	getTripRoute: function(mo_id, trip_id, lastHours) {
-		var params = {mo_id: mo_id, trip_id: trip_id};
+
+	getTripRoute: function (mo_id, trip_id, lastHours) {
+		var params = { mo_id: mo_id, trip_id: trip_id };
 		if (lastHours > 0) {
 			params.from = moment().subtract(1, 'hours').toISOString();
 			params.to = moment().toISOString();
