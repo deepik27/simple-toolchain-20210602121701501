@@ -4,8 +4,8 @@
   "version": "1.0.0-M1",
   "scripts": {
     "start": "node app.js",
-    "preinstall": "rm -rf app_modules/iot4a-node-lib",
-    "postinstall": "cp -r node_modules/iot4a-node-lib app_modules"
+    "preinstall": "rm -rf app_modules/cvi-node-lib",
+    "postinstall": "cp -r node_modules/cvi-node-lib app_modules"
   },
   "dependencies": {
     "basic-auth": "1.0.3",
@@ -25,6 +25,7 @@
     "fs-extra": "0.26.5",
     "helmet": "1.1.0",
     "ibmiotf": "^0.2.25",
+    "cvi-node-lib": "git+https://<ibm_ghe_token>:x-oauth-basic@github.ibm.com/Watson-IoT/cvi-node-lib.git",
     "method-override": "2.3.6",
     "moment": "2.8.3",
     "morgan": "1.6.0",
@@ -33,8 +34,7 @@
     "q": "2.0.3",
     "request": "2.69.0",
     "underscore": "1.8.3",
-    "ws": "0.8.0",
-    "iot4a-node-lib": "git+https://<ibm_ghe_token>:x-oauth-basic@github.ibm.com/Watson-IoT/iot4a-node-lib.git"
+    "ws": "0.8.0"
   },
   "repository": {
     "type": "git",

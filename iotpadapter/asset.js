@@ -15,7 +15,7 @@ var dbClient = require('./../cloudantHelper.js');
 
 var queue = app_module_require('utils/queue.js');
 var IOTF = app_module_require('iotfclient');
-const iot4aAsset = app_module_require("iot4a-node-lib").asset;
+const iot4aAsset = app_module_require("cvi-node-lib").asset;
 
 var ASSET_DB_NAME = "iotp_asset_map";
 var DEFAULT_DRIVER_NAME = "OBDII Driver";

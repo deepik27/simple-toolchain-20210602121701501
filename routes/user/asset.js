@@ -16,7 +16,7 @@ var _ = require('underscore');
 var debug = require('debug')('device');
 debug.log = console.log.bind(console);
 
-const iot4aAsset = app_module_require("iot4a-node-lib").asset;
+const iot4aAsset = app_module_require("cvi-node-lib").asset;
 
 var authenticate = require('./auth.js').authenticate;
 

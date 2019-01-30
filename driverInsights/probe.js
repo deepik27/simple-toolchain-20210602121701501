@@ -13,7 +13,7 @@ var _ = require("underscore");
 var Q = new require('q');
 var moment = require("moment");
 var driverInsightsAlert = require("./fleetalert.js");
-const iot4aVehicleDataHub = app_module_require('iot4a-node-lib').vehicleDataHub;
+const iot4aVehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
 var debug = require('debug')('probe');
 debug.log = console.log.bind(console);
 

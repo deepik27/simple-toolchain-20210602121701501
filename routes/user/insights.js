@@ -20,8 +20,8 @@ var authenticate = require('./auth.js').authenticate;
 var driverInsightsProbe = require('../../driverInsights/probe');
 var driverInsightsAlert = require('../../driverInsights/fleetalert.js');
 var driverInsightsAnalysis = require('../../driverInsights/analysis.js');
-const iot4aContextMapping = app_module_require("iot4a-node-lib").contextMapping;
-const iot4aVehicleDataHub = app_module_require('iot4a-node-lib').vehicleDataHub;
+const iot4aContextMapping = app_module_require("cvi-node-lib").contextMapping;
+const iot4aVehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
 var dbClient = require('../../cloudantHelper.js');
 var probeAggregator = require('./aggregator.js');
 

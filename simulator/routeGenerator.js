@@ -9,7 +9,7 @@
  */
 var _ = require("underscore");
 var Q = new require('q');
-const iot4aContextMapping = app_module_require("iot4a-node-lib").contextMapping;
+const iot4aContextMapping = app_module_require("cvi-node-lib").contextMapping;
 var debug = require('debug')('vehicleLocation');
 debug.log = console.log.bind(console);
 

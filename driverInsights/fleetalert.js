@@ -14,7 +14,7 @@ var Q = require("q");
 var cfenv = require("cfenv");
 var moment = require("moment");
 var fs = require("fs-extra");
-const iot4aAsset = app_module_require("iot4a-node-lib").asset;
+const iot4aAsset = app_module_require("cvi-node-lib").asset;
 var alertManager = require("./alertManager.js");
 
 var debug = require('debug')('alert');

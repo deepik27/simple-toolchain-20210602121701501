@@ -13,7 +13,7 @@ var _ = require("underscore");
 var Q = require("q");
 var moment = require("moment");
 var dbClient = require('./../cloudantHelper.js');
-const iot4aVehicleDataHub = app_module_require('iot4a-node-lib').vehicleDataHub;
+const iot4aVehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
 
 var debug = require('debug')('alertmanager');
 debug.log = console.log.bind(console);

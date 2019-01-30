@@ -12,8 +12,8 @@ var driverInsightsAnalysis = module.exports = {};
 var _ = require("underscore");
 var Q = new require('q');
 var moment = require("moment");
-const iot4aDriverBehavior = app_module_require("iot4a-node-lib").driverBehavior;
-const iot4aAsset = app_module_require("iot4a-node-lib").asset;
+const iot4aDriverBehavior = app_module_require("cvi-node-lib").driverBehavior;
+const iot4aAsset = app_module_require("cvi-node-lib").asset;
 
 var debug = require('debug')('analysis');
 debug.log = console.log.bind(console);

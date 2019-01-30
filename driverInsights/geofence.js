@@ -15,7 +15,7 @@ var moment = require("moment");
 
 var dbClient = require('./../cloudantHelper.js');
 var ruleGenerator = require('./ruleGenerator.js');
-const iot4aAsset = app_module_require("iot4a-node-lib").asset;
+const iot4aAsset = app_module_require("cvi-node-lib").asset;
 var version = app_module_require('utils/version.js');
 
 var debug = require('debug')('geofence');

@@ -10,7 +10,7 @@
 
 var Q = require('q');
 var _ = require('underscore');
-const iot4aVehicleDataHub = app_module_require('iot4a-node-lib').vehicleDataHub;
+const iot4aVehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
 
 var probeInterface = {};
 _.extend(probeInterface, {

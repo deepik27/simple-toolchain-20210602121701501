@@ -14,7 +14,7 @@ var Q = require('q');
 var _ = require('underscore');
 var fs = require('fs-extra');
 var Chance = require('chance');
-const iot4aAsset = app_module_require("iot4a-node-lib").asset;
+const iot4aAsset = app_module_require("cvi-node-lib").asset;
 
 var debug = require('debug')('simulatedVehicleManager');
 debug.log = console.log.bind(console);

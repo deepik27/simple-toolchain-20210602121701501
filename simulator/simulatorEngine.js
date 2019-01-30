@@ -14,7 +14,7 @@ var moment = require("moment");
 var routeGenerator = require('./routeGenerator.js');
 var vehicleManager = require('./vehicleManager.js');
 var simulatedVehicle = require('./simulatedVehicle.js');
-const iot4aAsset = app_module_require("iot4a-node-lib").asset;
+const iot4aAsset = app_module_require("cvi-node-lib").asset;
 var Queue = app_module_require('utils/queue.js');
 var probeInterface = app_module_require("utils/probe.js");
 
