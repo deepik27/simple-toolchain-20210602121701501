@@ -25,17 +25,11 @@ public class MovingAverageAcceleration implements IComplexRuleMethod {
 	
 	static final String VASTATE_AVG_SPEED = "AvgSpeed";
 	static final String VASTATE_AVG_ACCEL = "AvgAccel";
-	static final String VASTATE_AVG_HEADING = "AvgHeading";
 	static final String VASTATE_SPEED = "Speed";	
 	static final String VASTATE_ACCEL = "Accel";
-	static final String VASTATE_HEADING = "Heading";
-	static final String VASTATE_DISTANCE = "Distance";
-	static final String VASTATE_MOVEDISTANCE = "MoveDistance";
-	static final String VASTATE_LINKID = "LinkID";
 	static final String VASTATE_CPTIME = "CPTime";
 	
 	static final String ITEM_SPEED = "Speed";
-	static final String ITEM_HEADING = "Heading";
 	static final String ITEM_ACCEL = "Accel";
 	static final String ITEM_SEQ = "Seq";
 	static final String ITEM_TIME = "Time";
@@ -55,13 +49,11 @@ public class MovingAverageAcceleration implements IComplexRuleMethod {
 	    } else {
 	      this.logger.info("PluginLog Test client is initialized.");
 	    }
-	    //this.logger.info("Current stacktrace: "+Arrays.toString(Thread.currentThread().getStackTrace()));
 	}
 
 	@Override
 	public void exec(EventOperator op, CarProbe cp, Vehicle v, Driver d,
 			Properties prop) {
-		//this.logger.info("Current stacktrace: "+Arrays.toString(Thread.currentThread().getStackTrace()));
 		try {
 			// props is a property having values if parameters are defined in a rule definition
 			
@@ -119,8 +111,6 @@ public class MovingAverageAcceleration implements IComplexRuleMethod {
 			// put the latest values of CarProbe
 			VAStateTreeItem newItem = tree.createTreeItem("N#" + seq);
 			newItem.putValue(ITEM_SPEED, cp.getSpeed());
-			newItem.putValue(ITEM_HEADING, cp.getHeading());
-			this.logger.info("======== VehicleActionRulePlugin#EXEC: ITEM_HEADING=" + cp.getHeading());
 			newItem.putValue(ITEM_SEQ, seq);
 			newItem.putValue(ITEM_TIME, cp.getEventTime());
 
@@ -141,7 +131,6 @@ public class MovingAverageAcceleration implements IComplexRuleMethod {
 			long min = -1;
 			VAStateTreeItem minItem = null;
 			double avg_speed = 0.0;
-			double avg_heading = 0.0;
 			double avg_accel = 0.0;
 			
 			int num = 0;
@@ -156,14 +145,12 @@ public class MovingAverageAcceleration implements IComplexRuleMethod {
 					minItem = it;
 				}
 				avg_speed += (int)it.getValue(ITEM_SPEED);
-				avg_heading += (double)it.getValue(ITEM_HEADING);
 				avg_accel += (double)it.getValue(ITEM_ACCEL);
 				num++;
 			}
 			if (num > maxItems) {
 				// evict the oldest item
 				avg_speed -= (int)minItem.getValue(ITEM_SPEED);
-				avg_heading -= (double)minItem.getValue(ITEM_HEADING);
 				avg_accel -= (double)minItem.getValue(ITEM_ACCEL);
 				minItem.remove();
 				
@@ -172,29 +159,12 @@ public class MovingAverageAcceleration implements IComplexRuleMethod {
 				num--;
 			}
 			avg_speed = avg_speed/num;
-			avg_heading = avg_heading/num;
 			avg_accel = avg_accel/num;
 			
 			rec.putValue(VASTATE_AVG_SPEED, avg_speed);
-			rec.putValue(VASTATE_AVG_HEADING, avg_heading);
 			rec.putValue(VASTATE_AVG_ACCEL, avg_accel);
-			
-			// Calculate distance and set to VAState
-			double move_distance = 0;
-			long cur_linkid = cp.getLink_id();
-			Double prev_distance = (Double)rec.getValue(VASTATE_DISTANCE);
-			Long prev_linkid = (Long)rec.getValue(VASTATE_LINKID);
-			if (prev_linkid == null || prev_linkid != cur_linkid) {
-				move_distance = cp.getDistance();
-			} else {
-				move_distance = Math.abs(cp.getDistance() - prev_distance);
-			}
-			rec.putValue(VASTATE_DISTANCE, cp.getDistance());
-			rec.putValue(VASTATE_MOVEDISTANCE,move_distance);
-			rec.putValue(VASTATE_LINKID, cp.getLink_id());
-			
+						
 			rec.putValue(VASTATE_SPEED, cp.getSpeed());
-			rec.putValue(VASTATE_HEADING, cp.getHeading());
 			rec.putValue(VASTATE_ACCEL, (double)new_accel);
 			
 			this.logger.info("======== VehicleActionRulePlugin#EXEC.rec:" + rec);
@@ -202,7 +172,7 @@ public class MovingAverageAcceleration implements IComplexRuleMethod {
 			this.logger.info("======== VehicleActionRulePlugin#EXEC.*AvgSpeed:" + rec.getValue(VASTATE_AVG_SPEED));
 
 		} catch(Exception e) {
-			e.printStackTrace();
+			this.logger.fatal("Caught exception: "+e.getLocalizedMessage());
 		}
 	}
 

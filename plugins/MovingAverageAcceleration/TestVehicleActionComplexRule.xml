@@ -27,26 +27,14 @@
 					<Parameter>
 						<Key>Speed</Key>
 						<Value>Vehicle.Edge.*Speed</Value>
-					</Parameter>
-					<Parameter>
-						<Key>Heading</Key>
-						<Value>Vehicle.Edge.*Heading</Value>
 					</Parameter>	
 					<Parameter>
 						<Key>Accel</Key>
 						<Value>Vehicle.Edge.*Accel</Value>
-					</Parameter>
-					<Parameter>
-						<Key>Distance</Key>
-						<Value>Vehicle.Edge.*Distance</Value>
 					</Parameter>					
 					<Parameter>
 						<Key>AvgSpeed</Key>
 						<Value>Vehicle.Edge.*AvgSpeed</Value>
-					</Parameter>
-					<Parameter>
-						<Key>AvgHeading</Key>
-						<Value>Vehicle.Edge.*AvgHeading</Value>
 					</Parameter>	
 					<Parameter>
 						<Key>AvgAccel</Key>
@@ -58,52 +46,6 @@
 		<!-- ************************************* -->
 		<!-- Speed: 0-40 -->
 		<!-- ************************************* -->
-        <VehicleActionRule>
-			<RuleType>1</RuleType>
-			<RuleID>2</RuleID>
-			<Description>Action for Execution</Description>
-			<Target>
-			</Target>
-			<Execution>
-				<Exec>
-					<ComplexMethodClass>com.ibm.mobility.agent.sample.MovingAverageAcceleration</ComplexMethodClass>
-					<Parameter>
-						<Key>MaxRecord</Key>
-						<Value>5</Value>
-					</Parameter>
-				</Exec>
-			</Execution>
-			<Condition>
-				<ValueCondition>
-					<Attribute object="Vehicle">Edge.*AvgSpeed@double</Attribute>
-					<Operator>GE</Operator>
-					<Value>0.0</Value>
-				</ValueCondition>
-				<ValueCondition>
-					<Attribute object="Vehicle">Edge.*AvgSpeed@double</Attribute>
-					<Operator>LT</Operator>
-					<Value>40.0</Value>
-				</ValueCondition>
-				<ValueCondition>
-					<Attribute object="Vehicle">Edge.*MoveDistance@double</Attribute>
-					<Operator>GE</Operator>
-					<Value>10.0</Value>
-				</ValueCondition>
-			</Condition>
-			<Action>
-				<VehicleAction>
-					<Message>Notify Speed:0-40,Distance:10</Message>
-					<Parameter>
-						<Key>AvgSpeed</Key>
-						<Value>Vehicle.Edge.*AvgSpeed</Value>
-					</Parameter>
-					<Parameter>
-						<Key>MoveDistance</Key>
-						<Value>Vehicle.Edge.*MoveDistance</Value>
-					</Parameter>					
-				</VehicleAction>
-			</Action>
-		</VehicleActionRule>
         <VehicleActionRule>
 			<RuleType>1</RuleType>
 			<RuleID>3</RuleID>
@@ -130,22 +72,13 @@
 					<Operator>LT</Operator>
 					<Value>40.0</Value>
 				</ValueCondition>
-				<ValueCondition>
-					<Attribute object="Vehicle">[$abs(CarProbe.Heading-Vehicle.Edge.AvgHeading@double)]</Attribute>
-					<Operator>GE</Operator>
-					<Value>3.0</Value>
-				</ValueCondition>
 			</Condition>
 			<Action>
 				<VehicleAction>
-					<Message>Notify Speed:0-40,Heading:3</Message>
+					<Message>Notify Speed:0-40</Message>
 					<Parameter>
 						<Key>AvgSpeed</Key>
 						<Value>Vehicle.Edge.*AvgSpeed</Value>
-					</Parameter>
-					<Parameter>
-						<Key>MoveHeading</Key>
-						<Value>[$abs(CarProbe.Heading-Vehicle.Edge.AvgHeading@double)]</Value>
 					</Parameter>					
 				</VehicleAction>
 			</Action>			
@@ -153,52 +86,6 @@
 		<!-- ************************************* -->
 		<!-- Speed: 40-80 -->
 		<!-- ************************************* -->
-        <VehicleActionRule>
-			<RuleType>1</RuleType>
-			<RuleID>4</RuleID>
-			<Description>Action for Execution</Description>
-			<Target>
-			</Target>
-			<Execution>
-				<Exec>
-					<ComplexMethodClass>com.ibm.mobility.agent.sample.MovingAverageAcceleration</ComplexMethodClass>
-					<Parameter>
-						<Key>MaxRecord</Key>
-						<Value>5</Value>
-					</Parameter>
-				</Exec>
-			</Execution>
-			<Condition>
-				<ValueCondition>
-					<Attribute object="Vehicle">Edge.*AvgSpeed@double</Attribute>
-					<Operator>GE</Operator>
-					<Value>40.0</Value>
-				</ValueCondition>
-				<ValueCondition>
-					<Attribute object="Vehicle">Edge.*AvgSpeed@double</Attribute>
-					<Operator>LT</Operator>
-					<Value>80.0</Value>
-				</ValueCondition>
-				<ValueCondition>
-					<Attribute object="Vehicle">Edge.*MoveDistance@double</Attribute>
-					<Operator>GE</Operator>
-					<Value>20.0</Value>
-				</ValueCondition>
-			</Condition>
-			<Action>
-				<VehicleAction>
-					<Message>Notify Speed:40-80,Distance:20</Message>
-					<Parameter>
-						<Key>AvgSpeed</Key>
-						<Value>Vehicle.Edge.*AvgSpeed</Value>
-					</Parameter>
-					<Parameter>
-						<Key>MoveDistance</Key>
-						<Value>Vehicle.Edge.*MoveDistance</Value>
-					</Parameter>					
-				</VehicleAction>
-			</Action>
-		</VehicleActionRule>
         <VehicleActionRule>
 			<RuleType>1</RuleType>
 			<RuleID>5</RuleID>
@@ -225,22 +112,13 @@
 					<Operator>LT</Operator>
 					<Value>80.0</Value>
 				</ValueCondition>
-				<ValueCondition>
-					<Attribute object="Vehicle">[$abs(CarProbe.Heading-Vehicle.Edge.AvgHeading@double)]</Attribute>
-					<Operator>GE</Operator>
-					<Value>2.0</Value>
-				</ValueCondition>
 			</Condition>
 			<Action>
 				<VehicleAction>
-					<Message>Notify Speed:40-80,Heading:2</Message>
+					<Message>Notify Speed:40-80</Message>
 					<Parameter>
 						<Key>AvgSpeed</Key>
 						<Value>Vehicle.Edge.*AvgSpeed</Value>
-					</Parameter>
-					<Parameter>
-						<Key>MoveHeading</Key>
-						<Value>[$abs(CarProbe.Heading-Vehicle.Edge.AvgHeading@double)]</Value>
 					</Parameter>					
 				</VehicleAction>
 			</Action>			
@@ -248,52 +126,6 @@
 		<!-- ************************************* -->
 		<!-- Speed: 80-120 -->
 		<!-- ************************************* -->
-        <VehicleActionRule>
-			<RuleType>1</RuleType>
-			<RuleID>6</RuleID>
-			<Description>Action for Execution</Description>
-			<Target>
-			</Target>
-			<Execution>
-				<Exec>
-					<ComplexMethodClass>com.ibm.mobility.agent.sample.MovingAverageAcceleration</ComplexMethodClass>
-					<Parameter>
-						<Key>MaxRecord</Key>
-						<Value>5</Value>
-					</Parameter>
-				</Exec>
-			</Execution>
-			<Condition>
-				<ValueCondition>
-					<Attribute object="Vehicle">Edge.*AvgSpeed@double</Attribute>
-					<Operator>GE</Operator>
-					<Value>80.0</Value>
-				</ValueCondition>
-				<ValueCondition>
-					<Attribute object="Vehicle">Edge.*AvgSpeed@double</Attribute>
-					<Operator>LT</Operator>
-					<Value>120.0</Value>
-				</ValueCondition>
-				<ValueCondition>
-					<Attribute object="Vehicle">Edge.*MoveDistance@double</Attribute>
-					<Operator>GE</Operator>
-					<Value>30.0</Value>
-				</ValueCondition>
-			</Condition>
-			<Action>
-				<VehicleAction>
-					<Message>Notify Speed:80-120,Distance:30</Message>
-					<Parameter>
-						<Key>AvgSpeed</Key>
-						<Value>Vehicle.Edge.*AvgSpeed</Value>
-					</Parameter>
-					<Parameter>
-						<Key>MoveDistance</Key>
-						<Value>Vehicle.Edge.*MoveDistance</Value>
-					</Parameter>					
-				</VehicleAction>
-			</Action>
-		</VehicleActionRule>
         <VehicleActionRule>
 			<RuleType>1</RuleType>
 			<RuleID>7</RuleID>
@@ -320,22 +152,13 @@
 					<Operator>LT</Operator>
 					<Value>120.0</Value>
 				</ValueCondition>
-				<ValueCondition>
-					<Attribute object="Vehicle">[$abs(CarProbe.Heading-Vehicle.Edge.AvgHeading@double)]</Attribute>
-					<Operator>GE</Operator>
-					<Value>1.0</Value>
-				</ValueCondition>
 			</Condition>
 			<Action>
 				<VehicleAction>
-					<Message>Notify Speed:80-120,Heading:1</Message>
+					<Message>Notify Speed:80-120</Message>
 					<Parameter>
 						<Key>AvgSpeed</Key>
 						<Value>Vehicle.Edge.*AvgSpeed</Value>
-					</Parameter>
-					<Parameter>
-						<Key>MoveHeading</Key>
-						<Value>[$abs(CarProbe.Heading-Vehicle.Edge.AvgHeading@double)]</Value>
 					</Parameter>					
 				</VehicleAction>
 			</Action>			
