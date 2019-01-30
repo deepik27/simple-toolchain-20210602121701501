@@ -21,7 +21,7 @@ debug.log = console.log.bind(console);
 _.extend(driverInsightsAnalysis, {
 
 	isAvailable: function () {
-		return iot4aAsset.isSaaS();
+		return true;
 	},
 
 	getTrips: function (mo_id, limit) {

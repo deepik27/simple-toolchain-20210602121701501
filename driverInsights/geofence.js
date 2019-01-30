@@ -67,7 +67,7 @@ _.extend(driverInsightsGeofence, {
 	},
 
 	isAvailable: function () {
-		return iot4aAsset.isSaaS();
+		return true;
 	},
 
 	getSupportInfo: function () {

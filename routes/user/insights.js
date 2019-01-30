@@ -225,14 +225,14 @@ router.get("/alert", function (req, res) {
 
 router.get("/event/query", function (req, res) {
 	var q = req.query;
-	iot4aContextMapping.queryEvent(
-		q.min_latitude,
-		q.min_longitude,
-		q.max_latitude,
-		q.max_longitude,
-		q.event_type,
-		q.status
-	).then(function (msg) {
+	iot4aContextMapping.queryEvent({
+		"min_latitude": q.min_latitude,
+		"min_longitude": q.min_longitude,
+		"max_latitude": q.max_latitude,
+		"max_longitude": q.max_longitude,
+		"event_type": q.event_type,
+		"status": q.status
+	}).then(function (msg) {
 		res.send(msg);
 	})["catch"](function (error) {
 		handleAssetError(res, error);

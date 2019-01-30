@@ -147,7 +147,7 @@ routeGenerator.prototype._generateAnchors = function (slat, slng, sheading) {
 		for (var i = 0; i < numPoints; i++) {
 			var pdst = i === (numPoints - 1) ? { lat: slat, lng: slng } : this._getRandomLoc(slat, slng);
 			var heading = this._calcHeading(porg, pdst);
-			promises.push(iot4aContextMapping.matchMapFirst(porg.lat, porg.lng, heading));
+			promises.push(iot4aContextMapping.matchMapFirst({ "latitude": porg.lat, "longitude": porg.lng, "heading": heading }));
 			porg = pdst;
 		}
 		Q.all(promises).then(function (results) {
@@ -248,7 +248,7 @@ routeGenerator.prototype._findRouteBetweenPoints = function (retryCount, start, 
 	var self = this;
 	var option = this.getOption("avoid_events") ? "avoid_events" : null;
 
-	Q.when(iot4aContextMapping.routeSearch(start.lat, start.lng, start.heading || 0, end.lat, end.lng, end.heading || 0, option), function (data) {
+	Q.when(iot4aContextMapping.routeSearch({ "orig_latitude": start.lat, "orig_longitude": start.lon, "orig_heading": start.heading || 0, "dest_latitude": end.lat, "dest_longitude": end.lon, "dest_heading": end.heading || 0 }, option), function (data) {
 		var routeArray = [];
 		data.link_shapes.forEach(function (shapes) {
 			shapes.shape.forEach(function (shape) {
@@ -372,8 +372,8 @@ routeGenerator.prototype._getRoutePosition = function () {
 };
 
 routeGenerator.prototype._calcHeading = function (p0, p1) {
-	var rad = 90 - Math.atan2(Math.cos(p0.lat / 90) * Math.tan(p1.lat / 90) - Math.sin(p0.lat / 90) * Math.cos((p1.lon - p0.lon) / 180),
-		Math.sin((p1.lon - p0.lon) / 180)) / Math.PI * 180;
+	var rad = 90 - Math.atan2(Math.cos(p0.lat / 90) * Math.tan(p1.lat / 90) - Math.sin(p0.lat / 90) * Math.cos((p1.lng - p0.lng) / 180),
+		Math.sin((p1.lng - p0.lng) / 180)) / Math.PI * 180;
 	return (rad + 360) % 360;
 };
 

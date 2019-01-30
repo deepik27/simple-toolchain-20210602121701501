@@ -611,7 +611,7 @@ _.extend(iotpPdapterAsset, {
 		var deferred = Q.defer();
 		Q.when(this._createVehicleFromDevice(deviceId, deviceType, isActive, vendors), function (vehicle) {
 			Q.when(iot4aAsset.addVehicle(vehicle, noRefresh), function (response) {
-				vehicle.mo_id = response.id;
+				vehicle.mo_id = response.mo_id;
 				if (response.siteid) {
 					vehicle.siteid = response.siteid;
 				}
@@ -658,7 +658,7 @@ _.extend(iotpPdapterAsset, {
 		var deferred = Q.defer();
 		Q.when(this._createVehicleFromDevice(deviceId, deviceType, false, vendors), function (vehicle) {
 			Q.when(iot4aAsset.updateVehicle(vehicleId, vehicle, false, noRefresh), function (response) {
-				vehicle.mo_id = response.id;
+				vehicle.mo_id = response.mo_id;
 				deferred.resolve(vehicle);
 			})["catch"](function (error) {
 				deferred.reject(error);
@@ -722,7 +722,7 @@ _.extend(iotpPdapterAsset, {
 				if (error.response.statusCode === 404 /* NOT FOUND */) {
 					// Create new driver if not found
 					Q.when(iot4aAsset.addDriver({ name: DEFAULT_DRIVER_NAME, status: "active" }), function (response) {
-						var driverId = response && response.id;
+						var driverId = response && response.driver_id;
 						self.defaultDriverId = driverId;
 						return deferred.resolve(driverId);
 					})["catch"](function (error) {

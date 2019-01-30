@@ -316,10 +316,6 @@ For each instance that you deploy, the following information is sent to a [Deplo
 
 This data is collected from the `package.json` and `repository.yaml` file in the sample application and the `VCAP_APPLICATION` and `VCAP_SERVICES` environment variables in IBM Cloud and other Cloud Foundry platforms. This data is used by IBM to track metrics around deployments of sample applications to IBM Cloud to measure the usefulness of our examples, so that we can continuously improve the content we offer to you. Only deployments of sample applications that include code to ping the Deployment Tracker service will be tracked.
 
-### Disabling deployment tracking
-
-You can disable the Deployment Tracker service by removing `require("metrics-tracker-client").track();` from the beginning of the `app.js` server file.
-
 ## Providing feedback to IBM
 
 Thank you for using our IBM® IoT Connected Vehicle Insights SaaS service and starter apps. As well as providing samples to help you get started, we'd like to know what you and your users think about our service offering.

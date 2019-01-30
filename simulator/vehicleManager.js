@@ -54,16 +54,14 @@ _.extend(simulatedVehicleManager, {
 				}).done();
 			} else {
 				debug("Create a vendor for simulator");
-				var params = { "type": "Vendor", "status": "Active" };
-				if (iot4aAsset.isSaaS()) {
-					var chance = new Chance();
-					vendor = chance.hash({ length: 12 });
-					params["vendor"] = vendor;
-					params["name"] = VENDOR_NAME;
-				} else {
-					vendor = VENDOR_NAME;
-					params["vendor"] = VENDOR_NAME;
-				}
+				var chance = new Chance();
+				vendor = chance.hash({ length: 12 });
+				var params = {
+					"type": "Vendor",
+					"status": "Active",
+					"vendor": vendor,
+					"name": VENDOR_NAME
+				};
 				Q.when(iot4aAsset.addVendor(params), function (response) {
 					debug("A vendor for simulator is created");
 					deferred.resolve(self._getAvailableVehicles(numVehicles, null, excludes, vendor));
@@ -80,28 +78,15 @@ _.extend(simulatedVehicleManager, {
 
 	_getSimulationVendor: function () {
 		var deferred = Q.defer();
-		if (iot4aAsset.isSaaS()) {
-			Q.when(iot4aAsset.getVendorList({ name: VENDOR_NAME }), function (response) {
-				if (response && response.data && response.data.length > 0) {
-					deferred.resolve(response.data[0].vendor);
-				} else {
-					deferred.resolve();
-				}
-			})["catch"](function (err) {
-				deferred.reject(err);
-			});
-		} else {
-			Q.when(iot4aAsset.getVendor(VENDOR_NAME), function (response) {
-				deferred.resolve(VENDOR_NAME);
-			})["catch"](function (err) {
-				var status = (err.response && (err.response.status || err.response.statusCode)) || 500;
-				if (status === 404) {
-					deferred.resolve();
-				} else {
-					deferred.reject(err);
-				}
-			});
-		}
+		Q.when(iot4aAsset.getVendorList({ name: VENDOR_NAME }), function (response) {
+			if (response && response.data && response.data.length > 0) {
+				deferred.resolve(response.data[0].vendor);
+			} else {
+				deferred.resolve();
+			}
+		})["catch"](function (err) {
+			deferred.reject(err);
+		});
 		return deferred.promise;
 	},
 
@@ -223,7 +208,7 @@ _.extend(simulatedVehicleManager, {
 
 		var promise = iot4aAsset.addDriver({ "name": DRIVER_NAME, "driver_id": driver_id, "status": "Active" });
 		Q.when(promise, function (response) {
-			var data = { driver_id: response.id, name: DRIVER_NAME };
+			var data = { driver_id: response.driver_id, name: DRIVER_NAME };
 			debug("Simulated driver was created");
 			deferred.resolve(data);
 		})["catch"](function (err) {
