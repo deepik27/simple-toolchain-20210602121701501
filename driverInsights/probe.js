@@ -60,30 +60,9 @@ _.extend(driverInsightsProbe, {
 			}
 			driverInsightsAlert.handleEvents(probe, (affected_events || []).concat(notified_messages || []));
 
-			var qs = {
-				min_longitude: (payload.longitude - 0.001),
-				max_longitude: (payload.longitude + 0.001),
-				min_latitude: (payload.latitude - 0.001),
-				max_latitude: (payload.latitude + 0.001),
-				mo_id: payload.mo_id
-			};
-			Q.when(iot4aVehicleDataHub.getCarProbe(qs), function (result) {
-				var probe = null;
-				if (result && result.length > 0) {
-					// Workaround:
-					//   IBM IoT Connected Vehicle Insights service returns probes of multiple vehicle in the area for now
-					//   even if the request specifies only one mo_id
-					for (var i = 0; i < result.length; i++) {
-						if (result[i].mo_id === payload.mo_id) {
-							probe = result[i];
-							break;
-						}
-					}
-					if (!probe) {
-						deferred.reject({ statusCode: 500, message: "no probe data for " + payload.mo_id });
-						return;
-					}
-					_.extend(payload, probe, { ts: ts });
+			Q.when(iot4aVehicleDataHub.getCarProbe({ mo_id: payload.mo_id }), function (result) {
+				if (result && result.length === 1) {
+					_.extend(payload, result[0], { ts: ts });
 				}
 
 				// Process alert probe rule
