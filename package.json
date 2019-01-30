@@ -4,6 +4,7 @@
   "version": "1.0.0-M1",
   "scripts": {
     "start": "node app.js",
+    "preinstall": "rm -rf app_modules/iot4a-node-lib",
     "postinstall": "cp -r node_modules/iot4a-node-lib app_modules"
   },
   "dependencies": {
