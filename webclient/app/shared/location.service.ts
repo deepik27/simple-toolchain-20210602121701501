@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -23,6 +23,7 @@ export class LocationService {
     {id: 'vegas2' ,name: 'Mandalay Bay, Las Vegas', center:  [-115.177541,36.093703]},
     {id: 'munch1'  ,name: 'Hellabrunn Zoo, Munich', center:  [11.558721,48.100317]},
     {id: 'munch2'  ,name: 'Nymphenburg Palace, Munich', center:  [11.555974,48.176261]},
+    {id: 'india1'  ,name: 'Connaught Place, New Delhi', center:  [77.2156304,28.630628]},
     {id: 'tokyo1', name: 'Tokyo, Japan', center: [139.731992, 35.709026] },
   ];
 
@@ -37,6 +38,7 @@ export class LocationService {
   regions: MapArea[] = [
     {id: 'vegas'  ,name: 'Las Vegas', extent: [-116.26637642089848,35.86905016413695,-114.00868599121098,36.423521308323046]},
     {id: "munich" ,name: 'Munich, Germany', extent: [10.982384418945298,48.01255711693946,12.111229633789048,48.24171763772631]},
+    {id: 'newdelhi'  ,name: 'New Delhi, India', extent:  [77.06557,28.7065088,77.2948207,28.5536736]},
     {id: 'tokyo'  ,name: 'Tokyo, Japan', extent:  [139.03856214008624,35.53126066670448,140.16740735493002,35.81016922341598]},
     {id: "toronto",name: 'Toronto, Canada', extent: [-80.69297429492181,43.57305259767264,-78.43528386523431,44.06846938917488]},
   ];

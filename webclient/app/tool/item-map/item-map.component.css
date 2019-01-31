@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -16,12 +16,14 @@
     padding: 10px 20px;
     background: #fff;
     font-weight: 500;
+    font-size: 100%;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }
 .carMonitorMap .itemToolContent {
     position: absolute;
     top: 130px;
     left: 30px;
+    min-width: 320px;
     z-index: 10;
     padding: 10px 10px;
     background: #fff;

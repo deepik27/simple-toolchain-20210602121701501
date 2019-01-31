@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -17,6 +17,9 @@ import { MapEventHelper } from '../../shared/map-event-helper';
 import { EventService } from '../../shared/iota-event.service';
 import { MapGeofenceHelper } from '../../shared/map-geofence-helper';
 import { GeofenceService } from '../../shared/iota-geofence.service';
+import { MapPOIHelper } from '../../shared/map-poi-helper';
+import { POIService } from '../../shared/iota-poi.service';
+import { AssetService } from '../../shared/iota-asset.service';
 import { ItemToolComponent } from '../item-tool/item-tool.component';
 
 declare var $; // jQuery from <script> tag in the index.html
@@ -54,9 +57,11 @@ export class ItemMapComponent implements OnInit {
   handleStyle: ol.style.Style;
   mapEventsLayer: ol.layer.Vector;
   mapGeofenceLayer: ol.layer.Vector;
+  mapPOILayer: ol.layer.Vector;
   mapHelper: MapHelper;
   mapItemHelpers: any = {};
   showTool: boolean = false;
+  toolTitle: string;
   dragging: boolean = false;
   dragFeatureCoordinate = null;
   dragStartCoordinate = null;
@@ -70,7 +75,8 @@ export class ItemMapComponent implements OnInit {
   constructor(
     private router: Router,
     private eventService: EventService,
-    private geofenceService: GeofenceService
+    private geofenceService: GeofenceService,
+    private poiService: POIService
   ) {
   }
 
@@ -96,6 +102,10 @@ export class ItemMapComponent implements OnInit {
       source: new ol.source.Vector(),
       renderOrder: undefined
     });
+    this.mapPOILayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+      renderOrder: undefined
+    });
 
     // create a map
     let mouseInteration = new interaction();
@@ -108,7 +118,8 @@ export class ItemMapComponent implements OnInit {
           preload: 4,
         }),
         this.mapGeofenceLayer,
-        this.mapEventsLayer
+        this.mapEventsLayer,
+        this.mapPOILayer
       ],
       view: new ol.View({
         center: ol.proj.fromLonLat((this.region && this.region.center) || [0, 0], undefined),
@@ -135,6 +146,7 @@ export class ItemMapComponent implements OnInit {
     }.bind(this));
     this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
     this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, {itemLabel: "Boundary", editable: true});
+    this.mapItemHelpers["poi"] = new MapPOIHelper(this.map, this.mapPOILayer, this.poiService);
 
 		// setup view change event handler
     this.mapHelper.postChangeViewHandlers.push(extent => {
@@ -239,6 +251,7 @@ export class ItemMapComponent implements OnInit {
     this.region && this.mapHelper.moveMap(this.region);
     this.initPopup();
     this.itemTool.setItemMap(this);
+    this.updateTool();
   }
 
   ngOnChanges(changes: {[propertyName: string]: SimpleChange}) {
@@ -247,6 +260,16 @@ export class ItemMapComponent implements OnInit {
       console.log("MoveMap", region);
       this.mapHelper && this.mapHelper.moveMap(region);
     }
+  }
+
+  onClickTool() {
+    this.showTool = this.showTool !== true;
+    this.updateTool();
+  }
+
+  updateTool() {
+    this.toolTitle = this.showTool ? "Close Tool" : "Open Tool";
+    this.itemTool.setActive(this.showTool);
   }
 
   getMapExtent() {

@@ -4,20 +4,27 @@
       <table>
         <tbody>
           <tr>
-            <td colspan="3" style="padding-bottom:10px;"><label for="creationGroup">Mouse click action: </label></td>
-          <tr>
-            <td style="white-space:nowrap;padding-left: 5px;"><span><input type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="none">Select</span></td>
-            <td style="white-space:nowrap;padding-left: 5px;"><span [hidden]="supportedItems.indexOf('event') < 0"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="event" [hidden]="supportedItems.indexOf('event') < 0">Create an event</span></td>
-            <td style="white-space:nowrap;padding-left: 5px;"><span [hidden]="supportedItems.indexOf('geofence') < 0"><input type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="geofence">Create a geofence</span></td>
+            <td style="white-space:nowrap;padding-left: 5px;">
+            <div class="tabControl">
+              <div class="tabLabel" [hidden]="supportedItems.indexOf('event') < 0">
+                <input id="tabEvent" type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="event">
+                <label for="tabEvent">Event</label>
+              </div>
+              <div class="tabLabel" [hidden]="supportedItems.indexOf('poi') < 0">
+                <input id="tabPOI" type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="poi">
+                <label for="tabPOI">POI</label>
+              </div>
+              <div class="tabLabel" [hidden]="supportedItems.indexOf('geofence') < 0">
+                <input id="tabGeofence" type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="geofence">
+                <label for="tabGeofence">Geofence</label>
+              </div>
+            </div>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
-    <hr>
-    <div [hidden]="creationMode!=='none'">
-      <div class="toolPageDescription">Select an item on a map to show details.</div>
-    </div>
-    <div [hidden]="creationMode!=='event'">
+    <div [hidden]="creationMode!=='event'" class="tabContents">
       <div class="toolPageDescription">Click on a map to put a new event.</div>
       <table class="toolPage">
         <tbody>
@@ -40,7 +47,7 @@
         </tbody>
       </table>
     </div>
-    <div [hidden]="creationMode!=='geofence'">
+    <div [hidden]="creationMode!=='geofence'" class="tabContents">
       <div class="toolPageDescription">Click the Add button to create a new geofence.</div>
       <table class="toolPage">
         <tbody>
@@ -67,5 +74,61 @@
         </tbody>
       </table>
     </div>
+    <div [hidden]="creationMode!=='poi'" class="tabContents">
+      <div class="toolPageDescription">Click on a map to put a new POI.</div>
+      <table class="toolPage">
+        <tbody>
+          <tr class="toolItemRow">
+            <td colspan="2" style="white-space:nowrap;padding-left: 5px;">
+              <input type="checkbox" [(ngModel)]="isSelectedVehicle">Target Vehicle:
+            </td>
+          </tr>
+          <tr class="toolItemRow">
+            <td colspan="2" class="toolItemValue">
+              <select class="toolSelection" [disabled]="requestSending||!isSelectedVehicle" size=10 [(ngModel)]="targetVehicle" name="targetVehicle">
+                <option *ngFor="let vehicle of targetVehicles" [ngValue]="vehicle">{{vehicle.__id}}</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" class="toolItemValue">
+              <span class="controlButtons">
+                <button (click)="targetVehicle=null;onShowPrev()" [disabled]="requestSending||pageNumber<2||!isSelectedVehicle">&lt;Prev</button>
+                <button (click)="targetVehicle=null;onShowNext()" [disabled]="requestSending||!hasNext||!isSelectedVehicle">Next&gt;</button>
+              </span>
+            </td>
+          </tr>
+          <tr class="toolItemRow">
+            <td class="toolItemLabel">Name: </td>
+            <td class="toolItemValue">
+              <input [(ngModel)]="poiName" name="poiName" style="width:100%;" placeholder="POI name">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div [hidden]="creationMode!=='event' && creationMode!=='poi'" class="tabContents">
+        <table class="toolPage">
+            <tbody>
+              <tr class="toolItemRow">
+                <td class="toolItemLabel">Latitude: </td>
+                <td class="toolItemValue">
+                  <input [(ngModel)]="itemLatitude" name="latitude" style="width:100%;" placeholder="Latitude">
+                </td>
+              </tr>
+              <tr class="toolItemRow">
+                <td class="toolItemLabel">Longitude: </td>
+                <td class="toolItemValue">
+                  <input [(ngModel)]="itemLongitude" name="longitude" style="width:100%;" placeholder="Longitude">
+                </td>
+              </tr>
+              <tr class="toolItemRow">
+                <td colspan="2" class="toolItemLabel">
+                  <button style="margin-left:10px;" (click)="onCreateItem()">Create at this location</button>
+              </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>  
   </div>
 </div>

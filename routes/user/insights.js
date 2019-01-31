@@ -14,15 +14,14 @@ var Q = require('q');
 var _ = require('underscore');
 var WebSocketServer = require('ws').Server;
 var appEnv = require("cfenv").getAppEnv();
+var chance = require('chance')();
 
 var router = module.exports = require('express').Router();
 var authenticate = require('./auth.js').authenticate;
-var driverInsightsProbe = require('../../driverInsights/probe');
 var driverInsightsAlert = require('../../driverInsights/fleetalert.js');
 var driverInsightsAnalysis = require('../../driverInsights/analysis.js');
-const iot4aContextMapping = app_module_require("cvi-node-lib").contextMapping;
-const iot4aVehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
-var dbClient = require('../../cloudantHelper.js');
+const contextMapping = app_module_require("cvi-node-lib").contextMapping;
+const vehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
 var probeAggregator = require('./aggregator.js');
 
 var debug = require('debug')('monitoring:cars');
@@ -31,11 +30,24 @@ debug.log = console.log.bind(console);
 var AGGREGATION_THRESHOLD = isNaN(process.env.AGGREGATION_THRESHOLD) ? 500 : process.env.AGGREGATION_THRESHOLD;
 
 function handleAssetError(res, err) {
+	if (!err) {
+		return res.status(500).send("unknown error");
+	}
 	//{message: msg, error: error, response: response}
 	console.error('error: ' + JSON.stringify(err));
-	var status = (err && (err.status || err.statusCode)) || 500;
+	var response = err.response;
+	var status = err.status || err.statusCode || (response && (response.status || response.statusCode)) || 500;
 	var message = err.message || (err.data && err.data.message) || err;
 	return res.status(status).send(message);
+}
+
+function convertPOI(feature) {
+	return {
+		id: feature.id,
+		longitude: feature.geometry.coordinates[0],
+		latitude: feature.geometry.coordinates[1],
+		properties: feature.properties
+	};
 }
 
 /**
@@ -168,7 +180,7 @@ router.get('/carProbeMonitor', authenticate, function (req, res) {
 
 router.get("/routesearch", function (req, res) {
 	var q = req.query;
-	iot4aContextMapping.routeSearch(
+	contextMapping.routeSearch(
 		q.orig_latitude,
 		q.orig_longitude,
 		q.orig_heading || 0,
@@ -222,9 +234,12 @@ router.get("/alert", function (req, res) {
 	}
 });
 
+// 
+// POI APIs
+// 
 router.get("/event/query", function (req, res) {
 	var q = req.query;
-	iot4aContextMapping.queryEvent({
+	contextMapping.queryEvent({
 		"min_latitude": q.min_latitude,
 		"min_longitude": q.min_longitude,
 		"max_latitude": q.max_latitude,
@@ -240,7 +255,7 @@ router.get("/event/query", function (req, res) {
 
 router.get("/event", function (req, res) {
 	var q = req.params.event_id;
-	iot4aContextMapping.getEvent(req.query.event_id).then(function (msg) {
+	contextMapping.getEvent(req.query.event_id).then(function (msg) {
 		res.send(msg);
 	})["catch"](function (error) {
 		handleAssetError(res, error);
@@ -248,7 +263,7 @@ router.get("/event", function (req, res) {
 });
 
 router.post("/event", function (req, res) {
-	iot4aVehicleDataHub.createEvent(req.body, "sync").then(function (msg) {
+	vehicleDataHub.createEvent(req.body, "sync").then(function (msg) {
 		res.send(msg);
 	})["catch"](function (error) {
 		handleAssetError(res, error);
@@ -256,13 +271,67 @@ router.post("/event", function (req, res) {
 });
 
 router["delete"]("/event", function (req, res) {
-	iot4aContextMapping.deleteEvent(req.query.event_id).then(function (msg) {
+	contextMapping.deleteEvent(req.query.event_id).then(function (msg) {
 		res.send(msg);
 	})["catch"](function (error) {
 		handleAssetError(res, error);
 	});
 });
 
+// 
+// POI APIs
+// 
+router.get("/capability/poi", authenticate, function(req, res) {
+	res.send({available: true});
+});
+
+router.post("/poi/query", function(req, res){
+	let body = req.body;
+	contextMapping.queryPoi(
+		contextMapping._generateFeature(null, "Point", 
+						[body.longitude, body.latitude], body.properties), 
+						{ "radius": body.radius }
+	).then(function(msg){
+		res.send(msg.features.map(convertPOI));
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
+
+router.get("/poi", function(req, res){
+	const id = req.query.poi_id;
+	contextMapping.getPoi({ "poi_id": id }).then(function(msg){
+		res.send(convertPOI(msg.features[0]));
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
+
+router.post("/poi", function(req, res){
+	const body = req.body;
+	const id = body.id || chance.guid();
+	const pois = contextMapping._generateFeatureCollection([
+		contextMapping._generateFeature(id, "Point", [body.longitude, body.latitude], body.properties)
+	]);
+	contextMapping.createPoi(pois).then(function(msg){
+			res.send({id: id});
+		})["catch"](function(error){
+			handleAssetError(res, error);
+		});
+});
+
+router["delete"]("/poi", function(req, res){
+	const id = req.query.poi_id;
+	contextMapping.deletePoi({ "poi_id": id }).then(function(msg){
+		res.send(msg);
+	})["catch"](function(error){
+		handleAssetError(res, error);
+	});
+});
+
+//
+// Driving Behavior Analysis APIs
+//
 router.get("/capability/analysis", authenticate, function (req, res) {
 	res.send({ available: driverInsightsAnalysis.isAvailable() });
 });
@@ -424,7 +493,7 @@ function getCarProbe(qs, addAlerts) {
 	if (qs.min_longitude && qs.min_latitude && qs.max_longitude && qs.max_latitude) {
 		regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude, qs.max_latitude);
 	}
-	var probes = Q(iot4aVehicleDataHub.getCarProbe(qs).then(function (probes) {
+	var probes = Q(vehicleDataHub.getCarProbe(qs).then(function (probes) {
 		// send normal response
 		(probes || []).forEach(function (p) {
 			if (p.timestamp) {
