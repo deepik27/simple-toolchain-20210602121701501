@@ -156,13 +156,13 @@ _.extend(driverInsightsGeofence, {
 			var rule_xml_id = ids.xmlid;
 			Q.when(iot4aAsset.addRule(rule, self._createGeofenceEmptyRuleXML(rule_xml_id), true), function (response) {
 				var promises = [];
-				var geofence_id = response.id;
+				var geofence_id = response.rule_id;
 				var ruleXML = self._createGeofenceRuleXML(geofence_id, geofence, rule_xml_id);
 				promises.push(iot4aAsset.updateRule(geofence_id, rule, ruleXML, true));
-				promises.push(self._createDoc(response.id, { geofence: geofence, rule_xml_id: rule_xml_id }));
+				promises.push(self._createDoc(response.rule_id, { geofence: geofence, rule_xml_id: rule_xml_id }));
 
 				Q.all(promises).then(function (data) {
-					deferred.resolve({ id: response.id });
+					deferred.resolve({ id: response.rule_id });
 				}, function (err) {
 					deferred.reject(err);
 				});
