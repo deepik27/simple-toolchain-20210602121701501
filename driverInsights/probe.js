@@ -13,7 +13,7 @@ var _ = require("underscore");
 var Q = new require('q');
 var moment = require("moment");
 var driverInsightsAlert = require("./fleetalert.js");
-const iot4aVehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
+const vehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
 var debug = require('debug')('probe');
 debug.log = console.log.bind(console);
 
@@ -48,7 +48,7 @@ _.extend(driverInsightsProbe, {
 		}
 
 		var deferred = Q.defer();
-		Q.when(iot4aVehicleDataHub.sendCarProbe(payload, "sync"), function (result) {
+		Q.when(vehicleDataHub.sendCarProbe(payload, "sync"), function (result) {
 			debug("events: " + result);
 			var affected_events = null;
 			var notified_messages = null;
@@ -60,7 +60,7 @@ _.extend(driverInsightsProbe, {
 			}
 			driverInsightsAlert.handleEvents(probe, (affected_events || []).concat(notified_messages || []));
 
-			Q.when(iot4aVehicleDataHub.getCarProbe({ mo_id: payload.mo_id }), function (result) {
+			Q.when(vehicleDataHub.getCarProbe({ mo_id: payload.mo_id }), function (result) {
 				if (result && result.length === 1) {
 					_.extend(payload, result[0], { ts: ts });
 				}

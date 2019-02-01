@@ -14,7 +14,7 @@ var moment = require("moment");
 var routeGenerator = require('./routeGenerator.js');
 var vehicleManager = require('./vehicleManager.js');
 var simulatedVehicle = require('./simulatedVehicle.js');
-const iot4aAsset = app_module_require("cvi-node-lib").asset;
+const asset = app_module_require("cvi-node-lib").asset;
 var Queue = app_module_require('utils/queue.js');
 var probeInterface = app_module_require("utils/probe.js");
 
@@ -259,7 +259,7 @@ simulatorEngine.prototype.getRouteData = function (vehicleId) {
  */
 simulatorEngine.prototype.start = function (vehicleId, parameters) {
 	return this.control(vehicleId, function (vehicle, id) {
-		return Q.when(iot4aAsset.updateVehicle(id, { "status": "active" }), function () {
+		return Q.when(asset.updateVehicle(id, { "status": "active" }), function () {
 			return Q(vehicle.start(parameters));
 		});
 	}, false, true);
@@ -272,7 +272,7 @@ simulatorEngine.prototype.stop = function (vehicleId, parameters) {
 	return this.control(vehicleId, function (vehicle, id) {
 		return Q.when(vehicle.stop(parameters), function (result) {
 			var deferred = Q.defer();
-			Q.when(iot4aAsset.updateVehicle(id, { "status": "inactive" }), function () {
+			Q.when(asset.updateVehicle(id, { "status": "inactive" }), function () {
 			})["catch"](function (err) {
 				console.error(err);
 			}).done(function () {

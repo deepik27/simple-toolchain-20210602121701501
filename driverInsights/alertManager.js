@@ -13,7 +13,7 @@ var _ = require("underscore");
 var Q = require("q");
 var moment = require("moment");
 var dbClient = require('./../cloudantHelper.js');
-const iot4aVehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
+const vehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
 
 var debug = require('debug')('alertmanager');
 debug.log = console.log.bind(console);
@@ -93,7 +93,7 @@ _.extend(alertManager, {
 		}
 		var self = this;
 		var deferred = Q.defer();
-		Q.when(iot4aVehicleDataHub.getCarProbe(area), function (probes) {
+		Q.when(vehicleDataHub.getCarProbe(area), function (probes) {
 			if (probes.length > 0) {
 				var mo_ids = probes.map(function (probe) { return probe.mo_id; });
 				self.getAlertsForVehicles(mo_ids, includeClosed, limit).then(function (results) {

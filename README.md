@@ -36,7 +36,7 @@ The automatic deployment option creates an instance of the app and the required 
 1. Open the IBM Cloud dashboard in your browser.
 2. To stop the app, click **ACTIONS** > **Stop App**.
 
-Next: Go to [Connecting to IBM IoT Connected Vehicle Insights service](#connect2iot4a).
+Next: Go to [Connecting to IBM IoT Connected Vehicle Insights service](#connect2cvi).
 
 ### Manually deploy the starter app on IBM Cloud
 
@@ -166,7 +166,7 @@ A fragment of the gateway.properties file exists under `conf` folder of the `Htt
 1. Deploy export the `FleetAlert` jar to an Agent server.
 1. Restart IBM IoT Connected Vehicle Insights components using IBM IoT Connected Vehicle Insights Plugin Deploy Tool as needed.
 
-## <a id="connect2iot4a"></a> Connecting the app to your IBM IoT Connected Vehicle Insights service
+## <a id="connect2cvi"></a> Connecting the app to your IBM IoT Connected Vehicle Insights service
 
 After deploying the app on IBM Cloud, you must configure the app to connect to your IBM IoT Connected Vehicle Insights SaaS service instance.
 

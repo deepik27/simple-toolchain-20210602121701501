@@ -14,7 +14,7 @@ var Q = require("q");
 var cfenv = require("cfenv");
 var moment = require("moment");
 var fs = require("fs-extra");
-const iot4aAsset = app_module_require("cvi-node-lib").asset;
+const asset = app_module_require("cvi-node-lib").asset;
 var alertManager = require("./alertManager.js");
 
 var debug = require('debug')('alert');
@@ -80,7 +80,7 @@ _.extend(driverInsightsAlert, {
 	},
 
 	/*
-	 * Remove all existing alert rules in iot4a and import alert rules defined as xml in ALERT_RULE_TEMPLATE_DIR again
+	 * Remove all existing alert rules in cvi and import alert rules defined as xml in ALERT_RULE_TEMPLATE_DIR again
 	 */
 	importAlertRules: function () {
 		var self = this;
@@ -89,8 +89,8 @@ _.extend(driverInsightsAlert, {
 				Q.allSettled(rules.map(function (rule) {
 					var deferred = Q.defer();
 					rule.status = "inactive";
-					Q.when(iot4aAsset.updateRule(rule.rule_id, rule, null, true), function (updated) {
-						Q.when(iot4aAsset.deleteRule(rule.rule_id, true), function (deleted) {
+					Q.when(asset.updateRule(rule.rule_id, rule, null, true), function (updated) {
+						Q.when(asset.deleteRule(rule.rule_id, true), function (deleted) {
 							deferred.resolve(deleted);
 						})["catch"](function (err) {
 							deferred.reject(err);
@@ -110,7 +110,7 @@ _.extend(driverInsightsAlert, {
 							}
 						})
 					}
-					Q.when(iot4aAsset.refreshRule(), function (response) {
+					Q.when(asset.refreshRule(), function (response) {
 						self._addRules();
 					})["catch"](function (err) {
 						self._addRules();
@@ -145,7 +145,7 @@ _.extend(driverInsightsAlert, {
 					}
 					var rule = { description: ALERT_RULE_DESCRIPTION + alert_rule_id, type: "Action", status: "active" };
 					data = data.replace(/\{alert_rule_id\}/g, alert_rule_id);
-					iot4aAsset.addRule(rule, data);
+					asset.addRule(rule, data);
 				})
 			});
 		});
@@ -153,7 +153,7 @@ _.extend(driverInsightsAlert, {
 	_findAlertRulesRecursive: function (num_page) {
 		var self = this;
 		var deferred = Q.defer();
-		Q.when(iot4aAsset.getRuleList({ num_rec_in_page: MAX_NUM_REC_IN_PAGE, num_page: num_page }), function (result) {
+		Q.when(asset.getRuleList({ num_rec_in_page: MAX_NUM_REC_IN_PAGE, num_page: num_page }), function (result) {
 			var rules_in_page = (result && result.data) || [];
 			var alert_rules_in_page = rules_in_page.filter(function (rule) { return rule.description && rule.description.startsWith(ALERT_RULE_DESCRIPTION); });
 			if (rules_in_page.length >= MAX_NUM_REC_IN_PAGE) {
@@ -218,7 +218,7 @@ _.extend(driverInsightsAlert, {
 		if (vehicle) {
 			deferred.resolve(vehicle);
 		} else {
-			Q.when(iot4aAsset.getVehicle(mo_id), function (vehicleInfo) {
+			Q.when(asset.getVehicle(mo_id), function (vehicleInfo) {
 				self._vehicles[mo_id] = vehicle = {
 					vehicleInfo: vehicleInfo
 				};

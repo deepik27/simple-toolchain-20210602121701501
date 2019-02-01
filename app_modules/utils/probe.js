@@ -10,13 +10,13 @@
 
 var Q = require('q');
 var _ = require('underscore');
-const iot4aVehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
+const vehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
 
 var probeInterface = {};
 _.extend(probeInterface, {
 	sendCarProbe: function (probe) {
 		var deferred = Q.defer();
-		Q.when(iot4aVehicleDataHub.sendCarProbe(probe, "sync"), function (message) {
+		Q.when(vehicleDataHub.sendCarProbe(probe, "sync"), function (message) {
 			var affected_events = null;
 			var notified_messages = null;
 			if (message) {

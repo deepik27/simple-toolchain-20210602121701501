@@ -15,7 +15,7 @@ var moment = require("moment");
 
 var dbClient = require('./../cloudantHelper.js');
 var ruleGenerator = require('./ruleGenerator.js');
-const iot4aAsset = app_module_require("cvi-node-lib").asset;
+const asset = app_module_require("cvi-node-lib").asset;
 var version = app_module_require('utils/version.js');
 
 var debug = require('debug')('geofence');
@@ -154,11 +154,11 @@ _.extend(driverInsightsGeofence, {
 		Q.when(this._getAvailableRuleId(), function (ids) {
 			var rule = { rule_id: ids.id, description: "geofence rule", type: "Action", status: "active" };
 			var rule_xml_id = ids.xmlid;
-			Q.when(iot4aAsset.addRule(rule, self._createGeofenceEmptyRuleXML(rule_xml_id), true), function (response) {
+			Q.when(asset.addRule(rule, self._createGeofenceEmptyRuleXML(rule_xml_id), true), function (response) {
 				var promises = [];
 				var geofence_id = response.rule_id;
 				var ruleXML = self._createGeofenceRuleXML(geofence_id, geofence, rule_xml_id);
-				promises.push(iot4aAsset.updateRule(geofence_id, rule, ruleXML, true));
+				promises.push(asset.updateRule(geofence_id, rule, ruleXML, true));
 				promises.push(self._createDoc(response.rule_id, { geofence: geofence, rule_xml_id: rule_xml_id }));
 
 				Q.all(promises).then(function (data) {
@@ -182,7 +182,7 @@ _.extend(driverInsightsGeofence, {
 			var rule = { description: "geofence rule", type: "Action", status: "active" };
 			var ruleXML = self._createGeofenceRuleXML(geofence_id, geofence, doc.rule_xml_id);
 			var promises = [];
-			promises.push(iot4aAsset.updateRule(geofence_id, rule, ruleXML, true));
+			promises.push(asset.updateRule(geofence_id, rule, ruleXML, true));
 			promises.push(self._updateDoc(geofence_id, { geofence: geofence }));
 			Q.all(promises).then(function (data) {
 				deferred.resolve({ id: geofence_id });
@@ -198,8 +198,8 @@ _.extend(driverInsightsGeofence, {
 	_deleteGeofenceRule: function (rule_id, successOnNoExists) {
 		var deferred = Q.defer();
 		var rule = { description: "geofence being removed", type: "Action", status: "inactive" };
-		Q.when(iot4aAsset.updateRule(rule_id, rule, null, true), function (response) {
-			Q.when(iot4aAsset.deleteRule(rule_id), function (response) {
+		Q.when(asset.updateRule(rule_id, rule, null, true), function (response) {
+			Q.when(asset.deleteRule(rule_id), function (response) {
 				deferred.resolve({ id: rule_id });
 			})["catch"](function (err) {
 				if (err.statusCode === 404 && successOnNoExists) {

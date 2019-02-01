@@ -14,7 +14,7 @@ var Q = require('q');
 var _ = require('underscore');
 var fs = require('fs-extra');
 var Chance = require('chance');
-const iot4aAsset = app_module_require("cvi-node-lib").asset;
+const asset = app_module_require("cvi-node-lib").asset;
 
 var debug = require('debug')('simulatedVehicleManager');
 debug.log = console.log.bind(console);
@@ -62,7 +62,7 @@ _.extend(simulatedVehicleManager, {
 					"vendor": vendor,
 					"name": VENDOR_NAME
 				};
-				Q.when(iot4aAsset.addVendor(params), function (response) {
+				Q.when(asset.addVendor(params), function (response) {
 					debug("A vendor for simulator is created");
 					deferred.resolve(self._getAvailableVehicles(numVehicles, null, excludes, vendor));
 				})["catch"](function (err) {
@@ -78,7 +78,7 @@ _.extend(simulatedVehicleManager, {
 
 	_getSimulationVendor: function () {
 		var deferred = Q.defer();
-		Q.when(iot4aAsset.getVendorList({ name: VENDOR_NAME }), function (response) {
+		Q.when(asset.getVendorList({ name: VENDOR_NAME }), function (response) {
 			if (response && response.data && response.data.length > 0) {
 				deferred.resolve(response.data[0].vendor);
 			} else {
@@ -91,7 +91,7 @@ _.extend(simulatedVehicleManager, {
 	},
 
 	_getVehicleList: function (status, excludes, vendor) {
-		return Q.when(iot4aAsset.getVehicleList({ "vendor": vendor, "status": status }), function (response) {
+		return Q.when(asset.getVehicleList({ "vendor": vendor, "status": status }), function (response) {
 			var vehicles = response && response.data || [];
 			if (excludes && excludes.length > 0) {
 				vehicles = _.filter(vehicles, function (vehicle) { return !_.contains(excludes, vehicle.mo_id); });
@@ -143,7 +143,7 @@ _.extend(simulatedVehicleManager, {
 				if (!_.contains(excludes, mo_id)) {
 					num--;
 					debug("try to inactivate: " + mo_id);
-					defList.push(iot4aAsset.updateVehicle(mo_id, { "status": "inactive" }));
+					defList.push(asset.updateVehicle(mo_id, { "status": "inactive" }));
 				}
 			}
 			Q.all(defList).then(function () {
@@ -168,10 +168,10 @@ _.extend(simulatedVehicleManager, {
 			};
 			var properties = this._getDeviceModelInfo();
 			vehicle.model = properties.makeModel;
-			if (iot4aAsset.acceptVehicleProperties()) {
+			if (asset.acceptVehicleProperties()) {
 				vehicle.properties = properties;
 			}
-			defList.push(iot4aAsset.addVehicle(vehicle));
+			defList.push(asset.addVehicle(vehicle));
 		}
 		Q.all(defList).then(function () {
 			debug("created " + num + " vehicles");
@@ -206,7 +206,7 @@ _.extend(simulatedVehicleManager, {
 		var chance = new Chance();
 		var driver_id = chance.hash({ length: 12 });
 
-		var promise = iot4aAsset.addDriver({ "name": DRIVER_NAME, "driver_id": driver_id, "status": "Active" });
+		var promise = asset.addDriver({ "name": DRIVER_NAME, "driver_id": driver_id, "status": "Active" });
 		Q.when(promise, function (response) {
 			var data = { driver_id: response.driver_id, name: DRIVER_NAME };
 			debug("Simulated driver was created");
@@ -220,7 +220,7 @@ _.extend(simulatedVehicleManager, {
 	getSimulatorDriver: function () {
 		var self = this;
 		var deferred = Q.defer();
-		Q.when(iot4aAsset.getDriverList({ "name": DRIVER_NAME }), function (response) {
+		Q.when(asset.getDriverList({ "name": DRIVER_NAME }), function (response) {
 			if (response && response.data && response.data.length > 0) {
 				deferred.resolve(response.data[0]);
 			} else {

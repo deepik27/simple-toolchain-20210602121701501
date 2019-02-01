@@ -15,7 +15,7 @@ var dbClient = require('./../cloudantHelper.js');
 
 var queue = app_module_require('utils/queue.js');
 var IOTF = app_module_require('iotfclient');
-const iot4aAsset = app_module_require("cvi-node-lib").asset;
+const asset = app_module_require("cvi-node-lib").asset;
 
 var ASSET_DB_NAME = "iotp_asset_map";
 var DEFAULT_DRIVER_NAME = "OBDII Driver";
@@ -93,7 +93,7 @@ _.extend(iotpPdapterAsset, {
 		var self = this;
 		var deferred = Q.defer();
 		Q.when(this.getAssetInfo(deviceId, deviceType), function (assetInfo) {
-			Q.when(iot4aAsset.updateVehicle(assetInfo.vehicleId, { status: activate ? "active" : "inactive" }, false), function (result) {
+			Q.when(asset.updateVehicle(assetInfo.vehicleId, { status: activate ? "active" : "inactive" }, false), function (result) {
 				deferred.resolve(assetInfo);
 			})["catch"](function (error) {
 				if (activate && error && error.response && error.response.statusCode === 404) {
@@ -223,7 +223,7 @@ _.extend(iotpPdapterAsset, {
 		var deferred = Q.defer();
 		Q.when(this._createVehicleFromDevice(deviceId, deviceType, false), function (vehicle) {
 			Q.when(self.getAssetInfo(deviceId, deviceType), function (assetInfo) {
-				Q.when(iot4aAsset.updateVehicle(assetInfo.vehicleId, vehicle), function (response) {
+				Q.when(asset.updateVehicle(assetInfo.vehicleId, vehicle), function (response) {
 					vehicle.mo_id = response.id;
 					if (response.siteid) {
 						vehicle.siteid = response.siteid;
@@ -323,7 +323,7 @@ _.extend(iotpPdapterAsset, {
 
 				var assetInfo = body.assetInfo;
 				var promises = [];
-				promises.push(iot4aAsset.deleteVehicle(assetInfo.vehicleId));
+				promises.push(asset.deleteVehicle(assetInfo.vehicleId));
 				var d = Q.defer();
 				db.destroy(body._id, body._rev, function (err, data) {
 					if (err) {
@@ -353,7 +353,7 @@ _.extend(iotpPdapterAsset, {
 		var deferred = Q.defer();
 		var promises = [];
 		_.each(assetInfos, function (info) {
-			promises.push(iot4aAsset.deleteVehicle(info.vehicleId));
+			promises.push(asset.deleteVehicle(info.vehicleId));
 		});
 		var deferred2 = Q.defer();
 		Q.when(this.db, function (db) {
@@ -468,7 +468,7 @@ _.extend(iotpPdapterAsset, {
 				})["catch"](function (error) {
 					// go ahead even if there are errors
 				}).done(function () {
-					iot4aAsset.refreshVehicle();
+					asset.refreshVehicle();
 
 					// Add assetInfo documents to cloudant DB when new assets are added to IBM IoT Connected Vehicle Insights
 					var assetInfoDocs = [];
@@ -566,7 +566,7 @@ _.extend(iotpPdapterAsset, {
 		if (found) {
 			// check if asset really exists or not
 			var info = _.find(existingAssetInfos, function (assetInfo) { return assetInfo.deviceId === device.deviceId && assetInfo.deviceType === device.typeId; });
-			Q.when(iot4aAsset.getVehicle(info.vehicleId), function (vehicle) {
+			Q.when(asset.getVehicle(info.vehicleId), function (vehicle) {
 				return deferred.resolve(!!vehicle);
 			})["catch"](function (error) {
 				if (error && error.response && error.response.statusCode === 404) {
@@ -610,7 +610,7 @@ _.extend(iotpPdapterAsset, {
 	_addVehicleToIoTAAsset: function (deviceId, deviceType, isActive, vendors, noRefresh) {
 		var deferred = Q.defer();
 		Q.when(this._createVehicleFromDevice(deviceId, deviceType, isActive, vendors), function (vehicle) {
-			Q.when(iot4aAsset.addVehicle(vehicle, noRefresh), function (response) {
+			Q.when(asset.addVehicle(vehicle, noRefresh), function (response) {
 				vehicle.mo_id = response.mo_id;
 				if (response.siteid) {
 					vehicle.siteid = response.siteid;
@@ -657,7 +657,7 @@ _.extend(iotpPdapterAsset, {
 	_updateVehicleInIoTAAsset: function (deviceId, deviceType, vehicleId, vendors, noRefresh) {
 		var deferred = Q.defer();
 		Q.when(this._createVehicleFromDevice(deviceId, deviceType, false, vendors), function (vehicle) {
-			Q.when(iot4aAsset.updateVehicle(vehicleId, vehicle, false, noRefresh), function (response) {
+			Q.when(asset.updateVehicle(vehicleId, vehicle, false, noRefresh), function (response) {
 				vehicle.mo_id = response.mo_id;
 				deferred.resolve(vehicle);
 			})["catch"](function (error) {
@@ -673,12 +673,12 @@ _.extend(iotpPdapterAsset, {
 	 */
 	_createVendorIfNotExist: function (vendor, vendors) {
 		var deferred = Q.defer();
-		if (!vendor || iot4aAsset.isAnonymouse) {
+		if (!vendor || asset.isAnonymouse) {
 			deferred.resolve();
 		} else if (vendors && vendors[vendor]) {
 			deferred.resolve(vendors[vendor]);
 		} else {
-			Q.when(iot4aAsset.getVendor(vendor), function (response) {
+			Q.when(asset.getVendor(vendor), function (response) {
 				if (vendors) {
 					vendors[vendor] = vendor;
 				}
@@ -686,7 +686,7 @@ _.extend(iotpPdapterAsset, {
 			})["catch"](function (error) {
 				if (error.response.statusCode === 404 /* NOT FOUND */) {
 					// Create new vendor if not found
-					Q.when(iot4aAsset.addVendor({ vendor: vendor, type: "Manufacturer", status: "active" }), function (response) {
+					Q.when(asset.addVendor({ vendor: vendor, type: "Manufacturer", status: "active" }), function (response) {
 						if (vendors) {
 							vendors[vendor] = vendor;
 						}
@@ -709,19 +709,19 @@ _.extend(iotpPdapterAsset, {
 	_createDriverIfNotExist: function () {
 		var self = this;
 		var deferred = Q.defer();
-		if (iot4aAsset.isAnonymouse) {
+		if (asset.isAnonymouse) {
 			deferred.resolve();
 		} else if (this.defaultDriverId) {
 			deferred.resolve(this.defaultDriverId);
 		} else {
-			Q.when(iot4aAsset.getDriverList({ name: DEFAULT_DRIVER_NAME }), function (response) {
+			Q.when(asset.getDriverList({ name: DEFAULT_DRIVER_NAME }), function (response) {
 				var driverId = response.data && response.data.length > 0 && response.data[0].driver_id;
 				self.defaultDriverId = driverId;
 				return deferred.resolve(driverId);
 			})["catch"](function (error) {
 				if (error.response.statusCode === 404 /* NOT FOUND */) {
 					// Create new driver if not found
-					Q.when(iot4aAsset.addDriver({ name: DEFAULT_DRIVER_NAME, status: "active" }), function (response) {
+					Q.when(asset.addDriver({ name: DEFAULT_DRIVER_NAME, status: "active" }), function (response) {
 						var driverId = response && response.driver_id;
 						self.defaultDriverId = driverId;
 						return deferred.resolve(driverId);

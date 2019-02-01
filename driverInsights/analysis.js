@@ -12,8 +12,7 @@ var driverInsightsAnalysis = module.exports = {};
 var _ = require("underscore");
 var Q = new require('q');
 var moment = require("moment");
-const iot4aDriverBehavior = app_module_require("cvi-node-lib").driverBehavior;
-const iot4aAsset = app_module_require("cvi-node-lib").asset;
+const driverBehavior = app_module_require("cvi-node-lib").driverBehavior;
 
 var debug = require('debug')('analysis');
 debug.log = console.log.bind(console);
@@ -30,7 +29,7 @@ _.extend(driverInsightsAnalysis, {
 		if (limit) {
 			params.limit = limit;
 		}
-		Q.when(iot4aDriverBehavior.getTrip(params), function (response) {
+		Q.when(driverBehavior.getTrip(params), function (response) {
 			if (response && response.length > 0) {
 				deferred.resolve(response);
 			}
@@ -46,7 +45,7 @@ _.extend(driverInsightsAnalysis, {
 			params.from = moment().subtract(1, 'hours').toISOString();
 			params.to = moment().toISOString();
 		}
-		return iot4aDriverBehavior.requestOnlineJobPerTrip(params);
+		return driverBehavior.requestOnlineJobPerTrip(params);
 	},
 
 	getTripRoute: function (mo_id, trip_id, lastHours) {
@@ -55,6 +54,6 @@ _.extend(driverInsightsAnalysis, {
 			params.from = moment().subtract(1, 'hours').toISOString();
 			params.to = moment().toISOString();
 		}
-		return iot4aDriverBehavior.getTripCarProbe(params);
+		return driverBehavior.getTripCarProbe(params);
 	}
 });
