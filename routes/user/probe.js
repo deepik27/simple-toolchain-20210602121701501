@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -10,45 +10,22 @@
 /*
  * REST APIs using Driver Behavior service as backend
  */
-var Q = require('q');
-var _ = require('underscore');
-var WebSocketServer = require('ws').Server;
-var appEnv = require("cfenv").getAppEnv();
-var chance = require('chance')();
+const Q = require('q');
+const _ = require('underscore');
+const WebSocketServer = require('ws').Server;
+const appEnv = require("cfenv").getAppEnv();
 
-var router = module.exports = require('express').Router();
-var authenticate = require('./auth.js').authenticate;
-var driverInsightsAlert = require('../../driverInsights/fleetalert.js');
-var driverInsightsAnalysis = require('../../driverInsights/analysis.js');
-const contextMapping = app_module_require("cvi-node-lib").contextMapping;
+const router = module.exports = require('express').Router();
+const authenticate = require('./auth.js').authenticate;
 const vehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
-var probeAggregator = require('./aggregator.js');
+const probeAggregator = require('./aggregator.js');
+const driverInsightsAlert = require('../../driverInsights/fleetalert.js');
 
-var debug = require('debug')('monitoring:cars');
+const handleError = require('./error.js').handleError;
+const debug = require('debug')('route:probe');
 debug.log = console.log.bind(console);
 
 var AGGREGATION_THRESHOLD = isNaN(process.env.AGGREGATION_THRESHOLD) ? 500 : process.env.AGGREGATION_THRESHOLD;
-
-function handleAssetError(res, err) {
-	if (!err) {
-		return res.status(500).send("unknown error");
-	}
-	//{message: msg, error: error, response: response}
-	console.error('error: ' + JSON.stringify(err));
-	var response = err.response;
-	var status = err.status || err.statusCode || (response && (response.status || response.statusCode)) || 500;
-	var message = err.message || (err.data && err.data.message) || err;
-	return res.status(status).send(message);
-}
-
-function convertPOI(feature) {
-	return {
-		id: feature.id,
-		longitude: feature.geometry.coordinates[0],
-		latitude: feature.geometry.coordinates[1],
-		properties: feature.properties
-	};
-}
 
 /**
  * {
@@ -110,7 +87,7 @@ router.post('/notifiedActions', authenticate, function (req, res) {
 		}
 		res.status(200).send("");
 	} catch (error) {
-		handleAssetError(res, error);
+		handleError(res, error);
 	}
 });
 
@@ -126,14 +103,16 @@ router.get('/carProbe', authenticate, function (req, res) {
 		return res.status(400).send('One or more of the parameters are undefined or not a number'); // FIXME response code
 	}
 	// query by extent
-	let qs = req.query.vehicleId
-		? { mo_id: req.query.vehicleId }
-		: {
-			min_longitude: extent.min_lng,
-			min_latitude: extent.min_lat,
-			max_longitude: extent.max_lng,
-			max_latitude: extent.max_lat,
-		};
+	var qs = {
+		min_longitude: extent.min_lng,
+		min_latitude: extent.min_lat,
+		max_longitude: extent.max_lng,
+		max_latitude: extent.max_lat,
+	};
+	// add vehicleId query
+	if (req.query.vehicleId) {
+		qs.mo_id = req.query.vehicleId;
+	}
 
 	// initialize WSS server
 	var wssUrl = req.baseUrl + req.route.path;
@@ -160,15 +139,14 @@ router.get('/carProbe', authenticate, function (req, res) {
 			devices = probes;
 		}
 
-		const path = qs.mo_id ? `mo_id=${encodeURI(qs.mo_id)}` : `region=${encodeURI(JSON.stringify(extent))}`;
 		res.send({
 			aggregated: aggregated,
 			count: count,
 			devices: devices,
 			serverTime: (isNaN(ts) || !isFinite(ts)) ? Date.now() : ts,
-			wssPath: wssUrl + '?' + path
+			wssPath: wssUrl + '?' + "region=" + encodeURI(JSON.stringify(extent))
 		});
-	})["catch"](function (error) {
+	}).catch(function (error) {
 		res.send(error);
 	}).done();
 });
@@ -176,23 +154,6 @@ router.get('/carProbe', authenticate, function (req, res) {
 router.get('/carProbeMonitor', authenticate, function (req, res) {
 	var qs = req.url.substring('/carProbeMonitor?'.length);
 	res.render('carProbeMonitor', { appName: appEnv.name, qs: qs });
-});
-
-router.get("/routesearch", function (req, res) {
-	var q = req.query;
-	contextMapping.routeSearch(
-		q.orig_latitude,
-		q.orig_longitude,
-		q.orig_heading || 0,
-		q.dest_latitude,
-		q.dest_longitude,
-		q.dest_heading || 0,
-		q.option
-	).then(function (msg) {
-		res.send(msg);
-	})["catch"](function (error) {
-		handleAssetError(res, error);
-	});
 });
 
 router.get("/alert", function (req, res) {
@@ -234,132 +195,6 @@ router.get("/alert", function (req, res) {
 	}
 });
 
-// 
-// POI APIs
-// 
-router.get("/event/query", function (req, res) {
-	var q = req.query;
-	contextMapping.queryEvent({
-		"min_latitude": q.min_latitude,
-		"min_longitude": q.min_longitude,
-		"max_latitude": q.max_latitude,
-		"max_longitude": q.max_longitude,
-		"event_type": q.event_type,
-		"status": q.status
-	}).then(function (msg) {
-		res.send(msg);
-	})["catch"](function (error) {
-		handleAssetError(res, error);
-	});
-});
-
-router.get("/event", function (req, res) {
-	var q = req.params.event_id;
-	contextMapping.getEvent(req.query.event_id).then(function (msg) {
-		res.send(msg);
-	})["catch"](function (error) {
-		handleAssetError(res, error);
-	});
-});
-
-router.post("/event", function (req, res) {
-	vehicleDataHub.createEvent(req.body, "sync").then(function (msg) {
-		res.send(msg);
-	})["catch"](function (error) {
-		handleAssetError(res, error);
-	});
-});
-
-router["delete"]("/event", function (req, res) {
-	contextMapping.deleteEvent(req.query.event_id).then(function (msg) {
-		res.send(msg);
-	})["catch"](function (error) {
-		handleAssetError(res, error);
-	});
-});
-
-// 
-// POI APIs
-// 
-router.get("/capability/poi", authenticate, function(req, res) {
-	res.send({available: true});
-});
-
-router.post("/poi/query", function(req, res){
-	let body = req.body;
-	contextMapping.queryPoi(
-		contextMapping._generateFeature(null, "Point", 
-						[body.longitude, body.latitude], body.properties), 
-						{ "radius": body.radius }
-	).then(function(msg){
-		res.send(msg.features.map(convertPOI));
-	})["catch"](function(error){
-		handleAssetError(res, error);
-	});
-});
-
-router.get("/poi", function(req, res){
-	const id = req.query.poi_id;
-	contextMapping.getPoi({ "poi_id": id }).then(function(msg){
-		res.send(convertPOI(msg.features[0]));
-	})["catch"](function(error){
-		handleAssetError(res, error);
-	});
-});
-
-router.post("/poi", function(req, res){
-	const body = req.body;
-	const id = body.id || chance.guid();
-	const pois = contextMapping._generateFeatureCollection([
-		contextMapping._generateFeature(id, "Point", [body.longitude, body.latitude], body.properties)
-	]);
-	contextMapping.createPoi(pois).then(function(msg){
-			res.send({id: id});
-		})["catch"](function(error){
-			handleAssetError(res, error);
-		});
-});
-
-router["delete"]("/poi", function(req, res){
-	const id = req.query.poi_id;
-	contextMapping.deletePoi({ "poi_id": id }).then(function(msg){
-		res.send(msg);
-	})["catch"](function(error){
-		handleAssetError(res, error);
-	});
-});
-
-//
-// Driving Behavior Analysis APIs
-//
-router.get("/capability/analysis", authenticate, function (req, res) {
-	res.send({ available: driverInsightsAnalysis.isAvailable() });
-});
-
-router.get('/analysis/trip/:mo_id', authenticate, function (req, res) {
-	Q.when(driverInsightsAnalysis.getTrips(req.params.mo_id, req.query.limit), function (msg) {
-		res.send(msg);
-	})["catch"](function (error) {
-		handleAssetError(res, error);
-	});
-});
-
-router.get('/analysis/behaviors/:mo_id', authenticate, function (req, res) {
-	Q.when(driverInsightsAnalysis.getTripBehavior(req.params.mo_id, req.query.trip_id, req.query.lastHours), function (msg) {
-		res.send(msg);
-	})["catch"](function (error) {
-		handleAssetError(res, error);
-	});
-});
-
-router.get("/analysis/triproutes/:mo_id", function (req, res) {
-	Q.when(driverInsightsAnalysis.getTripRoute(req.params.mo_id, req.query.trip_id, req.query.lastHours), function (msg) {
-		res.send(msg);
-	})["catch"](function (error) {
-		handleAssetError(res, error);
-	});
-});
-
 /*
  * Shared WebSocket server instance
  */
@@ -380,9 +215,6 @@ var initWebSocketServer = function (server, path) {
 		//
 		Q.allSettled(router.wsServer.clients.map(function (client) {
 			function getQs() {
-				if (client.mo_id) {
-					return { "mo_id": client.mo_id };
-				}
 				var e = client.extent;
 				if (e) {
 					return {
@@ -477,22 +309,12 @@ var initWebSocketServer = function (server, path) {
 			} catch (e) {
 				console.error('Error on parsing extent in wss URL', e);
 			}
-		} else {
-			qsIndex = url.lastIndexOf("?mo_id=");
-			if (qsIndex >= 0) {
-				const mo_id = decodeURI(url.substr(qsIndex + 7)); // 7 is length of "?mo_id="
-				client.mo_id = mo_id;
-				client.aggregationNeeded = false;
-			}
 		}
 	});
 }
 
 function getCarProbe(qs, addAlerts) {
-	let regions;
-	if (qs.min_longitude && qs.min_latitude && qs.max_longitude && qs.max_latitude) {
-		regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude, qs.max_latitude);
-	}
+	var regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude, qs.max_latitude);
 	var probes = Q(vehicleDataHub.getCarProbe(qs).then(function (probes) {
 		// send normal response
 		(probes || []).forEach(function (p) {

@@ -18,9 +18,13 @@
  * Export routers
  */
 module.exports = [
-                  require('./iotpdevice.js'),
-                  require('./insights.js'),
-                  require('./simulator.js'),
                   require('./asset.js'),
-                  require('./geofence.js')
+                  require('./probe.js'),
+                  require('./map.js'),
+                  require('./event.js'),
+                  require('./poi.js'),
+                  require('./geofence.js'),
+                  require('./analysis.js'),
+                  require('./iotpdevice.js'),
+                  require('./simulator.js')
                   ];
