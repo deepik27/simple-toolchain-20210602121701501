@@ -9,7 +9,7 @@
  */
 var _ = require("underscore");
 var Q = new require('q');
-const iot4aContextMapping = app_module_require("cvi-node-lib").contextMapping;
+const contextMapping = app_module_require("cvi-node-lib").contextMapping;
 var debug = require('debug')('vehicleLocation');
 debug.log = console.log.bind(console);
 
@@ -114,7 +114,7 @@ routeGenerator.prototype.updateRoute = function (locs) {
 		if (self.callback) {
 			self.callback({ data: { route: self.tripRoute, loop: true, current: self.prevLoc, destination: self.destination, options: self.options }, type: 'route' });
 		}
-	})["catch"](function (error) {
+	}).catch(function (error) {
 		if (self.callback) {
 			self.callback({ data: { loop: true, current: self.prevLoc, destination: self.destination, options: self.options }, error: error, type: 'route' });
 		}
@@ -147,12 +147,12 @@ routeGenerator.prototype._generateAnchors = function (slat, slng, sheading) {
 		for (var i = 0; i < numPoints; i++) {
 			var pdst = i === (numPoints - 1) ? { lat: slat, lng: slng } : this._getRandomLoc(slat, slng);
 			var heading = this._calcHeading(porg, pdst);
-			promises.push(iot4aContextMapping.matchMapFirst({ "latitude": porg.lat, "longitude": porg.lng, "heading": heading }));
+			promises.push(contextMapping.matchMapFirst({ "latitude": porg.lat, "longitude": porg.lng, "heading": heading }));
 			porg = pdst;
 		}
 		Q.all(promises).then(function (results) {
 			deferred.resolve(_.filter(results, function (loc) { return loc; }));
-		})["catch"](function (error) {
+		}).catch(function (error) {
 			deferred.reject(error);
 		});
 	}
@@ -189,7 +189,7 @@ routeGenerator.prototype._resetRoute = function () {
 				self.callback({ data: { route: self.tripRoute, loop: loop, current: self.prevLoc, destination: self.destination, options: self.options }, type: 'route' });
 			}
 			deferred.resolve(routeArray);
-		})["catch"](function (error) {
+		}).catch(function (error) {
 			if (self.callback) {
 				self.callback({ data: { loop: loop, current: self.prevLoc, destination: self.destination, options: self.options }, error: error, type: 'route' });
 			}
@@ -210,11 +210,16 @@ routeGenerator.prototype._createRoutes = function (locs, loop) {
 	var fail = function (error) {
 		return null;
 	};
-	for (var i = 0; i < locs.length - (loop ? 0 : 1); i++) {
-		var loc1 = locs[i];
-		var loc2 = (i < locs.length - 1) ? locs[i + 1] : locs[0];
-		var index = "index" + i;
-		promises.push(Q.when(this._findRouteBetweenPoints(0, loc1, loc2, index), success, fail));
+
+	if (this.getOption("avoid_events") || this.getOption("avoid_alerts")) {
+		for (var i = 0; i < locs.length - (loop ? 0 : 1); i++) {
+			var loc1 = locs[i];
+			var loc2 = (i < locs.length - 1) ? locs[i + 1] : locs[0];
+			var index = "index" + i;
+			promises.push(Q.when(this._findRouteBetweenPoints(0, loc1, loc2, index), success, fail));
+		}
+	} else {
+		promises.push(Q.when(this._findRouteMultiplePoints(0, locs, loop, "index0"), success, fail));
 	}
 
 	var self = this;
@@ -234,7 +239,7 @@ routeGenerator.prototype._createRoutes = function (locs, loop) {
 		}
 		self.routing = false;
 		deferred.resolve(routeArray);
-	})["catch"](function (error) {
+	}).catch(function (error) {
 		self.routing = false;
 		deferred.reject(error);
 	});
@@ -248,7 +253,7 @@ routeGenerator.prototype._findRouteBetweenPoints = function (retryCount, start, 
 	var self = this;
 	var option = this.getOption("avoid_events") ? "avoid_events" : null;
 
-	Q.when(iot4aContextMapping.routeSearch({ "orig_latitude": start.lat, "orig_longitude": start.lon, "orig_heading": start.heading || 0, "dest_latitude": end.lat, "dest_longitude": end.lon, "dest_heading": end.heading || 0 }, option), function (data) {
+	Q.when(contextMapping.routeSearch({ "orig_latitude": start.lat, "orig_longitude": start.lon, "orig_heading": start.heading || 0, "dest_latitude": end.lat, "dest_longitude": end.lon, "dest_heading": end.heading || 0 }, option), function (data) {
 		var routeArray = [];
 		data.link_shapes.forEach(function (shapes) {
 			shapes.shape.forEach(function (shape) {
@@ -268,7 +273,67 @@ routeGenerator.prototype._findRouteBetweenPoints = function (retryCount, start, 
 		}
 		console.error("Cannot get route for simulation");
 		deferred.reject();
-	})["catch"](function (error) {
+	}).catch(function (error) {
+		console.error("Error in route search: " + error);
+		deferred.reject();
+	});
+	return deferred.promise;
+};
+
+// find a route from a specific location to a specific location
+routeGenerator.prototype._findRouteMultiplePoints = function (retryCount, locs, loop, searchId) {
+	retryCount = retryCount || 0;
+	var deferred = Q.defer();
+	var self = this;
+	var mo_id = this.getOption("target_vehicle");
+	var driver_id = this.getOption("target_driver");
+	var route_mode = this.getOption("route_mode");
+
+	var params = {points: [], props: { get_links: true, get_linkshape: true }};
+	if (mo_id) params.mo_id = mo_id;
+	if (driver_id) params.driver_id = driver_id;
+	if (route_mode) params.route_mode = route_mode;
+
+	var addPoint = function(loc) {
+		if (loc.props && loc.props.poi_id) {
+			params.points.push({props: loc.props});
+		} else {
+			params.points.push({latitude: loc.lat, longitude: loc.lon, heading: loc.heading});
+		}
+	}
+	for (var i = 0; i < locs.length; i++) {
+		addPoint(locs[i]);
+	}
+	if (loop) {
+		addPoint(locs[0]);
+	}
+
+	Q.when(contextMapping.findRoute(params), function (data) {
+		var routeArray = [];
+		_.forEach(data.routes, function(route) {
+				_.forEach(route && route.trips, function(trip) {
+				_.forEach(trip && trip.paths, function(path) {
+					_.forEach(path && path.links, function(link) {
+						_.forEach(link && link.shape, function(shape) {
+							if (shape) routeArray.push(shape);
+						});
+					});
+				});
+			});
+		});
+		if (routeArray.length >= 2) {
+			deferred.resolve(searchId ? { id: searchId, route: routeArray } : routeArray);
+			return;
+		} else if (retryCount++ < 5) {
+			// retry 5 times
+			console.log("failed to search route. retry[" + retryCount + "]");
+			return self._findRouteMultiplePoints(retryCount, locs, loop).then(function (result) {
+				deferred.resolve(searchId ? { id: searchId, route: result } : result);
+			});
+		}
+		console.error("Cannot get route for simulation");
+		deferred.reject();
+	}).catch(function (error) {
 		console.error("Error in route search: " + error);
 		deferred.reject();
 	});
