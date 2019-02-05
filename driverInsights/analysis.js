@@ -30,9 +30,7 @@ _.extend(driverInsightsAnalysis, {
 			params.limit = limit;
 		}
 		Q.when(driverBehavior.getTrip(params), function (response) {
-			if (response && response.length > 0) {
-				deferred.resolve(response);
-			}
+			deferred.resolve(response);
 		})["catch"](function (err) {
 			deferred.reject(err);
 		}).done();
