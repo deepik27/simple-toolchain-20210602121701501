@@ -10,6 +10,7 @@
 var _ = require("underscore");
 var Q = new require('q');
 const contextMapping = app_module_require("cvi-node-lib").contextMapping;
+var version = app_module_require('utils/version.js');
 var debug = require('debug')('vehicleLocation');
 debug.log = console.log.bind(console);
 
@@ -211,7 +212,7 @@ routeGenerator.prototype._createRoutes = function (locs, loop) {
 		return null;
 	};
 
-	if (this.getOption("avoid_events") || this.getOption("avoid_alerts")) {
+	if (!version.laterOrEqual("3.0") || this.getOption("avoid_events") || this.getOption("avoid_alerts")) {
 		for (var i = 0; i < locs.length - (loop ? 0 : 1); i++) {
 			var loc1 = locs[i];
 			var loc2 = (i < locs.length - 1) ? locs[i + 1] : locs[0];
