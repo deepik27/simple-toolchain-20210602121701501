@@ -21,10 +21,11 @@ angular.module('htmlClient')
     	properties: {},
     	initialized: false,
     	
-    	init: function(clientId, vehicleId) {
+    	init: function(clientId, vehicleId, siteId) {
     		var deferred = $q.defer();
        		this.clientId = clientId;
-    		this.vehicleId = vehicleId;
+				this.vehicleId = vehicleId;
+				this.siteId = siteId;
     		var self = this;
 			$http(mobileClientService.makeRequestOption({
 				method: "GET",
@@ -55,7 +56,10 @@ angular.module('htmlClient')
     	
     	getVehicleId: function() {
     		return this.vehicleId;
-    	},
+			},
+			getMoId: function() {
+				return this.siteId + ":" + this.vehicleId;
+			},
     	getVehicle: function() {
     		return this.vehicle;
     	},

@@ -37,8 +37,8 @@
 						return;
 					}
 					var message = JSON.parse(e.originalEvent.data);
-					if (message.message === "simulator-start-all" || message.message === "simulator-stop-all") {
-						$q.when($scope.onDriving(true, message.message === "simulator-start-all"), function () {
+					if (message.message === "simulator-start" || message.message === "simulator-stop") {
+						$q.when($scope.onDriving(true, message.message === "simulator-start"), function () {
 							postStatusMessage(e.originalEvent.source, message.message, message.requestId);
 						}, function (error) {
 							postStatusMessage(e.originalEvent.source, message.message, message.requestId, true);
@@ -290,6 +290,75 @@
 					});
 				};
 
+				$scope.onLoadPOI = function() {
+					$scope.assignedPOIs = [];
+					poiHelper.searchArea = null;
+					poiLayer.getSource().clear();
+					poiHelper.poiMap = {};
+					poiHelper.updatePOIs();
+				};
+
+				$scope.onMoveUpPOI = function() {
+					if (!$scope.assignedPOIs || $scope.assignedPOIs.length == 0 || 
+						!$scope.selectedPOIID || $scope.assignedPOIs[0].id == $scope.selectedPOIID) {
+						return;
+					}
+					let pois = [];
+					$scope.assignedPOIs.forEach(function(poi) {
+						if ($scope.selectedPOIID === poi.id) {
+							let lastPoi = pois.pop();
+							pois.push(poi);
+							pois.push(lastPoi);
+						} else {
+							pois.push(poi);
+						}
+					});
+					$scope.assignedPOIs = pois;
+				};
+
+				$scope.onMoveDownPOI = function() {
+					if (!$scope.assignedPOIs || $scope.assignedPOIs.length == 0 || 
+						!$scope.selectedPOIID || $scope.assignedPOIs[$scope.assignedPOIs.length-1].id == $scope.selectedPOIID) {
+						return;
+					}
+					let pois = [];
+					let targetPOI = null;
+					$scope.assignedPOIs.forEach(function(poi) {
+						if ($scope.selectedPOIID === poi.id) {
+							targetPOI = poi;
+						} else if (targetPOI) {
+							pois.push(poi);
+							pois.push(targetPOI);
+							targetPOI = null;
+						} else {
+							pois.push(poi);
+						}
+					});
+					$scope.assignedPOIs = pois;
+				};
+
+				$scope.onPOISelected = function(index) {
+					if ($scope.selectedPOIID) {
+						let poi = null;
+						for (let i = 0; i < $scope.assignedPOIs.length; i++) {
+							if ($scope.assignedPOIs[i].id === $scope.selectedPOIID) {
+								poi = $scope.assignedPOIs[i];
+								break;
+							}
+						}
+						poiHelper.updateSelection(poi);
+
+						var size = map.getSize();
+						var ext = map.getView().calculateExtent(size);
+						var extent = ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326');
+						if (extent[0] <= poi.longitude && poi.longitude < extent[2] &&
+								extent[1] <= poi.latitude && poi.latitude < extent[3]) {
+							return;
+						}
+						map.getView().setCenter(ol.proj.transform([poi.longitude, poi.latitude], 'EPSG:4326', 'EPSG:3857'));
+					}
+				};
+
 				// device ID
 				$scope.traceCurrentLocation = true;
 				$scope.directions = [{ label: "North", value: 0 }, { label: "North East", value: 45 }, { label: "East", value: 90 }, { label: "South East", value: 135 }, { label: "South", value: 180 }, { label: "South West", value: 225 }, { label: "West", value: 270 }, { label: "North West", value: 315 }];
@@ -301,12 +370,14 @@
 				$scope.actionMode = "action-car-position";
 				$scope.opt_avoid_events = simulatedVehicle.getOption("avoid_events");
 				$scope.opt_route_loop = simulatedVehicle.getOption("route_loop");
+				$scope.assignedPOIs = [];
+				$scope.routeMode = "general";
 
 				// rules
 				// should be synced with rules defined in /driverinsights/fleetalert.js
 				$scope.rules = [
-					{ propName: "engineTemp", label: "Engine Temperature (Critical if larger than 248)" },
-					{ propName: "fuel", label: "Fuel" }
+					{ propName: "engineTemp", label: "Engine Temperature (Critical if larger than 248)"},
+					{ propName: "fuel", label: "Fuel"}
 				];
 
 				// vehicle data control panel
@@ -341,6 +412,28 @@
 					lockPosition = true;
 					$scope.traceCurrentLocation = true;
 					showLocation(simulatedVehicle.getCurrentPosition());
+				};
+ 
+				// Event handlers
+				function onMouseDown(e) {
+					console.log("mouse down");
+					let feature = e.map.forEachFeatureAtPixel(e.pixel,
+							function(feature, layer) {
+								return feature;
+							});
+
+					if (feature && feature.get("type") == "poi") {
+						let poi = feature.get("item");;
+						for (let i = 0; i < $scope.assignedPOIs.length; i++) {
+							let p = $scope.assignedPOIs[i];
+							if (p.id === poi.id) {
+								$scope.selectedPOIID = p.id;
+								poiHelper.updateSelection(p);
+								break;
+							}
+						}
+					}
+					return !!feature;
 				};
 
 				// Show specified location on a map
@@ -416,7 +509,7 @@
 						lockPosition = false;
 					});
 					map.on("click", function (e) {
-						if (!simulatedVehicle.isDriving()) {
+						if (!simulatedVehicle.isDriving() && $scope.mouseMode) {
 							var loc = ol.proj.toLonLat(e.coordinate);
 							if ($scope.actionMode === "action-car-position") {
 								$scope.requestSending = true;
@@ -463,6 +556,14 @@
 					var centerPosition = ol.proj.fromLonLat([location.longitude || 0, location.latitude || 0]);
 					lockPosition = true;
 
+					function interaction() {
+						ol.interaction.Pointer.call(this, {
+							handleDownEvent: onMouseDown
+						});
+					};
+					ol.inherits(interaction, ol.interaction.Pointer);
+
+					
 					// Setup current car position
 					carFeature = new ol.Feature({ geometry: new ol.geom.Point(centerPosition) });
 					var carStyle = new ol.style.Style({
@@ -528,7 +629,9 @@
 					});
 
 					// create a map
+					let mouseInteration = new interaction();
 					map = new ol.Map({
+						interactions: ol.interaction.defaults(undefined).extend([mouseInteration]),
 						controls: ol.control.defaults({
 							attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
 								collapsible: false
@@ -552,7 +655,7 @@
 
 					eventHelper = new EventHelper(map, eventLayer, $q, eventService);
 					geofenceHelper = new GeofenceHelper(map, geofenceLayer, $q, geofenceService);
-					poiHelper = new POIHelper(map, poiLayer, $q, poiService);
+					poiHelper = new POIHelper(map, poiLayer, $q, poiService, {mo_id: simulatedVehicle.getMoId()});
 
 					enableMoveListener();
 
@@ -661,6 +764,24 @@
 						return null;
 					};
 
+					poiHelper.addPOIChangedListener(function(pois) {
+						$scope.assignedPOIs = pois;
+						if (pois && pois.length > 0) {
+							if (!$scope.selectedPOIID) {
+								$scope.selectedPOIID = pois[0].id;
+							} else {
+								for (let i = 0; i < pois.length; i++) {
+									if ($scope.selectedPOIID == pois[i].id) {
+										$scope.selectedPOIID = pois[i].id;
+										return;
+									}
+								}
+								$scope.selectedPOIID = pois[0].id;
+							}
+						} else {
+							$scope.selectedPOIID = null;
+						}
+					});
 				};
 
 				// initializer
@@ -1184,7 +1305,7 @@
 		// Setup current event position
 		var coordinates = [event.s_longitude || 0, event.s_latitude || 0];
 		var position = ol.proj.fromLonLat(coordinates, undefined);
-		var feature = new ol.Feature({ geometry: new ol.geom.Point(position), item: event, affected: false });
+		var feature = new ol.Feature({ type: "event", geometry: new ol.geom.Point(position), item: event, affected: false });
 		//		console.log("created an event feature : " + event.event_id);
 		return feature;
 	};
@@ -1384,7 +1505,7 @@
 		if (geofence.target && geofence.target.area) {
 			var polygonCoordinates = this.createGeofenceCoordinate(geofence.target.area);
 			var polygon = new ol.geom.Polygon([polygonCoordinates]);
-			var feature = new ol.Feature({ geometry: polygon, item: geofence, area: geofence.target.area });
+			var feature = new ol.Feature({ type: "geofence", geometry: polygon, item: geofence, area: geofence.target.area });
 			features.push(feature);
 			target = feature;
 		}
@@ -1431,13 +1552,14 @@
 	/*
 	 * POI healer
 	 */
-	var POIHelper = function (map, layer, q, poiService) {
+	var POIHelper = function (map, layer, q, poiService, queryProperties) {
 		// the map
 		this.map = map;
 		this.poiLayer = layer;
 		this.poiService = poiService;
 		this.q = q;
-		this.queryProperties = null;
+		this.queryProperties = queryProperties;
+		this.selectedPOI = null;
 
 		var self = this;
 		this.loadingHandle = null;
@@ -1452,12 +1574,23 @@
 					src: '/images/MarkerBlue.png',
 				})});
 
+				self.selectedPoiStyle = new ol.style.Style({image: new ol.style.Icon({
+					anchor: [79,158],
+					anchorXUnits: 'pixels',
+					anchorYUnits: 'pixels',
+					opacity: 1,
+					scale: 0.12,
+					src: '/images/MarkerRed.png',
+				})});
+
 			return function (feature, resolution) {
-				feature.setStyle(self.poiStyle);
+				var style = self.getPOIStyle(feature);
+				feature.setStyle(style);
 				return self.poiStyle;
 			};
 		}());
 
+		
 		this.poiListChangedListeners = [];
 		this.poiMap = {};
 
@@ -1468,6 +1601,27 @@
 			self.viewChanged();
 		});
 		this.updatePOIs();
+	};
+
+	POIHelper.prototype.updateSelection = function updateSelection(poi) {
+		if (this.selectedPOI) {
+			this.poiMap[this.selectedPOI.id].feature.setStyle(this.poiStyle);
+		}
+		this.selectedPOI = poi;
+		if (this.selectedPOI) {
+			this.poiMap[this.selectedPOI.id].feature.setStyle(this.selectedPoiStyle);
+		}
+	}
+
+	POIHelper.prototype.getPOIStyle = function getPOIStyle(feature) {
+		var poi = feature.get("item");
+		if (!poi) {
+			return;
+		}
+		if (this.selectedPOI && this.selectedPOI.id === poi.id)
+			return this.selectedPoiStyle;
+		else
+			return this.poiStyle;
 	};
 
 	POIHelper.prototype.viewChanged = function viewChanged() {
@@ -1522,7 +1676,8 @@
 
 		let center_latitude = (this.searchArea.max_latitude + this.searchArea.min_latitude) / 2;
     let center_longitude = (this.searchArea.max_longitude + this.searchArea.min_longitude) / 2;
-    let radius = Math.ceil(this._calcDistance([center_longitude, center_latitude], [this.searchArea.max_longitude, this.searchArea.max_latitude]) / 1000);
+		let radius = Math.ceil(this._calcDistance([center_longitude, center_latitude], [this.searchArea.max_longitude, this.searchArea.max_latitude]) / 1000);
+		radius += 10; // search larger area
 
 		let params = {
 			latitude: center_latitude,
@@ -1588,7 +1743,7 @@
 		return n * (Math.PI / 180);
 	};
 
-	POIHelper.prototype.createPOI = function createPOI(lat, lon, name, mo_id, serialnumer) {
+	POIHelper.prototype.createPOI = function createPOI(lat, lon, name, mo_id, serialnumber) {
 		var self = this;
 		var date = new Date();
 		var currentTime = date.toISOString();
@@ -1599,7 +1754,7 @@
 			properties: {
 				name: name,
 				mo_id: mo_id,
-				serialnumber: serialnumer
+				serialnumber: serialnumber
 			}
 		};
 		this.q.when(this.poiService.createPOI(params), function (id) {
@@ -1663,7 +1818,7 @@
 		// Setup current poi position
 		var coordinates = [poi.longitude || 0, poi.latitude || 0];
 		var position = ol.proj.fromLonLat(coordinates, undefined);
-		var feature = new ol.Feature({ geometry: new ol.geom.Point(position), item: poi });
+		var feature = new ol.Feature({ type: "poi", geometry: new ol.geom.Point(position), item: poi });
 		//		console.log("created an poi feature : " + poi.poi);
 		return feature;
 	};
