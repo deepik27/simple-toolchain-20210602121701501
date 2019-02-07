@@ -307,11 +307,13 @@ routeGenerator.prototype._findRouteMultiplePoints = function (retryCount, locs, 
 	var mo_id = this.getOption("target_vehicle");
 	var driver_id = this.getOption("target_driver");
 	var route_mode = this.getOption("route_mode");
+	var search_mode = this.getOption("search_mode");
 
 	var params = {points: [], props: { get_links: true, get_linkshape: true }};
 	if (mo_id) params.mo_id = mo_id;
 	if (driver_id) params.driver_id = driver_id;
 	if (route_mode) params.route_mode = route_mode;
+	if (search_mode) params.props.search_mode = search_mode;
 
 	var addPoint = function(loc) {
 		if (loc.props && loc.props.poi_id) {
