@@ -47,7 +47,7 @@ _.extend(driverInsightsAnalysis, {
 	},
 
 	getTripRoute: function (mo_id, trip_id, lastHours) {
-		var params = { mo_id: mo_id, trip_id: trip_id };
+		var params = { mo_id: mo_id, trip_id: trip_id, filter: "B:timestamp,B:latitude,B:longitude,B:matched_latitude,B:matched_longitude" };
 		if (lastHours > 0) {
 			params.from = moment().subtract(1, 'hours').toISOString();
 			params.to = moment().toISOString();
