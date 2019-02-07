@@ -9,7 +9,7 @@
  */
 .locationMap {
 	position: relative;
-    height: 275px;
+    height: 320px;
     width: 100%;
 }
 
@@ -373,4 +373,74 @@
 }
 .ol-overviewmap-box {
   border: 2px dotted rgba(0,60,136,0.7);
+}
+
+.driveButton {
+  background: #1b3649;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  padding: 10px 30px;
+}
+
+.driveButton[disabled] {
+cursor: default;
+opacity: 0.65;
+filter: alpha(opacity=65);
+}
+
+.driveButton:hover {
+  background: #25465d;
+  color: #fff;
+}
+
+.categoryTitle {
+  padding-top: 5px;
+}
+.routeOptionGroupLabel {
+  padding-top: 5px;
+  padding-bottom: 3px;
+  font-weight: 400;
+  font-size: medium;
+}
+.routeTypeSelection {
+  padding: 5px;
+}
+.routeSettingPanel {
+  background-color: #eee;
+  padding: 10px;
+  min-height: 150px;
+}
+.pointSelection {
+  font-size: small;
+  font-weight: 100;
+  margin-right: 10px; 
+}
+.routeOptions {
+  padding: 3px;
+}
+.routeOptions label {
+  font-size: 11pt;
+  font-weight: normal;
+  margin-left: 3px;
+}
+.routeOptions select {
+  font-size: 10pt;
+  font-weight: normal;
+}
+.routeOptions input {
+  margin-left: 10px;
+}
+.poiList {
+  width: 85%;
+}
+.poiListControl {
+  display: inline-block;
+}
+.poiListControl button {
+  font-size: 11pt;
+  font-weight: normal;
+  width: 70px;
 }

@@ -19,7 +19,6 @@ import { MapGeofenceHelper } from '../../shared/map-geofence-helper';
 import { GeofenceService } from '../../shared/iota-geofence.service';
 import { MapPOIHelper } from '../../shared/map-poi-helper';
 import { POIService } from '../../shared/iota-poi.service';
-import { AssetService } from '../../shared/iota-asset.service';
 import { ItemToolComponent } from '../item-tool/item-tool.component';
 
 declare var $; // jQuery from <script> tag in the index.html

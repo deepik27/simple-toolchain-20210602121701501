@@ -54,15 +54,49 @@ export class POIService {
     let options = new RequestOptions({headers: headers});
 
     return this.http.post(url, body, options).map(data => {
-        let resJson = data.json();
-        return resJson;
+      let resJson = data.json();
+      return resJson;
+    });
+  }
+
+  public uploadPOIFile(file) {
+    let formData: FormData = new FormData();
+    formData.append("file", file, file.name);
+    let headers = new Headers();
+    headers.set("Accept", "application/json");
+    let options = new RequestOptions({ headers: headers });
+
+    return this.http.post("/user/poi/upload", formData, options).map(data => {
+      let resJson = data.json();
+      return resJson;
     });
   }
 
   public deletePOI(poi_id) {
     return this.http.delete("/user/poi?poi_id=" + poi_id).map(data => {
-        let resJson = data.json();
-        return resJson;
+      let resJson = data.json();
+      return resJson;
     });
+  }
+
+  /*
+  * Calculate a distance between point1[longitude, latitude] and point2[longitude, latitude]
+  */
+  public calcDistance(point1, point2) {
+    let R = 6378e3;
+    let lon1 = this.toRadians(point1[0]);
+    let lat1 = this.toRadians(point1[1]);
+    let lon2 = this.toRadians(point2[0]);
+    let lat2 = this.toRadians(point2[1]);
+    let delta_x = lon2 - lon1;
+    let delta_y = lat2 - lat1;
+    let a = Math.sin(delta_y / 2) * Math.sin(delta_y / 2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(delta_x / 2) * Math.sin(delta_x / 2);
+    let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    let distance = R * c;
+    return distance;
+  }
+
+  public toRadians(n) {
+    return n * (Math.PI / 180);
   }
 }

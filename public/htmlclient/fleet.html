@@ -68,15 +68,20 @@
             </ul>
         </aside>
 		<div class="container-50 noTopPadding mainContent row">
-			<div class="column-4-med" ui-view="vehicle"></div>
+			<div class="column-4-med">
+                <div class="column-12-med" ui-view="vehicle"></div>
+                <div class="column-12-med" ng-show="pageLoaded">
+                        <div class="row" >
+                            <button class="btn" style="margin: 5px;width:280px;" ng-disabled="busy" ng-click="onDoCurrent()">{{vehicleActionLabel}}</button>
+                        </div>
+                        <div class="row"style="margin-top: 40px">
+                            <button class="btn" style="margin: 5px;width:280px;" ng-disabled="busy" ng-click="onStartAll()">{{requestingStarting ? "Starting..." : "Start All Vehicles"}}</button>
+                            <button class="btn" style="margin: 5px;width:280px;" ng-disabled="busy" ng-click="onStopAll()">{{requestingStopping ? "Stopping..." : "Stop All Vehicles"}}</button>
+                        </div>
+                    </div>
+                </div>
 			<div class="column-8-med" ng-repeat="vehicle in vehicles track by $index" ng-show="vehicle.display">
 				<iframe id="{{vehicle.mo_id}}" class="mapFrame" ng-src="{{vehicle.url}}" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" onload="onFrameLoaded()"></iframe>
-			</div>
-			<div class="column-12-med" ng-show="pageLoaded">
-				<div class="floatRight row">
-				<a class="btn" style="margin-left: 10px; margin-top: 5px;" ng-disabled="busy" ng-click="onStartAll()">{{requestingStarting ? "Starting..." : "Start All Vehicles"}}</a>
-				<a class="btn" style="margin-left: 10px; margin-top: 5px;" ng-disabled="busy" ng-click="onStopAll()">{{requestingStopping ? "Stopping..." : "Stop All Vehicles"}}</a>
-				</div>
 			</div>
 		</div>
 

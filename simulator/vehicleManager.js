@@ -167,7 +167,7 @@ _.extend(simulatedVehicleManager, {
 				"serial_number": "s-" + chance.hash({ length: 6 })
 			};
 			var properties = this._getDeviceModelInfo();
-			vehicle.model = properties.makeModel;
+			vehicle.model = "Simulated Vehicle";
 			if (asset.acceptVehicleProperties()) {
 				vehicle.properties = properties;
 			}

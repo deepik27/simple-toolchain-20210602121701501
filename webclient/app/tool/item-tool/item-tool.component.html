@@ -25,7 +25,7 @@
       </table>
     </div>
     <div [hidden]="creationMode!=='event'" class="tabContents">
-      <div class="toolPageDescription">Click on the map to put a new event.</div>
+      <div class="toolPageDescription">Click on the map to create a new event.</div>
       <table class="toolPage">
         <tbody>
           <tr>
@@ -75,7 +75,7 @@
       </table>
     </div>
     <div [hidden]="creationMode!=='poi'" class="tabContents">
-      <div class="toolPageDescription">Click on the map to put a new POI.</div>
+      <div class="toolPageDescription">Click on the map to create a new POI.</div>
       <table class="toolPage">
         <tbody>
           <tr class="toolItemRow">
@@ -124,9 +124,21 @@
               </tr>
               <tr class="toolItemRow">
                 <td colspan="2" class="toolItemLabel">
-                  <button style="margin-left:10px;" (click)="onCreateItem()">Create at this location</button>
-              </td>
+                  <button [disabled]="requestSending" style="margin-left:10px;" (click)="onCreateItem()">Create</button>
+                  <span [hidden]="creationMode!=='poi'">
+                    <button [disabled]="requestSending" onclick="document.getElementById('uploadFile').click();" >Load from CSV</button>
+                    <input type="file" id="uploadFile" style="display:none" (change)="uploadPOIFile($event)" placeholder="Upload POIs" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+                  </span>
+                </td>
               </tr>
+<!--
+              <tr class="toolItemRow" [hidden]="creationMode!=='poi'">
+                <td colspan="2" class="toolItemLabel">
+                  <button [disabled]="requestSending||!isSelectedVehicle||!targetVehicle" (click)="onDeleteSelectedVehiclePOI()" style="white-space: nowrap">Delete POI for target vehicle</button>
+                  <button [disabled]="requestSending" (click)="onDeleteAllPOI()" style="white-space: nowrap">Delete all</button>
+                </td>
+              </tr>
+-->
             </tbody>
           </table>
         </div>  

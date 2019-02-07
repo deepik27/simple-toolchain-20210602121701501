@@ -15,7 +15,7 @@ htmlClient.config(['$stateProvider', '$urlRouterProvider', function($stateProvid
 				url: '/home?vehicleId&serial_number&vendor&driverId&siteId&clientId',
 				template: '<client-drive></client-drive>',
 				controller: function($stateParams, $q, simulatedVehicle){
-					simulatedVehicle.init($stateParams.clientId, $stateParams.vehicleId);
+					simulatedVehicle.init($stateParams.clientId, $stateParams.vehicleId, $stateParams.siteId);
 				}
 			})
 			.state('profile', {

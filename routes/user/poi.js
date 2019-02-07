@@ -10,13 +10,22 @@
 /*
  * REST APIs using Driver Behavior service as backend
  */
-var router = module.exports = require('express').Router();
-var authenticate = require('./auth.js').authenticate;
+const router = module.exports = require('express').Router();
+const authenticate = require('./auth.js').authenticate;
 const contextMapping = app_module_require("cvi-node-lib").contextMapping;
-var chance = require('chance')();
+const version = app_module_require('utils/version.js');
+const chance = require('chance')();
+const fs = require("fs-extra");
+const multer = require('multer');
+
+const tempfolder = "tmp/";
+const upload = multer({dest: tempfolder}); 
+if (!fs.existsSync(tempfolder)){
+	fs.mkdirSync(tempfolder);
+}
 
 const handleError = require('./error.js').handleError;
-var debug = require('debug')('route:poi');
+const debug = require('debug')('route:poi');
 debug.log = console.log.bind(console);
 
 function convertPOI(feature) {
@@ -32,10 +41,10 @@ function convertPOI(feature) {
 // POI APIs
 // 
 router.get("/capability/poi", authenticate, function(req, res) {
-	res.send({available: true});
+	res.send({available: version.laterOrEqual("3.0")});
 });
 
-router.post("/poi/query", function(req, res){
+router.post("/poi/query", authenticate, function(req, res){
 	let body = req.body;
 	contextMapping.queryPoi(
 		contextMapping._generateFeature(null, "Point", 
@@ -49,7 +58,7 @@ router.post("/poi/query", function(req, res){
 	})
 });
 
-router.get("/poi", function(req, res){
+router.get("/poi", authenticate, function(req, res){
 	contextMapping.getPoi({ "poi_id": req.query.poi_id })
 	.then(function(result) {
 		if (result.features.length > 0)
@@ -61,7 +70,7 @@ router.get("/poi", function(req, res){
 	})
 });
 
-router.post("/poi", function(req, res){
+router.post("/poi", authenticate, function(req, res){
 	const body = req.body;
 	const id = body.id || chance.guid();
 	const pois = contextMapping._generateFeatureCollection([
@@ -75,11 +84,105 @@ router.post("/poi", function(req, res){
 	});
 });
 
-router["delete"]("/poi", function(req, res){
+router["delete"]("/poi", authenticate, function(req, res){
 	contextMapping.deletePoi({ "poi_id": req.query.poi_id })
 	.then(function(result) {
 		return res.send(result);
 	}).catch(function(error) {
 		handleError(res, error);
 	});
+});
+
+router.post("/poi/upload", upload.single('file'), function(req, res) {
+	var features = [];
+	var deleteIds = [];
+	const flushFeatures = function() {
+		if (features.length == 0) {
+			return;
+		}
+
+		// Delete existing POIs before creating
+		if (deleteIds.length > 0) {
+			let poi_ids = deleteIds.join(",");
+			deleteIds = [];
+			contextMapping.deletePoi({ "poi_id": poi_ids })
+			.then(function(result) {
+				let featureCollection = contextMapping._generateFeatureCollection(features);
+				contextMapping.createPoi(featureCollection);
+				features = [];
+			});
+		} else {
+			let featureCollection = contextMapping._generateFeatureCollection(features);
+			contextMapping.createPoi(featureCollection);
+			features = [];
+		}
+	}
+
+	var numEntries = 0;
+	// longitude, latitude, name, mo_id, serialnumber, id
+	const callbabck = function(line, flush) {
+		// comment line
+		if (line.charAt(0) == "#") {
+			return;
+		}
+		const entries = line.split(",");
+		if (entries.length < 2) {
+			return;
+		}
+		let longitude = Number(entries[0]);
+		let latitude = Number(entries[1]);
+		if (isNaN(longitude) || isNaN(latitude) || -180 > longitude || longitude > 180 || -90 > latitude || latitude > 90) {
+			return;
+		}
+
+		numEntries+=entries.length;
+
+		let id = entries.length > 5 ? entries[5] : null;
+		if (id) {
+			deleteIds.push(id);
+		} else {
+			id = chance.guid();
+		}
+		let properties = {};
+		if (entries.length > 4) {
+			properties.serialnumber = entries[4];
+		}
+		if (entries.length > 3) {
+			properties.mo_id = entries[3];
+		}
+		if (entries.length > 2) {
+			properties.name = entries[2];
+		}
+		let feature = contextMapping._generateFeature(id, "Point", [longitude, latitude], properties);
+		features.push(feature);
+
+		if (features.length > 100) {
+			flushFeatures(features);
+		}
+	};
+
+	const finished = function() {
+		flushFeatures(features);
+		res.send({created: numEntries});
+		fs.unlinkSync(req.file.path);
+	}
+
+	try {
+		var previous = "";
+		const stream = fs.createReadStream(req.file.path);
+		stream.on("data", function(data) {
+			previous += data;
+			previous.split('\n').forEach(function(line) {
+				callbabck(line.replace('\r', '').trim(), false);
+			});
+		});
+		stream.on('end', function() {
+			if (previous.length > 0) {
+				callbabck(previous, true);
+			}
+			finished();
+		});
+	} catch (e) {
+		res.status(500).send();
+	}
 });
