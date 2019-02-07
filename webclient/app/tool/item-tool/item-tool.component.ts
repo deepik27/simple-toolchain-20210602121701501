@@ -114,6 +114,21 @@ export class ItemToolComponent implements OnInit {
     }
   }
 
+  uploadPOIFile(event) {
+    if (!event.target.files || event.target.files.length == 0) {
+      return;
+    }
+    this.poiService.uploadPOIFile(event.target.files[0])
+    .subscribe((result: any) => {
+      if (result.created > 0) {
+        let helper = this.itemMap.mapItemHelpers["poi"];
+        helper.updateView();
+      }
+    }, (error: any) => {
+      alert("Failed to crate POIs.")
+    });
+  }
+
   private _updateVehicleList(pageNumber: number) {
     let isRequestRoot = !this.requestSending;
     this.requestSending = true;
@@ -137,6 +152,44 @@ export class ItemToolComponent implements OnInit {
         if (isRequestRoot) {
           this.requestSending = false;
         }
+    });
+  }
+
+  onDeleteSelectedVehiclePOI() {
+    this._onDeletePOI(this.targetVehicle.__mo_id);
+  }
+
+  onDeleteAllPOI() {
+    this._onDeletePOI(null);
+  }
+  
+  private _onDeletePOI(mo_id) {
+		var size = this.itemMap.map.getSize();
+		if (!size || isNaN(size[0]) || isNaN(size[1])) {
+			return;
+		}
+		var ext = this.itemMap.map.getView().calculateExtent(size);
+		var extent = ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326');
+
+		let center_latitude = (extent[1] + extent[3]) / 2;
+    let center_longitude = (extent[0] + extent[2]) / 2;
+		let radius = Math.ceil(this.poiService.calcDistance([center_longitude, center_latitude], [extent[2], extent[0]]) / 1000);
+		radius += 10; // search larger area
+
+    let properties;
+    if (mo_id) properties = {mo_id: mo_id};
+
+		let params = {
+			latitude: center_latitude,
+			longitude: center_longitude,
+			radius: radius,
+			properties: properties
+		}
+    this.poiService.queryPOIs(params).map(data => {
+      let poi_ids = data.map(function(poi) {
+        return poi.poi_id;
+      }).join(",");
+      this.poiService.deletePOI(poi_ids);
     });
   }
 
@@ -450,7 +503,7 @@ export class CreatePOICommand extends ToolCommand {
         latitude: this.loc.latitude,
         longitude: this.loc.longitude,
         properties: {
-          mo_id: this.vehicle ? this.vehicle.mo_id : undefined,
+          mo_id: this.vehicle ? this.vehicle.__mo_id : undefined,
           serialnumber: this.vehicle ? this.vehicle.serial_number : undefined,
           name: this.name
         }
