@@ -273,14 +273,14 @@ simulatedVehicle.prototype.getRouteData = function() {
  * Set current vehicle position
  */
 simulatedVehicle.prototype.setCurrentPosition = function(longitude, latitude, heading, donotResetRoute) {
-	return this.route.setCurrentPosition({latitude: latitude, longitude: longitude, heading: heading || 0}, donotResetRoute);
+	return this.route.setCurrentPosition({latitude: latitude, longitude: longitude, heading: heading}, donotResetRoute);
 };
 	
 /**
  * Set destination of this vehicle
  */
 simulatedVehicle.prototype.setDestination = function(longitude, latitude, heading, donotResetRoute) {
-	return this.route.setDestination({latitude: latitude, longitude: longitude, heading: heading || 0}, donotResetRoute);
+	return this.route.setDestination({latitude: latitude, longitude: longitude, heading: heading}, donotResetRoute);
 };
 	
 /**
@@ -325,6 +325,13 @@ simulatedVehicle.prototype.unsetProperties = function(properties) {
 	_.each(properties, function(key) {
 		delete this.fixedProps[key];
 	}.bind(this));
+};
+
+/**
+ * Set waypoints
+ */
+simulatedVehicle.prototype.setWaypoints = function (waypoints) {
+	return this.route.setWaypoints(waypoints);
 };
 
 /**

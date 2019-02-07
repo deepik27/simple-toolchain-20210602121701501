@@ -314,6 +314,7 @@
 						}
 					});
 					$scope.assignedPOIs = pois;
+					poiUpdated(pois);
 				};
 
 				$scope.onMoveDownPOI = function() {
@@ -335,6 +336,7 @@
 						}
 					});
 					$scope.assignedPOIs = pois;
+					poiUpdated(pois);
 				};
 
 				$scope.onPOISelected = function(index) {
@@ -529,6 +531,16 @@
 								setDestination(e.coordinate);
 							}
 						}
+					});
+				}
+
+				function poiUpdated(pois) {
+					let waypoints = pois.map(function(poi) { return {latitude: poi.latitude, longitude: poi.longitude, poi_id: poi.id};});
+					$scope.requestSending = true;
+					simulatedVehicle.setWaypoints(waypoints).then(function() {
+						$scope.requestSending = false;
+					}, function(error) {
+						$scope.requestSending = false;
 					});
 				}
 
@@ -766,6 +778,8 @@
 
 					poiHelper.addPOIChangedListener(function(pois) {
 						$scope.assignedPOIs = pois;
+						poiUpdated(pois);
+
 						if (pois && pois.length > 0) {
 							if (!$scope.selectedPOIID) {
 								$scope.selectedPOIID = pois[0].id;

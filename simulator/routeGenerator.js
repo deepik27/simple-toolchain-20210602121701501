@@ -24,6 +24,7 @@ function routeGenerator() {
 	this.tripRouteIndex = 0;
 	this.prevLoc = { lat: 48.134994, lon: 11.671026, speed: 0, heading: 0 };
 	this.destination = null;
+	this.waypoints = [];
 	this.options = { avoid_events: true, route_loop: true };
 }
 
@@ -87,6 +88,11 @@ routeGenerator.prototype.setDestination = function (loc, donotResetRoute) {
 	return donotResetRoute ? Q() : this._resetRoute();
 };
 
+routeGenerator.prototype.setWaypoints = function(waypoints) {
+	this.waypoints = waypoints;
+	return this._resetRoute();
+};
+
 routeGenerator.prototype.getDestination = function () {
 	return this.destination;
 };
@@ -137,7 +143,17 @@ routeGenerator.prototype._getRandomLoc = function (slat, slng) {
 routeGenerator.prototype._generateAnchors = function (slat, slng, sheading) {
 	var deferred = Q.defer();
 	var locs = [];
-	if (this.destination) {
+	if (this.waypoints && this.waypoints.length > 0) {
+		locs.push({ lat: slat, lon: slng, heading: sheading });
+		this.waypoints.forEach(function(p) {
+			locs.push({ lat: p.latitude, lon: p.longitude, heading: p.heading, poi_id: p.poi_id });
+		});
+		if (this.destination) {
+			locs.push({ lat: this.destination.lat, lon: this.destination.lon, heading: this.destination.heading });
+
+		}
+		deferred.resolve(locs);
+	} else if (this.destination) {
 		locs.push({ lat: slat, lon: slng, heading: sheading });
 		locs.push({ lat: this.destination.lat, lon: this.destination.lon, heading: this.destination.heading });
 		deferred.resolve(locs);
@@ -167,6 +183,7 @@ routeGenerator.prototype._resetRoute = function () {
 	var sheading = this.prevLoc.heading;
 	var speed = this.prevLoc.speed;
 	var loop = !this.destination || (this.options && this.options.route_loop);
+	if (this.waypoints && this.waypoints.length > 0) loop = false;
 
 	var deferred = Q.defer();
 	var self = this;
@@ -212,7 +229,8 @@ routeGenerator.prototype._createRoutes = function (locs, loop) {
 		return null;
 	};
 
-	if (!version.laterOrEqual("3.0") || this.getOption("avoid_events") || this.getOption("avoid_alerts")) {
+	if (!version.laterOrEqual("3.0") || 
+		(!this.waypoints || this.waypoints.length == 0) && (this.getOption("avoid_events") || this.getOption("avoid_alerts"))) {
 		for (var i = 0; i < locs.length - (loop ? 0 : 1); i++) {
 			var loc1 = locs[i];
 			var loc2 = (i < locs.length - 1) ? locs[i + 1] : locs[0];
