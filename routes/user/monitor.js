@@ -103,15 +103,15 @@ router.get('/carProbe', authenticate, function (req, res) {
 		return res.status(400).send('One or more of the parameters are undefined or not a number'); // FIXME response code
 	}
 	// query by extent
-	var qs = {
-		min_longitude: extent.min_lng,
-		min_latitude: extent.min_lat,
-		max_longitude: extent.max_lng,
-		max_latitude: extent.max_lat,
-	};
+	var qs = {};
 	// add vehicleId query
 	if (req.query.vehicleId) {
 		qs.mo_id = req.query.vehicleId;
+	} else {
+		qs.min_longitude = extent.min_lng;
+		qs.min_latitude = extent.min_lat;
+		qs.max_longitude =  extent.max_lng;
+		qs.max_latitude = extent.max_lat;
 	}
 
 	// initialize WSS server
@@ -314,6 +314,9 @@ var initWebSocketServer = function (server, path) {
 }
 
 function getCarProbe(qs, addAlerts) {
+	if (qs.min_longitude == -180 && qs.mo_id) {
+		console.warn("area is too large");
+	}
 	var regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude, qs.max_latitude);
 	var probes = Q(vehicleDataHub.getCarProbe(qs).then(function (probes) {
 		// send normal response

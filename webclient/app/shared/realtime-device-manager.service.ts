@@ -49,16 +49,26 @@ export class RealtimeDeviceDataProviderService {
    }
 
   private getQs(extent: any[], vehicleId: string){
-    var xt = extent ? extent: [-180, -90, 180, 90];
-    var qlist = ['min_lat='+xt[1], 'min_lng='+xt[0],
-                  'max_lat='+xt[3], 'max_lng='+xt[2]];
-    if(vehicleId)
-        qlist.push('vehicleId=' + vehicleId);
-    return qlist.join('&');
+		if (vehicleId) {
+			return 'vehicleId=' + vehicleId;
+		} else if (extent) {
+			let min_lon = extent[0];
+			let min_lat = extent[1];
+			let max_lon = extent[2];
+			let max_lat = extent[3];
+			if (max_lon - min_lon > 180 || max_lat - min_lat > 90) {
+				console.warn("Monitoring area is too large.");
+				return null;
+			}
+			return 'min_lat='+min_lat + '&min_lng='+min_lon + '&max_lat='+max_lat + '&max_lng='+max_lon;
+		}
   }
 
   getProbe(vehicleId: string) {
-    var qs = this.getQs(null, vehicleId);
+		var qs = this.getQs(null, vehicleId);
+		if (!qs) {
+			return;
+		}
     return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise();
   }
 
@@ -108,7 +118,10 @@ export class RealtimeDeviceDataProviderService {
       var extent = extentOrVehicleId;
       var xt = mapHelper ? mapHelper.expandExtent(extent, 0.1) : extent; // get extended extent to track for map
       qs = this.getQs(xt, null);
-    }
+		}
+		if (!qs) {
+			return;
+		}
 
 		// handle cars
 		this.refreshCarStatus(qs).then((data) => {
