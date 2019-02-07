@@ -97,21 +97,25 @@ router.post('/notifiedActions', authenticate, function (req, res) {
  *   http://localhost:6003/monitoring/cars/query?min_lat=-90&max_lat=90&min_lng=-180&max_lng=180
  */
 router.get('/carProbe', authenticate, function (req, res) {
-	// get extent
-	var extent = normalizeExtent(req.query);
-	if ([extent.max_lat, extent.max_lng, extent.min_lat, extent.min_lng].some(function (v) { return isNaN(v); })) {
-		return res.status(400).send('One or more of the parameters are undefined or not a number'); // FIXME response code
-	}
-	// query by extent
-	var qs = {
-		min_longitude: extent.min_lng,
-		min_latitude: extent.min_lat,
-		max_longitude: extent.max_lng,
-		max_latitude: extent.max_lat,
-	};
-	// add vehicleId query
+	let qs = {}, path;
 	if (req.query.vehicleId) {
-		qs.mo_id = req.query.vehicleId;
+		// query by vehicleId
+		qs = { mo_id: req.query.vehicleId };
+		path = `mo_id=${encodeURI(qs.mo_id)}`;
+	} else {
+		// get extent
+		const extent = normalizeExtent(req.query);
+		if ([extent.max_lat, extent.max_lng, extent.min_lat, extent.min_lng].some(function (v) { return isNaN(v); })) {
+			return res.status(400).send('One or more of the parameters are undefined or not a number'); // FIXME response code
+		}
+		// query by extent
+		qs = {
+			min_longitude: extent.min_lng,
+			min_latitude: extent.min_lat,
+			max_longitude: extent.max_lng,
+			max_latitude: extent.max_lat,
+		};
+		path = `region=${encodeURI(JSON.stringify(extent))}`;
 	}
 
 	// initialize WSS server
@@ -144,10 +148,10 @@ router.get('/carProbe', authenticate, function (req, res) {
 			count: count,
 			devices: devices,
 			serverTime: (isNaN(ts) || !isFinite(ts)) ? Date.now() : ts,
-			wssPath: wssUrl + '?' + "region=" + encodeURI(JSON.stringify(extent))
+			wssPath: wssUrl + '?' + path
 		});
 	}).catch(function (error) {
-		res.send(error);
+		res.send(400, error);
 	}).done();
 });
 
@@ -215,6 +219,9 @@ var initWebSocketServer = function (server, path) {
 		//
 		Q.allSettled(router.wsServer.clients.map(function (client) {
 			function getQs() {
+				if (client.mo_id) {
+					return { "mo_id": client.mo_id };
+				}
 				var e = client.extent;
 				if (e) {
 					return {
@@ -309,12 +316,22 @@ var initWebSocketServer = function (server, path) {
 			} catch (e) {
 				console.error('Error on parsing extent in wss URL', e);
 			}
+		} else {
+			qsIndex = url.lastIndexOf("?mo_id=");
+			if (qsIndex >= 0) {
+				const mo_id = decodeURI(url.substr(qsIndex + 7)); // 7 is length of "?mo_id="
+				client.mo_id = mo_id;
+				client.aggregationNeeded = false;
+			}
 		}
 	});
 }
 
 function getCarProbe(qs, addAlerts) {
-	var regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude, qs.max_latitude);
+	let regions;
+	if (qs.min_longitude && qs.min_latitude && qs.max_longitude && qs.max_latitude) {
+		regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude, qs.max_latitude);
+	}
 	var probes = Q(vehicleDataHub.getCarProbe(qs).then(function (probes) {
 		// send normal response
 		(probes || []).forEach(function (p) {
