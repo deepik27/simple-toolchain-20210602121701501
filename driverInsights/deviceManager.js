@@ -58,6 +58,31 @@ class DeviceManager {
 			return Promise.reject(error);
 		});
 		debug(vendor);
+
+		// Remove IoTP devices which is not in CVI asset
+		const vehicles = await cviAsset.getVehicleList({ "vendor": VENDOR_NAME });
+		const devices = await iotfAppClient.getAllDevices({ "typeId": VENDOR_NAME });
+
+		const vehiclemap = {};
+		vehicles.data.forEach(vehicle => {
+			vehiclemap[vehicle.mo_id.toUpperCase()] = vehicle;
+		});
+		const deleteDevices = [];
+		devices.results.forEach(device => {
+			if (!vehiclemap[device.deviceId.toUpperCase()]) {
+				deleteDevices.push({ "typeId": VENDOR_NAME, "deviceId": device.deviceId });
+			}
+		});
+		if (deleteDevices.length > 0) {
+			const responce = await iotfAppClient.deleteMultipleDevices(deleteDevices).catch(error => {
+				// Workaround of defect of iotf client
+				if (error.message.indexOf("Expected HTTP 201 from server but got HTTP 202.") > 0) {
+					return deleteDevices.map(d => { d.success = true; return d; });
+				}
+				return Promise.reject(error);
+			});
+			debug(JSON.stringify(response));
+		}
 	}
 	async getDeviceType(deviceType) {
 		const type = await iotfAppClient.getDeviceType(deviceType).catch(error => {
@@ -76,14 +101,17 @@ class DeviceManager {
 	 * @param {Object} vehicle
 	 * @param {String} protocol "mqtt" | "http"
 	 */
-	async addVehicle(id, vehicle, protocol) {
+	async addVehicle(tcuId, vehicle, protocol) {
 		vehicle = Object.assign({
 			"mo_id": chance.hash({ length: 10 }),
 			"vendor": VENDOR_NAME,
 			"serial_number": "s-" + chance.hash({ length: 6 }),
-			"status": "active"
+			"status": "active",
+			"properties": {}
 		}, vehicle || {});
-		if (!cviAsset.acceptVehicleProperties()) {
+		if (cviAsset.acceptVehicleProperties()) {
+			vehicle.properties["TCU_ID"] = tcuId;
+		} else {
 			delete vehicle.properties;
 		}
 
@@ -149,11 +177,6 @@ class DeviceManager {
 		} else {
 			//TODO
 		}
-	}
-	async getVehicleInfo(mo_id) {
-
-	}
-	async deleteVehicle() {
 	}
 	async getAllDevices(num_page, num_rec_in_page) {
 	}
