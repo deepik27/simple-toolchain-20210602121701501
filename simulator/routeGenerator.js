@@ -24,7 +24,8 @@ function routeGenerator() {
 	this.tripRouteIndex = 0;
 	this.prevLoc = { lat: 48.134994, lon: 11.671026, speed: 0, heading: 0 };
 	this.destination = null;
-	this.options = { avoid_events: true, route_loop: true };
+	this.waypoints = [];
+	this.options = { avoid_events: false, route_loop: true };
 }
 
 routeGenerator.prototype.listen = function (callback) {
@@ -87,6 +88,11 @@ routeGenerator.prototype.setDestination = function (loc, donotResetRoute) {
 	return donotResetRoute ? Q() : this._resetRoute();
 };
 
+routeGenerator.prototype.setWaypoints = function(waypoints) {
+	this.waypoints = waypoints;
+	return this._resetRoute();
+};
+
 routeGenerator.prototype.getDestination = function () {
 	return this.destination;
 };
@@ -131,24 +137,34 @@ routeGenerator.prototype._getRandomLoc = function (slat, slng) {
 	var dtheta = 2 * Math.PI * Math.random();
 	var dlat = +slat + ddist * Math.sin(dtheta);
 	var dlng = +slng + ddist * Math.cos(dtheta);
-	return { lat: dlat, lng: dlng };
+	return { lat: dlat, lon: dlng };
 };
 
 routeGenerator.prototype._generateAnchors = function (slat, slng, sheading) {
 	var deferred = Q.defer();
 	var locs = [];
-	if (this.destination) {
-		locs.push({ lat: slat, lng: slng, heading: sheading });
-		locs.push({ lat: this.destination.lat, lng: this.destination.lon, heading: this.destination.heading });
+	if (this.waypoints && this.waypoints.length > 0) {
+		locs.push({ lat: slat, lon: slng, heading: sheading });
+		this.waypoints.forEach(function(p) {
+			locs.push({ lat: p.latitude, lon: p.longitude, heading: p.heading, poi_id: p.poi_id });
+		});
+		if (this.destination) {
+			locs.push({ lat: this.destination.lat, lon: this.destination.lon, heading: this.destination.heading });
+
+		}
+		deferred.resolve(locs);
+	} else if (this.destination) {
+		locs.push({ lat: slat, lon: slng, heading: sheading });
+		locs.push({ lat: this.destination.lat, lon: this.destination.lon, heading: this.destination.heading });
 		deferred.resolve(locs);
 	} else {
 		var promises = [];
 		var numPoints = 3;
-		var porg = { lat: slat, lng: slng };
+		var porg = { lat: slat, lon: slng };
 		for (var i = 0; i < numPoints; i++) {
-			var pdst = i === (numPoints - 1) ? { lat: slat, lng: slng } : this._getRandomLoc(slat, slng);
+			var pdst = i === (numPoints - 1) ? { lat: slat, lon: slng } : this._getRandomLoc(slat, slng);
 			var heading = this._calcHeading(porg, pdst);
-			promises.push(contextMapping.matchMapFirst({ "latitude": porg.lat, "longitude": porg.lng, "heading": heading }));
+			promises.push(contextMapping.matchMapFirst({ "latitude": porg.lat, "longitude": porg.lon, "heading": heading }));
 			porg = pdst;
 		}
 		Q.all(promises).then(function (results) {
@@ -167,6 +183,7 @@ routeGenerator.prototype._resetRoute = function () {
 	var sheading = this.prevLoc.heading;
 	var speed = this.prevLoc.speed;
 	var loop = !this.destination || (this.options && this.options.route_loop);
+	if (this.waypoints && this.waypoints.length > 0) loop = false;
 
 	var deferred = Q.defer();
 	var self = this;
@@ -212,7 +229,8 @@ routeGenerator.prototype._createRoutes = function (locs, loop) {
 		return null;
 	};
 
-	if (!version.laterOrEqual("3.0") || this.getOption("avoid_events") || this.getOption("avoid_alerts")) {
+	if (!version.laterOrEqual("3.0") || 
+		(!this.waypoints || this.waypoints.length == 0) && (this.getOption("avoid_events") || this.getOption("avoid_alerts"))) {
 		for (var i = 0; i < locs.length - (loop ? 0 : 1); i++) {
 			var loc1 = locs[i];
 			var loc2 = (i < locs.length - 1) ? locs[i + 1] : locs[0];
@@ -289,11 +307,13 @@ routeGenerator.prototype._findRouteMultiplePoints = function (retryCount, locs, 
 	var mo_id = this.getOption("target_vehicle");
 	var driver_id = this.getOption("target_driver");
 	var route_mode = this.getOption("route_mode");
+	var search_mode = this.getOption("search_mode");
 
 	var params = {points: [], props: { get_links: true, get_linkshape: true }};
 	if (mo_id) params.mo_id = mo_id;
 	if (driver_id) params.driver_id = driver_id;
 	if (route_mode) params.route_mode = route_mode;
+	if (search_mode) params.props.search_mode = search_mode;
 
 	var addPoint = function(loc) {
 		if (loc.props && loc.props.poi_id) {
@@ -438,8 +458,8 @@ routeGenerator.prototype._getRoutePosition = function () {
 };
 
 routeGenerator.prototype._calcHeading = function (p0, p1) {
-	var rad = 90 - Math.atan2(Math.cos(p0.lat / 90) * Math.tan(p1.lat / 90) - Math.sin(p0.lat / 90) * Math.cos((p1.lng - p0.lng) / 180),
-		Math.sin((p1.lng - p0.lng) / 180)) / Math.PI * 180;
+	var rad = 90 - Math.atan2(Math.cos(p0.lat / 90) * Math.tan(p1.lat / 90) - Math.sin(p0.lat / 90) * Math.cos((p1.lon - p0.lon) / 180),
+		Math.sin((p1.lon - p0.lon) / 180)) / Math.PI * 180;
 	return (rad + 360) % 360;
 };
 

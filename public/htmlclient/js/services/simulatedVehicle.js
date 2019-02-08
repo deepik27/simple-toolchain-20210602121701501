@@ -406,6 +406,24 @@ angular.module('htmlClient')
 					deferred.reject(error);
 				});
 				return deferred.promise;
+			},
+			setWaypoints: function(waypoints) {
+    		var self = this;
+				var deferred = $q.defer();
+				$http(mobileClientService.makeRequestOption({
+					method: "PUT",
+					url: '/user/simulator/vehicle/' + this.vehicleId + '?command=waypoints',
+					headers: {
+						"iota-simulator-uuid": this.clientId
+					},
+					data: {parameters: waypoints}
+				})).success(function(result, status){
+					deferred.resolve(self._updateRoute(result.data && result.data[self.vehicleId]));
+				}).error(function(error, status){
+					console.error("Error[" + status + "]: " + error);
+					deferred.reject(error);
+				});
+				return deferred.promise;
 			}
 		};
 		return service;

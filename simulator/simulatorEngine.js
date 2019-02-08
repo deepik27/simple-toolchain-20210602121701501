@@ -312,6 +312,15 @@ simulatorEngine.prototype.setPosition = function (vehicleId, position) {
 };
 
 /**
+ * Set waypoints
+ */
+simulatorEngine.prototype.setWaypoints = function (vehicleId, waypoints) {
+	return this.control(vehicleId, function (vehicle) {
+		return vehicle.setWaypoints(waypoints);
+	}, true, true);
+};
+
+/**
  * Set route options (origin, destination, options)
  */
 simulatorEngine.prototype.setRouteOptions = function (vehicleId, options) {

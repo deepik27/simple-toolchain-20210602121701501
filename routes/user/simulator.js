@@ -231,6 +231,8 @@ router.put("/simulator/vehicle/:vehicle_id", authenticate, function(req, res) {
 			return simulator.unsetProperties(vehicleId, parameters);
 		} else if (command === 'position') {
 			return simulator.setPosition(vehicleId, parameters);
+		} else if (command === 'waypoints') {
+			return simulator.setWaypoints(vehicleId, parameters);
 		} else if (command === 'route') {
 			return simulator.setRouteOptions(vehicleId, parameters);
 		}
