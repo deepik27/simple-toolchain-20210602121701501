@@ -25,7 +25,7 @@ function routeGenerator() {
 	this.prevLoc = { lat: 48.134994, lon: 11.671026, speed: 0, heading: 0 };
 	this.destination = null;
 	this.waypoints = [];
-	this.options = { avoid_events: true, route_loop: true };
+	this.options = { avoid_events: false, route_loop: true };
 }
 
 routeGenerator.prototype.listen = function (callback) {
