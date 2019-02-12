@@ -13,24 +13,51 @@
 angular.module('htmlClient')
 .factory('poiService', function($q, $http, mobileClientService) {
 	var service = {
-		
+		isAvailable: function() {
+			var deferred = $q.defer();
+			if (this.available !== undefined) {
+				deferred.resolve(this.available);
+			} else {
+				var self = this;
+			 var url = "/user/capability/poi";
+					$http(mobileClientService.makeRequestOption({
+					method: "GET",
+					url: url
+			 })).success(function(data, status){
+				 self.available = !!data.available;
+				 deferred.resolve(data.available);
+					}).error(function(error, status){
+				 deferred.reject(error);
+			 });
+			}
+			return deferred.promise;
+	 },
+			
 		queryPOIs: function(params) {
-			var self = this;
 			var url = "/user/poi/query";
 			console.log("query poi: " + url);
 	    	
 			var deferred = $q.defer();
-			$http(mobileClientService.makeRequestOption({
-				method: "POST",
-				url: url,
-				headers: {
-					'Content-Type': 'application/JSON;charset=utf-8'
-				},
-				data: params
-			})).success(function(data, status){
-				deferred.resolve(data);
-			}).error(function(error, status){
-				deferred.reject({error: error, status: status});
+			this.isAvailable().then(function(b) {
+				if (!b) {
+					deferred.resolve([]);
+					return;
+				}
+
+				$http(mobileClientService.makeRequestOption({
+					method: "POST",
+					url: url,
+					headers: {
+						'Content-Type': 'application/JSON;charset=utf-8'
+					},
+					data: params
+				})).success(function(data, status){
+					deferred.resolve(data);
+				}).error(function(error, status){
+					deferred.reject({error: error, status: status});
+				});
+			}, function(error) {
+				deferred.reject(error);
 			});
 			return deferred.promise;
 		},
