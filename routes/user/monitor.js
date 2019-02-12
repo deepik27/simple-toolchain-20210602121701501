@@ -328,9 +328,6 @@ var initWebSocketServer = function (server, path) {
 }
 
 function getCarProbe(qs, addAlerts) {
-	if (qs.min_longitude == -180) {
-		console.warn("area is too large");
-	}
 	let regions;
 	if (qs.min_longitude && qs.min_latitude && qs.max_longitude && qs.max_latitude) {
 		regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude, qs.max_latitude);
