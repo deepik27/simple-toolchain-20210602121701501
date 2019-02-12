@@ -24,7 +24,5 @@ module.exports = [
   require('./geofence.js'),
   require('./analysis.js'),
   require('./monitor.js'),
-  require('./iotpdevice.js'),
-  require('./simulator.js'),
-  require('./device.js')
+  require('./simulator.js')
 ];

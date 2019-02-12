@@ -38,7 +38,7 @@ class DeviceManager {
 	}
 
 	async _initialize() {
-		if (this.mqttAccessInfo) {
+		if (this.isIoTPlatformAvailable()) {
 			let deviceType = await this.getDeviceType(VENDOR_NAME);
 			if (!deviceType) {
 				deviceType = await this.registerDeviceType(VENDOR_NAME);
@@ -52,6 +52,7 @@ class DeviceManager {
 					"vendor": VENDOR_NAME,
 					"type": "Vendor",
 					"status": "Active",
+					"model": "TCU",
 					"description": VENDOR_NAME
 				});
 			}
@@ -59,7 +60,15 @@ class DeviceManager {
 		});
 		debug(vendor);
 
-		// Remove IoTP devices which is not in CVI asset
+		deleteUnusedDevices();
+	}
+	isIoTPlatformAvailable() {
+		return !!iotfAppClient;
+	}
+	/**
+	 * Remove IoTP devices which is not in CVI asset
+	 */
+	async deleteUnusedDevices() {
 		const vehicles = await cviAsset.getVehicleList({ "vendor": VENDOR_NAME });
 		const devices = await iotfAppClient.getAllDevices({ "typeId": VENDOR_NAME });
 
@@ -74,7 +83,7 @@ class DeviceManager {
 			}
 		});
 		if (deleteDevices.length > 0) {
-			const responce = await iotfAppClient.deleteMultipleDevices(deleteDevices).catch(error => {
+			const response = await iotfAppClient.deleteMultipleDevices(deleteDevices).catch(error => {
 				// Workaround of defect of iotf client
 				if (error.message.indexOf("Expected HTTP 201 from server but got HTTP 202.") > 0) {
 					return deleteDevices.map(d => { d.success = true; return d; });
@@ -83,7 +92,9 @@ class DeviceManager {
 			});
 			debug(JSON.stringify(response));
 		}
+		return `${deleteDevices.length} of devices are deleted.`;
 	}
+
 	async getDeviceType(deviceType) {
 		const type = await iotfAppClient.getDeviceType(deviceType).catch(error => {
 			if (error.status === 404) {
@@ -96,19 +107,20 @@ class DeviceManager {
 
 	/**
 	 * Create a vehicle on both of IoT Platform and IoT Connected Vehicle Insights with same id
+	 * Recreate another device if the vehicle has already been on IoT Platform
 	 *
-	 * @param {String} id vehicle/device id
-	 * @param {Object} vehicle
+	 * @param {String} tcuId
+	 * @param {Object} vehicle Vehicle information to be created. Use default
 	 * @param {String} protocol "mqtt" | "http"
 	 */
 	async addVehicle(tcuId, vehicle, protocol) {
 		vehicle = Object.assign({
 			"mo_id": chance.hash({ length: 10 }),
-			"vendor": VENDOR_NAME,
 			"serial_number": "s-" + chance.hash({ length: 6 }),
 			"status": "active",
 			"properties": {}
 		}, vehicle || {});
+		vehicle.vendor = VENDOR_NAME; // Force use vendor specified in the application side
 		if (cviAsset.acceptVehicleProperties()) {
 			vehicle.properties["TCU_ID"] = tcuId;
 		} else {
@@ -121,6 +133,9 @@ class DeviceManager {
 
 		let device = {};
 		if (protocol === "mqtt") {
+			if (!isIoTPlatformAvailable()) {
+				return { "statusCode": 400, "message": "IoT Platform is not available. Use HTTP to send car probe." };
+			}
 			device = await iotfAppClient.getDevice(VENDOR_NAME, vehicle.mo_id).catch(error => {
 				if (error && error.status === 404) {
 					return null;
@@ -143,42 +158,66 @@ class DeviceManager {
 
 		return this._extractAccessInfo(Object.assign(device, response));
 	}
-	async getVehicleByTcuId(tcuId) {
+
+	/**
+	 * Get access information for a vehicle that associated with tcuId
+	 * Recreate another device if if ERROR_ON_VEHICLE_INCONSISTENT
+	 *
+	 * @param {*} tcuId
+	 * @param {*} protocol "mqtt" | "http"
+	 */
+	async getVehicleByTcuId(tcuId, protocol) {
 		const vehicles = await cviAsset.getVehicleList(null, { "TCU_ID": tcuId }).catch(error => {
 			if (error.statusCode === 404) {
 				return;
 			}
 		});
 		if (vehicles && vehicles.length > 0) {
-			const mo_id = vehicles[0].mo_id;
-			const device = await iotfAppClient.getDevice(VENDOR_NAME, mo_id).catch(async error => {
-				if (error && error.status === 404) {
-					if (ERROR_ON_VEHICLE_INCONSISTENT) {
-						return Promise.reject({ "statusCode": 500, "message": "CVI Vehicle and IoTP Device are inconcistent." });
+			const vehicle = vehicles[0];
+			const mo_id = vehicle.mo_id;
+			let device;
+			if (protocol === "mqtt" && isIoTPlatformAvailable()) {
+				device = await iotfAppClient.getDevice(VENDOR_NAME, mo_id).catch(async error => {
+					if (error && error.status === 404) {
+						if (ERROR_ON_VEHICLE_INCONSISTENT) {
+							return Promise.reject({ "statusCode": 404, "message": "CVI Vehicle and IoTP Device are inconcistent." });
+						}
+						return null;
 					}
-					return await iotfAppClient.registerDevice(vehicle.vendor, vehicle.mo_id, null, deviceInfo);
+					return Promise.reject(error);
+				});
+				if (device) {
+					await iotfAppClient.unregisterDevice(VENDOR_NAME, vehicle.mo_id);
 				}
-				return Promise.reject(error);
-			});
-			return Object.assign(device, vehicles[0]);
+				const deviceInfo = vehicle.serial_number ? { "serialNumber": vehicle.serial_number } : {};
+				return await iotfAppClient.registerDevice(VENDOR_NAME, vehicle.mo_id, null, deviceInfo);
+			}
+			return Object.assign(device || {}, vehicle);
 		}
 		return Promise.reject({ "statusCode": 404, "message": `Vehicle with TCU_ID=${tcuId} is not found.` });
 	}
-	async getVehicle(id) {
-		const vehicle = await cviAsset.getVehicle({ "mo_id": id });
-		const device = await iotfAppClient.getDevice(VENDOR_NAME, id).catch(error => {
-			if (error.status === 404) {
-				error.statusCode = 404;
+	async deleteVehicleByTcuId(tcuId) {
+		const vehicles = await cviAsset.getVehicleList(null, { "TCU_ID": tcuId }).catch(error => {
+			if (error.statusCode === 404) {
+				return;
 			}
-			return Promise.reject(error);
 		});
-		if (device && vehicle) {
-			return Object.assign(device, vehicle);
+		if (vehicles && vehicles.length > 0) {
+			const vehicle = await cviAsset.deleteVehicle(vehicle[0].mo_id);
+			if (isIoTPlatformAvailable()) {
+				await iotfAppClient.unregisterDevice(VENDOR_NAME, vehicle[0].mo_id);
+			}
+			return vehicle;
 		} else {
-			//TODO
+			return Promise.reject({ "statusCode": 404, "message": "Not Found" });
 		}
 	}
-	async getAllDevices(num_page, num_rec_in_page) {
+	async deleteVehicle(mo_id) {
+		const vehicle = await cviAsset.deleteVehicle(mo_id);
+		if (isIoTPlatformAvailable()) {
+			await iotfAppClient.unregisterDevice(VENDOR_NAME, mo_id);
+		}
+		return vehicle;
 	}
 
 	_extractAccessInfo(vehicle, protocol) {

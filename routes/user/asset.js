@@ -13,6 +13,7 @@
 const router = module.exports = require('express').Router();
 const authenticate = require('./auth.js').authenticate;
 const asset = app_module_require("cvi-node-lib").asset;
+const deviceManager = require("../../driverInsights/deviceManager.js");
 
 const handleError = require('./error.js').handleError;
 const debug = require('debug')('route:asset');
@@ -26,6 +27,31 @@ router.post("/vehicle", authenticate, function (req, res) {
 		}).catch(function (error) {
 			handleError(res, error);
 		})
+});
+router.post("/device/:tcuId", authenticate, async (req, res) => {
+	try {
+		const tcuId = req.params.tcuId;
+		const errorWhenExists = req.query.errorWhenExists && (req.query.errorWhenExists !== 'false');
+		const protocol = req.query.protocol || "http"; // mqtt/http
+		let vehicle = (req.body && Object.keys(req.body).length !== 0) ? req.body : {};
+		const vehicles = await deviceManager.getVehicleByTcuId(tcuId, protocol).catch(error => {
+			if (error.statusCode === 404) {
+				return null;
+			}
+		});
+		if (vehicles && vehicles.length > 0) {
+			if (errorWhenExists) {
+				return handleError(res, { statusCode: 400, message: `Device for ${tcuId} is already registered.` });
+			} else {
+				res.send(vehicles[0]);
+			}
+		}
+		vehicle = await deviceManager.addVehicle(tcuId, null, protocol);
+
+		res.send(vehicle);
+	} catch (error) {
+		handleError(res, error);
+	}
 });
 
 router.get("/vehicle", authenticate, function (req, res) {
@@ -49,6 +75,17 @@ router.get("/vehicle/:vehicleId", authenticate, function (req, res) {
 		})
 });
 
+router.get("/device/:tcuId", authenticate, async (req, res) => {
+	try {
+		const tcuId = req.params.tcuId;
+		const protocol = req.query.protocol || "http"; // mqtt/http
+		const vehicle = await deviceManager.getVehicleByTcuId(tcuId, protocol);
+		res.send(vehicle);
+	} catch (error) {
+		return handleError(res, error);
+	}
+});
+
 router.put("/vehicle/:vehicleId", authenticate, function (req, res) {
 	const overwrite = !req.query.addition || req.query.addition.toLowerCase() !== 'true';
 	asset.updateVehicle(req.params.vehicleId, req.body, overwrite)
@@ -59,14 +96,32 @@ router.put("/vehicle/:vehicleId", authenticate, function (req, res) {
 		})
 });
 
-router["delete"]("/vehicle/:vehicleId", authenticate, function (req, res) {
-	asset.deleteVehicle(req.params.vehicleId)
-		.then(function (result) {
-			return res.send(result);
-		}).catch(function (error) {
-			handleError(res, error);
-		})
+router["delete"]("/vehicle/:vehicleId", authenticate, async (req, res) => {
+	try {
+		const mo_id = req.params.vehicleId;
+		const result = await deviceManager.deleteVehicle(mo_id);
+		return res.send(result);
+	} catch (error) {
+		handleError(res, error);
+	};
 });
+
+router.get("/capability/device", authenticate, function (req, res) {
+	res.send({ available: deviceManager.isIoTPlatformAvailable() });
+});
+
+/**
+ * Delete all IoTP devices that are not binded to CVI vehicle by mo_id
+ */
+router.post("/device/sync", authenticate, async (req, res) => {
+	try {
+		const result = await deviceManager.deleteUnusedDevices();
+		res.send({ "message": result });
+	} catch (error) {
+		handleError(res, error);
+	}
+});
+
 
 router.post("/driver", authenticate, function (req, res) {
 	asset.addDriver(req.body && req.body.driver)
