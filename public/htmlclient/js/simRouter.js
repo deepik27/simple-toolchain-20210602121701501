@@ -360,8 +360,6 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 		
 		$scope.onDoCurrent = function() {
 			if (!$scope.busy) {
-				$scope.requestingStarting = true;
-				
 				var vehicle = $scope.vehicles[$scope.selectedIndex];	    	 
 				_postMessageToVehicle($scope.vehicleStatus[vehicle.mo_id].driving ? "simulator-stop" : "simulator-start", vehicle);
 			}
