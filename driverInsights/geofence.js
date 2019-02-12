@@ -261,8 +261,8 @@ _.extend(driverInsightsGeofence, {
 		if (geofenceJson.geometry_type === "circle") {
 			ruleJson.condition.location_condition = {
 				range: range,
-				latitude: geofenceJson.geometry.latitude,
-				longitude: geofenceJson.geometry.longitude,
+				center_latitude: geofenceJson.geometry.latitude,
+				center_longitude: geofenceJson.geometry.longitude,
 				radius: geofenceJson.geometry.radius
 			};
 		} else {
