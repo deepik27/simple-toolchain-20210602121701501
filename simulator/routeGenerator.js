@@ -9,6 +9,7 @@
  */
 var _ = require("underscore");
 var Q = new require('q');
+var LatLon = require("geodesy/latlon-spherical");
 var iot4aContextMapping = app_module_require("iot4a-api/contextMapping.js");
 var debug = require('debug')('vehicleLocation');
 debug.log = console.log.bind(console);
@@ -339,28 +340,53 @@ routeGenerator.prototype._getRoutePosition = function(){
 	}
 	var prevLoc = this.prevLoc;
 	var loc = this.tripRoute[this.tripRouteIndex];
-	var speed = this._getDistance(loc, prevLoc)*0.001*3600;
-	var referenceSpeed = this._getReferenceSpeed(this.tripRouteIndex, speed);
-	var acceleration = Math.floor(Math.random() * 10 + 10);
-	while((speed - prevLoc.speed) < (acceleration * -1) && this.tripRouteIndex < this.tripRoute.length-1){ 
-		// too harsh brake, then skip the pointpoint
-		this.tripRouteIndex++;
-		loc = this.tripRoute[this.tripRouteIndex];
-		speed = this._getDistance(loc, prevLoc)*0.001*3600;
-	}
-	while(speed>referenceSpeed || (speed - prevLoc.speed) > acceleration){
-		// too harsh acceleration, then insert intermediate point
-		var loc2 = {lat: (+loc.lat+prevLoc.lat)/2, lon: (+loc.lon+prevLoc.lon)/2};
-		speed = this._getDistance(loc2, prevLoc)*0.001*3600;
-		this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
-		loc = loc2;
-	}
-	loc.speed = speed;
-	loc.heading = this._calcHeading(prevLoc, loc);
-	// keep the previous info
-	this.prevLoc = loc;
+	//var speed = this._getDistance(loc, prevLoc)*0.001*3600;
+	var speed = this._getRhumbDistance(loc, prevLoc)*0.001*3600;
+	
+	//var heading = this._calcHeading(prevLoc, loc);
+	var heading = this._getRhumbBearing(prevLoc, loc);
+	var acceleration = 10;
+	// console.log("--------------Trip route index: "+this.tripRouteIndex+" --------------");
+	// console.log("Loc lat: "+loc.lat+" lon: "+loc.lon);
+	// console.log("PrevLoc lat: "+prevLoc.lat+" lon: "+prevLoc.lon);
+	// console.log("Heading was: "+heading);
 
-	this.tripRouteIndex++;
+	var referenceSpeed = this._getReferenceSpeed(this.tripRouteIndex, speed);
+	console.log("Reference speed was: " + referenceSpeed);
+	console.log("Actual speed was: " + speed);
+	//var acceleration = Math.floor(Math.random() * 10 + 10);
+	// while((speed - prevLoc.speed) < (acceleration * -1) && this.tripRouteIndex < this.tripRoute.length-1){ 
+	// 	// too harsh brake, then skip the pointpoint
+	// 	this.tripRouteIndex++;
+	// 	loc = this.tripRoute[this.tripRouteIndex];
+	// 	speed = this._getDistance(loc, prevLoc)*0.001*3600;
+	// }
+	// while(speed>referenceSpeed || (speed - prevLoc.speed) > acceleration){
+	// 	// too harsh acceleration, then insert intermediate point
+	// 	var loc2 = {lat: (+loc.lat+prevLoc.lat)/2, lon: (+loc.lon+prevLoc.lon)/2};
+	// 	speed = this._getDistance(loc2, prevLoc)*0.001*3600;
+	// 	this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
+	// 	loc = loc2;
+	// }
+
+	if((speed - prevLoc.speed) > acceleration){
+		// Simulate harsh acceleration
+		speed = prevLoc.speed + 10;
+		if(speed > 120){
+			speed = 120;
+		} 
+		var loc2 = this._getRhumbDestinationPoint(prevLoc, speed, heading);;
+		console.log("Destination lat:"+loc2.lat + " lon:"+loc2.lon);
+		console.log("Accelerated speed is:"+speed);
+		console.log("Calculated speed is:"+this._getDistance(loc2, prevLoc));
+		this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
+		//loc2.speed = speed ;
+		loc = loc2;
+	} 
+	loc.speed = speed;
+	this.prevLoc = loc;	
+	loc.heading = this._calcHeading(prevLoc, loc);
+	this.tripRouteIndex++;	
 	if(this.tripRouteIndex >= this.tripRoute.length){
 		if (this.destination && !(this.options && this.options.route_loop)) {
 			this.tripRouteIndex--;
@@ -393,6 +419,38 @@ routeGenerator.prototype._getDistance = function(p0, p1) {
 	// Earths radius in meters via WGS 84 model.
 	var earth = 6378137;
 	return earth * norm_dist;
+};
+
+/*
+ * Calculate Rhumb distance in meters between two points on the globe
+ * - p0, p1: points in {latitude: [lat in degree], longitude: [lng in degree]}
+ */
+routeGenerator.prototype._getRhumbDistance = function(p0, p1) {
+	var point0 = new LatLon(p0.lat, p0.lon);
+	var point1 = new LatLon(p1.lat, p1.lon);
+	return point0.rhumbDistanceTo(point1);
+};
+
+/*
+ * Calculate Rhumb bearing in degrees between two points on the globe
+ * - p0, p1: points in {latitude: [lat in degree], longitude: [lng in degree]}
+ */
+routeGenerator.prototype._getRhumbBearing = function(p0, p1) {
+	var point0 = new LatLon(p0.lat, p0.lon);
+	var point1 = new LatLon(p1.lat, p1.lon);
+	return point0.rhumbBearingTo(point1);
+};
+
+/*
+ * Calculate destination point from starting point and distance and heading(bearing) angle
+ * - p: starting point in {latitude: [lat in degree], longitude: [lng in degree]}
+ * - d: distance in meter
+ * - h: heading direction(bearing) in degree
+ */
+routeGenerator.prototype._getRhumbDestinationPoint = function(startPoint, distance, bearing) {
+	var s_point = new LatLon(startPoint.lat, startPoint.lon);
+	var dest_point = s_point.rhumbDestinationPoint(distance, bearing);
+	return {lat: dest_point.lat, lon: dest_point.lon};
 };
 
 routeGenerator.prototype._toRadians = function(n) {

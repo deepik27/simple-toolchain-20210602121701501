@@ -12,7 +12,7 @@
 	 <button class="button mapCurrentLocation" ng-show="!traceCurrentLocation" ng-click="onCurrentLocation()">Current Location</button>
 	 <div class="mapProbe" ng-show="isDriving">
 	 					Location=({{drivingEvent.latitude||0}},{{drivingEvent.longitude||0}})<br> 
-	 					Speed={{(drivingEvent.speed/1.609344).toPrecision(3)}} MPH<br>
+	 					Speed={{(drivingEvent.speed).toPrecision(3)}} KPH<br>
 	 					Heading={{(drivingEvent.heading).toPrecision(3)}}<br>
 	 					Fuel={{drivingEvent.props.fuel}}<br>
 	 					Engine Temperature={{(drivingEvent.props.engineTemp*9/5+32).toPrecision(3)}} F</div>
