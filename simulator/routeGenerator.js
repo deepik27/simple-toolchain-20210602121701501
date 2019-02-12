@@ -14,8 +14,6 @@ var version = app_module_require('utils/version.js');
 var debug = require('debug')('vehicleLocation');
 debug.log = console.log.bind(console);
 
-var lastProbeTimeByMoId = {};
-
 function routeGenerator() {
 	this.watchId = null;
 	this.driving = false;
@@ -25,29 +23,46 @@ function routeGenerator() {
 	this.prevLoc = { lat: 48.134994, lon: 11.671026, speed: 0, heading: 0 };
 	this.destination = null;
 	this.waypoints = [];
-	this.options = { avoid_events: false, route_loop: true };
+	this.options = { avoid_events: false, route_loop: false, routemode: "time,distance,pattern" };
 }
 
 routeGenerator.prototype.listen = function (callback) {
 	this.callback = callback;
 };
 
-routeGenerator.prototype.start = function (interval) {
-	if (!this.routing && !this.tripRoute) {
-		this._resetRoute();
-	}
-	this.driving = true;
-	var self = this;
-	this.watchId = setInterval(function () {
-		if (self.driving) {
-			var p = self._getRoutePosition();
-			if (p && self.callback) {
-				self.callback({ data: { latitude: p.lat, longitude: p.lon, speed: p.speed, heading: p.heading }, type: 'position' });
+routeGenerator.prototype.start = function (params) {
+	const _start = function _start() {
+		var interval = (params && params.interval) || 1000;
+		var mode = params && params.mode;
+
+		this.tripRoute = null;
+		for (let i = 0; i < this.allRoutes.length; i++) {
+			if (mode === this.allRoutes[i].mode) {
+				this.tripRoute = this.allRoutes[i].route;
 			}
 		}
-	}, interval || 1000);
-	if (this.callback) {
-		this.callback({ data: { driving: this.driving, routing: this.routing }, type: "state" });
+		if (!this.tripRoute) {
+			this.tripRoute = this.allRoutes[0].route;
+		}
+
+		this.driving = true;
+		this.watchId = setInterval(function () {
+			if (this.driving) {
+				var p = this._getRoutePosition();
+				if (p && this.callback) {
+					this.callback({ data: { latitude: p.lat, longitude: p.lon, speed: p.speed, heading: p.heading }, type: 'position' });
+				}
+			}
+		}.bind(this), interval);
+		if (this.callback) {
+			this.callback({ data: { driving: this.driving, routing: this.routing }, type: "state" });
+		}
+	}.bind(this);
+
+	if (!this.routing && !this.allRoutes || this.allRoutes.length == 0) {
+		Q.when(this._resetRoute(), function() { _start(); });
+	} else {
+		_start(); 
 	}
 };
 
@@ -84,13 +99,14 @@ routeGenerator.prototype.setDestination = function (loc, donotResetRoute) {
 		// under driving
 		return Q();
 	}
+	this.prevAnchors = [];
 	this.destination = { lat: loc.latitude, lon: loc.longitude, heading: loc.heading, speed: loc.speed };
 	return donotResetRoute ? Q() : this._resetRoute();
 };
 
-routeGenerator.prototype.setWaypoints = function(waypoints) {
+routeGenerator.prototype.setWaypoints = function(waypoints, donotResetRoute) {
 	this.waypoints = waypoints;
-	return this._resetRoute();
+	return donotResetRoute ? Q() : this._resetRoute();
 };
 
 routeGenerator.prototype.getDestination = function () {
@@ -109,38 +125,20 @@ routeGenerator.prototype.updateRoute = function (locs) {
 	if (!locs) {
 		return this._resetRoute();
 	}
-	var deferred = Q.defer();
-	var self = this;
-	this._createRoutes(locs, true).then(function (routeArray) {
-		self.tripRouteIndex = 0;
-		self.tripRoute = routeArray;
-		if (routeArray.length > 0) {
-			self.prevLoc = routeArray[0];
-		}
-		deferred.resolve(routeArray);
-		if (self.callback) {
-			self.callback({ data: { route: self.tripRoute, loop: true, current: self.prevLoc, destination: self.destination, options: self.options }, type: 'route' });
-		}
-	}).catch(function (error) {
-		if (self.callback) {
-			self.callback({ data: { loop: true, current: self.prevLoc, destination: self.destination, options: self.options }, error: error, type: 'route' });
-		}
-		deferred.reject(error);
-	});
-	return deferred.promise;
+	this.routing = true;
+	return this._createRoutes(locs, this.getOption("route_loop"));
 };
 
 // find a random location in about 5km from the specified location
 routeGenerator.prototype._getRandomLoc = function (slat, slng) {
-	var deferred = Q.defer();
-	var ddist = (Math.random() / 2 + 0.5) * 0.025 / 2;
+	var ddist = (Math.random() / 2 + 0.8) * 0.1 / 2;
 	var dtheta = 2 * Math.PI * Math.random();
 	var dlat = +slat + ddist * Math.sin(dtheta);
 	var dlng = +slng + ddist * Math.cos(dtheta);
 	return { lat: dlat, lon: dlng };
 };
 
-routeGenerator.prototype._generateAnchors = function (slat, slng, sheading) {
+routeGenerator.prototype._generateAnchors = function (slat, slng, sheading, keepAnchors) {
 	var deferred = Q.defer();
 	var locs = [];
 	if (this.waypoints && this.waypoints.length > 0) {
@@ -155,9 +153,12 @@ routeGenerator.prototype._generateAnchors = function (slat, slng, sheading) {
 		deferred.resolve(locs);
 	} else if (this.destination) {
 		locs.push({ lat: slat, lon: slng, heading: sheading });
+		if (this.prevAnchors) locs = locs.concat(this.prevAnchors);
 		locs.push({ lat: this.destination.lat, lon: this.destination.lon, heading: this.destination.heading });
 		deferred.resolve(locs);
-	} else {
+	} else if (keepAnchors && this.prevAnchors) {
+		deferred.resolve(this.prevAnchors);
+	} else {	
 		var promises = [];
 		var numPoints = 3;
 		var porg = { lat: slat, lon: slng };
@@ -167,8 +168,10 @@ routeGenerator.prototype._generateAnchors = function (slat, slng, sheading) {
 			promises.push(contextMapping.matchMapFirst({ "latitude": porg.lat, "longitude": porg.lon, "heading": heading }));
 			porg = pdst;
 		}
+		var self = this;
 		Q.all(promises).then(function (results) {
-			deferred.resolve(_.filter(results, function (loc) { return loc; }));
+			self.prevAnchors = _.filter(results, function (loc) { return loc; });
+			deferred.resolve(self.prevAnchors);
 		}).catch(function (error) {
 			deferred.reject(error);
 		});
@@ -177,48 +180,72 @@ routeGenerator.prototype._generateAnchors = function (slat, slng, sheading) {
 };
 
 // reset trip route
-routeGenerator.prototype._resetRoute = function () {
+routeGenerator.prototype._resetRoute = function (keepAnchors) {
 	var slat = this.prevLoc.lat;
 	var slng = this.prevLoc.lon;
 	var sheading = this.prevLoc.heading;
-	var speed = this.prevLoc.speed;
-	var loop = !this.destination || (this.options && this.options.route_loop);
-	if (this.waypoints && this.waypoints.length > 0) loop = false;
+	var loop = !this.destination && this.options && this.options.route_loop;
 
-	var deferred = Q.defer();
+	this.routing = true;
+	return Q.when(this._generateAnchors(slat, slng, sheading, keepAnchors), function (locs) {
+		return Q.when(this._createRoutes(locs, loop));
+	}.bind(this));
+};
+
+routeGenerator.prototype._createRoutes = function (locs, loop) {
+	this.routing = true;
+	var speed = this.prevLoc ? this.prevLoc.speed : 0;
+
+	var route;
+	if (!version.laterOrEqual("3.0") || this.getOption("avoid_events") || this.getOption("avoid_alerts")) {
+		// call old type of route search
+		route = this._findRouteBetweenPointsWithWaypoints(locs, loop);
+	} else {
+		// call cognitive route search supported by 3.0 or later
+		route = this._findRouteMultiplePoints(locs, loop);
+	}
+
 	var self = this;
-	Q.when(this._generateAnchors(slat, slng, sheading), function (locs) {
-		Q.when(self._createRoutes(locs, loop), function (routeArray) {
-			self.tripRouteIndex = 0;
+	var deferred = Q.defer();
+	Q.when(route, function(routes) {
+		routes = _.filter(routes, function(route) { return route.route; });
+		if (routes.length == 0) {
+			return deferred.reject("no route found");
+		}
+		self.allRoutes = routes;
+
+		for (var i = 0; i < routes.length; i++) {
 			var prevLoc = null;
-			self.tripRoute = _.filter(routeArray, function (loc) {
+			routes[i].route = _.filter(routes[i].route, function (loc) {
 				var diff = !prevLoc || prevLoc.lon !== loc.lon || prevLoc.lat !== loc.lat;
 				prevLoc = loc;
 				return diff;
 			});
-			if (routeArray.length > 0) {
-				self.prevLoc = routeArray[0];
-				self.prevLoc.heading = self._calcHeading(routeArray[0], routeArray[1]);
-			} else if (self.prevLoc.heading === undefined) {
-				self.prevLoc.heading = sheading;
-			}
-			self.prevLoc.speed = speed;
-			if (self.callback) {
-				self.callback({ data: { route: self.tripRoute, loop: loop, current: self.prevLoc, destination: self.destination, options: self.options }, type: 'route' });
-			}
-			deferred.resolve(routeArray);
-		}).catch(function (error) {
-			if (self.callback) {
-				self.callback({ data: { loop: loop, current: self.prevLoc, destination: self.destination, options: self.options }, error: error, type: 'route' });
-			}
-			deferred.reject(error);
-		}).done();
+		}
+
+		self.tripRouteIndex = 0;
+		routeArray = routes[0].route;
+		if (routeArray.length > 0) {
+			self.prevLoc = routeArray[0];
+			self.prevLoc.heading = self._calcHeading(routeArray[0], routeArray[1]);
+		}
+		self.prevLoc.speed = speed;
+		self.routing = false;
+		if (self.callback) {
+			self.callback({ data: { route: routes, loop: loop, current: self.prevLoc, destination: self.destination, options: self.options }, type: 'route' });
+		}
+		deferred.resolve(routes);
+	}).catch(function (error) {
+		self.routing = false;
+		if (self.callback) {
+			self.callback({ data: { loop: loop, current: self.prevLoc, destination: self.destination, options: self.options }, error: error, type: 'route' });
+		}
+		deferred.reject(error);
 	});
 	return deferred.promise;
 };
 
-routeGenerator.prototype._createRoutes = function (locs, loop) {
-	var promises = [];
+routeGenerator.prototype._findRouteBetweenPointsWithWaypoints = function(locs, loop) {
 	var routeArrays = {};
 
 	var success = function (result) {
@@ -229,24 +256,19 @@ routeGenerator.prototype._createRoutes = function (locs, loop) {
 		return null;
 	};
 
-	if (!version.laterOrEqual("3.0") || 
-		(!this.waypoints || this.waypoints.length == 0) && (this.getOption("avoid_events") || this.getOption("avoid_alerts"))) {
-		for (var i = 0; i < locs.length - (loop ? 0 : 1); i++) {
-			var loc1 = locs[i];
-			var loc2 = (i < locs.length - 1) ? locs[i + 1] : locs[0];
-			var index = "index" + i;
-			promises.push(Q.when(this._findRouteBetweenPoints(0, loc1, loc2, index), success, fail));
-		}
-	} else {
-		promises.push(Q.when(this._findRouteMultiplePoints(0, locs, loop, "index0"), success, fail));
+	var promises = []
+	for (var i = 0; i < locs.length - (loop ? 0 : 1); i++) {
+		var loc1 = locs[i];
+		var loc2 = (i < locs.length - 1) ? locs[i + 1] : locs[0];
+		var index = "index" + i;
+		promises.push(Q.when(this._findRouteBetweenPoints(0, loc1, loc2, index), success, fail));
 	}
 
 	var self = this;
-	this.routing = true;
 	var deferred = Q.defer();
-	Q.all(promises).then(function (routes) {
+	Q.all(promises).then(function(routes) {
 		var routeArray = [];
-		for (var i = 0; i < promises.length; i++) {
+		for (var i = 0; i < routes.length; i++) {
 			var r = routeArrays["index" + i];
 			if (!r) {
 				return deferred.reject();
@@ -256,10 +278,8 @@ routeGenerator.prototype._createRoutes = function (locs, loop) {
 				routeArray = routeArray.concat(r);
 			}
 		}
-		self.routing = false;
-		deferred.resolve(routeArray);
+		deferred.resolve([{route: routeArray}]);
 	}).catch(function (error) {
-		self.routing = false;
 		deferred.reject(error);
 	});
 	return deferred.promise;
@@ -281,14 +301,12 @@ routeGenerator.prototype._findRouteBetweenPoints = function (retryCount, start, 
 			});
 		});
 		if (routeArray.length >= 2) {
-			deferred.resolve(searchId ? { id: searchId, route: routeArray } : routeArray);
+			deferred.resolve({ id: searchId, route: routeArray });
 			return;
 		} else if (retryCount++ < 5) {
 			// retry 5 times
 			console.log("failed to search route. retry[" + retryCount + "]");
-			return self._findRouteBetweenPoints(retryCount, start, end, searchId).then(function (result) {
-				deferred.resolve(searchId ? { id: searchId, route: result } : result);
-			});
+			return self._findRouteBetweenPoints(retryCount, start, end, searchId);
 		}
 		console.error("Cannot get route for simulation");
 		deferred.reject();
@@ -300,20 +318,14 @@ routeGenerator.prototype._findRouteBetweenPoints = function (retryCount, start, 
 };
 
 // find a route from a specific location to a specific location
-routeGenerator.prototype._findRouteMultiplePoints = function (retryCount, locs, loop, searchId) {
-	retryCount = retryCount || 0;
-	var deferred = Q.defer();
-	var self = this;
+routeGenerator.prototype._findRouteMultiplePoints = function (locs, loop) {
 	var mo_id = this.getOption("target_vehicle");
 	var driver_id = this.getOption("target_driver");
-	var route_mode = this.getOption("route_mode");
-	var search_mode = this.getOption("search_mode");
+	var routemode = this.getOption("routemode");
 
-	var params = {points: [], props: { get_links: true, get_linkshape: true }};
+	var params = {points: [], props: { get_links: true, get_linkshape: true, get_poi: true }};
 	if (mo_id) params.mo_id = mo_id;
 	if (driver_id) params.driver_id = driver_id;
-	if (route_mode) params.route_mode = route_mode;
-	if (search_mode) params.props.search_mode = search_mode;
 
 	var addPoint = function(loc) {
 		if (loc.props && loc.props.poi_id) {
@@ -329,31 +341,61 @@ routeGenerator.prototype._findRouteMultiplePoints = function (retryCount, locs, 
 		addPoint(locs[0]);
 	}
 
+	var routeParams = [];
+	routemode.split(",").forEach(function(mode) {
+		if (mode == "time") {
+			routeParams.push({mode: mode, params: _.extend({}, params, {route_mode: "search", props: _.extend({}, params.props, {search_mode: "time"})})});
+		} else if (mode == "distance") {
+			routeParams.push({mode: mode, params: _.extend({}, params, {route_mode: "search", props: _.extend({}, params.props, {search_mode: "distance"})})});
+		} else if (mode == "pattern") {
+			routeParams.push({mode: mode, params: _.extend({}, params, {route_mode: "predict", props: _.extend({}, params.props, {prediction_method: "pattern"})})});
+		}
+	});
+	
+	var promises = routeParams.map(function(param) { return this._findRouteWithParams(param.mode, param.params);}.bind(this));
+	return Q.all(promises);
+};
+
+routeGenerator.prototype._findRouteWithParams = function(mode, params) {
+	var deferred = Q.defer();
 	Q.when(contextMapping.findRoute(params), function (data) {
+		// get one trip from pattern
+		var bestTrip = null;
+		for (let i = 0; i < data.routes.length; i++) {
+			let trips = data.routes[i].trips || [];
+			for (let j = 0; j < trips.length; j++) {
+				let trip = trips[j];
+				if ((trip.paths || []).length > 0) {
+					bestTrip = trip;
+					break;
+				}
+			}
+			if (bestTrip) {
+				break;
+			}
+		}
+
+		if (!bestTrip) {
+			return deferred.resolve({});
+		}
+
 		var routeArray = [];
-		_.forEach(data.routes, function(route) {
-				_.forEach(route && route.trips, function(trip) {
-				_.forEach(trip && trip.paths, function(path) {
-					_.forEach(path && path.links, function(link) {
-						_.forEach(link && link.shape, function(shape) {
-							if (shape) routeArray.push(shape);
-						});
-					});
+		var distance = 0;
+		var traveltime = 0;
+
+		// combine all shapes in the trip
+		_.forEach(bestTrip.paths, function(path) {
+			if (path && path.props) {
+				distance += parseFloat(path.props.travel_distance);
+				traveltime += parseFloat(path.props.travel_time);
+			}
+		_.forEach(path && path.links, function(link) {
+				_.forEach(link && link.shape, function(shape) {
+					if (shape) routeArray.push(shape);
 				});
 			});
 		});
-		if (routeArray.length >= 2) {
-			deferred.resolve(searchId ? { id: searchId, route: routeArray } : routeArray);
-			return;
-		} else if (retryCount++ < 5) {
-			// retry 5 times
-			console.log("failed to search route. retry[" + retryCount + "]");
-			return self._findRouteMultiplePoints(retryCount, locs, loop).then(function (result) {
-				deferred.resolve(searchId ? { id: searchId, route: result } : result);
-			});
-		}
-		console.error("Cannot get route for simulation");
-		deferred.reject();
+		deferred.resolve({ mode: mode, route: routeArray, distance: distance, traveltime: traveltime });
 	}).catch(function (error) {
 		console.error("Error in route search: " + error);
 		deferred.reject();

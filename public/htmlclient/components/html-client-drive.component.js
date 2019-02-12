@@ -60,6 +60,26 @@
 				$scope.drivingEvent = {};
 				$scope.isDriving = simulatedVehicle.isDriving();
 
+				function showTripDetails(route) {
+					let timeText = "";
+					let traveltime = Math.ceil(route.traveltime);
+					if (traveltime > 3600) {
+						timeText = Math.ceil(traveltime / 3600 * 100) / 100 + " hours";
+					} else if (traveltime > 60) {
+						timeText = Math.ceil(traveltime / 60 * 100) /100  + " minutes";
+					} else {
+						timeText = traveltime + " seconds";
+					}
+					let distanceText = "";
+					let distance = Math.ceil(route.distance);
+					if (distance > 1000) {
+						distanceText = distance / 1000 + " km";
+					} else {
+						distanceText = distance + " m";
+					}
+					$scope.routeDetails = " (travel time: " + timeText + ", distance: " + distanceText + ")";
+				}
+
 				function updateDrvingEvent(probe) {
 					var event = { props: {} };
 					try {
@@ -104,9 +124,29 @@
 						postStatusMessage();
 					},
 					route: function updateMethod_route(tripRoute, error) {
-						if (tripRoute && tripRoute.length > 0)
-							$scope.routeSearching = false;
-						_plotTripRoute(tripRoute);
+						if (!tripRoute || tripRoute.length == 0)
+							return;
+
+						$scope.routeSearching = false;
+
+						tripRouteCache = tripRoute;
+						var modeFound = false;
+						$scope.availableRouteModes = [];
+						tripLayer.getSource().clear();
+						tripRoute.forEach(function(route) {
+							_plotTripRoute(route.route, ($scope.currentRouteMode && route.mode === $scope.currentRouteMode) ? selectedTripStyle : tripStyle);
+							if (route.mode && $scope.routemodes[route.mode]) {
+								$scope.availableRouteModes.push({label: $scope.routemodes[route.mode], value: route.mode});
+								if ($scope.currentRouteMode === route.mode) {
+									showTripDetails(route);
+									modeFound = true;
+								}
+							}
+						});
+						if (!modeFound) {
+							$scope.currentRouteMode = tripRoute[0].mode;
+						}
+						$scope.routeFixed = $scope.availableRouteModes.length < 2;
 					},
 					state: function udpateMethod_state(state, error) {
 						$scope.isDriving = state === 'driving';
@@ -146,9 +186,17 @@
 				$scope.drivingButtonLabel = simulatedVehicle.isDriving() ? "Stop Driving" : "Start Driving";
 				// start driving
 				function startDriving() {
-					return $q.when(simulatedVehicle.startDriving(function () {
+					// show only driving route
+					$scope.routeFixed = true;
+					tripLayer.getSource().clear();
+					tripRouteCache && tripRouteCache.forEach(function(route) {
+						if (route.mode == $scope.currentRouteMode) {
+							_plotTripRoute(route.route, drivingTripStyle);
+						}
+					});
+					return $q.when(simulatedVehicle.startDriving($scope.currentRouteMode), function () {
 						console.log("vehicle is started.");
-					}));
+					});
 				}
 
 				// stop driving
@@ -208,7 +256,6 @@
 				//////////////////////////////////////////////////////////////////
 				// Vehicle Data Simulator
 				//////////////////////////////////////////////////////////////////
-				
 				// rules
 				// should be synced with rules defined in /driverinsights/fleetalert.js
 				$scope.rules = [
@@ -246,14 +293,29 @@
 				//////////////////////////////////////////////////////////////////
 				// Route Planner
 				//////////////////////////////////////////////////////////////////
+				$scope.routemodes = {time: "Shortest time", distance: "Shortest distance", pattern: "Trajectory pattern", unknown: "Unknown"};
+				$scope.availableRouteModes = [];
+				$scope.routeFixed = false;
+				$scope.currentRouteMode = "time";
+				$scope.routeDetails = "";
 				$scope.directions = [{ label: "North", value: 0 }, { label: "North East", value: 45 }, { label: "East", value: 90 }, { label: "South East", value: 135 }, { label: "South", value: 180 }, { label: "South West", value: 225 }, { label: "West", value: 270 }, { label: "North West", value: 315 }];
 				$scope.routeSearching = true;
 				$scope.srcDirection = 0;
 				$scope.dstDirection = 0;
-				$scope.actionMode = "action-car-position";
+				$scope.mouseStartPositionMode = true;
+				$scope.mouseDestinationMode = false;
 				$scope.opt_avoid_events = simulatedVehicle.getOption("avoid_events");
 				$scope.opt_route_loop = simulatedVehicle.getOption("route_loop");
 				$scope.assignedPOIs = [];
+
+				$scope.onChangeMouseMode = function(mode) {
+					if ($scope.mouseStartPositionMode && $scope.mouseDestinationMode) {
+						if (mode == "start")
+							$scope.mouseDestinationMode = false;
+						else
+							$scope.mouseStartPositionMode = false;
+					}
+				};
 
 				$scope.onChangeSrcDirection = function () {
 					let loc = simulatedVehicle.getCurrentPosition();
@@ -322,6 +384,18 @@
 						postStatusMessage();
 					});
 				};
+
+				$scope.onChangeRouteMode = function () {
+					tripLayer.getSource().clear();
+					tripRouteCache && tripRouteCache.forEach(function(route) {
+						if ($scope.currentRouteMode && route.mode === $scope.currentRouteMode) {
+							_plotTripRoute(route.route, selectedTripStyle);
+							showTripDetails(route);
+						} else {
+							_plotTripRoute(route.route, tripStyle);
+						}
+					});
+			}
 
 				function poiUpdated(pois) {
 					let waypoints = pois.map(function(poi) { return {latitude: poi.latitude, longitude: poi.longitude, poi_id: poi.id};});
@@ -429,6 +503,8 @@
 				var eventHelper = null;
 				var geofenceHelper = null;
 
+				var tripRouteCache = null;
+
 				// How the app can determin if a map is panned by the app or by a user. Need to find a smarter way
 				var lockPosition = false;
 
@@ -534,9 +610,9 @@
 						lockPosition = false;
 					});
 					map.on("click", function (e) {
-						if (!simulatedVehicle.isDriving() && $scope.mouseMode) {
+						if (!simulatedVehicle.isDriving()) {
 							var loc = ol.proj.toLonLat(e.coordinate);
-							if ($scope.actionMode === "action-car-position") {
+							if ($scope.mouseStartPositionMode) {
 								$scope.requestSending = true;
 								simulatedVehicle.setCurrentPosition({ latitude: loc[1], longitude: loc[0], heading: $scope.srcDirection }).then(function (tripRoute) {
 									$scope.requestSending = false;
@@ -544,7 +620,7 @@
 									$scope.requestSending = false;
 								});
 								carFeature.getGeometry().setCoordinates(e.coordinate);
-							} else if ($scope.actionMode === "action-route") {
+							} else if ($scope.mouseDestinationMode) {
 								$scope.requestSending = true;
 								simulatedVehicle.setDestination({ latitude: loc[1], longitude: loc[0], heading: $scope.dstDirection }).then(function (tripRoute) {
 									$scope.requestSending = false;
@@ -557,11 +633,10 @@
 					});
 				}
 
-				function _plotTripRoute(tripRoute) {
+				function _plotTripRoute(tripRoute, style) {
 					if (!tripLayer) {
 						return;
 					}
-					tripLayer.getSource().clear();
 					if (!tripRoute || tripRoute.length < 2) {
 						return;
 					}
@@ -573,6 +648,8 @@
 					var lineStrings = new ol.geom.MultiLineString([]);
 					lineStrings.setCoordinates(lines);
 					var feature = new ol.Feature(lineStrings);
+					if (style)
+						feature.setStyle(style);
 					tripLayer.getSource().addFeature(feature);
 				}
 
@@ -633,8 +710,14 @@
 					});
 
 					// trip layer
-					var tripStyle = new ol.style.Style({
+					tripStyle = new ol.style.Style({
 						stroke: new ol.style.Stroke({ color: 'rgba(120, 120, 120, 0.7)', width: 3 }),
+					});
+					selectedTripStyle = new ol.style.Style({
+						stroke: new ol.style.Stroke({ color: 'rgba(255, 0, 0, 0.7)', width: 4 }),
+					});
+					drivingTripStyle = new ol.style.Style({
+						stroke: new ol.style.Stroke({ color: 'rgba(120, 120, 120, 0.7)', width: 2, lineDash: [12, 15] }),
 					});
 					tripLayer = new ol.layer.Vector({ source: new ol.source.Vector(), style: tripStyle });
 

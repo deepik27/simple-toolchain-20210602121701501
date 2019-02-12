@@ -9,7 +9,7 @@
  */
 .locationMap {
 	position: relative;
-    height: 320px;
+    height: 350px;
     width: 100%;
 }
 
@@ -411,7 +411,7 @@ filter: alpha(opacity=65);
 .routeSettingPanel {
   background-color: #eee;
   padding: 10px;
-  min-height: 150px;
+  min-height: 200px;
 }
 .pointSelection {
   font-size: small;

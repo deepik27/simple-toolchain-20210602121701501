@@ -52,7 +52,7 @@ simulatedVehicle.prototype.start = function(parameters) {
 		return this.trip_id;
 	}
 	this.trip_id = new Chance().hash({length: 20});
-	this.route.start(parameters && parameters.interval);
+	this.route.start(parameters);
 	console.log("vehicle is started. mo_id=" + this.vehicle.mo_id);
 	return Q({tripId: this.trip_id, state: this._getState()});
 };
@@ -246,8 +246,8 @@ simulatedVehicle.prototype.getVehicleInformation = function(properties) {
 /**
  * Update route according to route search options
  */
-simulatedVehicle.prototype.updateRoute = function() {
-	return this.route._resetRoute();
+simulatedVehicle.prototype.updateRoute = function(keepAnchors) {
+	return this.route._resetRoute(keepAnchors);
 };
 
 /**
@@ -264,7 +264,7 @@ simulatedVehicle.prototype.getRouteData = function() {
 				deferred.resolve(data);
 		}});
 	} else {
-		deferred.resolve(this.route.tripRoute);
+		deferred.resolve(this.route.allRoutes);
 	}
 	return deferred.promise;
 };

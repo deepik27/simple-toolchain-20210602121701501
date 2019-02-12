@@ -334,7 +334,7 @@ simulatorEngine.prototype.setRouteOptions = function (vehicleId, options) {
 		if (options.destination) {
 			vehicle.setDestination(options.destination.longitude, options.destination.latitude, options.destination.heading, true);
 		}
-		return Q(vehicle.updateRoute());
+		return Q(vehicle.updateRoute(options.options && !options.origin && !options.destination));
 	}, false, true);
 };
 
