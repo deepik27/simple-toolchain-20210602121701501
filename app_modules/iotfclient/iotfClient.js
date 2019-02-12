@@ -14,7 +14,7 @@ var _ = require('underscore');
 var fs = require('fs-extra');
 var appEnv = require("cfenv").getAppEnv();
 
-var getDevicesConfigs,getCredentials;
+var getDevicesConfigs, getCredentials;
 BM_APPLICATION_ID = appEnv.app.application_id || process.env.USER_PROVIDED_BM_APPLICATION_ID;
 
 function iotfClient(options) {
@@ -29,23 +29,23 @@ function iotfClient(options) {
 		return;
 	}
 	this.iotfAppClient = new iotfAppClient(iotfConfig);
-	if(process.env.STAGE1){
+	if (process.env.STAGE1) {
 		this.iotfAppClient.staging = true;
 	};
 	this.iotfAppClient.log.setLevel('debug');
 	this.devicesConfigs = [];
-	if(options.configFile){
+	if (options.configFile) {
 		this.devicesConfigs = getDevicesConfigs(options.configFile);
-		if(options.configs){
+		if (options.configs) {
 			this.devicesConfigs = options.configs;
 		}
-		if(options.config){
+		if (options.config) {
 			this.devicesConfigs.push(options.config);
 		}
 		this.createCommandsMethods();
-		this.iotfAppClient.on("connect",_.bind(this.subscribeToDevicesEvents, this));
-		this.iotfAppClient.on("deviceEvent", _.bind(this.onDeviceEvent, this));
-		this.iotfAppClient.on("deviceStatus", _.bind(this.onDeviceStatus, this));
+		// this.iotfAppClient.on("connect", _.bind(this.subscribeToDevicesEvents, this));
+		// this.iotfAppClient.on("deviceEvent", _.bind(this.onDeviceEvent, this));
+		// this.iotfAppClient.on("deviceStatus", _.bind(this.onDeviceStatus, this));
 	}
 	this.iotfAppClient.connect();
 }
@@ -54,7 +54,7 @@ module.exports = iotfClient;
 //Inherit functions from `EventEmitter`'s prototype
 util.inherits(iotfClient, EventEmitter);
 
-iotfClient.prototype.onDeviceStatus = function(deviceType, deviceId, payload, topic){
+iotfClient.prototype.onDeviceStatus = function (deviceType, deviceId, payload, topic) {
 	payload = JSON.parse(payload);
 	this.emit(deviceId + "_" + payload.Action, deviceType, deviceId, payload, topic);
 	this.emit(deviceType + "_" + payload.Action, deviceType, deviceId, payload, topic);
@@ -62,57 +62,57 @@ iotfClient.prototype.onDeviceStatus = function(deviceType, deviceId, payload, to
 	this.emit("+_DeviceStatus", deviceType, deviceId, payload, topic);
 };
 
-iotfClient.prototype.onDeviceEvent = function(deviceType, deviceId, eventType, format, payload){
+iotfClient.prototype.onDeviceEvent = function (deviceType, deviceId, eventType, format, payload) {
 	payload = (format === 'json') ? JSON.parse(payload).d : payload;
 	this.emit(deviceId + "_+", payload, deviceType, deviceId, eventType, format);
 	this.emit(deviceId + "_" + payload, deviceType, deviceId, eventType, format);
-	this.emit(deviceType + "_+",  payload, deviceType, deviceId, eventType, format);
-	this.emit(deviceType + "_"  +  payload, eventType, deviceType, deviceId, eventType, format);
+	this.emit(deviceType + "_+", payload, deviceType, deviceId, eventType, format);
+	this.emit(deviceType + "_" + payload, eventType, deviceType, deviceId, eventType, format);
 	this.emit("+", payload, deviceType, deviceId, eventType, format);
 };
 
-iotfClient.prototype.subscribeToDevicesEvents = function(){
-	_.each(this.devicesConfigs, function(config){
+iotfClient.prototype.subscribeToDevicesEvents = function () {
+	_.each(this.devicesConfigs, function (config) {
 		config.deviceType = (config.deviceType) ? config.deviceType : ["+"];
 		config.Ids = (config.Ids) ? config.Ids : ["+"];
 		config.events = (config.events) ? config.events : ["+"];
-		_.each(config.Ids, function(deviceID){
-			_.each(config.events, function(event){
+		_.each(config.Ids, function (deviceID) {
+			_.each(config.events, function (event) {
 				this.iotfAppClient.subscribeToDeviceEvents(config.deviceType, deviceID, event, "json");
-				if(config.subscribeToStatus){
+				if (config.subscribeToStatus) {
 					this.iotfAppClient.subscribeToDeviceStatus(config.deviceType, "+");
 				}
-			},this);
-		},this);
-	},this);
+			}, this);
+		}, this);
+	}, this);
 
 };
 
-iotfClient.prototype.sendCommand = function(deviceType, deviceID, command, payload){
-	payload = (payload)? payload : {};
+iotfClient.prototype.sendCommand = function (deviceType, deviceID, command, payload) {
+	payload = (payload) ? payload : {};
 	this.iotfAppClient.publishDeviceCommand(deviceType, deviceID, command, 'json', JSON.stringify(payload));
 };
 
-iotfClient.prototype.createCommandsMethods = function createCommandsMethonds(){
+iotfClient.prototype.createCommandsMethods = function createCommandsMethonds() {
 	//create send<message name>Message function
 	_.each(this.devicesConfigs,
-			function(config){
-		this[config.deviceType] = {};
-		_.each(config.commands,
-				function(command){
-			// generate the camelized function
-			var functionName = ('send_' + command.name + '_Message').replace(/(\-|\_)(\w)/g, function(all, g1, g2){ return g2.toUpperCase(); })
-			var funct =  _.bind(function(deviceID, payload) {
-				return this.sendCommand(config.deviceType, deviceID, command.name, payload);
-			},this);
-			//set the method both on this and on this.<deviceType>
-			this[functionName] = funct;
-			this[config.deviceType][functionName] = funct;
-		},this);
-	},this);
+		function (config) {
+			this[config.deviceType] = {};
+			_.each(config.commands,
+				function (command) {
+					// generate the camelized function
+					var functionName = ('send_' + command.name + '_Message').replace(/(\-|\_)(\w)/g, function (all, g1, g2) { return g2.toUpperCase(); })
+					var funct = _.bind(function (deviceID, payload) {
+						return this.sendCommand(config.deviceType, deviceID, command.name, payload);
+					}, this);
+					//set the method both on this and on this.<deviceType>
+					this[functionName] = funct;
+					this[config.deviceType][functionName] = funct;
+				}, this);
+		}, this);
 };
 
-getCredentials = function (){
+getCredentials = function () {
 	var iotfservices = VCAP_SERVICES["iotf-service"];
 	if (!iotfservices || iotfservices.length === 0) {
 		if (process.env.USER_PROVIDED_VCAP_SERVICES) {
@@ -125,17 +125,17 @@ getCredentials = function (){
 	}
 	var iotFcreds = iotfservices[0].credentials;
 	var config = {
-			"org" : iotFcreds.org,
-			"id" : BM_APPLICATION_ID,
-			"auth-key" : iotFcreds.apiKey,
-			"auth-token" : iotFcreds.apiToken
+		"org": iotFcreds.org,
+		"id": BM_APPLICATION_ID,
+		"auth-key": iotFcreds.apiKey,
+		"auth-token": iotFcreds.apiToken
 	};
 	return config;
 };
 
-getDevicesConfigs = function getDevicesConfigs(file){
-	var obj = fs.readJsonSync(file, {throws: false});
-	if(!obj){
+getDevicesConfigs = function getDevicesConfigs(file) {
+	var obj = fs.readJsonSync(file, { throws: false });
+	if (!obj) {
 		console.error("cannot load devices info file");
 		obj = {};
 	}

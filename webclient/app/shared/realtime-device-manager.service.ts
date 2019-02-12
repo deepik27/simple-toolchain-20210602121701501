@@ -25,30 +25,30 @@ var CAR_STATUS_REFRESH_PERIOD = 0 // was 15000; now, setting 0 not to update via
 
 @Injectable()
 export class RealtimeDeviceDataProviderService {
-  private webApiHost: string;
+	private webApiHost: string;
 	private appConfig: AppConfig;
-  //
+	//
 	// Devices management
 	//
-  provider = new RealtimeDeviceDataProvider();
+	provider = new RealtimeDeviceDataProvider();
 
-  //
+	//
 	// Connection to server and reflecting the response to the Map
 	//
 	activeWsClient = null;
 	activeWsSubscribe = null; // WebSocket client
 	carStatusIntervalTimer: any;
-	wsRetryCount:number = 0;
+	wsRetryCount: number = 0;
 
-  constructor(
-    private $http: HttpClient,
-    @Inject(APP_CONFIG) appConfig: AppConfig
-  ) {
-    this.webApiHost = appConfig.webApiHost;
+	constructor(
+		private $http: HttpClient,
+		@Inject(APP_CONFIG) appConfig: AppConfig
+	) {
+		this.webApiHost = appConfig.webApiHost;
 		this.appConfig = appConfig;
-   }
+	}
 
-  private getQs(extent: any[], vehicleId: string){
+	private getQs(extent: any[], vehicleId: string) {
 		if (vehicleId) {
 			return 'vehicleId=' + vehicleId;
 		} else if (extent) {
@@ -62,62 +62,62 @@ export class RealtimeDeviceDataProviderService {
 			}
 			return 'min_lat='+min_lat + '&min_lng='+min_lon + '&max_lat='+max_lat + '&max_lng='+max_lon;
 		}
-  }
+	}
 
-  getProbe(vehicleId: string) {
+	getProbe(vehicleId: string) {
 		var qs = this.getQs(null, vehicleId);
 		if (!qs) {
 			return;
 		}
-    return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise();
-  }
+		return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise();
+	}
 
-  getVehicle(vehicleId: string){
-    return new Promise((resolve, reject) => {
-      this.$http.get(VEHICLE_URL + '/' + vehicleId)
-      .subscribe((resp: Response) => {
-        var vehicle = resp.json();
-        resolve(vehicle);
-      }, (error: any) => {
-        reject(error);
-      });
-    });
-  }
+	getVehicle(vehicleId: string) {
+		return new Promise((resolve, reject) => {
+			this.$http.get(VEHICLE_URL + '/' + vehicleId)
+				.subscribe((resp: Response) => {
+					var vehicle = resp.json();
+					resolve(vehicle);
+				}, (error: any) => {
+					reject(error);
+				});
+		});
+	}
 
-  scheduleVehicleDataLoading(vehicleId: string){
-    var device = this.provider.getDevice(vehicleId);
-    if(device && !device.vehicle){
-      device.vehicle = {};
-      this.getVehicle(vehicleId)
-      .then(vehicle => { device.vehicle = vehicle; })
-      .catch(err => { 
-				if (err.status === 404) {
-					console.log(err); 
-				} else {
-					console.error(err); 
-					device.vehicle = undefined; 
-				}
-			});
-    }
-  }
+	scheduleVehicleDataLoading(vehicleId: string) {
+		var device = this.provider.getDevice(vehicleId);
+		if (device && !device.vehicle) {
+			device.vehicle = {};
+			this.getVehicle(vehicleId)
+				.then(vehicle => { device.vehicle = vehicle; })
+				.catch(err => {
+					if (err.status === 404) {
+						console.log(err);
+					} else {
+						console.error(err);
+						device.vehicle = undefined;
+					}
+				});
+		}
+	}
 
-  getProvider(){
-    return this.provider;
-  }
+	getProvider() {
+		return this.provider;
+	}
 
 	/**
 	 * Start trackgin a region
 	 */
-	startTracking(extentOrVehicleId, mapHelper?, updateEvents?){
-    this.stopTracking(true, mapHelper);
+	startTracking(extentOrVehicleId, mapHelper?, updateEvents?) {
+		this.stopTracking(true, mapHelper);
 
-    var qs: string;
-    if(typeof extentOrVehicleId === 'string'){
-      qs = this.getQs(null, extentOrVehicleId);
-    }else{
-      var extent = extentOrVehicleId;
-      var xt = mapHelper ? mapHelper.expandExtent(extent, 0.1) : extent; // get extended extent to track for map
-      qs = this.getQs(xt, null);
+		var qs: string;
+		if (typeof extentOrVehicleId === 'string') {
+			qs = this.getQs(null, extentOrVehicleId);
+		} else {
+			var extent = extentOrVehicleId;
+			var xt = mapHelper ? mapHelper.expandExtent(extent, 0.1) : extent; // get extended extent to track for map
+			qs = this.getQs(xt, null);
 		}
 		if (!qs) {
 			return;
@@ -126,14 +126,14 @@ export class RealtimeDeviceDataProviderService {
 		// handle cars
 		this.refreshCarStatus(qs).then((data) => {
 			// adjust animation time
-			if(data.serverTime){
+			if (data.serverTime) {
 				mapHelper && mapHelper.setTimeFromServerRightNow(data.serverTime);
 			}
 
 			// start websock server for real-time tracking
 			this.wsRetryCount = 0;
 			this.stopWsClient();
-			if (data.wssPath){
+			if (data.wssPath) {
 				var startWssClient = () => {
 					var wsProtocol = (location.protocol == "https:") ? "wss" : "ws";
 					var wssUrl = wsProtocol + '://' + this.webApiHost + data.wssPath;
@@ -141,16 +141,16 @@ export class RealtimeDeviceDataProviderService {
 					var ws = this.activeWsClient = Observable.webSocket(wssUrl);
 					this.activeWsSubscribe = ws.subscribe((data: any) => {
 						this.provider.addDeviceSamples(data.devices, true);
-						if(this.appConfig.DEBUG){
+						if (this.appConfig.DEBUG) {
 							console.log('DEBUG-MAP: got devices data from WS: n=' + data.devices.length);
 						}
 						this.wsRetryCount = 0; // connected
 					}, (e) => {
-						if (e.type === 'close' || this.wsRetryCount++ < 3){
+						if (e.type === 'close' || this.wsRetryCount++ < 3) {
 							this.activeWsSubscribe = null;
 							ws.socket.close(); //closeObserver(); observer.dispose();
 							// handle close event
-							if(ws === this.activeWsClient){ // reconnect only when this ws is active ws
+							if (ws === this.activeWsClient) { // reconnect only when this ws is active ws
 								if (e.type === 'close') {
 									console.log('DEBUG-MAP: got wss socket close event. reopening...');
 								} else {
@@ -172,68 +172,68 @@ export class RealtimeDeviceDataProviderService {
 			mapHelper && mapHelper.startAnimation();
 
 			var events = data && data.devices;
-			if (events){
-        updateEvents && updateEvents(events);
-      }
+			if (events) {
+				updateEvents && updateEvents(events);
+			}
 
 			// schedule status timer
 			var carStatusTimerFunc = () => {
 				this.refreshCarStatus(qs);
 				this.carStatusIntervalTimer = setTimeout(carStatusTimerFunc, CAR_STATUS_REFRESH_PERIOD);
 			}
-			if(CAR_STATUS_REFRESH_PERIOD > 0)
-					this.carStatusIntervalTimer = setTimeout(carStatusTimerFunc, CAR_STATUS_REFRESH_PERIOD);
+			if (CAR_STATUS_REFRESH_PERIOD > 0)
+				this.carStatusIntervalTimer = setTimeout(carStatusTimerFunc, CAR_STATUS_REFRESH_PERIOD);
 		}, (err) => {
 			console.warn('it\'s fail to access the server.');
 		})
 
 		// handle driver events
-//		this.refreshDriverEvents(qs, updateEvents);
+		//		this.refreshDriverEvents(qs, updateEvents);
 	};
 	// Add/update cars with DB info
 	refreshCarStatus(qs) {
 		return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise().then((resp) => {
 			let data = resp.json();
-			if(data.devices){
+			if (data.devices) {
 				this.provider.addDeviceSamples(data.devices, true);
 			}
 			return data; // return resp so that subsequent can use the resp
 		});
 	};
 	// Add driver events on the map
-	refreshDriverEvents(qs, updateEvents: ((events: any[]) => void)){
+	refreshDriverEvents(qs, updateEvents: ((events: any[]) => void)) {
 		return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise().then((resp) => {
 			let data = resp.json();
 			var events = data.devices;
-			if (events){
-        updateEvents && updateEvents(events);
-      }
+			if (events) {
+				updateEvents && updateEvents(events);
+			}
 		});
 	};
 
 	/**
 	 * Stop server connection
 	 */
-	stopTracking(intermediate, mapHelper){
+	stopTracking(intermediate, mapHelper) {
 		// stop timer
-		if(this.carStatusIntervalTimer){
+		if (this.carStatusIntervalTimer) {
 			clearTimeout(this.carStatusIntervalTimer);
 			this.carStatusIntervalTimer = 0;
 		}
-		if(!intermediate){
+		if (!intermediate) {
 			// stop animation
 			mapHelper && mapHelper.stopAnimation();
 			// stop WebSock client
 			this.stopWsClient();
 		}
 	};
-	stopWsClient(){
-		if (this.activeWsSubscribe){
+	stopWsClient() {
+		if (this.activeWsSubscribe) {
 			this.activeWsSubscribe.unsubscribe();
 			this.activeWsSubscribe = null;
 		}
-		if (this.activeWsClient){
-			if (this.activeWsClient.socket && this.activeWsClient.socket){
+		if (this.activeWsClient) {
+			if (this.activeWsClient.socket && this.activeWsClient.socket) {
 				this.activeWsClient.socket.close();
 			}
 			this.activeWsClient = null;
