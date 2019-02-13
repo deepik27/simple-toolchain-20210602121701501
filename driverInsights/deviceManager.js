@@ -44,7 +44,6 @@ class DeviceManager {
 					"vendor": VENDOR_NAME,
 					"type": "Vendor",
 					"status": "Active",
-					"model": "TCU",
 					"description": VENDOR_NAME
 				});
 			}
@@ -110,9 +109,10 @@ class DeviceManager {
 	 */
 	async addVehicle(tcuId, vehicle, protocol) {
 		vehicle = Object.assign({
-			"mo_id": chance.hash({ length: 10 }),
+			"mo_id": chance.hash({ length: 10 }).toUpperCase(),
 			"serial_number": "s-" + chance.hash({ length: 6 }),
 			"status": "active",
+			"model": "TCU",
 			"properties": {}
 		}, vehicle || {});
 		vehicle.vendor = VENDOR_NAME; // Force use vendor specified in the application side
@@ -123,7 +123,7 @@ class DeviceManager {
 		}
 
 		vehicle.iotcvusealtid = true;
-		vehicle.iotcvaltmoid = vehicle.iotcvaltmoid || vehicle.mo_id;
+		vehicle.iotcvaltmoid = (vehicle.iotcvaltmoid || vehicle.mo_id).toUpperCase(); // Alternate MO ID is case sensitive and MO_ID will be stored as uppercase.
 		const response = await cviAsset.addVehicle(vehicle, false);
 
 		let device = {};
@@ -211,7 +211,12 @@ class DeviceManager {
 	async deleteVehicle(mo_id) {
 		const vehicle = await cviAsset.deleteVehicle(mo_id);
 		if (this.isIoTPlatformAvailable()) {
-			await iotfAppClient.unregisterDevice(VENDOR_NAME, mo_id);
+			await iotfAppClient.unregisterDevice(VENDOR_NAME, mo_id).catch(error => {
+				if (error.statusCode === 404) {
+					// The vehicle is not associated with IoTP
+					return null;
+				}
+			});
 		}
 		return vehicle;
 	}
