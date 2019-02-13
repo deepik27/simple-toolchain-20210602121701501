@@ -51,6 +51,7 @@ export class ItemToolComponent implements OnInit {
   itemLatitude: number;
   itemLongitude: number;
   isActive: boolean = false;
+  inputPOIFile: string = null;
 
   constructor(
     private router: Router,
@@ -120,11 +121,15 @@ export class ItemToolComponent implements OnInit {
     if (!event.target.files || event.target.files.length == 0) {
       return;
     }
+    this.inputPOIFile = null;
     this.poiService.uploadPOIFile(event.target.files[0])
     .subscribe((result: any) => {
       if (result.created > 0) {
+        alert("POIs were created.");
         let helper = this.itemMap.mapItemHelpers["poi"];
         helper.updateView();
+      } else {
+        alert("No POI was included.");
       }
     }, (error: any) => {
       alert("Failed to crate POIs.")
@@ -178,7 +183,7 @@ export class ItemToolComponent implements OnInit {
 
 		let center_latitude = (extent[1] + extent[3]) / 2;
     let center_longitude = (extent[0] + extent[2]) / 2;
-		let radius = Math.ceil(this.poiService.calcDistance([center_longitude, center_latitude], [extent[2], extent[0]]) / 1000);
+		let radius = Math.ceil(this.poiService.calcDistance([center_longitude, center_latitude], [extent[2], extent[3]]) / 1000);
 		radius += 10; // search larger area
 
     let properties;
@@ -194,7 +199,10 @@ export class ItemToolComponent implements OnInit {
       let poi_ids = data.map(function(poi) {
         return poi.poi_id;
       }).join(",");
-      this.poiService.deletePOI(poi_ids);
+      this.poiService.deletePOI(poi_ids).map(data => {
+        let helper = this.itemMap.mapItemHelpers["poi"];
+        helper.updateView();
+      });
     });
   }
 
