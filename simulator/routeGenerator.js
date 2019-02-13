@@ -60,9 +60,9 @@ routeGenerator.prototype.start = function (params) {
 	}.bind(this);
 
 	if (!this.routing && !this.allRoutes || this.allRoutes.length == 0) {
-		Q.when(this._resetRoute(), function() { _start(); });
+		Q.when(this._resetRoute(), function () { _start(); });
 	} else {
-		_start(); 
+		_start();
 	}
 };
 
@@ -104,7 +104,7 @@ routeGenerator.prototype.setDestination = function (loc, donotResetRoute) {
 	return donotResetRoute ? Q() : this._resetRoute();
 };
 
-routeGenerator.prototype.setWaypoints = function(waypoints, donotResetRoute) {
+routeGenerator.prototype.setWaypoints = function (waypoints, donotResetRoute) {
 	this.waypoints = waypoints;
 	return donotResetRoute ? Q() : this._resetRoute();
 };
@@ -143,7 +143,7 @@ routeGenerator.prototype._generateAnchors = function (slat, slng, sheading, keep
 	var locs = [];
 	if (this.waypoints && this.waypoints.length > 0) {
 		locs.push({ lat: slat, lon: slng, heading: sheading });
-		this.waypoints.forEach(function(p) {
+		this.waypoints.forEach(function (p) {
 			locs.push({ lat: p.latitude, lon: p.longitude, heading: p.heading, poi_id: p.poi_id });
 		});
 		if (this.destination) {
@@ -157,7 +157,7 @@ routeGenerator.prototype._generateAnchors = function (slat, slng, sheading, keep
 		deferred.resolve(locs);
 	} else if (keepAnchors && this.prevAnchors) {
 		deferred.resolve(this.prevAnchors);
-	} else {	
+	} else {
 		var promises = [];
 		var numPoints = 3;
 		var porg = { lat: slat, lon: slng };
@@ -206,8 +206,8 @@ routeGenerator.prototype._createRoutes = function (locs, loop) {
 
 	var self = this;
 	var deferred = Q.defer();
-	Q.when(route, function(routes) {
-		routes = _.filter(routes, function(route) { return route.route; });
+	Q.when(route, function (routes) {
+		routes = _.filter(routes, function (route) { return route.route; });
 		if (routes.length == 0) {
 			return deferred.reject("no route found");
 		}
@@ -244,7 +244,7 @@ routeGenerator.prototype._createRoutes = function (locs, loop) {
 	return deferred.promise;
 };
 
-routeGenerator.prototype._findRouteBetweenPointsWithWaypoints = function(locs, loop) {
+routeGenerator.prototype._findRouteBetweenPointsWithWaypoints = function (locs, loop) {
 	var routeArrays = {};
 
 	var success = function (result) {
@@ -265,7 +265,7 @@ routeGenerator.prototype._findRouteBetweenPointsWithWaypoints = function(locs, l
 
 	var self = this;
 	var deferred = Q.defer();
-	Q.all(promises).then(function(routes) {
+	Q.all(promises).then(function (routes) {
 		var routeArray = [];
 		for (var i = 0; i < routes.length; i++) {
 			var r = routeArrays["index" + i];
@@ -277,7 +277,7 @@ routeGenerator.prototype._findRouteBetweenPointsWithWaypoints = function(locs, l
 				routeArray = routeArray.concat(r);
 			}
 		}
-		deferred.resolve([{route: routeArray}]);
+		deferred.resolve([{ route: routeArray }]);
 	}).catch(function (error) {
 		deferred.reject(error);
 	});
@@ -289,9 +289,16 @@ routeGenerator.prototype._findRouteBetweenPoints = function (retryCount, start, 
 	retryCount = retryCount || 0;
 	var deferred = Q.defer();
 	var self = this;
-	var option = this.getOption("avoid_events") ? "avoid_events" : null;
-
-	Q.when(contextMapping.routeSearch({ "orig_latitude": start.lat, "orig_longitude": start.lon, "orig_heading": start.heading || 0, "dest_latitude": end.lat, "dest_longitude": end.lon, "dest_heading": end.heading || 0 }, option), function (data) {
+	const params = {
+		"orig_latitude": start.lat,
+		"orig_longitude": start.lon,
+		"orig_heading": start.heading || 0,
+		"dest_latitude": end.lat,
+		"dest_longitude": end.lon,
+		"dest_heading": end.heading || 0,
+		"option": this.getOption("avoid_events") ? "avoid_events" : ""
+	};
+	Q.when(contextMapping.routeSearch(params), function (data) {
 		var routeArray = [];
 		data.link_shapes.forEach(function (shapes) {
 			shapes.shape.forEach(function (shape) {
@@ -322,16 +329,16 @@ routeGenerator.prototype._findRouteMultiplePoints = function (locs, loop) {
 	var driver_id = this.getOption("target_driver");
 	var routemode = this.getOption("routemode");
 
-	var params = {points: [], props: { get_links: true, get_linkshape: true, get_poi: true }};
+	var params = { points: [], props: { get_links: true, get_linkshape: true, get_poi: true } };
 	if (mo_id) params.mo_id = mo_id;
 	if (driver_id) params.driver_id = driver_id;
 
-	var addPoint = function(loc) {
-//		if (loc.poi_id) {
-//			params.points.push({props: loc.props});
-//		} else {
-			params.points.push({latitude: loc.lat, longitude: loc.lon, heading: loc.heading});
-//		}
+	var addPoint = function (loc) {
+		//		if (loc.poi_id) {
+		//			params.points.push({props: loc.props});
+		//		} else {
+		params.points.push({ latitude: loc.lat, longitude: loc.lon, heading: loc.heading });
+		//		}
 	}
 	for (var i = 0; i < locs.length; i++) {
 		addPoint(locs[i]);
@@ -341,37 +348,37 @@ routeGenerator.prototype._findRouteMultiplePoints = function (locs, loop) {
 	}
 
 	var routeParams = [];
-	routemode.split(",").forEach(function(mode) {
+	routemode.split(",").forEach(function (mode) {
 		if (mode == "time") {
-			routeParams.push({mode: mode, params: _.extend({}, params, {route_mode: "search", props: _.extend({}, params.props, {search_mode: "time"})})});
+			routeParams.push({ mode: mode, params: _.extend({}, params, { route_mode: "search", props: _.extend({}, params.props, { search_mode: "time" }) }) });
 		} else if (mode == "distance") {
-			routeParams.push({mode: mode, params: _.extend({}, params, {route_mode: "search", props: _.extend({}, params.props, {search_mode: "distance"})})});
+			routeParams.push({ mode: mode, params: _.extend({}, params, { route_mode: "search", props: _.extend({}, params.props, { search_mode: "distance" }) }) });
 		} else if (mode == "pattern") {
-			routeParams.push({mode: mode, params: _.extend({}, params, {route_mode: "predict", props: _.extend({}, params.props, {prediction_method: "pattern"})})});
+			routeParams.push({ mode: mode, params: _.extend({}, params, { route_mode: "predict", props: _.extend({}, params.props, { prediction_method: "pattern" }) }) });
 		}
 	});
-	
-	var promises = routeParams.map(function(param) { return this._findRouteWithParams(param.mode, param.params);}.bind(this));
+
+	var promises = routeParams.map(function (param) { return this._findRouteWithParams(param.mode, param.params); }.bind(this));
 	return Q.all(promises);
 };
 
-routeGenerator.prototype._findRouteWithParams = function(mode, params) {
+routeGenerator.prototype._findRouteWithParams = function (mode, params) {
 	var deferred = Q.defer();
 	Q.when(contextMapping.findRoute(params), function (data) {
 		var routeArray = [];
 		var distance = 0;
 		var traveltime = 0;
 
-		_.forEach(data.routes, function(route) {
+		_.forEach(data.routes, function (route) {
 			let trips = route.trips;
-			_.forEach(trips, function(trip) {
-				_.forEach(trip.paths, function(path) {
+			_.forEach(trips, function (trip) {
+				_.forEach(trip.paths, function (path) {
 					if (path && path.props) {
 						distance += parseFloat(path.props.travel_distance);
 						traveltime += parseFloat(path.props.travel_time);
 					}
-					_.forEach(path && path.links, function(link) {
-						_.forEach(link && link.shape, function(shape) {
+					_.forEach(path && path.links, function (link) {
+						_.forEach(link && link.shape, function (shape) {
 							if (shape) routeArray.push(shape);
 						});
 					});
