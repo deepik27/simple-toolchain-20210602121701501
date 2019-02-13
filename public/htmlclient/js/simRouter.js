@@ -248,10 +248,11 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 			var vehicle = $scope.vehicles[$scope.selectedIndex];	   
 			if (id === vehicle.mo_id) {
 				if ($scope.vehicleStatus[vehicle.mo_id].driving) {
-					$scope.vehicleActionLabel = $scope.vehicleStatus[vehicle.mo_id].busy ? "Stopping..." : "Stop Driving";
+					$scope.vehicleActionLabel = "Stop Driving";
 				} else {
-					$scope.vehicleActionLabel = $scope.vehicleStatus[vehicle.mo_id].busy ? "Starting..." : "Start Driving";
+					$scope.vehicleActionLabel = "Start Driving";
 				}
+				$scope.busySelected = $scope.vehicleStatus[vehicle.mo_id].busy;  	 
 			} 	 
 		}
 		
@@ -315,7 +316,7 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
         	if ($window.location.origin !== e.origin, 0) {
         		return;
         	}
-        	var message = JSON.parse(e.data);
+					var message = JSON.parse(e.data);
         	if (message.requestId) {
         		if (message.requestMessage === "simulator-set-message-target") {
         			var index = $scope.vehiclesToBeInitialzed.indexOf(message.requestId);
@@ -341,9 +342,9 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
             	}
        		}
         	if (message.message === "status") {
-				_updateVehicleStatus(message.mo_id, "busy", message.busy);
-				_updateVehicleStatus(message.mo_id, "driving", message.driving);
-	    		$scope.$apply();
+						_updateVehicleStatus(message.mo_id, "busy", message.busy);
+						_updateVehicleStatus(message.mo_id, "driving", message.driving);
+		    		$scope.$apply();
         	}
         });
 		
@@ -356,6 +357,15 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 				vehicle.display = i == index;		
 			});
 			$scope.selectedIndex = index;
+
+			var vehicle = $scope.vehicles[$scope.selectedIndex];
+			var vehicle = $scope.vehicles[$scope.selectedIndex];	   
+			if ($scope.vehicleStatus[vehicle.mo_id].driving) {
+				$scope.vehicleActionLabel = "Stop Driving";
+			} else {
+				$scope.vehicleActionLabel = "Start Driving";
+			}
+			$scope.busySelected = $scope.vehicleStatus[vehicle.mo_id].busy;  	 
 		};
 		
 		$scope.onDoCurrent = function() {

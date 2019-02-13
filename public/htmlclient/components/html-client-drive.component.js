@@ -150,6 +150,7 @@
 					},
 					state: function udpateMethod_state(state, error) {
 						$scope.isDriving = state === 'driving';
+						postStatusMessage();
 					},
 					position: function updateMethod_position(position, error) {
 						if ($scope.traceCurrentLocation) {
@@ -317,74 +318,50 @@
 					}
 				};
 
+				function _requestNewRoute(method, callback) {
+					$scope.requestSending = true;
+					$scope.routeSearching = true;
+					postStatusMessage();
+					method().then(function(result) {
+						if (_.isFunction(callback)) {
+							callback(data);
+						}
+						$scope.requestSending = false;
+						$scope.routeSearching = false;
+						postStatusMessage();
+				}, function(error) {
+						$scope.requestSending = false;
+						$scope.routeSearching = false;
+						postStatusMessage();
+					});
+				}
+
+				function _setWaypoints(pois) {
+					let waypoints = pois.map(function(poi) { return {latitude: poi.latitude, longitude: poi.longitude, poi_id: poi.id};});
+					_requestNewRoute(() => simulatedVehicle.setWaypoints(waypoints));
+				}
+
+				// Direction of start location and destination handler
 				$scope.onChangeSrcDirection = function () {
 					let loc = simulatedVehicle.getCurrentPosition();
-					if (!loc) {
-						return;
+					if (loc) {
+						_requestNewRoute(() => simulatedVehicle.setCurrentPosition({ latitude: loc.latitude, longitude: loc.longitude, heading: $scope.srcDirection }));
 					}
-					$scope.requestSending = true;
-					$scope.routeSearching = true;
-					postStatusMessage();
-					simulatedVehicle.setCurrentPosition({ latitude: loc.latitude, longitude: loc.longitude, heading: $scope.srcDirection }).then(function (tripRoute) {
-						$scope.requestSending = false;
-						$scope.routeSearching = false;
-						postStatusMessage();
-					}, function (error) {
-						$scope.requestSending = false;
-						$scope.routeSearching = false;
-						postStatusMessage();
-					});
 				};
-
 				$scope.onChangeDstDirection = function () {
 					let loc = simulatedVehicle.getDestination();
-					if (!loc) {
-						return;
+					if (loc) {
+						_requestNewRoute(() => simulatedVehicle.setDestination({ latitude: loc.latitude, longitude: loc.longitude, heading: $scope.dstDirection }));
 					}
-					$scope.requestSending = true;
-					$scope.routeSearching = true;
-					postStatusMessage();
-					simulatedVehicle.setDestination({ latitude: loc.latitude, longitude: loc.longitude, heading: $scope.dstDirection }).then(function (tripRoute) {
-						$scope.requestSending = false;
-						$scope.routeSearching = false;
-						postStatusMessage();
-					}, function (error) {
-						$scope.requestSending = false;
-						$scope.routeSearching = false;
-						postStatusMessage();
-					});
 				};
 
+				// Route options handler
 				$scope.onAvoidEventChange = function () {
-					$scope.requestSending = true;
-					$scope.routeSearching = true;
-					postStatusMessage();
-					simulatedVehicle.setOption("avoid_events", $scope.opt_avoid_events).then(function (tripRoute) {
-						$scope.requestSending = false;
-						$scope.routeSearching = false;
-						postStatusMessage();
-					}, function (error) {
-						$scope.requestSending = false;
-						$scope.routeSearching = false;
-						postStatusMessage();
-					});
+					_requestNewRoute(() => simulatedVehicle.setOption("avoid_events", $scope.opt_avoid_events));
 				};
-
 				$scope.onRouteLoop = function () {
-					$scope.requestSending = true;
-					$scope.routeSearching = true;
-					postStatusMessage();
-					simulatedVehicle.setOption("route_loop", $scope.opt_route_loop).then(function (tripRoute) {
-						$scope.requestSending = false;
-						$scope.routeSearching = false;
-						postStatusMessage();
-					}, function (error) {
-						$scope.requestSending = false;
-						$scope.routeSearching = false;
-						postStatusMessage();
-					});
+					_requestNewRoute(() => simulatedVehicle.setOption("route_loop", $scope.opt_route_loop));
 				};
-
 				$scope.onChangeRouteMode = function () {
 					tripLayer.getSource().clear();
 					tripRouteCache && tripRouteCache.forEach(function(route) {
@@ -395,18 +372,9 @@
 							_plotTripRoute(route.route, tripStyle);
 						}
 					});
-			}
-
-				function poiUpdated(pois) {
-					let waypoints = pois.map(function(poi) { return {latitude: poi.latitude, longitude: poi.longitude, poi_id: poi.id};});
-					$scope.requestSending = true;
-					simulatedVehicle.setWaypoints(waypoints).then(function() {
-						$scope.requestSending = false;
-					}, function(error) {
-						$scope.requestSending = false;
-					});
 				}
 
+				// POI table handler
 				$scope.onLoadPOI = function() {
 					$scope.assignedPOIs = [];
 					poiHelper.searchArea = null;
@@ -414,7 +382,6 @@
 					poiHelper.poiMap = {};
 					poiHelper.updatePOIs();
 				};
-
 				$scope.onMoveUpPOI = function() {
 					if (!$scope.assignedPOIs || $scope.assignedPOIs.length == 0 || 
 						!$scope.selectedPOIID || $scope.assignedPOIs[0].id == $scope.selectedPOIID) {
@@ -431,9 +398,8 @@
 						}
 					});
 					$scope.assignedPOIs = pois;
-					poiUpdated(pois);
+					_setWaypoints(pois);
 				};
-
 				$scope.onMoveDownPOI = function() {
 					if (!$scope.assignedPOIs || $scope.assignedPOIs.length == 0 || 
 						!$scope.selectedPOIID || $scope.assignedPOIs[$scope.assignedPOIs.length-1].id == $scope.selectedPOIID) {
@@ -453,9 +419,8 @@
 						}
 					});
 					$scope.assignedPOIs = pois;
-					poiUpdated(pois);
+					_setWaypoints(pois);
 				};
-
 				$scope.onPOISelected = function(index) {
 					if ($scope.selectedPOIID) {
 						let poi = null;
@@ -613,20 +578,10 @@
 						if (!simulatedVehicle.isDriving()) {
 							var loc = ol.proj.toLonLat(e.coordinate);
 							if ($scope.mouseStartPositionMode) {
-								$scope.requestSending = true;
-								simulatedVehicle.setCurrentPosition({ latitude: loc[1], longitude: loc[0], heading: $scope.srcDirection }).then(function (tripRoute) {
-									$scope.requestSending = false;
-								}, function (error) {
-									$scope.requestSending = false;
-								});
+								_requestNewRoute(() => simulatedVehicle.setCurrentPosition({ latitude: loc[1], longitude: loc[0] }));
 								carFeature.getGeometry().setCoordinates(e.coordinate);
 							} else if ($scope.mouseDestinationMode) {
-								$scope.requestSending = true;
-								simulatedVehicle.setDestination({ latitude: loc[1], longitude: loc[0], heading: $scope.dstDirection }).then(function (tripRoute) {
-									$scope.requestSending = false;
-								}, function (error) {
-									$scope.requestSending = false;
-								});
+								_requestNewRoute(() => simulatedVehicle.setDestination({ latitude: loc[1], longitude: loc[0] }));
 								setDestination(e.coordinate);
 							}
 						}
@@ -874,7 +829,7 @@
 
 					poiHelper.addPOIChangedListener(function(pois) {
 						$scope.assignedPOIs = pois;
-						poiUpdated(pois);
+						_setWaypoints(pois);
 
 						if (pois && pois.length > 0) {
 							if (!$scope.selectedPOIID) {

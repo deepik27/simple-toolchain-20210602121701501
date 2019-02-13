@@ -17,7 +17,7 @@ angular.module('htmlClient')
     	prevLoc: {latitude:48.134994,longitude:11.671026,speed:0},
     	destination: null,
     	state: 'stop',
-    	options: {avoid_events: true, route_loop: true},
+    	options: {avoid_events: false, route_loop: false},
     	properties: {},
     	initialized: false,
     	
@@ -312,25 +312,25 @@ angular.module('htmlClient')
     	setCurrentPosition: function(loc, donotResetRoute){
     		if(this.isDriving()){
     			// under driving
-    			return;
+    			return $q.resolve();
     		}
        		this.prevLoc = loc;
 
        		var self = this;
- 			var deferred = $q.defer();
-			$http(mobileClientService.makeRequestOption({
-				method: "PUT",
-				url: '/user/simulator/vehicle/' + this.vehicleId + '?command=position',
-				headers: {
-					"iota-simulator-uuid": this.clientId
-				},
-				data: {parameters: {latitude: loc.latitude, longitude: loc.longitude, heading: loc.heading, doNotResetRoute: donotResetRoute}}
-			})).success(function(result, status){
-				deferred.resolve(self._updateRoute(result.data && result.data[self.vehicleId]));
-			}).error(function(error, status){
-				console.error("Error[" + status + "]: " + error);
-				deferred.reject(error);
-			});
+				var deferred = $q.defer();
+				$http(mobileClientService.makeRequestOption({
+					method: "PUT",
+					url: '/user/simulator/vehicle/' + this.vehicleId + '?command=position',
+					headers: {
+						"iota-simulator-uuid": this.clientId
+					},
+					data: {parameters: {latitude: loc.latitude, longitude: loc.longitude, heading: loc.heading, doNotResetRoute: donotResetRoute}}
+				})).success(function(result, status){
+					deferred.resolve(self._updateRoute(result.data && result.data[self.vehicleId]));
+				}).error(function(error, status){
+					console.error("Error[" + status + "]: " + error);
+					deferred.reject(error);
+				});
     		return deferred.promise;
     	},
     	getCurrentPosition: function(){
@@ -339,7 +339,7 @@ angular.module('htmlClient')
     	setDestination: function(loc){
     		if(this.isDriving()){
     			// under driving
-    			return;
+    			return $q.resolve();
     		}
     		this.destination = loc;
 

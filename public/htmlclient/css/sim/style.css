@@ -313,7 +313,7 @@ and (orientation : portrait) {
 
 aside.sidebar,
 .content .mainContent {
-    padding-top: 85px;
+    padding-top: 70px;
 }
 
 
@@ -1026,7 +1026,7 @@ div.loadingModal div.loadingSpinner-outter {
 
 .mapFrame {
 	width: 100%;
-	min-height: 700px;
+	min-height: 720px;
 }
 
 .driving:before {

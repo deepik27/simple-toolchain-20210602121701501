@@ -148,7 +148,6 @@ routeGenerator.prototype._generateAnchors = function (slat, slng, sheading, keep
 		});
 		if (this.destination) {
 			locs.push({ lat: this.destination.lat, lon: this.destination.lon, heading: this.destination.heading });
-
 		}
 		deferred.resolve(locs);
 	} else if (this.destination) {
@@ -328,11 +327,11 @@ routeGenerator.prototype._findRouteMultiplePoints = function (locs, loop) {
 	if (driver_id) params.driver_id = driver_id;
 
 	var addPoint = function(loc) {
-		if (loc.props && loc.props.poi_id) {
-			params.points.push({props: loc.props});
-		} else {
+//		if (loc.poi_id) {
+//			params.points.push({props: loc.props});
+//		} else {
 			params.points.push({latitude: loc.lat, longitude: loc.lon, heading: loc.heading});
-		}
+//		}
 	}
 	for (var i = 0; i < locs.length; i++) {
 		addPoint(locs[i]);
@@ -359,42 +358,31 @@ routeGenerator.prototype._findRouteMultiplePoints = function (locs, loop) {
 routeGenerator.prototype._findRouteWithParams = function(mode, params) {
 	var deferred = Q.defer();
 	Q.when(contextMapping.findRoute(params), function (data) {
-		// get one trip from pattern
-		var bestTrip = null;
-		for (let i = 0; i < data.routes.length; i++) {
-			let trips = data.routes[i].trips || [];
-			for (let j = 0; j < trips.length; j++) {
-				let trip = trips[j];
-				if ((trip.paths || []).length > 0) {
-					bestTrip = trip;
-					break;
-				}
-			}
-			if (bestTrip) {
-				break;
-			}
-		}
-
-		if (!bestTrip) {
-			return deferred.resolve({});
-		}
-
 		var routeArray = [];
 		var distance = 0;
 		var traveltime = 0;
 
-		// combine all shapes in the trip
-		_.forEach(bestTrip.paths, function(path) {
-			if (path && path.props) {
-				distance += parseFloat(path.props.travel_distance);
-				traveltime += parseFloat(path.props.travel_time);
-			}
-		_.forEach(path && path.links, function(link) {
-				_.forEach(link && link.shape, function(shape) {
-					if (shape) routeArray.push(shape);
+		_.forEach(data.routes, function(route) {
+			let trips = route.trips;
+			_.forEach(trips, function(trip) {
+				_.forEach(trip.paths, function(path) {
+					if (path && path.props) {
+						distance += parseFloat(path.props.travel_distance);
+						traveltime += parseFloat(path.props.travel_time);
+					}
+					_.forEach(path && path.links, function(link) {
+						_.forEach(link && link.shape, function(shape) {
+							if (shape) routeArray.push(shape);
+						});
+					});
 				});
 			});
 		});
+
+		if (routeArray.length == 0) {
+			return deferred.resolve({});
+		}
+
 		deferred.resolve({ mode: mode, route: routeArray, distance: distance, traveltime: traveltime });
 	}).catch(function (error) {
 		console.error("Error in route search: " + error);

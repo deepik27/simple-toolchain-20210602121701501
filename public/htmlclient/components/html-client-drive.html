@@ -70,7 +70,7 @@
 					<div style="margin-top: 20px;"><button  ng-click="onLoadPOI()">Reload</button></div>
 				</span>
 		 	</div>
-			<div class="routeOptions" ng-hide="assignedPOIs.length > 0">
+			<div class="routeOptions"">
 				<input type="checkbox" ng-disabled="isDriving" ng-model="opt_avoid_events" ng-change="onAvoidEventChange()" id="avoid"><label for="avoid">Avoid events</label>
 				<input type="checkbox" ng-disabled="isDriving" ng-model="opt_route_loop" ng-change="onRouteLoop()" id="loop"><label for="loop">Loop the route</label>
 			</div> 

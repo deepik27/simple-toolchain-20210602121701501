@@ -72,7 +72,7 @@
                 <div ui-view="vehicle"></div>
                 <div style="margin-top: 20px;" ng-show="pageLoaded">
                         <div class="row" >
-                            <button class="btn" style="margin: 5px;width:250px;" ng-disabled="busy" ng-click="onDoCurrent()">{{vehicleActionLabel}}</button>
+                            <button class="btn" style="margin: 5px;width:250px;" ng-disabled="vehicleStatus[vehicles[selectedIndex].mo_id].busy" ng-click="onDoCurrent()">{{vehicleActionLabel}}</button>
                         </div>
                         <div class="row"style="margin-top: 40px">
                             <button class="btn" style="margin: 5px;width:250px;" ng-disabled="busy" ng-click="onStartAll()">{{requestingStarting ? "Starting..." : "Start All Vehicles"}}</button>
