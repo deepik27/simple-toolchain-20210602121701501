@@ -39,9 +39,9 @@ export class ItemToolComponent implements OnInit {
   geofenceDirections =  [{label: "OUT", value: "out"}, {label: "IN", value: "in"}];
   geofenceDirection: string = "out";
   geofenceUseTargetArea: boolean = false;
-  isSelectedVehicle: boolean = false;
-  targetVehicles: Vehicle[] = [];
-  targetVehicle: Vehicle;
+  dummyVehicle: Vehicle = new Vehicle({});
+  targetVehicles: Vehicle[] = [this.dummyVehicle];
+  targetVehicle: Vehicle = this.dummyVehicle;
   poiName: string;
   pageNumber: number;
   hasNext: boolean;
@@ -74,6 +74,7 @@ export class ItemToolComponent implements OnInit {
       if (data) {
         if (data.available) {
           this.supportedItems.push("geofence");
+          this.creationMode = this.supportedItems[0];
         }
         this.geofenceUseTargetArea = data.useTargetArea;
       }
@@ -81,7 +82,8 @@ export class ItemToolComponent implements OnInit {
     this.poiService.getCapability().subscribe(data => {
       if (data) {
         if (data.available) {
-          this.supportedItems.push("poi");
+          this.supportedItems.splice(0, 0, "poi");
+          this.creationMode = this.supportedItems[0];
         }
         this.geofenceUseTargetArea = data.useTargetArea;
         this._updateVehicleList(1);
@@ -137,6 +139,9 @@ export class ItemToolComponent implements OnInit {
         this.targetVehicles = vehicles.map(v => {
             return new Vehicle(v);
         });
+        if (pageNumber == 1) {
+          this.targetVehicles.splice(0, 0, this.dummyVehicle);
+        }
         this.pageNumber = pageNumber;
         this.hasNext = this.numRecInPage <= this.targetVehicles.length;
         if (isRequestRoot) {
@@ -316,7 +321,7 @@ export class ItemToolComponent implements OnInit {
     if (this.creationMode === "event") {
       return new CreateEventCommand(this.eventService, range, loc, this.selectedEventType, this.eventDirection);
     } else if (this.creationMode === "poi") {
-      return new CreatePOICommand(this.poiService, range, loc, this.poiName, this.isSelectedVehicle ? this.targetVehicle : undefined);
+      return new CreatePOICommand(this.poiService, range, loc, this.poiName, this.targetVehicle);
     }
   }
 
@@ -503,7 +508,7 @@ export class CreatePOICommand extends ToolCommand {
         latitude: this.loc.latitude,
         longitude: this.loc.longitude,
         properties: {
-          mo_id: this.vehicle ? this.vehicle.__mo_id : undefined,
+          mo_id: this.vehicle.__mo_id,
           serialnumber: this.vehicle ? this.vehicle.serial_number : undefined,
           name: this.name
         }
@@ -539,6 +544,8 @@ class Vehicle {
       this[key] = props[key];
     }
     this.__id = this.serial_number || this.mo_id;
-    this.__mo_id = this.siteid ? (this.siteid + ':' + this.mo_id) : this.mo_id;
+    if (this.mo_id) {
+      this.__mo_id = this.siteid ? (this.siteid + ':' + this.mo_id) : this.mo_id;
+    }
   }
 }

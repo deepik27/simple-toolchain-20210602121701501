@@ -6,13 +6,13 @@
           <tr>
             <td style="white-space:nowrap;padding-left: 5px;">
             <div class="tabControl">
-              <div class="tabLabel" [hidden]="supportedItems.indexOf('event') < 0">
-                <input id="tabEvent" type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="event">
-                <label for="tabEvent">Event</label>
-              </div>
               <div class="tabLabel" [hidden]="supportedItems.indexOf('poi') < 0">
                 <input id="tabPOI" type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="poi">
                 <label for="tabPOI">POI</label>
+              </div>
+              <div class="tabLabel" [hidden]="supportedItems.indexOf('event') < 0">
+                <input id="tabEvent" type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="event">
+                <label for="tabEvent">Event</label>
               </div>
               <div class="tabLabel" [hidden]="supportedItems.indexOf('geofence') < 0">
                 <input id="tabGeofence" type="radio" name="creationGroup" [(ngModel)]="creationMode" (ngModelChange)="onChangeMode()" value="geofence">
@@ -78,21 +78,21 @@
         <tbody>
           <tr class="toolItemRow">
             <td colspan="2" style="white-space:nowrap;padding-left: 5px;">
-              <input type="checkbox" [(ngModel)]="isSelectedVehicle">Target Vehicle:
+              Target Vehicle:
             </td>
           </tr>
           <tr class="toolItemRow">
             <td colspan="2" class="toolItemValue">
-              <select class="toolSelection" [disabled]="requestSending||!isSelectedVehicle" size=10 [(ngModel)]="targetVehicle" name="targetVehicle">
-                <option *ngFor="let vehicle of targetVehicles" [ngValue]="vehicle">{{vehicle.__id}}</option>
+              <select class="toolSelection" [disabled]="requestSending" size=10 [(ngModel)]="targetVehicle" name="targetVehicle">
+                <option *ngFor="let vehicle of targetVehicles" [ngValue]="vehicle">{{vehicle.__id || "(None)"}}</option>
               </select>
             </td>
           </tr>
           <tr>
             <td colspan="2" class="toolItemValue">
               <span class="controlButtons">
-                <button (click)="targetVehicle=null;onShowPrev()" [disabled]="requestSending||pageNumber<2||!isSelectedVehicle">&lt;Prev</button>
-                <button (click)="targetVehicle=null;onShowNext()" [disabled]="requestSending||!hasNext||!isSelectedVehicle">Next&gt;</button>
+                <button (click)="targetVehicle=null;onShowPrev()" [disabled]="requestSending||pageNumber<2">&lt;Prev</button>
+                <button (click)="targetVehicle=null;onShowNext()" [disabled]="requestSending||!hasNext">Next&gt;</button>
               </span>
             </td>
           </tr>
@@ -132,7 +132,7 @@
 <!--
               <tr class="toolItemRow" [hidden]="creationMode!=='poi'">
                 <td colspan="2" class="toolItemLabel">
-                  <button [disabled]="requestSending||!isSelectedVehicle||!targetVehicle" (click)="onDeleteSelectedVehiclePOI()" style="white-space: nowrap">Delete POI for target vehicle</button>
+                  <button [disabled]="requestSending||!targetVehicle" (click)="onDeleteSelectedVehiclePOI()" style="white-space: nowrap">Delete POI for target vehicle</button>
                   <button [disabled]="requestSending" (click)="onDeleteAllPOI()" style="white-space: nowrap">Delete all</button>
                 </td>
               </tr>
