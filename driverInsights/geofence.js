@@ -300,6 +300,12 @@ _.extend(driverInsightsGeofence, {
 					}, {
 						key: "latitude",
 						value: "CarProbe.Latitude"
+					}, {
+						key: "ts",
+						value: "CarProbe.ts"
+					}, {
+						key: "timestamp",
+						value: "CarProbe.timestamp"
 					}]
 				}]
 			};
