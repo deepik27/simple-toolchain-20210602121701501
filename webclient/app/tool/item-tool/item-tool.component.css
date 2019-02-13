@@ -43,6 +43,7 @@
   padding: 3px; 
   border: 1px solid lightgray; 
   margin-left: -1px; 
+  margin-right: 3px;
   position: relative;
   left: 1px; 
   cursor: pointer;

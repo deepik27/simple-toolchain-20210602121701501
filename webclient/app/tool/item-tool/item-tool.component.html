@@ -77,12 +77,10 @@
       <table class="toolPage">
         <tbody>
           <tr class="toolItemRow">
-            <td colspan="2" style="white-space:nowrap;padding-left: 5px;">
-              Target Vehicle:
+            <td class="toolItemLabel">
+                Vehicle:
             </td>
-          </tr>
-          <tr class="toolItemRow">
-            <td colspan="2" class="toolItemValue">
+            <td class="toolItemValue">
               <select class="toolSelection" [disabled]="requestSending" size=10 [(ngModel)]="targetVehicle" name="targetVehicle">
                 <option *ngFor="let vehicle of targetVehicles" [ngValue]="vehicle">{{vehicle.__id || "(None)"}}</option>
               </select>
