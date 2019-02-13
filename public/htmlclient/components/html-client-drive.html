@@ -31,11 +31,13 @@
 		<div class="mapMessage" ng-show="routeSearching">Searching route...</div>
 		<div id="infopopup"></div>
 		</div>
-		<div style="font-size: 11pt; font-weight: 400; margin-top:10px" ng-hide="!currentRouteMode">
+		<div style="font-size: 11pt; font-weight: 400; margin-top:10px">
 			Route Selection:
-			<select class="routeMode" ng-disabled="isDriving || routeFixed" ng-model="currentRouteMode" ng-change="onChangeRouteMode()">
-				<option ng-repeat="mode in availableRouteModes" value="{{mode.value}}" ng-selected="currentRouteMode === mode.value">{{mode.label}}</option>
-			</select>
+			<span ng-hide="!currentRouteMode">
+				<select class="routeMode" ng-disabled="isDriving || routeFixed" ng-model="currentRouteMode" ng-change="onChangeRouteMode()">
+					<option ng-repeat="mode in availableRouteModes" value="{{mode.value}}" ng-selected="currentRouteMode === mode.value">{{mode.label}}</option>
+				</select>
+			</span>
 			{{routeDetails}}
 		</div>
 		<div id="console">{{console_message}}</div>
@@ -48,19 +50,21 @@
 	<div>
 		<div class=routeSettingPanel>
 			<div class="routeOptions">
-				<label>Create location on the map:</label>
-				<span class="pointSelection">
-					<input type="checkbox" name="actionGroup" ng-change="onChangeMouseMode('start')" ng-disabled="isDriving" ng-model="mouseStartPositionMode" id="start">
-					<label for="start">Start location</label>
+				<label>Set location on the map:</label>
+				<span style="white-space: nowrap;">
+					<span class="pointSelection">
+						<input type="checkbox" name="actionGroup" ng-change="onChangeMouseMode('start')" ng-disabled="isDriving" ng-model="mouseStartPositionMode" id="start">
+						<label for="start">Origination</label>
+						<select ng-model="srcDirection" ng-options="dir.value as dir.label for dir in directions" ng-change="onChangeSrcDirection()" ng-disabled="isDriving"></select>
+					</span>
 				</span>
 				<span class="pointSelection">
 					<input type="checkbox" name="actionGroup" ng-change="onChangeMouseMode('destination')" ng-disabled="isDriving" ng-model="mouseDestinationMode" id="destination">
 					<label for="destination">Destination</label>
+					<select ng-model="dstDirection" ng-options="dir.value as dir.label for dir in directions" ng-change="onChangeDstDirection()" ng-disabled="isDriving">></select>
 				</span>
 			</div>
-			<div class="routeOptions">
-			</div>
-			<div class="routeOptions">
+			<div class="routeOptions" style="white-space: nowrap;">
 				<select class="poiList" size="5" ng-model="selectedPOIID" ng-change="onPOISelected($index)">
 					<option ng-repeat="poi in assignedPOIs track by $index" value="{{poi.id}}" ng-selected="selectedPOIID === poi.id">{{$index+1}}. {{poi.properties.name}} @{{poi.latitude}},{{poi.longitude}}</option>
 				</select>

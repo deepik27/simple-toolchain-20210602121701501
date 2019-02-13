@@ -61,6 +61,10 @@
 				$scope.isDriving = simulatedVehicle.isDriving();
 
 				function showTripDetails(route) {
+					if (!route.mode) {
+						$scope.routeDetails = " Information is not available in this mode.";
+						return;
+					}
 					let timeText = "";
 					let traveltime = Math.ceil(route.traveltime);
 					if (traveltime > 3600) {
@@ -141,6 +145,8 @@
 									showTripDetails(route);
 									modeFound = true;
 								}
+							} else {
+								showTripDetails(route);
 							}
 						});
 						if (!modeFound) {
@@ -372,6 +378,9 @@
 							_plotTripRoute(route.route, tripStyle);
 						}
 					});
+					if (!$scope.currentRouteMode) {
+						showTripDetails(route);
+					}
 				}
 
 				// POI table handler
@@ -578,10 +587,10 @@
 						if (!simulatedVehicle.isDriving()) {
 							var loc = ol.proj.toLonLat(e.coordinate);
 							if ($scope.mouseStartPositionMode) {
-								_requestNewRoute(() => simulatedVehicle.setCurrentPosition({ latitude: loc[1], longitude: loc[0] }));
+								_requestNewRoute(() => simulatedVehicle.setCurrentPosition({ latitude: loc[1], longitude: loc[0], heading: $scope.srcDirection }));
 								carFeature.getGeometry().setCoordinates(e.coordinate);
 							} else if ($scope.mouseDestinationMode) {
-								_requestNewRoute(() => simulatedVehicle.setDestination({ latitude: loc[1], longitude: loc[0] }));
+								_requestNewRoute(() => simulatedVehicle.setDestination({ latitude: loc[1], longitude: loc[0], heading: $scope.dstDirection }));
 								setDestination(e.coordinate);
 							}
 						}
