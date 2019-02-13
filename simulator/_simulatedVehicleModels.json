@@ -3,26 +3,31 @@
   {
     "year": 2014,
     "mileage": 80000,
+    "fueltank": 100,
     "thumbnailURL": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Isuzu_N-Series_%28Elf%29.jpg/280px-Isuzu_N-Series_%28Elf%29.jpg"
   },
   {
     "year": 2015,
     "mileage": 70000,
+    "fueltank": 90,
     "thumbnailURL": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/1995_Mazda_T3500_2-door_truck_%282009-06-07%29.jpg/264px-1995_Mazda_T3500_2-door_truck_%282009-06-07%29.jpg"
   },
   {
     "year": 2013,
     "mileage": 90000,
+    "fueltank": 200,
     "thumbnailURL": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Isuzu_F-Series_%282008%29.jpg/248px-Isuzu_F-Series_%282008%29.jpg"
   },
   {
     "year": 2012,
     "mileage": 95000,
+    "fueltank": 200,
     "thumbnailURL": "https://upload.wikimedia.org/wikipedia/commons/8/84/Forward2nd.jpg"
   },
   {
     "year": 2005,
     "mileage": 200000,
+    "fueltank": 60,
     "thumbnailURL": "https://upload.wikimedia.org/wikipedia/commons/f/f1/1stElf.jpg"
   }]
 }
