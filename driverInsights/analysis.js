@@ -12,49 +12,46 @@ var driverInsightsAnalysis = module.exports = {};
 var _ = require("underscore");
 var Q = new require('q');
 var moment = require("moment");
-var iot4aDriverBehavior = app_module_require('iot4a-api/driverBehavior');
-var iot4aAsset = app_module_require('iot4a-api/asset.js');
+const driverBehavior = app_module_require("cvi-node-lib").driverBehavior;
 
 var debug = require('debug')('analysis');
 debug.log = console.log.bind(console);
 
 _.extend(driverInsightsAnalysis, {
 
-	isAvailable: function() {
-		return iot4aAsset.isSaaS();
+	isAvailable: function () {
+		return true;
 	},
-	
-	getTrips: function(mo_id, limit) {
+
+	getTrips: function (mo_id, limit) {
 		var deferred = Q.defer();
-		var params = {mo_id: mo_id};
+		var params = { mo_id: mo_id };
 		if (limit) {
 			params.limit = limit;
 		}
-		Q.when(iot4aDriverBehavior.getTrip(params), function(response) {
-			if (response && response.length > 0) {
-				deferred.resolve(response);
-			}
-		})["catch"](function(err){
+		Q.when(driverBehavior.getTrip(params), function (response) {
+			deferred.resolve(response);
+		})["catch"](function (err) {
 			deferred.reject(err);
 		}).done();
 		return deferred.promise;
 	},
 
-	getTripBehavior: function(mo_id, trip_id, lastHours) {
-		var params = {mo_id: mo_id, trip_id: trip_id};
+	getTripBehavior: function (mo_id, trip_id, lastHours) {
+		var params = { mo_id: mo_id, trip_id: trip_id };
 		if (lastHours > 0) {
 			params.from = moment().subtract(1, 'hours').toISOString();
 			params.to = moment().toISOString();
 		}
-		return iot4aDriverBehavior.requestOnlineJobPerTrip(params);
+		return driverBehavior.requestOnlineJobPerTrip(params);
 	},
-	
-	getTripRoute: function(mo_id, trip_id, lastHours) {
-		var params = {mo_id: mo_id, trip_id: trip_id};
+
+	getTripRoute: function (mo_id, trip_id, lastHours) {
+		var params = { mo_id: mo_id, trip_id: trip_id, filter: "B:timestamp,B:latitude,B:longitude,B:matched_latitude,B:matched_longitude" };
 		if (lastHours > 0) {
 			params.from = moment().subtract(1, 'hours').toISOString();
 			params.to = moment().toISOString();
 		}
-		return iot4aDriverBehavior.getTripCarProbe(params);
+		return driverBehavior.getTripCarProbe(params);
 	}
 });

@@ -10,252 +10,262 @@
 /*
  * REST apis for car devices
  */
-var router = module.exports = require('express').Router();
-var Q = require('q');
-var _ = require('underscore');
-var debug = require('debug')('device');
+const router = module.exports = require('express').Router();
+const authenticate = require('./auth.js').authenticate;
+const asset = app_module_require("cvi-node-lib").asset;
+const deviceManager = require("../../driverInsights/deviceManager.js");
+
+const handleError = require('./error.js').handleError;
+const debug = require('debug')('route:asset');
 debug.log = console.log.bind(console);
 
-var iot4aAsset = app_module_require('iot4a-api/asset.js');
 
-var authenticate = require('./auth.js').authenticate;
-
-var request = require("request");
-
-function handleAssetError(res, err) {
-	//{message: msg, error: error, response: response}
-	console.error('error: ' + JSON.stringify(err));
-	var response = err.response;
-	var status = err.statusCode || (response && (response.status||response.statusCode)) || 500;
-	var message = err.message || (err.data && err.data.message) || err;
-	return res.status(status).send(message);
-}
-
-router.post("/vehicle", authenticate, function(req, res){
-	var vehicle = req.body && req.body.vehicle;
-	Q.when(iot4aAsset.addVehicle(vehicle), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
+router.post("/vehicle", authenticate, function (req, res) {
+	asset.addVehicle(req.body && req.body.vehicle)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
 });
-router.get("/vehicle", authenticate, function(req, res){
-	var params = null;
-	if (req.query.num_rec_in_page || req.query.num_page) {
-		params = {num_rec_in_page: req.query.num_rec_in_page||50, num_page: req.query.num_page||1};
+router.post("/device/:tcuId", authenticate, async (req, res) => {
+	try {
+		const tcuId = req.params.tcuId;
+		const errorWhenExists = req.query.errorWhenExists && (req.query.errorWhenExists !== 'false');
+		const protocol = req.query.protocol || "http"; // mqtt/http
+		let vehicle = (req.body && Object.keys(req.body).length !== 0) ? req.body : {};
+		const vehicles = await deviceManager.getVehicleByTcuId(tcuId, protocol).catch(error => {
+			if (error.statusCode === 404) {
+				return null;
+			}
+		});
+		if (vehicles && vehicles.length > 0) {
+			if (errorWhenExists) {
+				return handleError(res, { statusCode: 400, message: `Device for ${tcuId} is already registered.` });
+			} else {
+				res.send(vehicles[0]);
+			}
+		}
+		vehicle = await deviceManager.addVehicle(tcuId, null, protocol);
+
+		res.send(vehicle);
+	} catch (error) {
+		handleError(res, error);
 	}
-	Q.when(iot4aAsset.getVehicleList(params), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router.get("/vehicle/:vehicleId", authenticate, function(req, res){
-	var vehicleId = req.params.vehicleId;
-	Q.when(iot4aAsset.getVehicle(vehicleId), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router.put("/vehicle/:vehicleId", authenticate, function(req, res){
-	var vehicleId = req.params.vehicleId;
-	var overwrite = !req.query.addition || req.query.addition.toLowerCase() !== 'true';
-	Q.when(iot4aAsset.updateVehicle(vehicleId, req.body, overwrite), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router["delete"]("/vehicle/:vehicleId", authenticate, function(req, res){
-	var vehicleId = req.params.vehicleId;
-	Q.when(iot4aAsset.deleteVehicle(vehicleId), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	});
 });
 
-router.post("/driver", authenticate, function(req, res){
-	var driver = req.body && req.body.driver;
-	Q.when(iot4aAsset.addDriver(driver), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router.get("/driver", authenticate, function(req, res){
-	var params = null;
-	if (req.query.num_rec_in_page || req.query.num_page) {
-		params = {num_rec_in_page: req.query.num_rec_in_page||50, num_page: req.query.num_page||1};
-	}
-	Q.when(iot4aAsset.getDriverList(params), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router.get("/driver/:driverId", authenticate, function(req, res){
-	var driverId = req.params.driverId;
-	Q.when(iot4aAsset.getDriver(driverId), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router.put("/driver/:driverId", authenticate, function(req, res){
-	var driverId = req.params.driverId;
-	var overwrite = !req.query.addition || req.query.addition.toLowerCase() !== 'true';
-	Q.when(iot4aAsset.updateDriver(driverId, req.body, overwrite), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router["delete"]("/driver/:driverId", authenticate, function(req, res){
-	var driverId = req.params.driverId;
-	Q.when(iot4aAsset.deleteDriver(driverId), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	});
-});
-router.post("/vendor", authenticate, function(req, res){
-	var vendor = req.body && req.body.vendor;
-	Q.when(iot4aAsset.addVendor(vendor), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router.get("/vendor", authenticate, function(req, res){
-	var params = null;
-	if (req.query.num_rec_in_page || req.query.num_page) {
-		params = {num_rec_in_page: req.query.num_rec_in_page||50, num_page: req.query.num_page||1};
-	}
-	Q.when(iot4aAsset.getVendorList(params), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router.get("/vendor/:vendor", authenticate, function(req, res){
-	var vendor = req.params.vendor;
-	Q.when(iot4aAsset.getVendor(vendor), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router.put("/vendor/:vendor", authenticate, function(req, res){
-	var vendor = req.params.vendor;
-	var overwrite = !req.query.addition || req.query.addition.toLowerCase() !== 'true';
-	Q.when(iot4aAsset.updateVendor(vendor, req.body, overwrite), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router["delete"]("/vendor/:vendor", authenticate, function(req, res){
-	var vendor = req.params.vendor;
-	Q.when(iot4aAsset.deleteVendor(vendor), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	});
-});
-router.post("/eventtype", authenticate, function(req, res){
-	var eventtype = req.body && req.body.eventtype;
-	Q.when(iot4aAsset.addEventType(eventtype), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router.get("/eventtype", authenticate, function(req, res){
-	var params = null;
-	if (req.query.num_rec_in_page || req.query.num_page) {
-		params = {num_rec_in_page: req.query.num_rec_in_page||50, num_page: req.query.num_page||1};
-	}
-	Q.when(iot4aAsset.getEventTypeList(params), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router.get("/eventtype/:event_type", authenticate, function(req, res){
-	var id = req.params.event_type;
-	Q.when(iot4aAsset.getEventType(id), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router.put("/eventtype/:event_type", authenticate, function(req, res){
-	var id = req.params.event_type;
-	Q.when(iot4aAsset.updateEventType(id, req.body), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router["delete"]("/eventtype/:event_type", authenticate, function(req, res){
-	var id = req.params.event_type;
-	Q.when(iot4aAsset.deleteEventType(id), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	});
-});
-router.post("/rule", authenticate, function(req, res){
-	var rule = req.body && req.body.rule;
-	Q.when(iot4aAsset.addRule(rule), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router.get("/rule", authenticate, function(req, res){
-	var params = null;
-	if (req.query.num_rec_in_page || req.query.num_page) {
-		params = {num_rec_in_page: req.query.num_rec_in_page||50, num_page: req.query.num_page||1};
-	}
-	Q.when(iot4aAsset.getRuleList(params), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router.get("/rule/:rule_id", authenticate, function(req, res){
-	var rule_id = req.params.rule_id;
-	Q.when(iot4aAsset.getRule(rule_id), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router.put("/rule/:rule_id", authenticate, function(req, res){
-	var rule_id = req.params.rule_id;
-	Q.when(iot4aAsset.updateRule(rule_id, req.body), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
-});
-router["delete"]("/rule/:rule_id", authenticate, function(req, res){
-	var rule_id = req.params.rule_id;
-	Q.when(iot4aAsset.deleteRule(rule_id), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	});
+router.get("/vehicle", authenticate, function (req, res) {
+	const q = req.query;
+	const params = (q.num_rec_in_page || q.num_page) ?
+		{ num_rec_in_page: q.num_rec_in_page || 50, num_page: q.num_page || 1 } : null;
+	asset.getVehicleList(params)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
 });
 
-/*
- * register a device and responds its credentials
+router.get("/vehicle/:vehicleId", authenticate, function (req, res) {
+	asset.getVehicle(req.params.vehicleId)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router.get("/device/:tcuId", authenticate, async (req, res) => {
+	try {
+		const tcuId = req.params.tcuId;
+		const protocol = req.query.protocol || "http"; // mqtt/http
+		const vehicle = await deviceManager.getVehicleByTcuId(tcuId, protocol);
+		res.send(vehicle);
+	} catch (error) {
+		return handleError(res, error);
+	}
+});
+
+router.put("/vehicle/:vehicleId", authenticate, function (req, res) {
+	const overwrite = !req.query.addition || req.query.addition.toLowerCase() !== 'true';
+	asset.updateVehicle(req.params.vehicleId, req.body, overwrite)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router["delete"]("/vehicle/:vehicleId", authenticate, async (req, res) => {
+	try {
+		const mo_id = req.params.vehicleId;
+		const result = await deviceManager.deleteVehicle(mo_id);
+		return res.send(result);
+	} catch (error) {
+		handleError(res, error);
+	};
+});
+
+router.get("/capability/device", authenticate, function (req, res) {
+	res.send({ available: deviceManager.isIoTPlatformAvailable() });
+});
+
+/**
+ * Delete all IoTP devices that are not binded to CVI vehicle by mo_id
  */
-router.get('/device/credentials/:deviceId', authenticate, function(req,res){
-	var deviceId = req.params.deviceId;
-	var ownerId = req.query && req.query.ownerOnly && req.get("iota-starter-uuid");
-	res.send("Noop");
+router.post("/device/sync", authenticate, async (req, res) => {
+	try {
+		const result = await deviceManager.deleteUnusedDevices();
+		res.send({ "message": result });
+	} catch (error) {
+		handleError(res, error);
+	}
+});
+
+
+router.post("/driver", authenticate, function (req, res) {
+	asset.addDriver(req.body && req.body.driver)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router.get("/driver", authenticate, function (req, res) {
+	const q = req.query;
+	const params = (q.num_rec_in_page || q.num_page) ?
+		{ num_rec_in_page: q.num_rec_in_page || 50, num_page: q.num_page || 1 } : null;
+	asset.getDriverList(params)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router.get("/driver/:driverId", authenticate, function (req, res) {
+	asset.getDriver(req.params.driverId)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router.put("/driver/:driverId", authenticate, function (req, res) {
+	const overwrite = !req.query.addition || req.query.addition.toLowerCase() !== 'true';
+	asset.updateDriver(req.params.driverId, req.body, overwrite)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router["delete"]("/driver/:driverId", authenticate, function (req, res) {
+	asset.deleteDriver(req.params.driverId)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router.post("/vendor", authenticate, function (req, res) {
+	const vendor = req.body && req.body.vendor;
+	asset.addVendor(vendor)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router.get("/vendor", authenticate, function (req, res) {
+	const q = req.query;
+	const params = (q.num_rec_in_page || q.num_page) ?
+		{ num_rec_in_page: q.num_rec_in_page || 50, num_page: q.num_page || 1 } : null;
+	asset.getVendorList(params)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router.get("/vendor/:vendor", authenticate, function (req, res) {
+	asset.getVendor(req.params.vendor)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router.put("/vendor/:vendor", authenticate, function (req, res) {
+	const overwrite = !req.query.addition || req.query.addition.toLowerCase() !== 'true';
+	asset.updateVendor(req.params.vendor, req.body, overwrite)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router["delete"]("/vendor/:vendor", authenticate, function (req, res) {
+	asset.deleteVendor(req.params.vendor)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router.post("/rule", authenticate, function (req, res) {
+	asset.addRule(req.body && req.body.rule)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router.get("/rule", authenticate, function (req, res) {
+	const q = req.query;
+	const params = (q.num_rec_in_page || q.num_page) ?
+		{ num_rec_in_page: q.num_rec_in_page || 50, num_page: q.num_page || 1 } : null;
+	asset.getRuleList(params)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router.get("/rule/:rule_id", authenticate, function (req, res) {
+	asset.getRule(req.params.rule_id)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router.put("/rule/:rule_id", authenticate, function (req, res) {
+	asset.updateRule(req.params.rule_id, req.body)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
+});
+
+router["delete"]("/rule/:rule_id", authenticate, function (req, res) {
+	asset.deleteRule(req.params.rule_id)
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
 });

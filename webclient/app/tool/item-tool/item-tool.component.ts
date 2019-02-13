@@ -1,8 +1,19 @@
+/**
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ *
+ * Licensed under the IBM License, a copy of which may be obtained at:
+ *
+ * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ *
+ * You may not use this file except in compliance with the license.
+ */
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChange } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { EventService } from '../../shared/iota-event.service';
 import { GeofenceService } from '../../shared/iota-geofence.service';
+import { POIService } from '../../shared/iota-poi.service';
+import { AssetService } from '../../shared/iota-asset.service';
 
 import * as ol from 'openlayers';
 
@@ -27,12 +38,26 @@ export class ItemToolComponent implements OnInit {
   geofenceType: string = "rectangle";
   geofenceDirections =  [{label: "OUT", value: "out"}, {label: "IN", value: "in"}];
   geofenceDirection: string = "out";
-  creationMode: string = "none";
+  geofenceUseTargetArea: boolean = false;
+  isSelectedVehicle: boolean = false;
+  targetVehicles: Vehicle[] = [];
+  targetVehicle: Vehicle;
+  poiName: string;
+  pageNumber: number;
+  hasNext: boolean;
+  numRecInPage: number = 10;
+  requestSending: boolean;
+  creationMode: string = "event";
+  itemLatitude: number;
+  itemLongitude: number;
+  isActive: boolean = false;
 
   constructor(
     private router: Router,
     private eventService: EventService,
-    private geofenceService: GeofenceService
+    private geofenceService: GeofenceService,
+    private poiService: POIService,
+    private assetService: AssetService
   ) {}
 
   ngOnInit() {
@@ -45,19 +70,156 @@ export class ItemToolComponent implements OnInit {
         this.selectedEventType = data[0];
       }
     });
-    this.geofenceService.isAvailable().subscribe(data => {
+    this.geofenceService.getCapability().subscribe(data => {
       if (data) {
-        this.supportedItems.push("geofence");
+        if (data.available) {
+          this.supportedItems.push("geofence");
+        }
+        this.geofenceUseTargetArea = data.useTargetArea;
+      }
+    });
+    this.poiService.getCapability().subscribe(data => {
+      if (data) {
+        if (data.available) {
+          this.supportedItems.push("poi");
+        }
+        this.geofenceUseTargetArea = data.useTargetArea;
+        this._updateVehicleList(1);
       }
     });
   }
 
+  setActive(active: boolean) {
+    this.isActive = active;
+    this.onChangeMode();
+  }
+
   onChangeMode() {
-    if (this.creationMode === "event") {
+    if (this.isActive && (this.creationMode === "event" || this.creationMode === "poi")) {
       this.itemMap.map.getViewport().style.cursor = "pointer";
     } else {
       this.itemMap.map.getViewport().style.cursor = "default";
     }
+  }
+
+  onShowPrev(event) {
+    if (this.pageNumber > 1) {
+      this._updateVehicleList(this.pageNumber - 1);
+    }
+  }
+
+  onShowNext(event) {
+    if (this.hasNext) {
+      this._updateVehicleList(this.pageNumber + 1);
+    }
+  }
+
+  uploadPOIFile(event) {
+    if (!event.target.files || event.target.files.length == 0) {
+      return;
+    }
+    this.poiService.uploadPOIFile(event.target.files[0])
+    .subscribe((result: any) => {
+      if (result.created > 0) {
+        let helper = this.itemMap.mapItemHelpers["poi"];
+        helper.updateView();
+      }
+    }, (error: any) => {
+      alert("Failed to crate POIs.")
+    });
+  }
+
+  private _updateVehicleList(pageNumber: number) {
+    let isRequestRoot = !this.requestSending;
+    this.requestSending = true;
+    this.assetService.getVehicles(pageNumber, this.numRecInPage)
+    .subscribe((vehicles: any) => {
+        this.targetVehicles = vehicles.map(v => {
+            return new Vehicle(v);
+        });
+        this.pageNumber = pageNumber;
+        this.hasNext = this.numRecInPage <= this.targetVehicles.length;
+        if (isRequestRoot) {
+          this.requestSending = false;
+        }
+    }, (error: any) => {
+        if (error.status === 400) {
+          alert("Thre are no more vehicles.");
+        } else if (pageNumber === 1 && error.status === 404) {
+          this.targetVehicles = [];
+        }
+        this.hasNext = false;
+        if (isRequestRoot) {
+          this.requestSending = false;
+        }
+    });
+  }
+
+  onDeleteSelectedVehiclePOI() {
+    this._onDeletePOI(this.targetVehicle.__mo_id);
+  }
+
+  onDeleteAllPOI() {
+    this._onDeletePOI(null);
+  }
+  
+  private _onDeletePOI(mo_id) {
+		var size = this.itemMap.map.getSize();
+		if (!size || isNaN(size[0]) || isNaN(size[1])) {
+			return;
+		}
+		var ext = this.itemMap.map.getView().calculateExtent(size);
+		var extent = ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326');
+
+		let center_latitude = (extent[1] + extent[3]) / 2;
+    let center_longitude = (extent[0] + extent[2]) / 2;
+		let radius = Math.ceil(this.poiService.calcDistance([center_longitude, center_latitude], [extent[2], extent[0]]) / 1000);
+		radius += 10; // search larger area
+
+    let properties;
+    if (mo_id) properties = {mo_id: mo_id};
+
+		let params = {
+			latitude: center_latitude,
+			longitude: center_longitude,
+			radius: radius,
+			properties: properties
+		}
+    this.poiService.queryPOIs(params).map(data => {
+      let poi_ids = data.map(function(poi) {
+        return poi.poi_id;
+      }).join(",");
+      this.poiService.deletePOI(poi_ids);
+    });
+  }
+
+  onCreateItem() {
+    if (isNaN(this.itemLongitude) || isNaN(this.itemLongitude)) {
+      alert("Valid latitude and longitude must be specified or click on a map to create.");
+      return;
+    }
+
+    let helper = this.itemMap.mapItemHelpers[this.creationMode];
+    let extent = this.itemMap.getMapExtent();
+    let loc = {longitude: Number(this.itemLongitude), latitude: Number(this.itemLatitude)};
+
+    let command = this.getLocationCommand(extent, loc);
+    if (!helper || !command) {
+      alert("The action cannot be executed.");
+      return;
+    }
+
+    let commandId = helper.addTentativeItem(loc);
+
+    return new Promise((resolve, reject) => {
+      return this.execute(command).then(function(result: any) {
+        helper.setTentativeItemId(commandId, result.data.id, false);
+        resolve(result);
+      }, function(error) {
+        helper.removeTentativeItem(commandId);
+        reject(error);
+      });
+    });
   }
 
   onCreateGeofence() {
@@ -85,7 +247,7 @@ export class ItemToolComponent implements OnInit {
     let commandId = helper.addTentativeItem({geometry_type: this.geofenceType, geometry: range});
 
     return new Promise((resolve, reject) => {
-      let target = {area: helper.createTargetArea(this.geofenceType, range, this.geofenceDirection)};
+      let target = this.geofenceUseTargetArea ? {area: helper.createTargetArea(this.geofenceType, range, this.geofenceDirection)} : null;
       return this.execute(new CreateGeofenceCommand(this.geofenceService, range, this.geofenceDirection, target)).then(function(result: any) {
         helper.setTentativeItemId(commandId, result.data.id, false);
         resolve(result);
@@ -101,7 +263,7 @@ export class ItemToolComponent implements OnInit {
   }
 
   locationClicked(loc) {
-    if (this.creationMode !== "event") {
+    if (!this.isActive || (this.creationMode !== "event" && this.creationMode !== "poi")) {
       return;
     }
     let extent = this.itemMap.getMapExtent();
@@ -109,7 +271,7 @@ export class ItemToolComponent implements OnInit {
     let commandId = helper.addTentativeItem(loc);
     return new Promise((resolve, reject) => {
       return this.execute(this.getLocationCommand(extent, loc)).then(function(result: any) {
-        helper.setTentativeItemId(commandId, result.data, true);
+        helper.setTentativeItemId(commandId, result.data.id, true);
         resolve(result);
       }, function(error) {
         helper.removeTentativeItem(commandId);
@@ -153,6 +315,8 @@ export class ItemToolComponent implements OnInit {
   getLocationCommand(range, loc): ToolCommand {
     if (this.creationMode === "event") {
       return new CreateEventCommand(this.eventService, range, loc, this.selectedEventType, this.eventDirection);
+    } else if (this.creationMode === "poi") {
+      return new CreatePOICommand(this.poiService, range, loc, this.poiName, this.isSelectedVehicle ? this.targetVehicle : undefined);
     }
   }
 
@@ -231,6 +395,8 @@ export class ItemToolComponent implements OnInit {
       return new DeleteEventCommand(this.eventService, item.event_id);
     } else if (item.getItemType() === "geofence") {
       return new DeleteGeofenceCommand(this.geofenceService, item.id);
+    } else if (item.getItemType() === "poi") {
+      return new DeletePOICommand(this.poiService, item.id);
     }
   }
 }
@@ -323,5 +489,56 @@ export class DeleteGeofenceCommand extends ToolCommand {
   }
   public execute() {
     return this.geofenceService.deleteGeofence(this.geofence_id);
+  }
+}
+
+export class CreatePOICommand extends ToolCommand {
+  constructor(private poiService, private extent, private loc, private name, private vehicle) {
+    super("poi");
+  }
+  execute() {
+    let date = new Date();
+    let currentTime = date.toISOString();
+    let params: any = {
+        latitude: this.loc.latitude,
+        longitude: this.loc.longitude,
+        properties: {
+          mo_id: this.vehicle ? this.vehicle.__mo_id : undefined,
+          serialnumber: this.vehicle ? this.vehicle.serial_number : undefined,
+          name: this.name
+        }
+      };
+    return this.poiService.createPOI(params);
+  }
+}
+
+export class DeletePOICommand extends ToolCommand {
+  constructor(private poiService, private poi_id) {
+    super("poi");
+  }
+  public execute() {
+    return this.poiService.deletePOI(this.poi_id);
+  }
+}
+
+// Vehicle definition
+class Vehicle {
+  __id: string;
+  __mo_id: string;
+  mo_id: string; // The ID of the vehicle that is automatically generated by the system.
+  siteid: string; // site id only for SaaS environment
+  internal_mo_id: number; // The numerical ID of the vehicle that is automatically generated by the system.
+  vendor: string = ""; // The vendor ID of the vehicle that is created from within the vendor's system.
+  serial_number: string = ""; // The serial number of the vehicle.
+  description: string = ""; // Description of the vehicle.
+  driver_id: string; // The driver ID that is created by the driver interface from within the vehicle.
+  properties: any;
+
+  constructor(props) {
+    for (let key in props) {
+      this[key] = props[key];
+    }
+    this.__id = this.serial_number || this.mo_id;
+    this.__mo_id = this.siteid ? (this.siteid + ':' + this.mo_id) : this.mo_id;
   }
 }

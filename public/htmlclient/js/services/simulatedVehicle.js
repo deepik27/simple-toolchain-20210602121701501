@@ -17,37 +17,39 @@ angular.module('htmlClient')
     	prevLoc: {latitude:48.134994,longitude:11.671026,speed:0},
     	destination: null,
     	state: 'stop',
-    	options: {avoid_events: true, route_loop: true},
+    	options: {avoid_events: false, route_loop: false},
     	properties: {},
     	initialized: false,
     	
-    	init: function(clientId, vehicleId) {
-    		var deferred = $q.defer();
-       		this.clientId = clientId;
-    		this.vehicleId = vehicleId;
+    	init: function(clientId, vehicleId, siteId) {
+       	this.clientId = clientId;
+				this.vehicleId = vehicleId;
+				this.siteId = siteId;
+
     		var self = this;
-			$http(mobileClientService.makeRequestOption({
-				method: "GET",
-				url: '/user/simulator/vehicle/' + this.vehicleId + '?properties=vehicle,position,state,options,properties',
-				headers: {
-					"iota-simulator-uuid": this.clientId
-				}
-			})).success(function(result, status){
-				var data = result.data || {};
-				self.vehicle = data.vehicle;
-				self.updateVehicleData(data);
-				$q.when(self.getRouteData(), function() {
-					self._updateInitialized(true);
-					deferred.resolve(data);
-				}, function(err) {
-					deferred.reject(err);
+    		var deferred = $q.defer();
+				$http(mobileClientService.makeRequestOption({
+					method: "GET",
+					url: '/user/simulator/vehicle/' + this.vehicleId + '?properties=vehicle,position,state,options,properties',
+					headers: {
+						"iota-simulator-uuid": this.clientId
+					}
+				})).success(function(result, status){
+					var data = result.data || {};
+					self.vehicle = data.vehicle;
+					self.updateVehicleData(data);
+					$q.when(self.getRouteData(), function() {
+						self._updateInitialized(true);
+						deferred.resolve(data);
+					}, function(err) {
+						deferred.reject(err);
+					});
+				}).error(function(error, status){
+					console.error("Error[" + status + "]: " + error);
+					deferred.reject(error);
 				});
-			}).error(function(error, status){
-				console.error("Error[" + status + "]: " + error);
-				deferred.reject(error);
-			});
     		return deferred.promise;
-       	},
+      },
        	
     	getClientId: function() {
     		return this.clientId;
@@ -55,11 +57,14 @@ angular.module('htmlClient')
     	
     	getVehicleId: function() {
     		return this.vehicleId;
-    	},
+			},
+			getMoId: function() {
+				return this.siteId + ":" + this.vehicleId;
+			},
     	getVehicle: function() {
     		return this.vehicle;
-    	},
-	    startDriving: function() {
+			},
+	    startDriving: function(mode) {
 	    	var self = this;
     		var deferred = $q.defer();
 			$http(mobileClientService.makeRequestOption({
@@ -68,7 +73,7 @@ angular.module('htmlClient')
 				headers: {
 					"iota-simulator-uuid": this.clientId
 				},
-				data: {parameters: {interval: 1000, successWhenAlready: true}}
+				data: {parameters: {interval: 1000, mode: mode, successWhenAlready: true}}
 			})).success(function(result, status){
 				var data = result.data && result.data[self.vehicleId];
 				deferred.resolve(self._updateState(data && data.state));
@@ -162,14 +167,15 @@ angular.module('htmlClient')
 	    _updateRoute: function(route, error) {
 	    	if (this.route !== route) {
 		    	this.route = route || [];
-				if (this.vehicleMonitor) {
-					this.vehicleMonitor('route', this.route, error);
-				}
+					if (this.vehicleMonitor) {
+						this.vehicleMonitor('route', this.route, error);
+					}
 	    	}
-			if (this.route && this.route.length > 0) {
-				var first = this.route[0];
-				this._updatePosition({latitude: first.lat, longitude: first.lon, heading: first.heading, speed: first.speed});
-			}
+				if (this.route && this.route.length > 0) {
+					var first = this.route[0];
+					if (first.length > 0)
+						this._updatePosition({latitude: first[0].lat, longitude: first[0].lon, heading: first[0].heading, speed: first[0].speed});
+				}
 	    	return this.route;
 	    },
 	    _updateProbe: function(probe, error) {
@@ -194,43 +200,45 @@ angular.module('htmlClient')
 	    setVehicleMonitor: function(vehicleMonitor) {
 	    	this.vehicleMonitor = vehicleMonitor;
 	    	if (vehicleMonitor) {
-				vehicleMonitor('position', this.prevLoc);
-				vehicleMonitor('options', this.options);
-				vehicleMonitor('properties', this.properties);
-				vehicleMonitor('state', this.state);
-				vehicleMonitor('route', this.tripRoute);
-				if (this.initialized) {
-					vehicleMonitor('initialized', this.initialized);
-				}
-				
-				// get probes via websocket
-				this._watchChanges(['probe']);
+					vehicleMonitor('position', this.prevLoc);
+					vehicleMonitor('options', this.options);
+					vehicleMonitor('properties', this.properties);
+					vehicleMonitor('state', this.state);
+					vehicleMonitor('route', this.tripRoute);
+					if (this.initialized) {
+						vehicleMonitor('initialized', this.initialized);
+					}
+					
+					// get probes via websocket
+					return this._watchChanges(['probe']);
 	    	} else {
-	    		this._clearWatch();
+	    		return this._clearWatch();
 	    	}
 	    },
 
-	    _watchChanges: function(properties){
+	    _watchChanges: function(properties) {
 	    	if (properties && properties.length === 0) {
 	    		return;
 	    	}
 	    	
-			var wsProtocol = (location.protocol == "https:") ? "wss" : "ws";
-			var wsPort = location.port;
-			var wssUrl = wsProtocol + '://' + $window.location.hostname;
-			if (wsPort) {
-				wssUrl += ':' + wsPort;
-			}
-			wssUrl += '/user/simulator/watch?clientId=' + this.clientId + '&vehicleId=' + this.vehicleId;
-			if (properties) {
-				wssUrl += '&properties=' + properties.join(',');
-			}
-			
-			var self = this;
+				var wsProtocol = (location.protocol == "https:") ? "wss" : "ws";
+				var wsPort = location.port;
+				var wssUrl = wsProtocol + '://' + $window.location.hostname;
+				if (wsPort) {
+					wssUrl += ':' + wsPort;
+				}
+				wssUrl += '/user/simulator/watch?clientId=' + this.clientId + '&vehicleId=' + this.vehicleId;
+				if (properties) {
+					wssUrl += '&properties=' + properties.join(',');
+				}
+				
+				var self = this;
+				var deferred = $q.defer();
 	    	this.ws = new WebSocket(wssUrl);
 	        this.ws.onopen = function(){  
-	            console.log("Socket is opened");
-	        };
+							console.log("Socket is opened");
+							deferred.resolve();
+					};
 	        this.ws.onclose = function(){
 	        	if (self.ws) {
 	        		// socket is disconnected unexpectedly. try to reconnect
@@ -264,15 +272,19 @@ angular.module('htmlClient')
 		        		console.error("data error: " + error);
 		        	}
 	        	});
-	        };
+					};
+					return deferred.promise;
 	    },
     	_clearWatch: function(watchId){
+				var deferred = $q.defer();
     		if (this.ws) {
     			console.log("closing socket");
     			var ws = this.ws;
     			this.ws = null;
-    			ws.close();
-    		}
+					ws.close();
+				}
+				deferred.resolve();
+				return deferred.promise;
     	},
  
     	setOption: function(key, value) {
@@ -300,25 +312,25 @@ angular.module('htmlClient')
     	setCurrentPosition: function(loc, donotResetRoute){
     		if(this.isDriving()){
     			// under driving
-    			return;
+    			return $q.resolve();
     		}
        		this.prevLoc = loc;
 
        		var self = this;
- 			var deferred = $q.defer();
-			$http(mobileClientService.makeRequestOption({
-				method: "PUT",
-				url: '/user/simulator/vehicle/' + this.vehicleId + '?command=position',
-				headers: {
-					"iota-simulator-uuid": this.clientId
-				},
-				data: {parameters: {latitude: loc.latitude, longitude: loc.longitude, heading: loc.heading, doNotResetRoute: donotResetRoute}}
-			})).success(function(result, status){
-				deferred.resolve(self._updateRoute(result.data && result.data[self.vehicleId]));
-			}).error(function(error, status){
-				console.error("Error[" + status + "]: " + error);
-				deferred.reject(error);
-			});
+				var deferred = $q.defer();
+				$http(mobileClientService.makeRequestOption({
+					method: "PUT",
+					url: '/user/simulator/vehicle/' + this.vehicleId + '?command=position',
+					headers: {
+						"iota-simulator-uuid": this.clientId
+					},
+					data: {parameters: {latitude: loc.latitude, longitude: loc.longitude, heading: loc.heading, doNotResetRoute: donotResetRoute}}
+				})).success(function(result, status){
+					deferred.resolve(self._updateRoute(result.data && result.data[self.vehicleId]));
+				}).error(function(error, status){
+					console.error("Error[" + status + "]: " + error);
+					deferred.reject(error);
+				});
     		return deferred.promise;
     	},
     	getCurrentPosition: function(){
@@ -327,25 +339,25 @@ angular.module('htmlClient')
     	setDestination: function(loc){
     		if(this.isDriving()){
     			// under driving
-    			return;
+    			return $q.resolve();
     		}
     		this.destination = loc;
 
     		var self = this;
- 			var deferred = $q.defer();
-			$http(mobileClientService.makeRequestOption({
-				method: "PUT",
-				url: '/user/simulator/vehicle/' + this.vehicleId + '?command=route',
-				headers: {
-					"iota-simulator-uuid": this.clientId
-				},
-				data: {parameters: {destination: {latitude: loc.latitude, longitude: loc.longitude, heading: loc.heading}}}
-			})).success(function(result, status){
-				deferred.resolve(self._updateRoute(result.data && result.data[self.vehicleId]));
-			}).error(function(error, status){
-				console.error("Error[" + status + "]: " + error);
-				deferred.reject(error);
-			});
+				var deferred = $q.defer();
+				$http(mobileClientService.makeRequestOption({
+					method: "PUT",
+					url: '/user/simulator/vehicle/' + this.vehicleId + '?command=route',
+					headers: {
+						"iota-simulator-uuid": this.clientId
+					},
+					data: {parameters: {destination: {latitude: loc.latitude, longitude: loc.longitude, heading: loc.heading}}}
+				})).success(function(result, status){
+					deferred.resolve(self._updateRoute(result.data && result.data[self.vehicleId]));
+				}).error(function(error, status){
+					console.error("Error[" + status + "]: " + error);
+					deferred.reject(error);
+				});
     		return deferred.promise;
     	},
     	getDestination: function() {
@@ -397,6 +409,24 @@ angular.module('htmlClient')
 					data: {parameters: propertyNames}
 				})).success(function(result, status){
 					deferred.resolve(result);
+				}).error(function(error, status){
+					console.error("Error[" + status + "]: " + error);
+					deferred.reject(error);
+				});
+				return deferred.promise;
+			},
+			setWaypoints: function(waypoints) {
+    		var self = this;
+				var deferred = $q.defer();
+				$http(mobileClientService.makeRequestOption({
+					method: "PUT",
+					url: '/user/simulator/vehicle/' + this.vehicleId + '?command=waypoints',
+					headers: {
+						"iota-simulator-uuid": this.clientId
+					},
+					data: {parameters: waypoints}
+				})).success(function(result, status){
+					deferred.resolve(self._updateRoute(result.data && result.data[self.vehicleId]));
 				}).error(function(error, status){
 					console.error("Error[" + status + "]: " + error);
 					deferred.reject(error);

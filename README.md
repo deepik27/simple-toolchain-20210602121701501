@@ -36,7 +36,7 @@ The automatic deployment option creates an instance of the app and the required 
 1. Open the IBM Cloud dashboard in your browser.
 2. To stop the app, click **ACTIONS** > **Stop App**.
 
-Next: Go to [Connecting to IBM IoT Connected Vehicle Insights service](#connect2iot4a).
+Next: Go to [Connecting to IBM IoT Connected Vehicle Insights service](#connect2cvi).
 
 ### Manually deploy the starter app on IBM Cloud
 
@@ -166,7 +166,7 @@ A fragment of the gateway.properties file exists under `conf` folder of the `Htt
 1. Deploy export the `FleetAlert` jar to an Agent server.
 1. Restart IBM IoT Connected Vehicle Insights components using IBM IoT Connected Vehicle Insights Plugin Deploy Tool as needed.
 
-## <a id="connect2iot4a"></a> Connecting the app to your IBM IoT Connected Vehicle Insights service
+## <a id="connect2cvi"></a> Connecting the app to your IBM IoT Connected Vehicle Insights service
 
 After deploying the app on IBM Cloud, you must configure the app to connect to your IBM IoT Connected Vehicle Insights SaaS service instance.
 
@@ -315,10 +315,6 @@ For each instance that you deploy, the following information is sent to a [Deplo
 * Metadata in the repository.yaml file
 
 This data is collected from the `package.json` and `repository.yaml` file in the sample application and the `VCAP_APPLICATION` and `VCAP_SERVICES` environment variables in IBM Cloud and other Cloud Foundry platforms. This data is used by IBM to track metrics around deployments of sample applications to IBM Cloud to measure the usefulness of our examples, so that we can continuously improve the content we offer to you. Only deployments of sample applications that include code to ping the Deployment Tracker service will be tracked.
-
-### Disabling deployment tracking
-
-You can disable the Deployment Tracker service by removing `require("metrics-tracker-client").track();` from the beginning of the `app.js` server file.
 
 ## Providing feedback to IBM
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -19,6 +19,8 @@ import { MapEventHelper } from '../../shared/map-event-helper';
 import { EventService } from '../../shared/iota-event.service';
 import { MapGeofenceHelper } from '../../shared/map-geofence-helper';
 import { GeofenceService } from '../../shared/iota-geofence.service';
+import { MapPOIHelper } from '../../shared/map-poi-helper';
+import { POIService } from '../../shared/iota-poi.service';
 import { DriverBehaviorService } from '../../shared/iota-driver-behavior.service';
 import { LocationService, MapArea } from '../../shared/location.service';
 import { AlertService } from '../../shared/alert.service';
@@ -47,6 +49,7 @@ export class DriverBehaviorComponent implements OnInit {
   routeLayer: ol.layer.Vector;
 	mapEventsLayer: ol.layer.Vector;
 	mapGeofenceLayer: ol.layer.Vector;
+	mapPOILayer: ol.layer.Vector;
 	behaviorLayer: ol.layer.Vector;
 	mapItemHelpers = {};
 	mapElementId: string = 'carmonitor';// + (NEXT_MAP_ELEMENT_ID ++);
@@ -73,6 +76,7 @@ export class DriverBehaviorComponent implements OnInit {
 						private locationService: LocationService, 
 						private eventService: EventService,
 						private geofenceService: GeofenceService,
+						private poiService: POIService,
 						private driverBehaviorService: DriverBehaviorService,
 						private alertService: AlertService) {
 		this.START_PIN_STYLE = this.getIconStyle('/images/MarkerGreen.png', [79,158], 0.1);
@@ -115,6 +119,10 @@ export class DriverBehaviorComponent implements OnInit {
 			source: new ol.source.Vector(),
 			renderOrder: undefined
 		});
+		this.mapPOILayer = new ol.layer.Vector({
+			source: new ol.source.Vector(),
+			renderOrder: undefined
+		});
     this.routeLayer = new ol.layer.Vector({
       source: new ol.source.Vector(),
       renderOrder: undefined
@@ -135,6 +143,7 @@ export class DriverBehaviorComponent implements OnInit {
         }),
 				this.mapGeofenceLayer,
 				this.mapEventsLayer,
+				this.mapPOILayer,
         this.routeLayer,
         this.behaviorLayer,
      ],
@@ -145,6 +154,7 @@ export class DriverBehaviorComponent implements OnInit {
     });
 		this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
     this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, {itemLabel: "Boundary"});
+		this.mapItemHelpers["poi"] = new MapPOIHelper(this.map, this.mapPOILayer, this.poiService);
 
     // add helpers
 		this.mapHelper = new MapHelper(this.map, function(coordinate, feature, layer) {

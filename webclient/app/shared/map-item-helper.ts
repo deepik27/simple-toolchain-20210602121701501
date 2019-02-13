@@ -243,7 +243,7 @@ export abstract class MapItemHelper<T extends Item> {
           }
           resolve();
         }, error => {
-          if (error.statusCode !== 404) {
+          if (error.status !== 404 && error.statusCode !== 404) {
             delete this.tentativeItemMap[id];
           }
           resolve();

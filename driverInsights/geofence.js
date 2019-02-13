@@ -15,7 +15,8 @@ var moment = require("moment");
 
 var dbClient = require('./../cloudantHelper.js');
 var ruleGenerator = require('./ruleGenerator.js');
-var iot4aAsset = app_module_require('iot4a-api/asset.js');
+const asset = app_module_require("cvi-node-lib").asset;
+var version = app_module_require('utils/version.js');
 
 var debug = require('debug')('geofence');
 debug.log = console.log.bind(console);
@@ -32,17 +33,17 @@ var GEOFENCE_MAX_RULE_ID_NUM = 100000;
  * 		geometry_type: "rectangle" or "circle", "rectangle" by default
  * 		geometry: {
  * 			min_latitude: start latitude of geo fence, valid when geometry_type is rectangle
- * 			min_longitude: start logitude of geo fence, valid when geometry_type is rectangle 
+ * 			min_longitude: start logitude of geo fence, valid when geometry_type is rectangle
  * 			max_latitude:  end latitude of geo fence, valid when geometry_type is rectangle
  * 			max_longitude:  start logitude of geo fence, valid when geometry_type is rectangle
  * 			latitude: center latitude of geo fence, valid when geometry_type is circle
- * 			longitude: center logitude of geo fence, valid when geometry_type is circle 
- * 			radius: radius of geo fence, valid when geometry_type is circle 
- * 		}, 
+ * 			longitude: center logitude of geo fence, valid when geometry_type is circle
+ * 			radius: radius of geo fence, valid when geometry_type is circle
+ * 		},
  * 		target: {
  * 			area: {
  *	 			min_latitude: start latitude of rule target, valid when direction is out
- * 				min_longitude: start logitude of rule target, valid when direction is out 
+ * 				min_longitude: start logitude of rule target, valid when direction is out
  * 				max_latitude:  end latitude of rule target, valid when direction is out
  * 				max_longitude:  start logitude of rule target, valid when direction is out
  * 			}
@@ -59,55 +60,59 @@ var GEOFENCE_MAX_RULE_ID_NUM = 100000;
 _.extend(driverInsightsGeofence, {
 	db: null,
 
-	_init: function(){
+	_init: function () {
 		if (this.isAvailable()) {
 			this.db = dbClient.getDB(DB_NAME, this._getDesignDoc());
 		}
 	},
 
-	isAvailable: function() {
-		return iot4aAsset.isSaaS();
+	isAvailable: function () {
+		return true;
 	},
-	
-	queryGeofence: function(min_latitude, min_longitude, max_latitude, max_longitude) {
+
+	getSupportInfo: function () {
+		return { available: this.isAvailable(), useTargetArea: !version.laterOrEqual("2.4") };
+	},
+
+	queryGeofence: function (min_latitude, min_longitude, max_latitude, max_longitude) {
 		var deferred = Q.defer();
-		Q.when(this._queryGeofenceDoc(min_longitude, min_latitude, max_longitude, max_latitude), function(response) {
-			var result = response.map(function(doc) {
+		Q.when(this._queryGeofenceDoc(min_longitude, min_latitude, max_longitude, max_latitude), function (response) {
+			var result = response.map(function (doc) {
 				doc.geofence.id = doc.id;
 				return doc.geofence;
 			});
 			deferred.resolve(result);
-		})["catch"](function(err){
+		})["catch"](function (err) {
 			deferred.reject(err);
 		}).done();
 		return deferred.promise;
 	},
 
-	getGeofence: function(geofence_id) {
+	getGeofence: function (geofence_id) {
 		var deferred = Q.defer();
-		Q.when(this._getGeofenceDoc(geofence_id), function(doc) {
+		Q.when(this._getGeofenceDoc(geofence_id), function (doc) {
 			doc.geofence.id = doc.id;
 			deferred.resolve(doc.geofence);
-		})["catch"](function(err){
+		})["catch"](function (err) {
 			deferred.reject(err);
 		}).done();
 		return deferred.promise;
 	},
-	
+
 	/*
-	 * Create an unique Id for rule xml. RuleID must be unique within VehicleActionRule rule xmls. They must be managed by application. 
+	 * Create an unique Id for rule xml. RuleID must be unique within VehicleActionRule rule xmls. They must be managed by application.
 	 * If the application create VehicleActionRule rules other than geofence, ids for those rules must be taken care of to calculate the uniqueness.
 	 */
-	_getAvailableRuleId: function() {
+	_getAvailableRuleId: function () {
 		var deferred = Q.defer();
 		var self = this;
-		Q.when(this.db, function(db) {
-			db.view(DB_NAME, "geofenceRuleXmlIds", {}, function(err, body) {
+		Q.when(this.db, function (db) {
+			db.view(DB_NAME, "geofenceRuleXmlIds", {}, function (err, body) {
 				if (err) {
 					console.error(err);
 					return deferred.reject(err);
 				} else {
-					var rule_ids = _.map(body.rows, function(value) {
+					var rule_ids = _.map(body.rows, function (value) {
 						return value.key;
 					});
 					var rule_id;
@@ -118,7 +123,7 @@ _.extend(driverInsightsGeofence, {
 						}
 					}
 
-					var rule_xml_ids = _.map(body.rows, function(value) {
+					var rule_xml_ids = _.map(body.rows, function (value) {
 						return value.value;
 					});
 					var rule_xml_id = GEOFENCE_RULE_TYPE + 1;
@@ -128,82 +133,82 @@ _.extend(driverInsightsGeofence, {
 						}
 						rule_xml_id++;
 					}
-					deferred.resolve({id: rule_id, xmlid: rule_xml_id});
-					deferred.reject({message: "no id is available", statusCode: 500});
+					deferred.resolve({ id: rule_id, xmlid: rule_xml_id });
+					deferred.reject({ message: "no id is available", statusCode: 500 });
 				}
 			});
 		});
 		return deferred.promise;
 	},
 
-	_id: function() {
+	_id: function () {
 		function s4() {
 			return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
 		}
 		return (s4() + s4()).toUpperCase();
 	},
-	
-	createGeofence: function(geofence) {
+
+	createGeofence: function (geofence) {
 		var self = this;
 		var deferred = Q.defer();
-		Q.when(this._getAvailableRuleId(), function(ids) {
-			var rule = {rule_id: ids.id, description: "geofence rule", type: "Action", status: "active"};
+		Q.when(this._getAvailableRuleId(), function (ids) {
+			var rule = { rule_id: ids.id, description: "geofence rule", type: "Action", status: "active" };
 			var rule_xml_id = ids.xmlid;
-			Q.when(iot4aAsset.addRule(rule, self._createGeofenceEmptyRuleXML(rule_xml_id), true), function(response) {
+			Q.when(asset.addRule(rule, self._createGeofenceEmptyRuleXML(rule_xml_id), true), function (response) {
 				var promises = [];
-				var geofence_id = response.id;
+				var geofence_id = response.rule_id;
 				var ruleXML = self._createGeofenceRuleXML(geofence_id, geofence, rule_xml_id);
-				promises.push(iot4aAsset.updateRule(geofence_id, rule, ruleXML, true));
-				promises.push(self._createDoc(response.id, {geofence: geofence, rule_xml_id: rule_xml_id}));
-				
-				Q.all(promises).then(function(data) {
-					deferred.resolve({id: response.id});
-				}, function(err) {
+				promises.push(asset.updateRule(geofence_id, rule, ruleXML, true));
+				promises.push(self._createDoc(response.rule_id, { geofence: geofence, rule_xml_id: rule_xml_id }));
+
+				Q.all(promises).then(function (data) {
+					deferred.resolve({ id: response.rule_id });
+				}, function (err) {
 					deferred.reject(err);
 				});
-			})["catch"](function(err){
+			})["catch"](function (err) {
 				deferred.reject(err);
 			});
-		})["catch"](function(err){
+		})["catch"](function (err) {
 			deferred.reject(err);
 		});
 		return deferred.promise;
 	},
-	
-	updateGeofence: function(geofence_id, geofence) {
+
+	updateGeofence: function (geofence_id, geofence) {
 		var deferred = Q.defer();
 		var self = this;
-		Q.when(this._getGeofenceDoc(geofence_id), function(doc) {
-			var rule = {description: "geofence rule", type: "Action", status: "active"};
+		Q.when(this._getGeofenceDoc(geofence_id), function (doc) {
+			var rule = { description: "geofence rule", type: "Action", status: "active" };
 			var ruleXML = self._createGeofenceRuleXML(geofence_id, geofence, doc.rule_xml_id);
 			var promises = [];
-			promises.push(iot4aAsset.updateRule(geofence_id, rule, ruleXML, true));
-			promises.push(self._updateDoc(geofence_id, {geofence: geofence}));
-			Q.all(promises).then(function(data) {
-				deferred.resolve({id: geofence_id});
-			}, function(err) {
+			promises.push(asset.updateRule(geofence_id, rule, ruleXML, true));
+			promises.push(self._updateDoc(geofence_id, { geofence: geofence }));
+			Q.all(promises).then(function (data) {
+				deferred.resolve({ id: geofence_id });
+			}, function (err) {
 				deferred.reject(err);
 			});
-		}, function(err) {
+		}, function (err) {
 			deferred.reject(err);
 		});
 		return deferred.promise;
 	},
-	
-	_deleteGeofenceRule: function(rule_id, successOnNoExists) {
+
+	_deleteGeofenceRule: function (rule_id, successOnNoExists) {
 		var deferred = Q.defer();
-		var rule = {description: "geofence being removed", type: "Action", status: "inactive"};
-		Q.when(iot4aAsset.updateRule(rule_id, rule, null, true), function(response) {
-			Q.when(iot4aAsset.deleteRule(rule_id), function(response) {
-				deferred.resolve({id: rule_id});
-			})["catch"](function(err){
+		var rule = { description: "geofence being removed", type: "Action", status: "inactive" };
+		Q.when(asset.updateRule(rule_id, rule, null, true), function (response) {
+			Q.when(asset.deleteRule(rule_id), function (response) {
+				deferred.resolve({ id: rule_id });
+			})["catch"](function (err) {
 				if (err.statusCode === 404 && successOnNoExists) {
 					deferred.resolve();
 				} else {
 					deferred.reject(err);
 				}
 			}).done();
-		})["catch"](function(err){
+		})["catch"](function (err) {
 			if (err.statusCode === 404 && successOnNoExists) {
 				deferred.resolve();
 			} else {
@@ -212,52 +217,52 @@ _.extend(driverInsightsGeofence, {
 		}).done();
 		return deferred.promise;
 	},
-	
-	deleteGeofence: function(geofence_id) {
+
+	deleteGeofence: function (geofence_id) {
 		var promises = [];
 		promises.push(this._deleteGeofenceRule(geofence_id, true));
 		promises.push(this._deleteDoc(geofence_id));
-		
+
 		var deferred = Q.defer();
-		Q.when(promises).then(function(result) {
-			deferred.resolve({id: geofence_id});
-		})["catch"](function(err){
+		Q.when(promises).then(function (result) {
+			deferred.resolve({ id: geofence_id });
+		})["catch"](function (err) {
 			deferred.reject(err);
 		}).done();
 
 		return deferred.promise;
 	},
 
-	_createGeofenceRuleXMLTemplate: function(rule_xml_id) {
+	_createGeofenceRuleXMLTemplate: function (rule_xml_id) {
 		return {
-				rule_id: rule_xml_id,
-				rule_type: GEOFENCE_RULE_TYPE,
-				name: "Geofence Rule",
-				description: "Geofence rule created by IBM IoT Connected Vehicle Insights Starter App rule engine.",
-				condition: {
-					pattern: "geofence"
-				},
-				actions: []
-			};
+			rule_id: rule_xml_id,
+			rule_type: GEOFENCE_RULE_TYPE,
+			name: "Geofence Rule",
+			description: "Geofence rule created by IBM IoT Connected Vehicle Insights Starter App rule engine.",
+			condition: {
+				pattern: "geofence"
+			},
+			actions: []
+		};
 	},
 
-	_createGeofenceEmptyRuleXML: function(rule_xml_id) {
+	_createGeofenceEmptyRuleXML: function (rule_xml_id) {
 		return ruleGenerator.createVehicleAcitonRuleXML(this._createGeofenceRuleXMLTemplate(rule_xml_id));
 	},
-	
-	_createGeofenceRuleXML: function(geofence_id, geofenceJson, rule_xml_id) {
+
+	_createGeofenceRuleXML: function (geofence_id, geofenceJson, rule_xml_id) {
 		if (!geofenceJson) {
 			return "";
 		}
-		
+
 		var ruleJson = this._createGeofenceRuleXMLTemplate(rule_xml_id);
-		
+
 		var range = geofenceJson.direction || "out";
 		if (geofenceJson.geometry_type === "circle") {
 			ruleJson.condition.location_condition = {
 				range: range,
-				latitude: geofenceJson.geometry.latitude,
-				longitude: geofenceJson.geometry.longitude,
+				center_latitude: geofenceJson.geometry.latitude,
+				center_longitude: geofenceJson.geometry.longitude,
 				radius: geofenceJson.geometry.radius
 			};
 		} else {
@@ -270,42 +275,47 @@ _.extend(driverInsightsGeofence, {
 			};
 		}
 		if (geofenceJson.target) {
-			ruleJson.target = {};
-			if (geofenceJson.target.area) {
-				ruleJson.target.areas = [geofenceJson.target.area];
+			var supportInfo = this.getSupportInfo();
+			if (supportInfo.useTargetArea) {
+				ruleJson.target = {};
+				if (geofenceJson.target.area) {
+					ruleJson.target.areas = [geofenceJson.target.area];
+				}
 			}
 		}
 		var message = geofenceJson.message || (range === "out" ? "Vehicle is out of the region" : "Vehicle is in the region");
 		ruleJson.actions = geofenceJson.actions
-						|| {vehicle_actions: [{
-							message: message,
-							parameters: [{
-								key: "message_type",
-								value: "geofence"
-							},{
-								key: "source_id",
-								value: geofence_id
-							},{
-								key: "longitude",
-								value: "CarProbe.Longitude"
-							},{
-								key: "latitude",
-								value: "CarProbe.Latitude"
-							}]
-						}]};
+			|| {
+				vehicle_actions: [{
+					message: message,
+					parameters: [{
+						key: "message_type",
+						value: "geofence"
+					}, {
+						key: "source_id",
+						value: geofence_id
+					}, {
+						key: "longitude",
+						value: "CarProbe.Longitude"
+					}, {
+						key: "latitude",
+						value: "CarProbe.Latitude"
+					}]
+				}]
+			};
 		return ruleGenerator.createVehicleAcitonRuleXML(ruleJson);
 	},
-	
-	_queryGeofenceDoc: function(min_latitude, min_longitude, max_latitude, max_longitude) {
+
+	_queryGeofenceDoc: function (min_latitude, min_longitude, max_latitude, max_longitude) {
 		var deferred = Q.defer();
 		if (isNaN(min_longitude) || isNaN(min_latitude) || isNaN(max_longitude) || isNaN(max_latitude)) {
-			Q.when(this.db, function(db) {
-				db.view(DB_NAME, "allGeofenceLocation", {}, function(err, body){
+			Q.when(this.db, function (db) {
+				db.view(DB_NAME, "allGeofenceLocation", {}, function (err, body) {
 					if (err) {
 						console.error(err);
 						return deferred.reject(err);
 					} else {
-						var result = _.map(body.rows, function(value) {
+						var result = _.map(body.rows, function (value) {
 							var doc = value.value;
 							if (doc) {
 								doc.id = value.id;
@@ -313,20 +323,20 @@ _.extend(driverInsightsGeofence, {
 								delete doc._rev;
 							}
 							return doc;
-						});						
+						});
 						deferred.resolve(result);
 					}
 				});
 			});
 		} else if (!isNaN(min_longitude) && !isNaN(min_latitude) && !isNaN(max_longitude) && !isNaN(max_latitude)) {
-			Q.when(this.db, function(db) {
-				var  bbox = min_latitude + "," + min_longitude + "," + max_latitude + "," + max_longitude;
-				db.geo(DB_NAME, "geoindex", {bbox:bbox, include_docs:true}, function(err, body) {
+			Q.when(this.db, function (db) {
+				var bbox = min_latitude + "," + min_longitude + "," + max_latitude + "," + max_longitude;
+				db.geo(DB_NAME, "geoindex", { bbox: bbox, include_docs: true }, function (err, body) {
 					if (err) {
 						console.error(err);
 						return deferred.reject(err);
 					} else {
-						var result = _.map(body.rows, function(value) {
+						var result = _.map(body.rows, function (value) {
 							var doc = value.doc;
 							if (doc) {
 								doc.id = value.id;
@@ -334,36 +344,36 @@ _.extend(driverInsightsGeofence, {
 								delete doc._rev;
 							}
 							return doc;
-						});						
+						});
 						deferred.resolve(result);
 					}
 				});
 			});
 		} else {
-			deferred.reject({statusCode: 400, message: "missing parameter: min_latitude, min_longitude, max_latitude and max_longitude are specified."});
+			deferred.reject({ statusCode: 400, message: "missing parameter: min_latitude, min_longitude, max_latitude and max_longitude are specified." });
 		}
 		return deferred.promise;
 	},
-	
-	_getGeofenceDoc: function(geofence_id) {
+
+	_getGeofenceDoc: function (geofence_id) {
 		var deferred = Q.defer();
-		Q.when(this.db, function(db) {
-			db.find({selector:{_id:geofence_id}}, function(err, body) {
+		Q.when(this.db, function (db) {
+			db.find({ selector: { _id: geofence_id } }, function (err, body) {
 				if (err) {
 					console.error(err);
 					return deferred.reject(err);
 				} else {
-					deferred.resolve(body.docs && body.docs.length > 0?body.docs[0] : null);
+					deferred.resolve(body.docs && body.docs.length > 0 ? body.docs[0] : null);
 				}
 			});
 		});
 		return deferred.promise;
 	},
-	
-	_createDoc: function(id, doc) {
+
+	_createDoc: function (id, doc) {
 		var deferred = Q.defer();
-		Q.when(this.db, function(db) {
-			db.insert(doc, id, function(err, body) {
+		Q.when(this.db, function (db) {
+			db.insert(doc, id, function (err, body) {
 				if (err) {
 					console.error(err);
 					return deferred.reject(err);
@@ -374,21 +384,21 @@ _.extend(driverInsightsGeofence, {
 		});
 		return deferred.promise;
 	},
-	
-	_updateDoc: function(id, doc) {
+
+	_updateDoc: function (id, doc) {
 		var deferred = Q.defer();
 
 		// get the current document for the device
-		Q.when(this.db, function(db) {
-			db.get(id, null, function(err, body) {
+		Q.when(this.db, function (db) {
+			db.get(id, null, function (err, body) {
 				if (err) {
 					console.error(err);
 					deferred.reject(err);
 					return;
 				}
-				
+
 				_.extend(body, doc);
-				db.insert(body, null, function(err, body) {
+				db.insert(body, null, function (err, body) {
 					if (err) {
 						console.error(err);
 						deferred.reject(err);
@@ -400,11 +410,11 @@ _.extend(driverInsightsGeofence, {
 		});
 		return deferred.promise;
 	},
-	
-	_deleteDoc: function(geofence_id, successOnNoExists) {
+
+	_deleteDoc: function (geofence_id, successOnNoExists) {
 		var deferred = Q.defer();
-		Q.when(this.db, function(db) {
-			db.get(geofence_id, null, function(err, body) {
+		Q.when(this.db, function (db) {
+			db.get(geofence_id, null, function (err, body) {
 				if (err) {
 					if (err.statusCode === 404 && successOnNoExists) {
 						deferred.resolve(err);
@@ -414,8 +424,8 @@ _.extend(driverInsightsGeofence, {
 					}
 					return;
 				}
-				
-				db.destroy(body._id, body._rev, function(err, data) {
+
+				db.destroy(body._id, body._rev, function (err, data) {
 					if (err) {
 						console.error(err);
 						deferred.reject(err);
@@ -427,67 +437,67 @@ _.extend(driverInsightsGeofence, {
 		});
 		return deferred.promise;
 	},
-	
-	_getDesignDoc: function(){
-		var allGeofenceLocation = function(doc) {
+
+	_getDesignDoc: function () {
+		var allGeofenceLocation = function (doc) {
 			if (doc.geofence && doc.geofence.geometry) {
 				emit(doc._id, doc.geofence);
 			}
 		};
-		var geofenceRuleXmlIds = function(doc) {
+		var geofenceRuleXmlIds = function (doc) {
 			if (doc.rule_xml_id) {
 				emit(doc._id, doc.rule_xml_id);
 			}
 		};
-		var geofenceIndexer = function(doc){
+		var geofenceIndexer = function (doc) {
 			if (doc.geofence && doc.geofence.geometry) {
 				var geofence = doc.geofence.geometry;
-				var geometry = {type: "Polygon", coordinates: []};
+				var geometry = { type: "Polygon", coordinates: [] };
 				if (geofence.target && geofence.target.area) {
 					var area = geofence.target.area;
 					geometry.coordinates.push([
-			   					    [parseFloat(area.min_longitude), parseFloat(area.min_latitude)],
-			   					    [parseFloat(area.max_longitude), parseFloat(area.min_latitude)],
-			   					    [parseFloat(area.max_longitude), parseFloat(area.max_latitude)],
-			   					    [parseFloat(area.min_longitude), parseFloat(area.max_latitude)],
-			   					    [parseFloat(area.min_longitude), parseFloat(area.min_latitude)]
-			   					  ]);
+						[parseFloat(area.min_longitude), parseFloat(area.min_latitude)],
+						[parseFloat(area.max_longitude), parseFloat(area.min_latitude)],
+						[parseFloat(area.max_longitude), parseFloat(area.max_latitude)],
+						[parseFloat(area.min_longitude), parseFloat(area.max_latitude)],
+						[parseFloat(area.min_longitude), parseFloat(area.min_latitude)]
+					]);
 				} else if (!isNaN(geofence.min_longitude)) {
 					geometry.coordinates.push([
-		   					    [parseFloat(geofence.min_longitude), parseFloat(geofence.min_latitude)],
-		   					    [parseFloat(geofence.max_longitude), parseFloat(geofence.min_latitude)],
-		   					    [parseFloat(geofence.max_longitude), parseFloat(geofence.max_latitude)],
-		   					    [parseFloat(geofence.min_longitude), parseFloat(geofence.max_latitude)],
-		   					    [parseFloat(geofence.min_longitude), parseFloat(geofence.min_latitude)]
-		   					  ]);
+						[parseFloat(geofence.min_longitude), parseFloat(geofence.min_latitude)],
+						[parseFloat(geofence.max_longitude), parseFloat(geofence.min_latitude)],
+						[parseFloat(geofence.max_longitude), parseFloat(geofence.max_latitude)],
+						[parseFloat(geofence.min_longitude), parseFloat(geofence.max_latitude)],
+						[parseFloat(geofence.min_longitude), parseFloat(geofence.min_latitude)]
+					]);
 				} else if (!isNaN(geofence.longitude)) {
-		            var r = 0.0001;
+					var r = 0.0001;
 					geometry.coordinates.push([
-		   					    [parseFloat(geofence.longitude)-r, parseFloat(geofence.latitude)-r],
-		   					    [parseFloat(geofence.longitude)+r, parseFloat(geofence.latitude)-r],
-		   					    [parseFloat(geofence.longitude)+r, parseFloat(geofence.latitude)+r],
-		   					    [parseFloat(geofence.longitude)-r, parseFloat(geofence.latitude)+r],
-		   					    [parseFloat(geofence.longitude)-r, parseFloat(geofence.latitude)-r]
-		   					  ]);
+						[parseFloat(geofence.longitude) - r, parseFloat(geofence.latitude) - r],
+						[parseFloat(geofence.longitude) + r, parseFloat(geofence.latitude) - r],
+						[parseFloat(geofence.longitude) + r, parseFloat(geofence.latitude) + r],
+						[parseFloat(geofence.longitude) - r, parseFloat(geofence.latitude) + r],
+						[parseFloat(geofence.longitude) - r, parseFloat(geofence.latitude) - r]
+					]);
 				}
 				st_index(geometry);
 			}
 		};
 		var designDoc = {
-				_id: '_design/' + DB_NAME,
-				views: {
-					allGeofenceLocation: {
-						map: allGeofenceLocation.toString()
-					},
-					geofenceRuleXmlIds: {
-						map: geofenceRuleXmlIds.toString()
-					},
+			_id: '_design/' + DB_NAME,
+			views: {
+				allGeofenceLocation: {
+					map: allGeofenceLocation.toString()
 				},
-				st_indexes: {
-					geoindex: {
-						index: geofenceIndexer.toString()
-					}
+				geofenceRuleXmlIds: {
+					map: geofenceRuleXmlIds.toString()
+				},
+			},
+			st_indexes: {
+				geoindex: {
+					index: geofenceIndexer.toString()
 				}
+			}
 		};
 		return designDoc;
 	},

@@ -13,7 +13,7 @@ var _ = require("underscore");
 var Q = require("q");
 var moment = require("moment");
 var dbClient = require('./../cloudantHelper.js');
-var iot4aVehicleDataHub = app_module_require('iot4a-api/vehicleDataHub.js');
+const vehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
 
 var debug = require('debug')('alertmanager');
 debug.log = console.log.bind(console);
@@ -42,17 +42,17 @@ _.extend(alertManager, {
 	insertTimeout: null,
 	db: null,
 
-	_init: function(){
+	_init: function () {
 		var self = this;
 		this.db = dbClient.getDB(FLEETALERT_DB_NAME, this._getDesignDoc());
 		this.getAlerts([], false, 200); // Get and cache all alerts
 	},
 
-	_searchAlertIndex: function(opts){
+	_searchAlertIndex: function (opts) {
 		debug("_searchAlertIndex: " + opts.q);
-		return Q(this.db).then(function(db){
+		return Q(this.db).then(function (db) {
 			var deferred = Q.defer();
-			db.search(FLEETALERT_DB_NAME, 'alerts', opts, function(err, result){
+			db.search(FLEETALERT_DB_NAME, 'alerts', opts, function (err, result) {
 				if (err)
 					return deferred.reject(err);
 				return deferred.resolve(result);
@@ -60,232 +60,232 @@ _.extend(alertManager, {
 			return deferred.promise;
 		});
 	},
-	_getDesignDoc: function(){
-		var fleetAlertIndexer = function(doc){
-			if(doc.ts && doc.mo_id && doc.type && doc.severity){
-				index("ts", doc.ts, {store: true});
-				index("mo_id", doc.mo_id, {store: true});
-				index("type", doc.type, {store: true});
-				index("severity", doc.severity, {store: true});
-				index("closed_ts", doc.closed_ts||-1, {store: true});
-				index("simulated", doc.simulated, {store: true});
+	_getDesignDoc: function () {
+		var fleetAlertIndexer = function (doc) {
+			if (doc.ts && doc.mo_id && doc.type && doc.severity) {
+				index("ts", doc.ts, { store: true });
+				index("mo_id", doc.mo_id, { store: true });
+				index("type", doc.type, { store: true });
+				index("severity", doc.severity, { store: true });
+				index("closed_ts", doc.closed_ts || -1, { store: true });
+				index("simulated", doc.simulated, { store: true });
 
-				index("description", doc.description||"", {store: true});
-				index("latitude", doc.latitude, {store: true});
-				index("longitude", doc.longitude, {store: true});
+				index("description", doc.description || "", { store: true });
+				index("latitude", doc.latitude, { store: true });
+				index("longitude", doc.longitude, { store: true });
 			}
 		};
 		var designDoc = {
-				_id: '_design/' + FLEETALERT_DB_NAME,
-				indexes: {
-					alerts: {
-						analyzer: {name: 'keyword'},
-						index: fleetAlertIndexer.toString()
-					}
+			_id: '_design/' + FLEETALERT_DB_NAME,
+			indexes: {
+				alerts: {
+					analyzer: { name: 'keyword' },
+					index: fleetAlertIndexer.toString()
 				}
+			}
 		};
 		return designDoc;
 	},
 
-	getAlertsForVehicleInArea: function(conditions, area, includeClosed, limit){
-		if(!area){
+	getAlertsForVehicleInArea: function (conditions, area, includeClosed, limit) {
+		if (!area) {
 			return Q.reject();
 		}
 		var self = this;
 		var deferred = Q.defer();
-		Q.when(iot4aVehicleDataHub.getCarProbe(area), function(probes){
-			if(probes.length > 0){
-				var mo_ids = probes.map(function(probe){return probe.mo_id;});
-				self.getAlertsForVehicles(mo_ids, includeClosed, limit).then(function(results){
+		Q.when(vehicleDataHub.getCarProbe(area), function (probes) {
+			if (probes.length > 0) {
+				var mo_ids = probes.map(function (probe) { return probe.mo_id; });
+				self.getAlertsForVehicles(mo_ids, includeClosed, limit).then(function (results) {
 					deferred.resolve(results);
 				});
-			}else{
-				deferred.resolve({alerts: []});
+			} else {
+				deferred.resolve({ alerts: [] });
 			}
 		});
 		return deferred.promise;
 	},
-	getAlertsForVehicles: function(mo_ids, includeClosed, limit){
+	getAlertsForVehicles: function (mo_ids, includeClosed, limit) {
 		var self = this;
-		var _getAlerts100 = function(mo_ids){
-			var mo_id_condition = "(" + mo_ids.map(function(mo_id){
-				return "mo_id:\""+mo_id+"\"";
+		var _getAlerts100 = function (mo_ids) {
+			var mo_id_condition = "(" + mo_ids.map(function (mo_id) {
+				return "mo_id:\"" + mo_id + "\"";
 			}).join(" OR ") + ")";
 			return self.getAlerts([mo_id_condition], includeClosed, limit);
 		};
 		var results = [];
-		for(var i=0; i<mo_ids.length/100; i++){
-			results.push(_getAlerts100(mo_ids.slice(i*100, (i+1)*100)));
+		for (var i = 0; i < mo_ids.length / 100; i++) {
+			results.push(_getAlerts100(mo_ids.slice(i * 100, (i + 1) * 100)));
 		}
-		return Q.allSettled(results).then(function(fulfilled){
+		return Q.allSettled(results).then(function (fulfilled) {
 			var alerts = [];
-			fulfilled.forEach(function(f){
-				if(f.value && f.value.alerts){
+			fulfilled.forEach(function (f) {
+				if (f.value && f.value.alerts) {
 					alerts = alerts.concat(f.value.alerts);
 				}
 			});
-			return {alerts: alerts};
+			return { alerts: alerts };
 		});
 	},
-	getAlerts: function(conditions, includeClosed, limit){
-		var opt = {sort: "-ts", include_docs:true};
-		if(conditions.length > 0){
-			_.extend(opt, {q: conditions.join(" AND "), limit: (limit || 10)});
-			if(!includeClosed){
+	getAlerts: function (conditions, includeClosed, limit) {
+		var opt = { sort: "-ts", include_docs: true };
+		if (conditions.length > 0) {
+			_.extend(opt, { q: conditions.join(" AND "), limit: (limit || 10) });
+			if (!includeClosed) {
 				opt.q += " AND closed_ts:\\-1";
 			}
-		}else{
-			_.extend(opt, {q: includeClosed ? "*:*" : "closed_ts:\\-1"});
-			if(limit){
-				_.extend(opt, {limit: limit});
+		} else {
+			_.extend(opt, { q: includeClosed ? "*:*" : "closed_ts:\\-1" });
+			if (limit) {
+				_.extend(opt, { limit: limit });
 			}
 		}
 		var self = this;
 		return this._searchAlertIndex(opt)
-			.then(function(result){
-				var alerts = (result.rows||[]).map(function(row){return _.extend(row.doc, row.fields);});
-				setImmediate(function(){
-					alerts.forEach(function(alert){self._cacheAlert(alert);});
+			.then(function (result) {
+				var alerts = (result.rows || []).map(function (row) { return _.extend(row.doc, row.fields); });
+				setImmediate(function () {
+					alerts.forEach(function (alert) { self._cacheAlert(alert); });
 				});
-				if(result.total_rows > (limit||10)){
+				if (result.total_rows > (limit || 10)) {
 					console[limit === 200 ? "error" : "warn"]("getAlerts: Alerts retrieved by the conditions are existing more than limit. limit=" + limit + ", total=" + result.total_rows);
 				}
-				return {alerts: alerts};
+				return { alerts: alerts };
 			});
 	},
 
-	getCurrentAlerts: function(mo_id, source_id){
-		if(mo_id){
+	getCurrentAlerts: function (mo_id, source_id) {
+		if (mo_id) {
 			var alertsForVehicle = this.currentAlerts[mo_id];
-			if(!alertsForVehicle){
+			if (!alertsForVehicle) {
 				alertsForVehicle = this.currentAlerts[mo_id] = {};
 			}
-			if(source_id){
+			if (source_id) {
 				return alertsForVehicle[source_id];
 			}
 			return alertsForVehicle;
 		}
 		return this.currentAlerts;
 	},
-	_cacheAlert: function(alert){
-		if(alert.closed_ts > 0){
+	_cacheAlert: function (alert) {
+		if (alert.closed_ts > 0) {
 			return;
 		}
 		var alertsForVehicle = this.currentAlerts[alert.mo_id];
-		if(!alertsForVehicle){
+		if (!alertsForVehicle) {
 			alertsForVehicle = this.currentAlerts[alert.mo_id] = {};
 		}
 		var existingAlert = alertsForVehicle[alert.source && alert.source.id];
-		if(!existingAlert){
+		if (!existingAlert) {
 			alertsForVehicle[alert.source && alert.source.id] = alert;
-		}else if(existingAlert._id !== alert._id){
+		} else if (existingAlert._id !== alert._id) {
 			console.warn("[WARNING] _cacheAlert(Duplicate alert): Close older alert and cache newer alert.");
 			console.warn("[WARNING] mo_id: " + alert.mo_id + ", source.type: " + alert.source.type + ", source.id: " + alert.source.id);
-			console.warn("[WARNING] alert1._id: " + (existingAlert._id||"-") + ", alert2._id: " + (alert._id||"-"));
-			if(existingAlert.ts > alert.ts){
+			console.warn("[WARNING] alert1._id: " + (existingAlert._id || "-") + ", alert2._id: " + (alert._id || "-"));
+			if (existingAlert.ts > alert.ts) {
 				alert.closed_ts = moment().valueOf();
 				this.updateAlert(alert);
-			}else{
+			} else {
 				alertsForVehicle[alert.source && alert.source.id] = alert;
 				existingAlert.closed_ts = moment().valueOf();
 				this.updateAlert(existingAlert);
 			}
 		}
 	},
-	addAlert: function(alert){
+	addAlert: function (alert) {
 		var alertsForVehicle = this.alertsToInsert[alert.mo_id];
-		if(!alertsForVehicle){
+		if (!alertsForVehicle) {
 			alertsForVehicle = this.alertsToInsert[alert.mo_id] = {};
 		}
 		var alertToInsert = alertsForVehicle[alert.source && alert.source.id];
-		if(!alertToInsert){
+		if (!alertToInsert) {
 			debug("addAlert: " + JSON.stringify(alert));
 			alertsForVehicle[alert.source && alert.source.id] = alert;
 		}
 		this._bulkInsert();
 	},
-	updateAlert: function(alert){
-		if(!alert._id || !alert._rev){
-			console.error({message: "_id and _rev are required to update alert: " + JSON.stringify(alert)});
+	updateAlert: function (alert) {
+		if (!alert._id || !alert._rev) {
+			console.error({ message: "_id and _rev are required to update alert: " + JSON.stringify(alert) });
 		}
 		var alertsForVehicle = this.alertsToInsert[alert.mo_id];
-		if(!alertsForVehicle){
+		if (!alertsForVehicle) {
 			alertsForVehicle = this.alertsToInsert[alert.mo_id] = {};
 		}
 		var alertToInsert = alertsForVehicle[alert.source && alert.source.id];
-		if(alertToInsert){
-			if(alertToInsert._id){
-				if(alertToInsert._id === alert._id){
+		if (alertToInsert) {
+			if (alertToInsert._id) {
+				if (alertToInsert._id === alert._id) {
 					// Duplicate inserts for the same cloudant document. Update for later revision and discard older revision
-					if(Number(alertToInsert._rev.split("-")[0]) < Number(alert._rev.split("-"[0]))){
+					if (Number(alertToInsert._rev.split("-")[0]) < Number(alert._rev.split("-"[0]))) {
 						console.warn("[WARNING] updateAlert(Duplicate inserts for the same cloudant document): " + JSON.stringify(alert));
 						alertsForVehicle[alert.source && alert.source.id] = alert;
 					}
-				}else{
+				} else {
 					// Duplicate documents for the same mo_id and source id. Close as invalid alert
-					if(alertToInsert.closed_ts < 0 && alert.closed_ts < 0){
+					if (alertToInsert.closed_ts < 0 && alert.closed_ts < 0) {
 						console.warn("[WARNING] updateAlert(Duplicate open alerts for the same mo_id and source.id): Close and mark older alert as invalid. ");
 						this.alertsToInsert["invalid"] = this.alertsToInsert["invalid"] || {};
-						if(alertToInsert.ts > alert.ts){
+						if (alertToInsert.ts > alert.ts) {
 							alert.closed_ts = alert.ts;
 							this.alertsToInsert["invalid"][alert._id] = alert;
-						}else{
+						} else {
 							alertToInsert.closed_ts = alertToInsert.ts;
 							alertsForVehicle[alert.source && alert.source.id] = alert; // Update as valid alert
 							this.alertsToInsert["invalid"][alertToInsert._id] = alertToInsert;
 						}
-					}else{
-						if(alert.closed_ts >= 0){
+					} else {
+						if (alert.closed_ts >= 0) {
 							this.alertsToInsert["invalid"] = this.alertsToInsert["invalid"] || {};
 							this.alertsToInsert["invalid"][alert._id] = alert;
 						}
 						// alertToInsert doesn't need to add in the update queue (this.alertsToInsert) because it has already been in the queue
 					}
 				}
-			}else{
+			} else {
 				// The alert has already inserted. This must be invalid state.
 				console.warn("updateAlert: " + JSON.stringify(alert));
 				alertsForVehicle[alert.source && alert.source.id] = alert;
 			}
-		}else{
+		} else {
 			debug("updateAlert: " + JSON.stringify(alert));
 			alertsForVehicle[alert.source && alert.source.id] = alert;
 		}
 		this._bulkInsert();
 	},
-	_bulkInsert: function(){
-		if(!this.insertTimeout){
+	_bulkInsert: function () {
+		if (!this.insertTimeout) {
 			var self = this;
-			this.insertTimeout = setTimeout(function(){
-				Q.when(self.db, function(db){
+			this.insertTimeout = setTimeout(function () {
+				Q.when(self.db, function (db) {
 					var docs = [];
-					Object.keys(self.alertsToInsert).forEach(function(mo_id){
-						Object.keys(self.alertsToInsert[mo_id]).forEach(function(sourceId){
+					Object.keys(self.alertsToInsert).forEach(function (mo_id) {
+						Object.keys(self.alertsToInsert[mo_id]).forEach(function (sourceId) {
 							docs.push(self.alertsToInsert[mo_id][sourceId]);
 						});
 					});
-					if(docs.length > 0){
-						db.bulk({docs: docs}, "insert", function(err, body){
-							if(err){
+					if (docs.length > 0) {
+						db.bulk({ docs: docs }, "insert", function (err, body) {
+							if (err) {
 								console.error("inserting alerts failed");
 								self.insertTimeout = null;
-							}else{
+							} else {
 								debug("inserting alerts succeeded");
 								self.alertsToInsert = {};
 								self.insertTimeout = null;
-								body.forEach(function(inserted, index){
-									if(inserted.error){
+								body.forEach(function (inserted, index) {
+									if (inserted.error) {
 										self.addAlert(docs[index]);
-									}else{
+									} else {
 										var alert = docs[index];
 										alert._id = inserted.id;
 										alert._rev = inserted.rev;
-										if(alert.closed_ts){
+										if (alert.closed_ts) {
 											delete self.currentAlerts[alert.mo_id][alert.source && alert.source.id];
-											if(self.currentAlerts[alert.mo_id].length <= 0){
+											if (self.currentAlerts[alert.mo_id].length <= 0) {
 												delete self.currentAlerts[alert.mo_id];
 											}
-										}else{
+										} else {
 											self._cacheAlert(alert);
 										}
 									}
@@ -297,9 +297,9 @@ _.extend(alertManager, {
 			}, BULK_INSERT_INTERVAL);
 		}
 	},
-	deleteAlert: function(alertId){
-		if(!alertId){
-			return Q.reject({message: "alertId is required to delete alert."});
+	deleteAlert: function (alertId) {
+		if (!alertId) {
+			return Q.reject({ message: "alertId is required to delete alert." });
 		}
 		var deferred = Q.defer();
 		//TODO

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -19,6 +19,8 @@ import { MapEventHelper } from '../../shared/map-event-helper';
 import { EventService } from '../../shared/iota-event.service';
 import { MapGeofenceHelper } from '../../shared/map-geofence-helper';
 import { GeofenceService } from '../../shared/iota-geofence.service';
+import { MapPOIHelper } from '../../shared/map-poi-helper';
+import { POIService } from '../../shared/iota-poi.service';
 import { RealtimeDeviceData, RealtimeDeviceDataProvider } from '../../shared/realtime-device';
 import { RealtimeDeviceDataProviderService } from '../../shared/realtime-device-manager.service';
 import { AppConfig, APP_CONFIG } from '../../app-config';
@@ -66,6 +68,7 @@ export class RealtimeMapComponent implements OnInit {
 	map: ol.Map;
 	mapEventsLayer: ol.layer.Vector;
 	mapGeofenceLayer: ol.layer.Vector;
+	mapPOILayer: ol.layer.Vector;
 	eventsLayer: ol.layer.Vector;
 	carsLayer: ol.layer.Vector;
 	mapHelper: MapHelper;
@@ -89,6 +92,7 @@ export class RealtimeMapComponent implements OnInit {
 		animatedDeviceManagerService: RealtimeDeviceDataProviderService,
 		private eventService: EventService,
 		private geofenceService: GeofenceService,
+		private poiService: POIService,
 		@Inject(APP_CONFIG) private appConfig: AppConfig
 	) {
 		this.animatedDeviceManagerService = animatedDeviceManagerService;
@@ -135,6 +139,10 @@ export class RealtimeMapComponent implements OnInit {
 			source: new ol.source.Vector(),
 			renderOrder: undefined
 		});
+		this.mapPOILayer = new ol.layer.Vector({
+			source: new ol.source.Vector(),
+			renderOrder: undefined
+		});
 
 		// create a map
 		var opt = new ol.Object();
@@ -159,6 +167,7 @@ export class RealtimeMapComponent implements OnInit {
 				this.eventsLayer,
 				this.mapGeofenceLayer,
 				this.mapEventsLayer,
+				this.mapPOILayer,
 				this.carsLayer
 			],
 			view: new ol.View({
@@ -179,6 +188,7 @@ export class RealtimeMapComponent implements OnInit {
     }.bind(this));
 		this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
     this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, { itemLabel: "Boundary" });
+		this.mapItemHelpers["poi"] = new MapPOIHelper(this.map, this.mapPOILayer, this.poiService);
 
 		/*
 		* Monitor devices to update affected events. If there are affected events, highlight the events

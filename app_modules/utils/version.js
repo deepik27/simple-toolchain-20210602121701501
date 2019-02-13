@@ -14,8 +14,8 @@ class Version {
 			var userVcapSvc = JSON.parse(process.env.USER_PROVIDED_VCAP_SERVICES || '{}');
 			var vcapSvc = userVcapSvc.iotforautomotive || VCAP_SERVICES.iotforautomotive;
 			if (vcapSvc && vcapSvc.length > 0) {
-				var iot4a_cred = vcapSvc[0].credentials;
-				return iot4a_cred.version;
+				var cred = vcapSvc[0].credentials;
+				return cred.version;
 			}
 		})();
 	}

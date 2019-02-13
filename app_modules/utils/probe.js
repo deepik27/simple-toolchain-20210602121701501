@@ -10,16 +10,16 @@
 
 var Q = require('q');
 var _ = require('underscore');
-var iotaVehicleDataHub = app_module_require('iot4a-api/vehicleDataHub.js');
+const vehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
 
 var probeInterface = {};
 _.extend(probeInterface, {
-	sendCarProbe: function(probe) {
+	sendCarProbe: function (probe) {
 		var deferred = Q.defer();
-		Q.when(iotaVehicleDataHub.sendCarProbe(probe, "sync"), function(message) {
+		Q.when(vehicleDataHub.sendCarProbe(probe, "sync"), function (message) {
 			var affected_events = null;
 			var notified_messages = null;
-			if(message){
+			if (message) {
 				// previous version of sendCarProbe returned an array of affected events directly in contents
 				// new version returns affectedEvents and notifiedMessages objects
 				affected_events = _.isArray(message) ? message : message.affectedEvents;
@@ -31,7 +31,7 @@ _.extend(probeInterface, {
 				notified_messages: notified_messages || []
 			};
 			deferred.resolve(probe);
-		})["catch"](function(err){
+		})["catch"](function (err) {
 			console.error("error: " + JSON.stringify(err));
 			deferred.reject(err);
 		}).done();
@@ -39,10 +39,10 @@ _.extend(probeInterface, {
 	}
 });
 
-if (!app_module_require('iot4a-api/asset.js').isSaaS() && process.env.DIRECT_VDH_CALL !== 'true') {
+if (process.env.DIRECT_VDH_CALL !== 'true') {
 	var driverInsightsProbe = require('../../driverInsights/probe.js');
 	_.extend(probeInterface, {
-		sendCarProbe: function(probe) {
+		sendCarProbe: function (probe) {
 			return driverInsightsProbe.sendCarProbe(probe);
 		}
 	});

@@ -18,6 +18,7 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 	/* === GENERAL CONTROLLERS === */
 	.controller('mainCtrl', ['$scope', '$state', '$http', '$q', '$sce', '$location', '$window', '$document', '$timeout', '$interval', function($scope, $state, $http, $q, $sce, $location, $window, $document, $timeout, $interval) {
 		$scope.pageLoaded = false;
+		$scope.vehicleActionLabel = "Start Driving";
 
 		//////////////////////////////////////////////////////////
 		// Utility method to load simulator uuid
@@ -243,6 +244,16 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 				}
 			}
 			$scope.busy = busy;
+
+			var vehicle = $scope.vehicles[$scope.selectedIndex];	   
+			if (id === vehicle.mo_id) {
+				if ($scope.vehicleStatus[vehicle.mo_id].driving) {
+					$scope.vehicleActionLabel = "Stop Driving";
+				} else {
+					$scope.vehicleActionLabel = "Start Driving";
+				}
+				$scope.busySelected = $scope.vehicleStatus[vehicle.mo_id].busy;  	 
+			} 	 
 		}
 		
 		function _postMessageToVehicle(message, vehicle) {
@@ -305,7 +316,7 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
         	if ($window.location.origin !== e.origin, 0) {
         		return;
         	}
-        	var message = JSON.parse(e.data);
+					var message = JSON.parse(e.data);
         	if (message.requestId) {
         		if (message.requestMessage === "simulator-set-message-target") {
         			var index = $scope.vehiclesToBeInitialzed.indexOf(message.requestId);
@@ -320,10 +331,10 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
             			requestIds.splice(index, 1);
             		}
             		if (requestIds.length === 0) {
-            			if (message.requestMessage === "simulator-start-all") {
+            			if (message.requestMessage === "simulator-start") {
                 			$scope.requestingStarting = false;
                     		$scope.$apply();
-            			} else if (message.requestMessage === "simulator-stop-all") {
+            			} else if (message.requestMessage === "simulator-stop") {
                 			$scope.requestingStopping = false;
                     		$scope.$apply();
             			}
@@ -331,9 +342,9 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
             	}
        		}
         	if (message.message === "status") {
-				_updateVehicleStatus(message.mo_id, "busy", message.busy);
-				_updateVehicleStatus(message.mo_id, "driving", message.driving);
-	    		$scope.$apply();
+						_updateVehicleStatus(message.mo_id, "busy", message.busy);
+						_updateVehicleStatus(message.mo_id, "driving", message.driving);
+		    		$scope.$apply();
         	}
         });
 		
@@ -346,19 +357,35 @@ angular.module('fleetManagementSimulator', ['ui.router', 'ngAnimate'])
 				vehicle.display = i == index;		
 			});
 			$scope.selectedIndex = index;
+
+			var vehicle = $scope.vehicles[$scope.selectedIndex];
+			var vehicle = $scope.vehicles[$scope.selectedIndex];	   
+			if ($scope.vehicleStatus[vehicle.mo_id].driving) {
+				$scope.vehicleActionLabel = "Stop Driving";
+			} else {
+				$scope.vehicleActionLabel = "Start Driving";
+			}
+			$scope.busySelected = $scope.vehicleStatus[vehicle.mo_id].busy;  	 
 		};
-	
+		
+		$scope.onDoCurrent = function() {
+			if (!$scope.busy) {
+				var vehicle = $scope.vehicles[$scope.selectedIndex];	    	 
+				_postMessageToVehicle($scope.vehicleStatus[vehicle.mo_id].driving ? "simulator-stop" : "simulator-start", vehicle);
+			}
+		};
+
 		$scope.onStartAll = function() {
 			if (!$scope.busy) {
 				$scope.requestingStarting = true;
-				_postMessageToVehicles("simulator-start-all");
+				_postMessageToVehicles("simulator-start");
 			}
 		};
 		
 		$scope.onStopAll = function() {
 			if (!$scope.busy) {
 				$scope.requestingStopping = true;
-				_postMessageToVehicles("simulator-stop-all");
+				_postMessageToVehicles("simulator-stop");
 			}
 		};
 

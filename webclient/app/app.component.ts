@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -17,13 +17,15 @@ import { RealtimeDeviceDataProviderService } from './shared/realtime-device-mana
 import { DriverBehaviorService } from './shared/iota-driver-behavior.service';
 import { EventService } from './shared/iota-event.service';
 import { GeofenceService } from './shared/iota-geofence.service';
+import { POIService } from './shared/iota-poi.service';
+import { AssetService } from './shared/iota-asset.service';
 import { AlertService } from './shared/alert.service';
 
 @Component({
   selector: 'fmdash-app',
   moduleId: module.id,
   templateUrl: 'app.component.html',
-  providers: [HttpClient, RealtimeDeviceDataProviderService, LocationService, EventService, GeofenceService, DriverBehaviorService, AlertService]
+  providers: [HttpClient, RealtimeDeviceDataProviderService, LocationService, EventService, GeofenceService, POIService, AssetService, DriverBehaviorService, AlertService]
 })
 export class AppComponent {
   title = "IBM IoT Connected Vehicle Insights - Fleet Management Starter Application - Monitoring";
@@ -32,7 +34,7 @@ export class AppComponent {
            { title: "Car Status", route: "carStatus", icon: "icon-car", active: false},
            { title: "Alert", route: "alert", icon: "icon-idea", active: false},
            { title: "Vehicle", route: "vehicle", icon: 'icon-car', active: false },
-           { title: "Events", route: "tool", icon: 'icon-location', active: false }
+           { title: "Control", route: "tool", icon: 'icon-location', active: false }
        ];
   menuOpened = false;
 

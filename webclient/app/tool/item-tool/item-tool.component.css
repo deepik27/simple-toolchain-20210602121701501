@@ -14,11 +14,56 @@
 }
 .toolItemLabel {
   width: 10px;
+  white-space: nowrap;
   padding-right: 10px;
   padding-bottom: 5px;
   text-align: right;
   vertical-align: top;
 }
+.toolItemSelectLabel {
+  vertical-align: top;
+}
 .toolItemValue {
   padding-bottom: 5px;
+}
+.controlButtons {
+  float: right;
+}
+
+.tabControl {
+  position: relative;   
+  clear: both;
+  margin: 15px 0;
+}
+.tabLabel {
+  float: left;
+}
+.tabLabel label {
+  background: #eee; 
+  padding: 3px; 
+  border: 1px solid lightgray; 
+  margin-left: -1px; 
+  position: relative;
+  left: 1px; 
+  cursor: pointer;
+}
+.tabLabel [type=radio] {
+  display: none;   
+}
+[type=radio]:checked ~ label {
+  background: white;
+  border-bottom: 1px solid white;
+  z-index: 1;
+  cursor: default;
+}
+.tabContents {
+  border-top: 1px solid lightgray;
+  padding: 5px 0px;
+}
+
+.toolSelection {
+  width: 100%;
+}
+.toolSelection:disabled {
+  background-color: lightgray;
 }

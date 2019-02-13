@@ -1,16 +1,7 @@
 	<div>
 		<img ng-src="{{vehicles[selectedIndex].properties.thumbnailurl}}">
-		<h4 class="marginTop">Specifications</h4>
+		<h4 class="marginTop">Vehicle Information</h4>
 		<ul class="carSpecsList">
-			<li>
-				<strong>Rating:</strong> 
-				<b class="stars ng-scope" ng-repeat="i in [0,1,2,3,4].slice(0, vehicles[selectedIndex].properties.stars)">O</b>
-			</li>
-			
-			<li class="ng-binding">
-				<strong>Price:</strong> ${{vehicles[selectedIndex].properties.hourlyrate}}/hr, ${{vehicles[selectedIndex].properties.dailyrate}}/day
-			</li>
-			
 			<li class="ng-binding">
 				<strong>Make &amp; Model:</strong> {{vehicles[selectedIndex].model}}
 			</li>

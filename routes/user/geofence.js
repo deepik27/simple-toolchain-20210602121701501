@@ -10,68 +10,67 @@
 /*
  * REST apis for geofence
  */
-var router = module.exports = require('express').Router();
-var Q = require('q');
-var _ = require('underscore');
-var debug = require('debug')('geofence');
+const router = module.exports = require('express').Router();
+const authenticate = require('./auth.js').authenticate;
+
+const driverInsightsGeofence = require('../../driverInsights/geofence.js');
+
+const handleError = require('./error.js').handleError;
+const debug = require('debug')('geofence');
 debug.log = console.log.bind(console);
 
-var driverInsightsGeofence = require('../../driverInsights/geofence.js');
-
-var authenticate = require('./auth.js').authenticate;
-
-function handleAssetError(res, err) {
-	//{message: msg, error: error, response: response}
-	console.error('error: ' + JSON.stringify(err));
-	var response = err.response;
-	var status = err.statusCode || (response && (response.status||response.statusCode)) || 500;
-	var message = err.message || (err.data && err.data.message) || err;
-	return res.status(status).send(message);
-}
-
 router.get("/capability/geofence", authenticate, function(req, res) {
-	res.send({available: driverInsightsGeofence.isAvailable()});
+	res.send({available: driverInsightsGeofence.getSupportInfo()});
 });
 
 router.post("/geofence", authenticate, function(req, res){
-	Q.when(driverInsightsGeofence.createGeofence(req.body), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
+	driverInsightsGeofence.createGeofence(req.body)
+	.then(function(result) {
+		return res.send(result);
+	}).catch(function(error) {
+		handleError(res, error);
+	})
 });
+
 router.get("/geofence", authenticate, function(req, res){
 	var min_latitude = req.query.min_latitude;
 	var min_longitude = req.query.min_longitude;
 	var max_latitude = req.query.max_latitude;
 	var max_longitude = req.query.max_longitude;
-	Q.when(driverInsightsGeofence.queryGeofence(min_latitude, min_longitude, max_latitude, max_longitude), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
+	driverInsightsGeofence.queryGeofence(min_latitude, min_longitude, max_latitude, max_longitude)
+	.then(function(result) {
+		return res.send(result);
+	}).catch(function(error) {
+		handleError(res, error);
+	})
 });
+
 router.get("/geofence/:geofence_id", authenticate, function(req, res){
 	var geofence_id = req.params.geofence_id;
-	Q.when(driverInsightsGeofence.getGeofence(geofence_id), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
+	driverInsightsGeofence.getGeofence(geofence_id)
+	.then(function(result) {
+		return res.send(result);
+	}).catch(function(error) {
+		handleError(res, error);
+	})
 });
+
 router.put("/geofence/:geofence_id", authenticate, function(req, res){
 	var geofence_id = req.params.geofence_id;
-	Q.when(driverInsightsGeofence.updateGeofence(geofence_id, req.body), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
+	driverInsightsGeofence.updateGeofence(geofence_id, req.body)
+	.then(function(result) {
+		return res.send(result);
+	}).catch(function(error) {
+		handleError(res, error);
+	})
 });
+
 router["delete"]("/geofence/:geofence_id", authenticate, function(req, res){
 	var geofence_id = req.params.geofence_id;
-	Q.when(driverInsightsGeofence.deleteGeofence(geofence_id), function(response){
-		res.send(response);
-	})["catch"](function(err){
-		return handleAssetError(res, err);
-	}).done();
+	driverInsightsGeofence.deleteGeofence(geofence_id)
+	.then(function(result) {
+		return res.send(result);
+	}).catch(function(error) {
+		handleError(res, error);
+	})
 });
