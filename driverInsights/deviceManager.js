@@ -38,14 +38,6 @@ class DeviceManager {
 	}
 
 	async _initialize() {
-		if (this.isIoTPlatformAvailable()) {
-			let deviceType = await this.getDeviceType(VENDOR_NAME);
-			if (!deviceType) {
-				deviceType = await this.registerDeviceType(VENDOR_NAME);
-			}
-			debug(deviceType);
-		}
-
 		let vendor = await cviAsset.getVendor(VENDOR_NAME).catch(async error => {
 			if (error.statusCode === 404) {
 				return await cviAsset.addVendor({
@@ -60,7 +52,17 @@ class DeviceManager {
 		});
 		debug(vendor);
 
-		deleteUnusedDevices();
+		if (this.isIoTPlatformAvailable()) {
+			let deviceType = await iotfAppClient.getDeviceType(VENDOR_NAME).catch(async error => {
+				if (error.status === 404) {
+					return await iotfAppClient.registerDeviceType(VENDOR_NAME);
+				}
+				return Promise.reject(error);
+			});
+			debug(deviceType);
+
+			this.deleteUnusedDevices();
+		}
 	}
 	isIoTPlatformAvailable() {
 		return !!iotfAppClient;
@@ -69,6 +71,9 @@ class DeviceManager {
 	 * Remove IoTP devices which is not in CVI asset
 	 */
 	async deleteUnusedDevices() {
+		if (!this.isIoTPlatformAvailable()) {
+			return;
+		}
 		const vehicles = await cviAsset.getVehicleList({ "vendor": VENDOR_NAME });
 		const devices = await iotfAppClient.getAllDevices({ "typeId": VENDOR_NAME });
 
@@ -93,16 +98,6 @@ class DeviceManager {
 			debug(JSON.stringify(response));
 		}
 		return `${deleteDevices.length} of devices are deleted.`;
-	}
-
-	async getDeviceType(deviceType) {
-		const type = await iotfAppClient.getDeviceType(deviceType).catch(error => {
-			if (error.status === 404) {
-				return null;
-			}
-			return Promise.reject(error);
-		});
-		return type;
 	}
 
 	/**
