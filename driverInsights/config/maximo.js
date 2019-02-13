@@ -27,7 +27,9 @@ const configure = async () => {
 	asset.assetConfig.maximo.username = username;
 	asset.assetConfig.maximo.password = password;
 	debug(JSON.stringify(asset.assetConfig));
-	const classification = await asset.addClassification(fleetVehicleClassification);
+	const classification = await asset.addClassification(fleetVehicleClassification).catch(error => {
+		console.error(error);
+	});
 	console.log(`Classification ${classification.classificationid} is created`);
 };
 const readLine = (message, isPassword) => {
@@ -78,5 +80,6 @@ const readLine = (message, isPassword) => {
 }
 
 configure().catch(error => {
+	console.error(error);
 	console.error("\nConfiguration is abandoned.");
 });
