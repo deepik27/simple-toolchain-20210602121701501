@@ -9,10 +9,10 @@
 			<Execution>
 				<Exec>
 					<ComplexMethodClass>com.ibm.mobility.agent.accel.MovingAverageAcceleration</ComplexMethodClass>
-					<Parameter>
+					<InitParameter>
 						<Key>MaxRecord</Key>
 						<Value>5</Value>
-					</Parameter>
+					</InitParameter>
 				</Exec>
 			</Execution>
 			<Condition>
@@ -56,10 +56,10 @@
 			<Execution>
 				<Exec>
 					<ComplexMethodClass>com.ibm.mobility.agent.accel.MovingAverageAcceleration</ComplexMethodClass>
-					<Parameter>
+					<InitParameter>
 						<Key>MaxRecord</Key>
 						<Value>5</Value>
-					</Parameter>
+					</InitParameter>
 				</Exec>
 			</Execution>			
 			<Condition>
@@ -91,10 +91,10 @@
 			<Execution>
 				<Exec>
 					<ComplexMethodClass>com.ibm.mobility.agent.accel.MovingAverageAcceleration</ComplexMethodClass>
-					<Parameter>
+					<InitParameter>
 						<Key>MaxRecord</Key>
 						<Value>5</Value>
-					</Parameter>
+					</InitParameter>
 				</Exec>
 			</Execution>			
 			<Condition>
