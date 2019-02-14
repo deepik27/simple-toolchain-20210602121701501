@@ -22,6 +22,7 @@ function routeGenerator() {
 	this.tripRouteIndex = 0;
 	this.prevLoc = { lat: 48.134994, lon: 11.671026, speed: 0, heading: 0 };
 	this.destination = null;
+	this.acceleration = 0;
 	this.waypoints = [];
 	this.options = { avoid_events: false, route_loop: false, routemode: "time,distance,pattern" };
 }
@@ -136,6 +137,14 @@ routeGenerator.prototype._getRandomLoc = function (slat, slng) {
 	var dlat = +slat + ddist * Math.sin(dtheta);
 	var dlng = +slng + ddist * Math.cos(dtheta);
 	return { lat: dlat, lon: dlng };
+};
+
+routeGenerator.prototype.setAcceleration = function(acceleration) {
+	this.acceleration = acceleration;
+};
+
+routeGenerator.prototype.getAcceleration = function() {
+	return this.acceleration;
 };
 
 routeGenerator.prototype._generateAnchors = function (slat, slng, sheading, keepAnchors) {
@@ -453,6 +462,10 @@ routeGenerator.prototype._getRoutePosition = function () {
 	if (!this.prevLoc || !this.tripRoute || this.tripRoute.length < 2) {
 		return this.prevLoc;
 	}
+	var harshAccelRadioButton = false;
+	if(this.acceleration !== 0){
+		harshAccelRadioButton = true;
+	}
 	var prevLoc = this.prevLoc;
 	var loc = this.tripRoute[this.tripRouteIndex];
 	var speed = this._getDistance(loc, prevLoc)*0.001*3600;
@@ -476,7 +489,7 @@ routeGenerator.prototype._getRoutePosition = function () {
 	} else {
 		var bearing = this._calcBearing(prevLoc, loc);
 		//Simulate harsh acceleration
-		var acceleration = 3;
+		var acceleration = this.getAcceleration();
 		if((this._toMeterPerSec(speed) - this._toMeterPerSec(prevLoc.speed)) > acceleration){
 			// Simulate harsh acceleration
 			var accel_speed = this._toMeterPerSec(prevLoc.speed) + acceleration;

@@ -259,9 +259,36 @@
 				//////////////////////////////////////////////////////////////////
 				// rules
 				// should be synced with rules defined in /driverinsights/fleetalert.js
+				const _upateVehicleProperties = function() {
+					if ($scope.vehicleDataName) {
+						let value = $scope.vehicleDataValue;
+						if (value) {
+							let property = {};
+							vehicleData[$scope.vehicleDataName] = property[$scope.vehicleDataName] = $scope.vehicleDataName === "engineTemp" ? String((value - 32) * 5 / 9) : value;
+							simulatedVehicle.setProperties(property);
+						} else {
+							delete vehicleData[$scope.vehicleDataName];
+							simulatedVehicle.unsetProperties([$scope.vehicleDataName]);
+						}
+					}
+				};
+				const _updateVehicleAcceleration = function() {
+					console.log("accel changed");
+					if ($scope.vehicleDataName) {
+						let value = $scope.vehicleDataValue;
+						if (value) {
+							console.log("Received accel is: "+value);
+							simulatedVehicle.setAcceleration(value);
+						} else {
+							console.log("Deleted accel");
+							simulatedVehicle.setAcceleration(0);
+						}
+					}
+				};
 				$scope.rules = [
-					{ propName: "engineTemp", label: "Engine Temperature (Critical if larger than 248)"},
-					{ propName: "fuel", label: "Fuel"}
+					{ propName: "engineTemp", label: "Engine Temperature (Critical if larger than 248)", method: _upateVehicleProperties},
+					{ propName: "fuel", label: "Fuel", method: _upateVehicleProperties},
+					{ propName: "accel", label: "Acceleration", method: _updateVehicleAcceleration}
 				];
 
 				// vehicle data control panel
@@ -278,15 +305,11 @@
 					}
 				};
 				$scope.updateVehicleDataValue = function () {
-					if ($scope.vehicleDataName) {
-						let value = $scope.vehicleDataValue;
-						if (value) {
-							let property = {};
-							vehicleData[$scope.vehicleDataName] = property[$scope.vehicleDataName] = $scope.vehicleDataName === "engineTemp" ? String((value - 32) * 5 / 9) : value;
-							simulatedVehicle.setProperties(property);
-						} else {
-							delete vehicleData[$scope.vehicleDataName];
-							simulatedVehicle.unsetProperties([$scope.vehicleDataName]);
+					for (let i = 0; i < $scope.rules.length; i++) {
+						if ($scope.rules[i].propName === $scope.vehicleDataName) {
+							if ( _.isFunction($scope.rules[i].method)) {
+								$scope.rules[i].method();
+							}
 						}
 					}
 				};

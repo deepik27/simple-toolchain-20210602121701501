@@ -313,10 +313,9 @@ angular.module('htmlClient')
     		if(this.isDriving()){
     			// under driving
     			return $q.resolve();
-    		}
-       		this.prevLoc = loc;
-
-       		var self = this;
+				}
+				this.prevLoc = loc;
+       	var self = this;
 				var deferred = $q.defer();
 				$http(mobileClientService.makeRequestOption({
 					method: "PUT",
@@ -427,6 +426,24 @@ angular.module('htmlClient')
 					data: {parameters: waypoints}
 				})).success(function(result, status){
 					deferred.resolve(self._updateRoute(result.data && result.data[self.vehicleId]));
+				}).error(function(error, status){
+					console.error("Error[" + status + "]: " + error);
+					deferred.reject(error);
+				});
+				return deferred.promise;
+			},
+			setAcceleration: function(acceleration) {
+    		var self = this;
+				var deferred = $q.defer();
+				$http(mobileClientService.makeRequestOption({
+					method: "PUT",
+					url: '/user/simulator/vehicle/' + this.vehicleId + '?command=acceleration',
+					headers: {
+						"iota-simulator-uuid": this.clientId
+					},
+					data: {parameters: acceleration}
+				})).success(function(result, status){
+					deferred.resolve(result);
 				}).error(function(error, status){
 					console.error("Error[" + status + "]: " + error);
 					deferred.reject(error);

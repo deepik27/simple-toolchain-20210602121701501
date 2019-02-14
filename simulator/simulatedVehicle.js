@@ -335,6 +335,14 @@ simulatedVehicle.prototype.setWaypoints = function (waypoints) {
 };
 
 /**
+ * Set acceleration
+ */
+simulatedVehicle.prototype.setAcceleration = function(acceleration) {
+	this.route.setAcceleration(acceleration);
+};
+
+
+/**
  * Get current vehicle state
  */
 simulatedVehicle.prototype._getState = function() {
