@@ -14,8 +14,10 @@ var version = app_module_require('utils/version.js');
 var debug = require('debug')('vehicleLocation');
 debug.log = console.log.bind(console);
 
-function routeGenerator() {
+function routeGenerator(mo_id, driver_id) {
 	this.watchId = null;
+	this.mo_id = mo_id;
+	this.driver_id = driver_id;
 	this.driving = false;
 	this.routing = false;
 	this.tripRoute = null;
@@ -50,7 +52,7 @@ routeGenerator.prototype.start = function (params) {
 			if (this.driving) {
 				var p = this._getRoutePosition();
 				if (p && this.callback) {
-					this.callback({ data: { latitude: p.lat, longitude: p.lon, speed: p.speed, heading: p.heading }, type: 'position' });
+					this.callback({ data: { latitude: p.lat, longitude: p.lon, speed: p.speed, heading: p.heading, destination: p.destination }, type: 'position' });
 				}
 			}
 		}.bind(this), interval);
@@ -142,18 +144,23 @@ routeGenerator.prototype._generateAnchors = function (slat, slng, sheading, keep
 	var deferred = Q.defer();
 	var locs = [];
 	if (this.waypoints && this.waypoints.length > 0) {
-		locs.push({ lat: slat, lon: slng, heading: sheading });
+		let prevLoc = { lat: slat, lon: slng, heading: sheading };
+		locs.push(prevLoc);
 		this.waypoints.forEach(function (p) {
-			locs.push({ lat: p.latitude, lon: p.longitude, heading: p.heading, poi_id: p.poi_id });
+			prevLoc.destination = {lat: p.latitude, lon: p.longitude};
+			if (p.poi_id) prevLoc.destination.props = {poi_id: p.poi_id};
+			prevLoc = { lat: p.latitude, lon: p.longitude, heading: p.heading };
+			locs.push(prevLoc);
 		});
 		if (this.destination) {
-			locs.push({ lat: this.destination.lat, lon: this.destination.lon, heading: this.destination.heading });
+			prevLoc.destination = this.destination;
+			locs.push(this.destination);
 		}
 		deferred.resolve(locs);
 	} else if (this.destination) {
-		locs.push({ lat: slat, lon: slng, heading: sheading });
+		locs.push({ lat: slat, lon: slng, heading: sheading, destination: this.destination });
 		if (this.prevAnchors) locs = locs.concat(this.prevAnchors);
-		locs.push({ lat: this.destination.lat, lon: this.destination.lon, heading: this.destination.heading });
+		locs.push(this.destination);
 		deferred.resolve(locs);
 	} else if (keepAnchors && this.prevAnchors) {
 		deferred.resolve(this.prevAnchors);
@@ -212,15 +219,6 @@ routeGenerator.prototype._createRoutes = function (locs, loop) {
 			return deferred.reject("no route found");
 		}
 		self.allRoutes = routes;
-
-		for (var i = 0; i < routes.length; i++) {
-			var prevLoc = null;
-			routes[i].route = _.filter(routes[i].route, function (loc) {
-				var diff = !prevLoc || prevLoc.lon !== loc.lon || prevLoc.lat !== loc.lat;
-				prevLoc = loc;
-				return diff;
-			});
-		}
 
 		self.tripRouteIndex = 0;
 		routeArray = routes[0].route;
@@ -330,15 +328,15 @@ routeGenerator.prototype._findRouteMultiplePoints = function (locs, loop) {
 	var routemode = this.getOption("routemode");
 
 	var params = { points: [], props: { get_links: true, get_linkshape: true, get_poi: true } };
-	if (mo_id) params.mo_id = mo_id;
+	params.mo_id = mo_id || this.mo_id;
 	if (driver_id) params.driver_id = driver_id;
 
 	var addPoint = function (loc) {
-		//		if (loc.poi_id) {
-		//			params.points.push({props: loc.props});
-		//		} else {
-		params.points.push({ latitude: loc.lat, longitude: loc.lon, heading: loc.heading });
-		//		}
+		if (loc.poi_id) {
+			params.points.push({props: {poi_id: loc.poi_id}});
+		} else {
+			params.points.push({ latitude: loc.lat, longitude: loc.lon, heading: loc.heading });
+		}
 	}
 	for (var i = 0; i < locs.length; i++) {
 		addPoint(locs[i]);
@@ -348,7 +346,7 @@ routeGenerator.prototype._findRouteMultiplePoints = function (locs, loop) {
 	}
 
 	var routeParams = [];
-	routemode.split(",").forEach(function (mode) {
+	routemode.split(",").forEach((mode) => {
 		if (mode == "time") {
 			routeParams.push({ mode: mode, params: _.extend({}, params, { route_mode: "search", props: _.extend({}, params.props, { search_mode: "time" }) }) });
 		} else if (mode == "distance") {
@@ -364,38 +362,81 @@ routeGenerator.prototype._findRouteMultiplePoints = function (locs, loop) {
 
 routeGenerator.prototype._findRouteWithParams = function (mode, params) {
 	var deferred = Q.defer();
-	Q.when(contextMapping.findRoute(params), function (data) {
+	Q.when(contextMapping.findRoute(params), (data) => {
 		var routeArray = [];
 		var distance = 0;
 		var traveltime = 0;
 
-		_.forEach(data.routes, function (route) {
-			let trips = route.trips;
-			_.forEach(trips, function (trip) {
-				_.forEach(trip.paths, function (path) {
-					if (path && path.props) {
-						distance += parseFloat(path.props.travel_distance);
-						traveltime += parseFloat(path.props.travel_time);
-					}
-					_.forEach(path && path.links, function (link) {
-						_.forEach(link && link.shape, function (shape) {
-							if (shape) routeArray.push(shape);
-						});
-					});
-				});
+		var route = this._selectRoute(data.routes);
+		if (!route) {
+			return deferred.resolve({});
+		}	
+
+		// Each trip represents a route between two POIs.
+		_.forEach(route.trips, (trip) => {
+			// There might be multiple paths for a trip. Find the best path in the triop from the paths.
+			var path = this._selectRecommendedPath(trip);
+			if (!path) return;
+
+			// Collect shages in the path
+			var tripArray = [];
+			_.forEach(path.links, (link) => {
+				if (!link.shape || link.shape.length == 0)
+					return;
+
+				if (tripArray.length > 0) {
+					// The last point in the previous shape and the first point in the next shape represent the same point.
+					// Therefore, remove the last point in the previous shape before adding new shape.
+					tripArray.pop();
+				}
+				tripArray = tripArray.concat(link.shape);
 			});
+
+			// Calculate total distance and travel time
+			if (path.props) {
+				distance += parseFloat(path.props.travel_distance);
+				traveltime += parseFloat(path.props.travel_time);
+			}
+
+			// Add destination point to the origin point to change destination
+			if (tripArray.length > 0) {
+				const dp = trip.destination_point;
+				tripArray[0].destination = {lat: dp.latitude, lon: dp.longitude, props: dp.props};
+			}
+			routeArray = routeArray.concat(tripArray);
 		});
 
 		if (routeArray.length == 0) {
 			return deferred.resolve({});
 		}
 
-		deferred.resolve({ mode: mode, route: routeArray, distance: distance, traveltime: traveltime });
-	}).catch(function (error) {
+		return deferred.resolve({ mode: mode, route: routeArray, distance: distance, traveltime: traveltime });
+	}).catch((error) => {
 		console.error("Error in route search: " + error);
 		deferred.reject();
 	});
 	return deferred.promise;
+};
+
+routeGenerator.prototype._selectRoute = function(routes) {
+	if (!routes || routes.length == 0) {
+		return;
+	}
+	// In CVI 3.0, only one trip exits.
+	return routes[0];
+};
+
+routeGenerator.prototype._selectRecommendedPath = function(trip) {
+	if (!trip.paths || trip.paths.length == 0) {
+		return;
+	}
+	var selectedPath;
+	trip.paths.forEach((path) => {
+		if (!selectedPath && path.links && path.links.length > 0) {
+			selectedPath = path;
+		}
+	});
+	return selectedPath;
 };
 
 routeGenerator.prototype._getReferenceSpeed = function (index, speed) {

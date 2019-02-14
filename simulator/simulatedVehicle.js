@@ -35,7 +35,14 @@ function simulatedVehicle(vehicle, driver, callback) {
 	this.vehicle = vehicle;
 	this.driver = driver;
 	this._waitingForRoute = [];
-	this.route = new routeGenerator();
+
+	var mo_id = vehicle.mo_id;
+	if(vehicle.siteid){
+		mo_id = vehicle.siteid + ":" + mo_id;
+	}
+	var driver_id = driver ? driver.driver_id : null;
+	this.route = new routeGenerator(mo_id, driver_id);
+
 	this.loadProperties();
 	this.setupCallback(callback);
 }
@@ -125,7 +132,7 @@ simulatedVehicle.prototype.setupCallback = function(callback) {
 				});
 				self.prevProps = probe.props = props;
 			}
-			callback({vehicleId: vehicleId, data: probe, type: 'probe'});
+			callback({vehicleId: vehicleId, data: {probe: probe, destination: data.destination}, type: 'probe'});
 			return true;
 		},
 		route: function(data, error) {
