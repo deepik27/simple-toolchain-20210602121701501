@@ -69,12 +69,12 @@
 					<option ng-repeat="poi in assignedPOIs track by $index" value="{{poi.id}}" ng-selected="selectedPOIID === poi.id">{{$index+1}}. {{poi.properties.name}} @{{poi.latitude}},{{poi.longitude}}</option>
 				</select>
 				<span class="poiListControl">
-					<div><button ng-click="onMoveUpPOI()">Up</button></div>
-					<div><button ng-click="onMoveDownPOI()">Down</button></div>
-					<div style="margin-top: 20px;"><button  ng-click="onLoadPOI()">Reload</button></div>
+					<div><button ng-disabled="isDriving" ng-click="onMoveUpPOI()">Up</button></div>
+					<div><button ng-disabled="isDriving" ng-click="onMoveDownPOI()">Down</button></div>
+					<div style="margin-top: 20px;"><button ng-disabled="isDriving" ng-click="onLoadPOI()">Reload</button></div>
 				</span>
 		 	</div>
-			<div class="routeOptions"">
+			<div class="routeOptions">
 				<input type="checkbox" ng-disabled="isDriving" ng-model="opt_avoid_events" ng-change="onAvoidEventChange()" id="avoid"><label for="avoid">Avoid events</label>
 				<input type="checkbox" ng-disabled="isDriving" ng-model="opt_route_loop" ng-change="onRouteLoop()" id="loop"><label for="loop">Loop the route</label>
 			</div> 
