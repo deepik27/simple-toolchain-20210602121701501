@@ -140,7 +140,12 @@ routeGenerator.prototype._getRandomLoc = function (slat, slng) {
 };
 
 routeGenerator.prototype.setAcceleration = function(acceleration) {
-	this.acceleration = acceleration;
+	var parsedAccel = parseFloat(acceleration);
+	if( !isNaN(parsedAccel) ){
+		this.acceleration = parsedAccel;
+	} else {
+		this.acceleration = 0;
+	}
 };
 
 routeGenerator.prototype.getAcceleration = function() {
@@ -463,6 +468,7 @@ routeGenerator.prototype._getRoutePosition = function () {
 		return this.prevLoc;
 	}
 	var harshAccelRadioButton = false;
+	const SPEED_CAP = 161; 	// speed cap is 161 km/h (about 100 MPH)
 	if(this.acceleration !== 0){
 		harshAccelRadioButton = true;
 	}
@@ -493,20 +499,30 @@ routeGenerator.prototype._getRoutePosition = function () {
 		if((this._toMeterPerSec(speed) - this._toMeterPerSec(prevLoc.speed)) > acceleration){
 			// Simulate harsh acceleration
 			var accel_speed = this._toMeterPerSec(prevLoc.speed) + acceleration;
-			if(accel_speed > 34){
-				accel_speed = 34;
+			if(accel_speed > this._toMeterPerSec(SPEED_CAP)){
+				accel_speed = this._toMeterPerSec(SPEED_CAP);
 			} 
-			if (accel_speed > this._toMeterPerSec(speed)){
-				accel_speed = this._toMeterPerSec(speed);
-			}
-			var loc2 = this._calcDestinationPoint(prevLoc, accel_speed, bearing);;
+			var loc2 = this._calcDestinationPoint(prevLoc, accel_speed, bearing);
 			if(accel_speed !== this._toMeterPerSec(speed)){
 				this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
 			}
 			loc2.speed = this._toKilometerPerHour(accel_speed);
 			loc = loc2;
 		} else {
-			loc.speed = speed;
+			var bearing = this._calcBearing(prevLoc, loc);
+			if(speed > SPEED_CAP){
+				// speed breaks speed CAP
+				// We will see this when acceleration is set using bigger values such as 10
+				// Will handle as capping speed.
+				var accel_speed = this._toMeterPerSec(SPEED_CAP);
+				var loc2 = this._calcDestinationPoint(prevLoc, accel_speed, bearing);
+				this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
+				loc2.speed = this._toKilometerPerHour(accel_speed);
+				loc = loc2;
+			} else {
+				// This is where currently harsh breaks are happening!
+				loc.speed = speed;
+			}
 		}
 	}
 	this.prevLoc = loc;	
