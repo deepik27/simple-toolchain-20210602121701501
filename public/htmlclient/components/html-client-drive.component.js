@@ -277,10 +277,12 @@
 					if ($scope.vehicleDataName) {
 						let value = $scope.vehicleDataValue;
 						if (value) {
-							console.log("Received accel is: "+value);
+							let property = {};
+							vehicleData[$scope.vehicleDataName] = value;
+							property[$scope.vehicleDataName] = value;
 							simulatedVehicle.setAcceleration(value);
 						} else {
-							console.log("Deleted accel");
+							delete vehicleData[$scope.vehicleDataName];
 							simulatedVehicle.setAcceleration(0);
 						}
 					}
@@ -288,7 +290,7 @@
 				$scope.rules = [
 					{ propName: "engineTemp", label: "Engine Temperature (Critical if larger than 248)", method: _upateVehicleProperties},
 					{ propName: "fuel", label: "Fuel", method: _upateVehicleProperties},
-					{ propName: "accel", label: "Acceleration", method: _updateVehicleAcceleration}
+					{ propName: "accel", label: "Acceleration [m/s^2] (1 m/s^2 = 2.2 mph/s) (Alert if larger than 4 m/s^2)", method: _updateVehicleAcceleration}
 				];
 
 				// vehicle data control panel
