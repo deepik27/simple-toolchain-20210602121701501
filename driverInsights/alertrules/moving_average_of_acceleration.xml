@@ -45,7 +45,7 @@
 			</Action>
 		</VehicleActionRule>
 		<!-- ************************************* -->
-		<!-- Accel (GE 2.0) -->
+		<!-- Accel (GE 4.0) -->
 		<!-- ************************************* -->	
         <VehicleActionRule>
 			<RuleType>1</RuleType>
@@ -66,7 +66,7 @@
 				<ValueCondition>
 					<Attribute object="Vehicle">Edge.*AvgAccel@double</Attribute>
 					<Operator>GE</Operator>
-					<Value>2.0</Value>
+					<Value>4.0</Value>
 				</ValueCondition>							
 			</Condition>
 			<Action>
@@ -82,46 +82,6 @@
 					<Parameter><Key>ts</Key><Value>CarProbe.ts</Value></Parameter>
 					<Parameter><Key>Average acceleration</Key><Value>Vehicle.Edge.*AvgAccel</Value></Parameter>
 				</VehicleAction>						
-			</Action>
-		</VehicleActionRule>		
-		<!-- ************************************* -->
-		<!-- Accel (LE -2.0) -->
-		<!-- ************************************* -->	
-        <VehicleActionRule>
-			<RuleType>1</RuleType>
-			<RuleID>13</RuleID>
-			<Description>Action for Execution</Description>
-			<Target>
-			</Target>
-			<Execution>
-				<Exec>
-					<ComplexMethodClass>com.ibm.mobility.agent.accel.MovingAverageAcceleration</ComplexMethodClass>
-					<InitParameter>
-						<Key>MaxRecord</Key>
-						<Value>5</Value>
-					</InitParameter>
-				</Exec>
-			</Execution>			
-			<Condition>
-				<ValueCondition>
-					<Attribute object="Vehicle">Edge.*AvgAccel@double</Attribute>
-					<Operator>LE</Operator>
-					<Value>-2.0</Value>
-				</ValueCondition>							
-			</Condition>
-			<Action>
-				<VehicleAction>
-					<Message>Harsh break</Message>
-					<Parameter><Key>mo_id</Key><Value>CarProbe.Vehicle_id_ext</Value></Parameter>
-					<Parameter><Key>message_type</Key><Value>harsh_break</Value></Parameter>
-					<Parameter><Key>source_id</Key><Value>harsh_break</Value></Parameter>
-					<Parameter><Key>longitude</Key><Value>CarProbe.Longitude</Value></Parameter>
-					<Parameter><Key>latitude</Key><Value>CarProbe.Latitude</Value></Parameter>
-					<Parameter><Key>severity</Key><Value>High</Value></Parameter>
-					<Parameter><Key>timestamp</Key><Value>CarProbe.timestamp</Value></Parameter>
-					<Parameter><Key>ts</Key><Value>CarProbe.ts</Value></Parameter>
-					<Parameter><Key>Average acceleration</Key><Value>Vehicle.Edge.*AvgAccel</Value></Parameter>
-				</VehicleAction>
 			</Action>
 		</VehicleActionRule>		
 </Rules>
