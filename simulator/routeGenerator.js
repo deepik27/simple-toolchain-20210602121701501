@@ -356,8 +356,77 @@ routeGenerator.prototype._findRouteMultiplePoints = function (locs, loop) {
 		}
 	});
 
+	var deferred = Q.defer();
 	var promises = routeParams.map(function (param) { return this._findRouteWithParams(param.mode, param.params); }.bind(this));
-	return Q.all(promises);
+	Q.all(promises).then((routes) => {
+		var referred;
+		var pattern;
+		_.forEach(routes, (route) => {
+			if (route.mode === "pattern") {
+				if (route.found) pattern = route.found;
+			} else if (route.mode === "time") {
+				referred = route.found;
+			} else if (route.mode === "distance") {
+				if (!referred) referred = route.found;
+			}
+		});
+
+		var allTrips = [];
+		_.forEach(routes, (route) => {
+			var routeArray = [];
+			var distance = 0;
+			var traveltime = 0;
+	
+					// Each trip represents a route between two POIs.
+			_.forEach(route.found ? route.found.trips : [], (trip, index) => {
+				// There might be multiple paths for a trip. Find the best path in the triop from the paths.
+				var path = this._selectRecommendedPath(trip);
+				if (!path && pattern === route.found) {
+					if (referred && referred.trips.length > index) {
+						path = this._selectRecommendedPath(referred.trips[index]);
+					} else {
+						path = {links: []};
+					}
+				}
+				if (!path) return;
+
+				// Collect shages in the path
+				var tripArray = [];
+				_.forEach(path.links, (link) => {
+					if (!link.shape || link.shape.length == 0)
+						return;
+
+					if (tripArray.length > 0) {
+						// The last point in the previous shape and the first point in the next shape represent the same point.
+						// Therefore, remove the last point in the previous shape before adding new shape.
+						tripArray.pop();
+					}
+					tripArray = tripArray.concat(link.shape);
+				});
+
+				// Calculate total distance and travel time
+				if (path.props) {
+					distance += parseFloat(path.props.travel_distance);
+					traveltime += parseFloat(path.props.travel_time);
+				}
+
+				// Add destination point to the origin point to change destination
+				if (tripArray.length > 0) {
+					const dp = trip.destination_point;
+					tripArray[0].destination = {lat: dp.latitude, lon: dp.longitude, props: dp.props};
+				}
+				routeArray = routeArray.concat(tripArray);
+			});
+
+			if (routeArray.length > 0) {
+				allTrips.push({ mode: route.mode, route: routeArray, distance: distance, traveltime: traveltime });
+			}
+		});
+		deferred.resolve(allTrips);
+	}).catch((error) => {
+		deferred.reject(error);
+	});
+	return deferred.promise;
 };
 
 routeGenerator.prototype._findRouteWithParams = function (mode, params) {
@@ -368,49 +437,10 @@ routeGenerator.prototype._findRouteWithParams = function (mode, params) {
 		var traveltime = 0;
 
 		var route = this._selectRoute(data.routes);
-		if (!route) {
-			return deferred.resolve({});
+		if (!route || _.every(route.trips, (trip) => { return !trip.paths || trip.paths.length == 0; })) {
+			return deferred.resolve({mode: mode});
 		}	
-
-		// Each trip represents a route between two POIs.
-		_.forEach(route.trips, (trip) => {
-			// There might be multiple paths for a trip. Find the best path in the triop from the paths.
-			var path = this._selectRecommendedPath(trip);
-			if (!path) return;
-
-			// Collect shages in the path
-			var tripArray = [];
-			_.forEach(path.links, (link) => {
-				if (!link.shape || link.shape.length == 0)
-					return;
-
-				if (tripArray.length > 0) {
-					// The last point in the previous shape and the first point in the next shape represent the same point.
-					// Therefore, remove the last point in the previous shape before adding new shape.
-					tripArray.pop();
-				}
-				tripArray = tripArray.concat(link.shape);
-			});
-
-			// Calculate total distance and travel time
-			if (path.props) {
-				distance += parseFloat(path.props.travel_distance);
-				traveltime += parseFloat(path.props.travel_time);
-			}
-
-			// Add destination point to the origin point to change destination
-			if (tripArray.length > 0) {
-				const dp = trip.destination_point;
-				tripArray[0].destination = {lat: dp.latitude, lon: dp.longitude, props: dp.props};
-			}
-			routeArray = routeArray.concat(tripArray);
-		});
-
-		if (routeArray.length == 0) {
-			return deferred.resolve({});
-		}
-
-		return deferred.resolve({ mode: mode, route: routeArray, distance: distance, traveltime: traveltime });
+		return deferred.resolve({ mode: mode, found: route });
 	}).catch((error) => {
 		console.error("Error in route search: " + error);
 		deferred.reject();
@@ -432,8 +462,14 @@ routeGenerator.prototype._selectRecommendedPath = function(trip) {
 	}
 	var selectedPath;
 	trip.paths.forEach((path) => {
-		if (!selectedPath && path.links && path.links.length > 0) {
+		if (!selectedPath) {
 			selectedPath = path;
+		} else if (path.links && path.links.length > 0) {
+			if (parseInt(path.props.matched_trip_count) > parseInt(selectedPath.props.matched_trip_count)) {
+				selectedPath = path;
+			} else if (path.props.matched_trip_count === path.props.matched_trip_count && parseFloat(path.props.travel_time) < parseFloat(selectedPath.props.travel_time)) {
+				selectedPath = path;
+			}
 		}
 	});
 	return selectedPath;
