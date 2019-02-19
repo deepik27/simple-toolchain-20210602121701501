@@ -134,24 +134,22 @@
 						$scope.routeSearching = false;
 
 						tripRouteCache = tripRoute;
-						var modeFound = false;
 						$scope.availableRouteModes = [];
 						tripLayer.getSource().clear();
+						if (tripRoute.every((route) => { return $scope.currentRouteMode !== route.mode; })) {
+							$scope.currentRouteMode = tripRoute[0].mode;
+						}
 						tripRoute.forEach(function(route) {
 							_plotTripRoute(route.route, ($scope.currentRouteMode && route.mode === $scope.currentRouteMode) ? selectedTripStyle : tripStyle);
 							if (route.mode && $scope.routemodes[route.mode]) {
 								$scope.availableRouteModes.push({label: $scope.routemodes[route.mode], value: route.mode});
 								if ($scope.currentRouteMode === route.mode) {
 									showTripDetails(route);
-									modeFound = true;
 								}
 							} else {
 								showTripDetails(route);
 							}
 						});
-						if (!modeFound) {
-							$scope.currentRouteMode = tripRoute[0].mode;
-						}
 						$scope.routeFixed = $scope.availableRouteModes.length < 2;
 					},
 					state: function udpateMethod_state(state, error) {
@@ -837,7 +835,9 @@
 					};
 
 					poiHelper.addPOIChangedListener(function(pois) {
-						$scope.assignedPOIs = pois;
+						$scope.assignedPOIs = pois.sort((p1, p2) => { 
+							return p1.id.localeCompare(p2.id); 
+						});
 						_setWaypoints(pois);
 
 						if (pois && pois.length > 0) {
