@@ -493,29 +493,32 @@ routeGenerator.prototype._getRoutePosition = function () {
 		}
 		loc.speed = speed;
 	} else {
-		var bearing = this._calcBearing(prevLoc, loc);
-		//Simulate harsh acceleration
+		// When acceleration is set from simulator UI.
 		var acceleration = this.getAcceleration();
 		if((this._toMeterPerSec(speed) - this._toMeterPerSec(prevLoc.speed)) > acceleration){
+			// Calculated acceleration exceeds harsh acceleration value set from simulator UI. 
 			// Simulate harsh acceleration
-			var accel_speed = this._toMeterPerSec(prevLoc.speed) + acceleration;
+			let accel_speed = this._toMeterPerSec(prevLoc.speed) + acceleration;
 			if(accel_speed > this._toMeterPerSec(SPEED_CAP)){
+				// Accelerated speed breaks speed CAP
+				// We will see this when acceleration is set using bigger values such as 10
+				// Accelerated speed will be capped. 
 				accel_speed = this._toMeterPerSec(SPEED_CAP);
 			} 
-			var loc2 = this._calcDestinationPoint(prevLoc, accel_speed, bearing);
-			if(accel_speed !== this._toMeterPerSec(speed)){
-				this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
-			}
+			let bearing = this._calcBearing(prevLoc, loc);
+			let loc2 = this._calcDestinationPoint(prevLoc, accel_speed, bearing);
+			this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
 			loc2.speed = this._toKilometerPerHour(accel_speed);
 			loc = loc2;
 		} else {
-			var bearing = this._calcBearing(prevLoc, loc);
+			// Calculated acceleration is smaller than harsh acceleration value set from simulator UI. 
 			if(speed > SPEED_CAP){
-				// speed breaks speed CAP
+				// Speed breaks speed CAP
 				// We will see this when acceleration is set using bigger values such as 10
-				// Will handle as capping speed.
-				var accel_speed = this._toMeterPerSec(SPEED_CAP);
-				var loc2 = this._calcDestinationPoint(prevLoc, accel_speed, bearing);
+				// Speed will be capped. 
+				let accel_speed = this._toMeterPerSec(SPEED_CAP);
+				let bearing = this._calcBearing(prevLoc, loc);
+				let loc2 = this._calcDestinationPoint(prevLoc, accel_speed, bearing);
 				this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
 				loc2.speed = this._toKilometerPerHour(accel_speed);
 				loc = loc2;
