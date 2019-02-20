@@ -6,7 +6,7 @@ debug.log = console.log.bind(console);
 const configure = async () => {
 
 	const fleetVehicleClassification = asset._createVehicleClassificationObject(
-		"marudai FLEET VEHICLE",
+		"FLEET VEHICLE",
 		[
 			{ "id": "DEST_LAT", "datatype": "NUMERIC" },
 			{ "id": "DEST_LON", "datatype": "NUMERIC" },
