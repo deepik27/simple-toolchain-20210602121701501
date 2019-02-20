@@ -58,7 +58,7 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 	// message handler
 	var messageHandler = {
 		queueMap: {},
-		probe: function (vehicleId, probe, callback) {
+		probe: function (vehicleId, data, callback) {
 			var queue = this.queueMap[vehicleId];
 			if (!queue) {
 				queue = new Queue();
@@ -66,7 +66,7 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 			}
 			// serialize results of send car probe
 			queue.push({
-				params: probeInterface.sendCarProbe(probe),
+				params: probeInterface.sendCarProbe(data.probe),
 				run: function (promise) {
 					return promise;
 				},
@@ -76,9 +76,18 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 				},
 				error: function (err) {
 					if (callback)
-						callback({ vehicleId: vehicleId, data: probe, type: 'probe', error: err });
+						callback({ vehicleId: vehicleId, data: data.probe, type: 'probe', error: err });
 				}
 			});
+			
+			if (data.destination) {
+				queue.push({
+					params: asset.updateVehicle(vehicleId, {properties: {dest_lon: data.destination.lon, dest_lat: data.destination.lat}}),
+					run: function (promise) {
+						return promise;
+					}
+				});
+			}
 			return true;
 		},
 		state: function (vehicleId, state, callback) {

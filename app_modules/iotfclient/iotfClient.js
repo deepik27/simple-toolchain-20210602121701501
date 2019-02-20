@@ -43,9 +43,10 @@ function iotfClient(options) {
 			this.devicesConfigs.push(options.config);
 		}
 		this.createCommandsMethods();
-		// this.iotfAppClient.on("connect", _.bind(this.subscribeToDevicesEvents, this));
-		// this.iotfAppClient.on("deviceEvent", _.bind(this.onDeviceEvent, this));
-		// this.iotfAppClient.on("deviceStatus", _.bind(this.onDeviceStatus, this));
+		this.iotfAppClient.on("connect", _.bind(this.subscribeToDevices, this));
+		this.iotfAppClient.on("deviceEvent", _.bind(this.onDeviceEvent, this));
+		this.iotfAppClient.on("deviceStatus", _.bind(this.onDeviceStatus, this));
+		this.iotfAppClient.on("deviceCommand", _.bind(this.onDeviceCommand, this));
 	}
 	this.iotfAppClient.connect();
 }
@@ -67,25 +68,39 @@ iotfClient.prototype.onDeviceEvent = function (deviceType, deviceId, eventType, 
 	this.emit(deviceId + "_+", payload, deviceType, deviceId, eventType, format);
 	this.emit(deviceId + "_" + payload, deviceType, deviceId, eventType, format);
 	this.emit(deviceType + "_+", payload, deviceType, deviceId, eventType, format);
-	this.emit(deviceType + "_" + payload, eventType, deviceType, deviceId, eventType, format);
+	this.emit(deviceType + "_" + payload, deviceType, deviceId, eventType, format);
 	this.emit("+", payload, deviceType, deviceId, eventType, format);
 };
 
-iotfClient.prototype.subscribeToDevicesEvents = function () {
+iotfClient.prototype.onDeviceCommand = function (deviceType, deviceId, cmdType, format, payload, topic) {
+	if (format === "json") {
+		const parsed = JSON.parse(payload);
+		payload = parsed.d || parsed;
+	}
+	this.emit(deviceId + "_" + cmdType, payload, deviceType, deviceId, cmdType, format);
+	this.emit(deviceType + "_" + cmdType, payload, deviceType, deviceId, cmdType, format);
+	this.emit("+_" + cmdType, payload, deviceType, deviceId, cmdType, format);
+	this.emit("+_DeviceCommand", payload, deviceType, deviceId, cmdType, format);
+}
+
+iotfClient.prototype.subscribeToDevices = function () {
 	_.each(this.devicesConfigs, function (config) {
 		config.deviceType = (config.deviceType) ? config.deviceType : ["+"];
 		config.Ids = (config.Ids) ? config.Ids : ["+"];
 		config.events = (config.events) ? config.events : ["+"];
+		config.commands = config.commands || ["+"];
+		if (config.subscribeToStatus) {
+			this.iotfAppClient.subscribeToDeviceStatus(config.deviceType, "+");
+		}
 		_.each(config.Ids, function (deviceID) {
 			_.each(config.events, function (event) {
 				this.iotfAppClient.subscribeToDeviceEvents(config.deviceType, deviceID, event, "json");
-				if (config.subscribeToStatus) {
-					this.iotfAppClient.subscribeToDeviceStatus(config.deviceType, "+");
-				}
+			}, this);
+			_.each(config.commands, function (command) {
+				this.iotfAppClient.subscribeToDeviceCommands(config.deviceType, deviceID, command, "json");
 			}, this);
 		}, this);
 	}, this);
-
 };
 
 iotfClient.prototype.sendCommand = function (deviceType, deviceID, command, payload) {

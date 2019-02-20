@@ -15,6 +15,7 @@ var cfenv = require("cfenv");
 var moment = require("moment");
 var fs = require("fs-extra");
 const asset = app_module_require("cvi-node-lib").asset;
+const IOTF = app_module_require("iotfclient");
 var alertManager = require("./alertManager.js");
 
 var debug = require('debug')('alert');
@@ -77,6 +78,19 @@ _.extend(driverInsightsAlert, {
 				});
 			});
 		});
+
+		if (!!IOTF.iotfAppClient) {
+			IOTF.on("+_alert", (payload, deviceType, deviceId) => {
+				let timestamp;
+				if (payload.affectedEvents && payload.affectedEvents.length > 0) {
+					timestamp = payload.affectedEvents[0].event_time;
+				} else if (payload.notifiedMessages && payload.notifiedMessages.length > 0) {
+					timestamp = Number(payload.notifiedMessages[0].ts) || payload.notifiedMessages[0].timestamp;
+				}
+				const probe = { "mo_id": deviceId, "ts": moment(timestamp).valueOf() };
+				this.handleEvents(probe, (payload.affectedEvents || []).concat(payload.notifiedMessages || []));
+			});
+		}
 	},
 
 	/*
@@ -175,42 +189,6 @@ _.extend(driverInsightsAlert, {
 		return deferred.promise;
 	},
 
-	evaluateAlertRule: function (probe) {
-		var self = this;
-		Q.when(this._getVehicle(probe.mo_id), function (vehicle) {
-			self._evaluateAlertRule(probe, _.clone(vehicle));
-			vehicle.prevProbe = probe;
-		});
-	},
-	_evaluateAlertRule: function (probe, vehicle) {
-		var self = this;
-		_.values(this._alertRules).forEach(function (rule) {
-			setImmediate(function () {
-				var alerts = rule.fireRule(probe, vehicle);
-				alerts.forEach(function (alert) {
-					alertManager.addAlert(alert);
-				});
-			});
-		});
-		var _alertsForVehicle = _.clone(alertManager.getCurrentAlerts(probe.mo_id));
-		Object.keys(_alertsForVehicle).forEach(function (key) {
-			var alert = _alertsForVehicle[key];
-			if (alert && alert.source && alert.source.type === "script") {
-				setImmediate(function () {
-					var rule = self._alertRules[alert.type];
-					if (rule) {
-						var closedAlert = rule.closeRule(alert, probe, vehicle);
-						if (closedAlert) {
-							alertManager.updateAlert(closedAlert);
-						}
-					} else {
-						alert.closed_ts = probe.ts;
-						alertManager.updateAlert(alert);
-					}
-				});
-			}
-		});
-	},
 	_getVehicle: function (mo_id) {
 		var self = this;
 		var deferred = Q.defer();

@@ -416,7 +416,8 @@ filter: alpha(opacity=65);
 .pointSelection {
   font-size: small;
   font-weight: 100;
-  margin-right: 10px; 
+  margin-right: 5px; 
+  white-space: nowrap;
 }
 .routeOptions {
   padding: 3px;
@@ -431,7 +432,7 @@ filter: alpha(opacity=65);
   font-weight: normal;
 }
 .routeOptions input {
-  margin-left: 10px;
+  margin-left: 5px;
 }
 .poiList {
   width: 85%;
