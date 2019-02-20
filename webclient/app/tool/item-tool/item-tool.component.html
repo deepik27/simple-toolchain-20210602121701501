@@ -77,6 +77,14 @@
       <table class="toolPage">
         <tbody>
           <tr class="toolItemRow">
+            <td colspan="2" class="toolItemLabel">
+              <span>
+                <button [disabled]="requestSending" (click)="poifile.click()" >Import from CSV</button>
+                <input type="file" id="uploadFile" style="display:none" (change)="uploadPOIFile($event)" [(ngModel)]="inputPOIFile" placeholder="Upload POIs" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" #poifile>
+              </span>
+            </td>
+          </tr>
+          <tr class="toolItemRow">
             <td class="toolItemLabel">
                 Vehicle:
             </td>
@@ -121,10 +129,6 @@
               <tr class="toolItemRow">
                 <td colspan="2" class="toolItemLabel">
                   <button [disabled]="requestSending" style="margin-left:10px;" (click)="onCreateItem()">Create</button>
-                  <span [hidden]="creationMode!=='poi'">
-                    <button [disabled]="requestSending" (click)="poifile.click()" >Load from CSV</button>
-                    <input type="file" id="uploadFile" style="display:none" (change)="uploadPOIFile($event)" [(ngModel)]="inputPOIFile" placeholder="Upload POIs" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" #poifile>
-                  </span>
                 </td>
               </tr>
 <!--
