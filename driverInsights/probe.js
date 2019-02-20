@@ -50,30 +50,11 @@ _.extend(driverInsightsProbe, {
 		var deferred = Q.defer();
 		Q.when(vehicleDataHub.sendCarProbe(payload, "sync"), function (result) {
 			debug("events: " + result);
-			var affected_events = null;
-			var notified_messages = null;
-			if (result) {
-				// previous version of sendCarProbe returned an array of affected events directly in contents
-				// new version returns affectedEvents and notifiedMessages objects
-				affected_events = _.isArray(result) ? result : result.affectedEvents;
-				notified_messages = result.notifiedMessages;
-			}
-			driverInsightsAlert.handleEvents(probe, (affected_events || []).concat(notified_messages || []));
 
 			Q.when(vehicleDataHub.getCarProbe({ mo_id: payload.mo_id }), function (result) {
 				if (result && result.length === 1) {
 					_.extend(payload, result[0], { ts: ts });
 				}
-
-				// Process alert probe rule
-				driverInsightsAlert.evaluateAlertRule(payload);
-
-				// Add notification to response
-				payload.notification = {
-					affected_events: affected_events || [],
-					notified_messages: notified_messages || []
-				};
-
 				deferred.resolve(payload);
 			})["catch"](function (err) {
 				console.error("error: " + JSON.stringify(err));

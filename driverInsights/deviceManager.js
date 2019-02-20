@@ -18,18 +18,21 @@ class DeviceManager {
 			const iotf_service = vcapSvc["iotf-service"] && vcapSvc["iotf-service"][0].credentials;
 			if (iotf_service) {
 				this.mqttAccessInfo = {
-					mqttEndpoint: `mqtts://${iotf_service.mqtt_host}:${iotf_service.mqtt_s_port}`,
+					vendor: VENDOR_NAME,
+					endpoint: iotf_service.org,
 					username: "use-token-auth"
 				};
 			}
-		} else if (process.env.IOTP_SERVICE_MQTT_ENDPOINT) {
+		} else if (process.env.IOTP_SERVICE_ORG) {
 			this.mqttAccessInfo = {
-				mqttEndpoint: process.env.IOTP_SERVICE_MQTT_ENDPOINT,
+				vendor: VENDOR_NAME,
+				endpoint: process.env.IOTP_SERVICE_ORG,
 				username: "use-token-auth"
 			}
 		}
 		this.httpAccessInfo = {
-			httpEndpoint: cviAsset.assetConfig.vdh.baseURL + "/carProbe",
+			vendor: VENDOR_NAME,
+			endpoint: cviAsset.assetConfig.vdh.baseURL + "/carProbe",
 			username: cviAsset.assetConfig.vdh.username,
 			password: cviAsset.assetConfig.vdh.password
 		};
@@ -138,7 +141,7 @@ class DeviceManager {
 			});
 			if (device) {
 				if (ERROR_ON_VEHICLE_INCONSISTENT) {
-					return Promise.reject({ "statusCode": 500, "message": `Device with id=${vehicle.mo_id} has already been existing.` });
+					return Promise.reject({ "statusCode": 409, "message": `Device with id=${vehicle.mo_id} has already been existing.` });
 				} else {
 					await iotfAppClient.unregisterDevice(VENDOR_NAME, vehicle.mo_id);
 				}

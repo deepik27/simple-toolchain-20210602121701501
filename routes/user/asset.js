@@ -48,7 +48,7 @@ router.post("/device/:tcuId", authenticate, async (req, res) => {
 		}
 		vehicle = await deviceManager.addVehicle(tcuId, null, protocol);
 
-		res.send(vehicle);
+		res.send(201, vehicle);
 	} catch (error) {
 		handleError(res, error);
 	}
