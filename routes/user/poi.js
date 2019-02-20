@@ -125,7 +125,7 @@ router.post("/poi/upload", upload.single('file'), function(req, res) {
 	// longitude, latitude, name, mo_id, serialnumber, id
 	const callbabck = function(line, flush) {
 		// comment line
-		if (line.charAt(0) == "#") {
+		if (line.charAt(0) == "#" || line.length === 0) {
 			return;
 		}
 		const entries = line.split(",");
@@ -175,7 +175,9 @@ router.post("/poi/upload", upload.single('file'), function(req, res) {
 		const stream = fs.createReadStream(req.file.path);
 		stream.on("data", function(data) {
 			previous += data;
-			previous.split('\n').forEach(function(line) {
+			let lines = previous.split('\n');
+			previous = lines.pop();
+			lines.forEach(function(line, index) {
 				callbabck(line.replace('\r', '').trim(), false);
 			});
 		});

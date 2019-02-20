@@ -139,17 +139,23 @@
 						if (tripRoute.every((route) => { return $scope.currentRouteMode !== route.mode; })) {
 							$scope.currentRouteMode = tripRoute[0].mode;
 						}
+						let selectedRoute = null;
 						tripRoute.forEach(function(route) {
-							_plotTripRoute(route.route, ($scope.currentRouteMode && route.mode === $scope.currentRouteMode) ? selectedTripStyle : tripStyle);
+							if ($scope.currentRouteMode && route.mode === $scope.currentRouteMode) {
+								selectedRoute = route;
+							} else {
+								_plotTripRoute(route.route, tripStyle);
+							}
 							if (route.mode && $scope.routemodes[route.mode]) {
 								$scope.availableRouteModes.push({label: $scope.routemodes[route.mode], value: route.mode});
-								if ($scope.currentRouteMode === route.mode) {
-									showTripDetails(route);
-								}
 							} else {
 								showTripDetails(route);
 							}
 						});
+						if (selectedRoute) {
+							showTripDetails(selectedRoute);
+							_plotTripRoute(selectedRoute.route, selectedTripStyle);
+						}
 						$scope.routeFixed = $scope.availableRouteModes.length < 2;
 					},
 					state: function udpateMethod_state(state, error) {
@@ -393,14 +399,18 @@
 				};
 				$scope.onChangeRouteMode = function () {
 					tripLayer.getSource().clear();
+					let selectedRoute = null;
 					tripRouteCache && tripRouteCache.forEach(function(route) {
 						if ($scope.currentRouteMode && route.mode === $scope.currentRouteMode) {
-							_plotTripRoute(route.route, selectedTripStyle);
-							showTripDetails(route);
+							selectedRoute = route;
 						} else {
 							_plotTripRoute(route.route, tripStyle);
 						}
 					});
+					if (selectedRoute) {
+						_plotTripRoute(selectedRoute.route, selectedTripStyle);
+						showTripDetails(selectedRoute);
+					}
 					if (!$scope.currentRouteMode) {
 						showTripDetails(route);
 					}
@@ -701,7 +711,7 @@
 						stroke: new ol.style.Stroke({ color: 'rgba(120, 120, 120, 0.7)', width: 3 }),
 					});
 					selectedTripStyle = new ol.style.Style({
-						stroke: new ol.style.Stroke({ color: 'rgba(255, 0, 0, 0.7)', width: 4 }),
+						stroke: new ol.style.Stroke({ color: 'rgba(255, 0, 0, 0.7)', width: 5 }),
 					});
 					drivingTripStyle = new ol.style.Style({
 						stroke: new ol.style.Stroke({ color: 'rgba(120, 120, 120, 0.7)', width: 2, lineDash: [12, 15] }),
