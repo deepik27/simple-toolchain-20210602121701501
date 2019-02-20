@@ -24,6 +24,7 @@ function routeGenerator(mo_id, driver_id) {
 	this.tripRouteIndex = 0;
 	this.prevLoc = { lat: 48.134994, lon: 11.671026, speed: 0, heading: 0 };
 	this.destination = null;
+	this.acceleration = 0;
 	this.waypoints = [];
 	this.options = { avoid_events: false, route_loop: false, routemode: "time,distance,pattern" };
 }
@@ -138,6 +139,19 @@ routeGenerator.prototype._getRandomLoc = function (slat, slng) {
 	var dlat = +slat + ddist * Math.sin(dtheta);
 	var dlng = +slng + ddist * Math.cos(dtheta);
 	return { lat: dlat, lon: dlng };
+};
+
+routeGenerator.prototype.setAcceleration = function(acceleration) {
+	var parsedAccel = parseFloat(acceleration);
+	if( !isNaN(parsedAccel) ){
+		this.acceleration = parsedAccel;
+	} else {
+		this.acceleration = 0;
+	}
+};
+
+routeGenerator.prototype.getAcceleration = function() {
+	return this.acceleration;
 };
 
 routeGenerator.prototype._generateAnchors = function (slat, slng, sheading, keepAnchors) {
@@ -537,31 +551,71 @@ routeGenerator.prototype._getRoutePosition = function () {
 	if (!this.prevLoc || !this.tripRoute || this.tripRoute.length < 2) {
 		return this.prevLoc;
 	}
+	var harshAccelRadioButton = false;
+	const SPEED_CAP = 161; 	// speed cap is 161 km/h (about 100 MPH)
+	if(this.acceleration !== 0){
+		harshAccelRadioButton = true;
+	}
 	var prevLoc = this.prevLoc;
 	var loc = this.tripRoute[this.tripRouteIndex];
-	var speed = this._getDistance(loc, prevLoc) * 0.001 * 3600;
-	var referenceSpeed = this._getReferenceSpeed(this.tripRouteIndex, speed);
-	var acceleration = Math.floor(Math.random() * 10 + 10);
-	while ((speed - prevLoc.speed) < (acceleration * -1) && this.tripRouteIndex < this.tripRoute.length - 1) {
-		// too harsh brake, then skip the pointpoint
-		this.tripRouteIndex++;
-		loc = this.tripRoute[this.tripRouteIndex];
-		speed = this._getDistance(loc, prevLoc) * 0.001 * 3600;
+	var speed = this._getDistance(loc, prevLoc)*0.001*3600;
+	if(!harshAccelRadioButton){
+		var referenceSpeed = this._getReferenceSpeed(this.tripRouteIndex, speed);
+		var acceleration = Math.floor(Math.random() * 10 + 10);
+		while((speed - prevLoc.speed) < (acceleration * -1) && this.tripRouteIndex < this.tripRoute.length-1){ 
+			// too harsh brake, then skip the pointpoint
+			this.tripRouteIndex++;
+			loc = this.tripRoute[this.tripRouteIndex];
+			speed = this._getDistance(loc, prevLoc)*0.001*3600;
+		}
+		while(speed>referenceSpeed || (speed - prevLoc.speed) > acceleration){
+			// too harsh acceleration, then insert intermediate point
+			var loc2 = {lat: (+loc.lat+prevLoc.lat)/2, lon: (+loc.lon+prevLoc.lon)/2};
+			speed = this._getDistance(loc2, prevLoc)*0.001*3600;
+			this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
+			loc = loc2;
+		}
+		loc.speed = speed;
+	} else {
+		// When acceleration is set from simulator UI.
+		var acceleration = this.getAcceleration();
+		if((this._toMeterPerSec(speed) - this._toMeterPerSec(prevLoc.speed)) > acceleration){
+			// Calculated acceleration exceeds harsh acceleration value set from simulator UI. 
+			// Simulate harsh acceleration
+			let accel_speed = this._toMeterPerSec(prevLoc.speed) + acceleration;
+			if(accel_speed > this._toMeterPerSec(SPEED_CAP)){
+				// Accelerated speed breaks speed CAP
+				// We will see this when acceleration is set using bigger values such as 10
+				// Accelerated speed will be capped. 
+				accel_speed = this._toMeterPerSec(SPEED_CAP);
+			} 
+			let bearing = this._calcHeading(prevLoc, loc);
+			let loc2 = this._calcDestinationPoint(prevLoc, accel_speed, bearing);
+			this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
+			loc2.speed = this._toKilometerPerHour(accel_speed);
+			loc = loc2;
+		} else {
+			// Calculated acceleration is smaller than harsh acceleration value set from simulator UI. 
+			if(speed > SPEED_CAP){
+				// Speed breaks speed CAP
+				// We will see this when acceleration is set using bigger values such as 10
+				// Speed will be capped. 
+				let accel_speed = this._toMeterPerSec(SPEED_CAP);
+				let bearing = this._calcHeading(prevLoc, loc);
+				let loc2 = this._calcDestinationPoint(prevLoc, accel_speed, bearing);
+				this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
+				loc2.speed = this._toKilometerPerHour(accel_speed);
+				loc = loc2;
+			} else {
+				// This is where currently harsh breaks are happening!
+				loc.speed = speed;
+			}
+		}
 	}
-	while (speed > referenceSpeed || (speed - prevLoc.speed) > acceleration) {
-		// too harsh acceleration, then insert intermediate point
-		var loc2 = { lat: (+loc.lat + prevLoc.lat) / 2, lon: (+loc.lon + prevLoc.lon) / 2 };
-		speed = this._getDistance(loc2, prevLoc) * 0.001 * 3600;
-		this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
-		loc = loc2;
-	}
-	loc.speed = speed;
+	this.prevLoc = loc;	
 	loc.heading = this._calcHeading(prevLoc, loc);
-	// keep the previous info
-	this.prevLoc = loc;
-
-	this.tripRouteIndex++;
-	if (this.tripRouteIndex >= this.tripRoute.length) {
+	this.tripRouteIndex++;	
+	if(this.tripRouteIndex >= this.tripRoute.length){
 		if (this.destination && !(this.options && this.options.route_loop)) {
 			this.tripRouteIndex--;
 		} else {
@@ -571,11 +625,18 @@ routeGenerator.prototype._getRoutePosition = function () {
 	return loc;
 };
 
-routeGenerator.prototype._calcHeading = function (p0, p1) {
-	var rad = 90 - Math.atan2(Math.cos(p0.lat / 90) * Math.tan(p1.lat / 90) - Math.sin(p0.lat / 90) * Math.cos((p1.lon - p0.lon) / 180),
-		Math.sin((p1.lon - p0.lon) / 180)) / Math.PI * 180;
-	return (rad + 360) % 360;
-};
+routeGenerator.prototype._calcHeading = function(p1, p2){
+	// this will calculate bearing
+	p1lon = this._toRadians(p1.lon);
+	p1lat = this._toRadians(p1.lat);
+	p2lon = this._toRadians(p2.lon);
+	p2lat = this._toRadians(p2.lat);
+	var y = Math.sin(p2lon-p1lon) * Math.cos(p2lat);
+	var x = Math.cos(p1lat)*Math.sin(p2lat) -
+        Math.sin(p1lat)*Math.cos(p2lat)*Math.cos(p2lon-p1lon);
+	var brng = Math.atan2(y, x);
+	return (this._toDegree(brng) + 360) % 360;
+}
 
 /*
  * Calculate distance in meters between two points on the globe
@@ -595,12 +656,43 @@ routeGenerator.prototype._getDistance = function (p0, p1) {
 	return earth * norm_dist;
 };
 
-routeGenerator.prototype._toRadians = function (n) {
-	return n * (Math.PI / 180);
+/*
+ * Calculate destination point from starting point and distance and heading(bearing) angle
+ * - p: starting point in {latitude: [lat in degree], longitude: [lng in degree]}
+ * - d: distance in meter
+ * - h: heading direction(bearing) in degree
+ */
+routeGenerator.prototype._calcDestinationPoint = function(startPoint, distance, bearing) {
+	// Earths radius in meters via WGS 84 model.
+	var earth = 6378137;
+	// Angular distance: sigma = distance / (earth_radius)
+	var sigma = distance / earth;
+	var s_lat_rad = this._toRadians(startPoint.lat);
+	var s_lon_rad = this._toRadians(startPoint.lon);
+	var bearing_rad = this._toRadians(bearing)
+	var dest_lat_rad = Math.asin( Math.sin(s_lat_rad)*Math.cos(sigma) +
+							Math.cos(s_lat_rad)*Math.sin(sigma)*Math.cos(bearing_rad) );
+	var dest_lon_rad = s_lon_rad + Math.atan2(Math.sin(bearing_rad)*Math.sin(sigma)*Math.cos(s_lat_rad),
+									Math.cos(sigma)-Math.sin(s_lat_rad)*Math.sin(dest_lat_rad));
+	var dest_lat_deg = this._toDegree(dest_lat_rad)
+	var dest_lon_deg = this._toDegree(dest_lon_rad)
+	return {lat: dest_lat_deg, lon: dest_lon_deg};
+};
+
+routeGenerator.prototype._toRadians = function(n) {
+    return n * (Math.PI / 180);
 };
 
 routeGenerator.prototype._toDegree = function (n) {
 	return n * (180 / Math.PI);
+};
+
+routeGenerator.prototype._toKilometerPerHour = function(n) {
+	return n*(0.001*3600);
+};
+
+routeGenerator.prototype._toMeterPerSec = function(n) {
+	return n/(0.001*3600);
 };
 
 module.exports = routeGenerator;

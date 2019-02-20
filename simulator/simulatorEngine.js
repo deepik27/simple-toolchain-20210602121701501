@@ -360,6 +360,16 @@ simulatorEngine.prototype.setRouteOptions = function (vehicleId, options) {
 };
 
 /**
+ * Set acceleration
+ */
+simulatorEngine.prototype.setAcceleration = function (vehicleId, properties) {
+	return this.control(vehicleId, function (vehicle) {
+		return vehicle.setAcceleration(properties);
+	}, true, false);
+};
+
+
+/**
  * Control a vehicle/vehicles.
  */
 simulatorEngine.prototype.control = function (vehicleId, method, allowedWhenRunning, allowedWhenStopping) {
