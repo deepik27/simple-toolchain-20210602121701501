@@ -1,13 +1,9 @@
-package com.ibm.mobility.agent.sample;
+package com.ibm.mobility.agent.accel;
 
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Properties;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
-import com.ibm.iot.cvi.plugin.log4j.PluginLogger;
 import com.ibm.mobility.agent.EventOperator;
 import com.ibm.mobility.agent.customize.VAHandle;
 import com.ibm.mobility.agent.customize.VAStateRecord;
@@ -23,7 +19,6 @@ public class MovingAverageAcceleration implements IComplexRuleMethod {
 	static final String VASTATE_HISTORICAL = "Historical";
 	static final String VASTATE_CPCOUNT = "CPCount";
 	
-	static final String VASTATE_AVG_SPEED = "AvgSpeed";
 	static final String VASTATE_AVG_ACCEL = "AvgAccel";
 	static final String VASTATE_SPEED = "Speed";	
 	static final String VASTATE_ACCEL = "Accel";
@@ -37,49 +32,31 @@ public class MovingAverageAcceleration implements IComplexRuleMethod {
 	static final String VASTATE_MAXRECORD = "MaxRecord";
 	static final String VASTATE_RULETYPE = "RuleType";
 	
-	private Logger logger = PluginLogger.getLogger(MovingAverageAcceleration.class.getName());
+	private int maxItems;
+	private int ruleType;
+	private String stateKey;
 	
 	@Override
 	public void init(Properties prop) {
-		String message = prop.getProperty("message");
-	    if (message != null){
-	      String levelStr = prop.getProperty("level");
-	      Level level = levelStr != null ? Level.toLevel(levelStr) : Level.INFO;
-	      this.logger.log(level, message);
-	    } else {
-	      this.logger.info("PluginLog Test client is initialized.");
-	    }
+		maxItems = Integer.parseInt(prop.getProperty(VASTATE_MAXRECORD, "10"));
+		ruleType = Integer.parseInt(prop.getProperty(VASTATE_RULETYPE, "1"));
+		stateKey = String.valueOf(ruleType);
 	}
 
 	@Override
 	public void exec(EventOperator op, CarProbe cp, Vehicle v, Driver d,
 			Properties prop) {
 		try {
-			// props is a property having values if parameters are defined in a rule definition
-			
-			this.logger.info("======== VehicleActionRulePlugin#EXEC: CarProbe=" + cp);
-			this.logger.info("======== VehicleActionRulePlugin#EXEC: Vehicle=" + v);
-			this.logger.info("======== VehicleActionRulePlugin#EXEC: Driver=" + d);
-			this.logger.info("======== VehicleActionRulePlugin#EXEC: prop=" + prop);
-
-			int maxItems = Integer.parseInt(prop.getProperty(VASTATE_MAXRECORD, "10"));
-			int ruleType = Integer.parseInt(prop.getProperty(VASTATE_RULETYPE, "1"));
-			String stateKey = String.valueOf(ruleType);
-			
+			// props is a property having values if parameters are defined in a rule definition			
 			VAHandle vah = op.getVAHandle(VASTATE_TYPE);
 			VAStateRecord rec = vah.getVAStateRecord(stateKey);
 			if (rec == null) {
 				rec = vah.createVAStateRecord(stateKey);
 			}
 			
-			this.logger.info("******** VehicleActionRulePlugin#EXEC.EventOperator:" + op + " VAH:" + vah);
-			this.logger.info("******** VehicleActionRulePlugin#EXEC.AvgSpeed:" + rec.getCommitValue(VASTATE_AVG_SPEED));
-			this.logger.info("******** VehicleActionRulePlugin#EXEC.*AvgSpeed:" + rec.getValue(VASTATE_AVG_SPEED));
-			
 			// Check whether this method has already been called for the latest CarProbe
 			// If so, skip this method
 			Timestamp timestamp = (Timestamp)rec.getValue(VASTATE_CPTIME);
-			this.logger.info("======== VehicleActionRulePlugin#EXEC: timestamp=" + timestamp + " carprobe.eventtime=" + cp.getEventTime());
 			if (timestamp != null && timestamp.getTime() >= cp.getEventTime().getTime()) {
 				return;
 			}
@@ -88,8 +65,6 @@ public class MovingAverageAcceleration implements IComplexRuleMethod {
 			// Get the current counter
 			long seq = 0L;
 			Long prev_seq = (Long)rec.getValue(VASTATE_CPCOUNT);
-			
-			this.logger.info("======== VehicleActionRulePlugin#EXEC: VASTATE_CPCOUNT=" + prev_seq);
 			
 			if (prev_seq == null) {
 				prev_seq = 0L;
@@ -100,7 +75,6 @@ public class MovingAverageAcceleration implements IComplexRuleMethod {
 			rec.putValue(VASTATE_CPCOUNT,seq);
 					
 			VAStateTree tree = rec.getStateTree(VASTATE_HISTORICAL);
-			this.logger.info("======== VehicleActionRulePlugin#EXEC: VASTATE_HISTORICAL=" + tree);
 			VAStateTreeItem prevItem = null;
 			if (tree == null) {
 				tree = rec.createStateTree(VASTATE_HISTORICAL);
@@ -119,18 +93,17 @@ public class MovingAverageAcceleration implements IComplexRuleMethod {
 				Integer prevSpeed = (Integer)prevItem.getValue(ITEM_SPEED);
 				Timestamp prevTime = (Timestamp)prevItem.getValue(ITEM_TIME);
 				Timestamp currentTime = cp.getEventTime();
-				new_accel = ((double)(cp.getSpeed() - prevSpeed))/(currentTime.getTime() - prevTime.getTime())*1000;
+				new_accel = ((double)(cp.getSpeed() - prevSpeed)/3.6)/(currentTime.getTime() - prevTime.getTime())*1000;
 				newItem.putValue(ITEM_ACCEL,(double)new_accel);
 			} else {
 				// the initial accel is just the current speed
 				new_accel = (double)cp.getSpeed();
-				newItem.putValue(ITEM_ACCEL,(double)new_accel);			
+				newItem.putValue(ITEM_ACCEL,(double)new_accel/3.6);			
 			}
 			
 			// Calculate moving averages and evict the oldest item if the number of items > maxItems
 			long min = -1;
 			VAStateTreeItem minItem = null;
-			double avg_speed = 0.0;
 			double avg_accel = 0.0;
 			
 			int num = 0;
@@ -144,35 +117,21 @@ public class MovingAverageAcceleration implements IComplexRuleMethod {
 					min = s;
 					minItem = it;
 				}
-				avg_speed += (int)it.getValue(ITEM_SPEED);
 				avg_accel += (double)it.getValue(ITEM_ACCEL);
 				num++;
 			}
 			if (num > maxItems) {
 				// evict the oldest item
-				avg_speed -= (int)minItem.getValue(ITEM_SPEED);
 				avg_accel -= (double)minItem.getValue(ITEM_ACCEL);
 				minItem.remove();
-				
-				this.logger.info("======== VehicleActionRulePlugin#EXEC.remove:" + minItem);
-				
 				num--;
 			}
-			avg_speed = avg_speed/num;
-			avg_accel = avg_accel/num;
-			
-			rec.putValue(VASTATE_AVG_SPEED, avg_speed);
-			rec.putValue(VASTATE_AVG_ACCEL, avg_accel);
-						
+			avg_accel = avg_accel/num;			
+			rec.putValue(VASTATE_AVG_ACCEL, avg_accel);						
 			rec.putValue(VASTATE_SPEED, cp.getSpeed());
 			rec.putValue(VASTATE_ACCEL, (double)new_accel);
-			
-			this.logger.info("======== VehicleActionRulePlugin#EXEC.rec:" + rec);
-			this.logger.info("======== VehicleActionRulePlugin#EXEC.AvgSpeed:" + rec.getCommitValue(VASTATE_AVG_SPEED));
-			this.logger.info("======== VehicleActionRulePlugin#EXEC.*AvgSpeed:" + rec.getValue(VASTATE_AVG_SPEED));
 
 		} catch(Exception e) {
-			this.logger.fatal("Caught exception: "+e.getLocalizedMessage());
 		}
 	}
 
@@ -180,4 +139,5 @@ public class MovingAverageAcceleration implements IComplexRuleMethod {
 	public boolean check(EventOperator op, CarProbe cp, Vehicle v, Driver d) {
 		return true;
 	}
+	
 }
