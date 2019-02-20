@@ -505,7 +505,7 @@ routeGenerator.prototype._getRoutePosition = function () {
 				// Accelerated speed will be capped. 
 				accel_speed = this._toMeterPerSec(SPEED_CAP);
 			} 
-			let bearing = this._calcBearing(prevLoc, loc);
+			let bearing = this._calcHeading(prevLoc, loc);
 			let loc2 = this._calcDestinationPoint(prevLoc, accel_speed, bearing);
 			this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
 			loc2.speed = this._toKilometerPerHour(accel_speed);
@@ -517,7 +517,7 @@ routeGenerator.prototype._getRoutePosition = function () {
 				// We will see this when acceleration is set using bigger values such as 10
 				// Speed will be capped. 
 				let accel_speed = this._toMeterPerSec(SPEED_CAP);
-				let bearing = this._calcBearing(prevLoc, loc);
+				let bearing = this._calcHeading(prevLoc, loc);
 				let loc2 = this._calcDestinationPoint(prevLoc, accel_speed, bearing);
 				this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
 				loc2.speed = this._toKilometerPerHour(accel_speed);
@@ -541,13 +541,8 @@ routeGenerator.prototype._getRoutePosition = function () {
 	return loc;
 };
 
-routeGenerator.prototype._calcHeading = function (p0, p1) {
-	var rad = 90 - Math.atan2(Math.cos(p0.lat / 90) * Math.tan(p1.lat / 90) - Math.sin(p0.lat / 90) * Math.cos((p1.lon - p0.lon) / 180),
-		Math.sin((p1.lon - p0.lon) / 180)) / Math.PI * 180;
-	return (rad + 360) % 360;
-};
-
-routeGenerator.prototype._calcBearing = function(p1, p2){
+routeGenerator.prototype._calcHeading = function(p1, p2){
+	// this will calculate bearing
 	p1lon = this._toRadians(p1.lon);
 	p1lat = this._toRadians(p1.lat);
 	p2lon = this._toRadians(p2.lon);
