@@ -10,6 +10,7 @@
 /*
  * REST APIs using Driver Behavior service as backend
  */
+const Q = require('q');
 const router = module.exports = require('express').Router();
 const authenticate = require('./auth.js').authenticate;
 const contextMapping = app_module_require("cvi-node-lib").contextMapping;
@@ -96,29 +97,31 @@ router["delete"]("/poi", authenticate, function(req, res){
 router.post("/poi/upload", upload.single('file'), function(req, res) {
 	var features = [];
 	var deleteIds = [];
+	var numEntries = 0;
+	var promises = [];
 	const flushFeatures = function() {
 		if (features.length == 0) {
 			return;
 		}
+		numEntries+=features.length;
 
 		// Delete existing POIs before creating
 		if (deleteIds.length > 0) {
 			let poi_ids = deleteIds.join(",");
 			deleteIds = [];
-			contextMapping.deletePoi({ "poi_id": poi_ids })
+			promises.push(contextMapping.deletePoi({ "poi_id": poi_ids })
 			.then(function(result) {
 				let featureCollection = contextMapping._generateFeatureCollection(features);
-				contextMapping.createPoi(featureCollection);
 				features = [];
-			});
+				return contextMapping.createPoi(featureCollection);
+			}));
 		} else {
 			let featureCollection = contextMapping._generateFeatureCollection(features);
-			contextMapping.createPoi(featureCollection);
 			features = [];
+			promises.push(contextMapping.createPoi(featureCollection));
 		}
 	}
 
-	var numEntries = 0;
 	// longitude, latitude, name, mo_id, serialnumber, id
 	const callbabck = function(line, flush) {
 		// comment line
@@ -134,8 +137,6 @@ router.post("/poi/upload", upload.single('file'), function(req, res) {
 		if (isNaN(longitude) || isNaN(latitude) || -180 > longitude || longitude > 180 || -90 > latitude || latitude > 90) {
 			return;
 		}
-
-		numEntries+=entries.length;
 
 		let id = entries.length > 5 ? entries[5] : null;
 		if (id) {
@@ -163,8 +164,10 @@ router.post("/poi/upload", upload.single('file'), function(req, res) {
 
 	const finished = function() {
 		flushFeatures(features);
-		res.send({created: numEntries});
-		fs.unlinkSync(req.file.path);
+		Q.all(promises).then(function() {
+			res.send({created: numEntries});
+			fs.unlinkSync(req.file.path);
+		});
 	}
 
 	try {

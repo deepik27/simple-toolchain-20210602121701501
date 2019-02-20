@@ -39,9 +39,9 @@ export class ItemToolComponent implements OnInit {
   geofenceDirections =  [{label: "OUT", value: "out"}, {label: "IN", value: "in"}];
   geofenceDirection: string = "out";
   geofenceUseTargetArea: boolean = false;
-  isSelectedVehicle: boolean = false;
-  targetVehicles: Vehicle[] = [];
-  targetVehicle: Vehicle;
+  dummyVehicle: Vehicle = new Vehicle({});
+  targetVehicles: Vehicle[] = [this.dummyVehicle];
+  targetVehicle: Vehicle = this.dummyVehicle;
   poiName: string;
   pageNumber: number;
   hasNext: boolean;
@@ -51,6 +51,7 @@ export class ItemToolComponent implements OnInit {
   itemLatitude: number;
   itemLongitude: number;
   isActive: boolean = false;
+  inputPOIFile: string = null;
 
   constructor(
     private router: Router,
@@ -74,6 +75,7 @@ export class ItemToolComponent implements OnInit {
       if (data) {
         if (data.available) {
           this.supportedItems.push("geofence");
+          this.creationMode = this.supportedItems[0];
         }
         this.geofenceUseTargetArea = data.useTargetArea;
       }
@@ -81,7 +83,8 @@ export class ItemToolComponent implements OnInit {
     this.poiService.getCapability().subscribe(data => {
       if (data) {
         if (data.available) {
-          this.supportedItems.push("poi");
+          this.supportedItems.splice(0, 0, "poi");
+          this.creationMode = this.supportedItems[0];
         }
         this.geofenceUseTargetArea = data.useTargetArea;
         this._updateVehicleList(1);
@@ -118,11 +121,15 @@ export class ItemToolComponent implements OnInit {
     if (!event.target.files || event.target.files.length == 0) {
       return;
     }
+    this.inputPOIFile = null;
     this.poiService.uploadPOIFile(event.target.files[0])
     .subscribe((result: any) => {
       if (result.created > 0) {
+        alert("POIs were created.");
         let helper = this.itemMap.mapItemHelpers["poi"];
         helper.updateView();
+      } else {
+        alert("No POI was included.");
       }
     }, (error: any) => {
       alert("Failed to crate POIs.")
@@ -137,6 +144,9 @@ export class ItemToolComponent implements OnInit {
         this.targetVehicles = vehicles.map(v => {
             return new Vehicle(v);
         });
+        if (pageNumber == 1) {
+          this.targetVehicles.splice(0, 0, this.dummyVehicle);
+        }
         this.pageNumber = pageNumber;
         this.hasNext = this.numRecInPage <= this.targetVehicles.length;
         if (isRequestRoot) {
@@ -173,7 +183,7 @@ export class ItemToolComponent implements OnInit {
 
 		let center_latitude = (extent[1] + extent[3]) / 2;
     let center_longitude = (extent[0] + extent[2]) / 2;
-		let radius = Math.ceil(this.poiService.calcDistance([center_longitude, center_latitude], [extent[2], extent[0]]) / 1000);
+		let radius = Math.ceil(this.poiService.calcDistance([center_longitude, center_latitude], [extent[2], extent[3]]) / 1000);
 		radius += 10; // search larger area
 
     let properties;
@@ -189,7 +199,10 @@ export class ItemToolComponent implements OnInit {
       let poi_ids = data.map(function(poi) {
         return poi.poi_id;
       }).join(",");
-      this.poiService.deletePOI(poi_ids);
+      this.poiService.deletePOI(poi_ids).map(data => {
+        let helper = this.itemMap.mapItemHelpers["poi"];
+        helper.updateView();
+      });
     });
   }
 
@@ -316,7 +329,7 @@ export class ItemToolComponent implements OnInit {
     if (this.creationMode === "event") {
       return new CreateEventCommand(this.eventService, range, loc, this.selectedEventType, this.eventDirection);
     } else if (this.creationMode === "poi") {
-      return new CreatePOICommand(this.poiService, range, loc, this.poiName, this.isSelectedVehicle ? this.targetVehicle : undefined);
+      return new CreatePOICommand(this.poiService, range, loc, this.poiName, this.targetVehicle);
     }
   }
 
@@ -503,7 +516,7 @@ export class CreatePOICommand extends ToolCommand {
         latitude: this.loc.latitude,
         longitude: this.loc.longitude,
         properties: {
-          mo_id: this.vehicle ? this.vehicle.__mo_id : undefined,
+          mo_id: this.vehicle.__mo_id,
           serialnumber: this.vehicle ? this.vehicle.serial_number : undefined,
           name: this.name
         }
@@ -539,6 +552,8 @@ class Vehicle {
       this[key] = props[key];
     }
     this.__id = this.serial_number || this.mo_id;
-    this.__mo_id = this.siteid ? (this.siteid + ':' + this.mo_id) : this.mo_id;
+    if (this.mo_id) {
+      this.__mo_id = this.siteid ? (this.siteid + ':' + this.mo_id) : this.mo_id;
+    }
   }
 }

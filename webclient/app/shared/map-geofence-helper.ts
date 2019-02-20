@@ -284,7 +284,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
       return new ol.geom.Polygon([polygonCoordinates]);
     } else if (direction === "out") {
       // create target area
-      let polygonCoordinates = this.createGeofenceCoordinate(geometry, "rectangle");
+      let polygonCoordinates = this.createGeofenceCoordinate(geometry, geometry_type);
       let polygon = new ol.geom.Polygon([polygonCoordinates]);
 
       // create clip area
