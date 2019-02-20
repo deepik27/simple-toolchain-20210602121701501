@@ -124,7 +124,9 @@ router.post("/poi/upload", upload.single('file'), function(req, res) {
 		}
 	}
 
-	// longitude, latitude, name, mo_id, serialnumber, id
+	/******************************************************
+	 csv line format: longitude,latitude,name,id-prefix
+	*******************************************************/
 	const callbabck = function(line, flush) {
 		// comment line
 		if (line.charAt(0) == "#" || line.length === 0) {
