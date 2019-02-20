@@ -189,42 +189,6 @@ _.extend(driverInsightsAlert, {
 		return deferred.promise;
 	},
 
-	evaluateAlertRule: function (probe) {
-		var self = this;
-		Q.when(this._getVehicle(probe.mo_id), function (vehicle) {
-			self._evaluateAlertRule(probe, _.clone(vehicle));
-			vehicle.prevProbe = probe;
-		});
-	},
-	_evaluateAlertRule: function (probe, vehicle) {
-		var self = this;
-		_.values(this._alertRules).forEach(function (rule) {
-			setImmediate(function () {
-				var alerts = rule.fireRule(probe, vehicle);
-				alerts.forEach(function (alert) {
-					alertManager.addAlert(alert);
-				});
-			});
-		});
-		var _alertsForVehicle = _.clone(alertManager.getCurrentAlerts(probe.mo_id));
-		Object.keys(_alertsForVehicle).forEach(function (key) {
-			var alert = _alertsForVehicle[key];
-			if (alert && alert.source && alert.source.type === "script") {
-				setImmediate(function () {
-					var rule = self._alertRules[alert.type];
-					if (rule) {
-						var closedAlert = rule.closeRule(alert, probe, vehicle);
-						if (closedAlert) {
-							alertManager.updateAlert(closedAlert);
-						}
-					} else {
-						alert.closed_ts = probe.ts;
-						alertManager.updateAlert(alert);
-					}
-				});
-			}
-		});
-	},
 	_getVehicle: function (mo_id) {
 		var self = this;
 		var deferred = Q.defer();
