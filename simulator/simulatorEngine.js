@@ -11,12 +11,11 @@
 var Q = require('q');
 var _ = require('underscore');
 var moment = require("moment");
-var routeGenerator = require('./routeGenerator.js');
 var vehicleManager = require('./vehicleManager.js');
 var simulatedVehicle = require('./simulatedVehicle.js');
 const asset = app_module_require("cvi-node-lib").asset;
 var Queue = app_module_require('utils/queue.js');
-var probeInterface = app_module_require("utils/probe.js");
+const vehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
 
 var debug = require('debug')('simulatorEngine');
 debug.log = console.log.bind(console);
@@ -66,13 +65,26 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 			}
 			// serialize results of send car probe
 			queue.push({
-				params: probeInterface.sendCarProbe(data.probe),
+				params: vehicleDataHub.sendCarProbe(data.probe, "sync"),
 				run: function (promise) {
 					return promise;
 				},
-				done: function (result) {
-					if (callback)
-						callback({ vehicleId: vehicleId, data: result, type: 'probe' });
+				done: function (message) {
+					if (!callback)
+						return;
+					let probe = data.probe;
+					let affected_events = null;
+					let notified_messages = null;
+					if (message) {
+						affected_events = message.affectedEvents;
+						notified_messages = message.notifiedMessages;
+					}
+					// Add notification to response
+					probe.notification = {
+						affected_events: affected_events || [],
+						notified_messages: notified_messages || []
+					};
+					callback({ vehicleId: vehicleId, data: probe, type: 'probe' });
 				},
 				error: function (err) {
 					if (callback)
@@ -346,6 +358,16 @@ simulatorEngine.prototype.setRouteOptions = function (vehicleId, options) {
 		return Q(vehicle.updateRoute(options.options && !options.origin && !options.destination));
 	}, false, true);
 };
+
+/**
+ * Set acceleration
+ */
+simulatorEngine.prototype.setAcceleration = function (vehicleId, properties) {
+	return this.control(vehicleId, function (vehicle) {
+		return vehicle.setAcceleration(properties);
+	}, true, false);
+};
+
 
 /**
  * Control a vehicle/vehicles.
