@@ -90,7 +90,7 @@
             </td>
             <td class="toolItemValue">
               <select class="toolSelection" [disabled]="requestSending" size=10 [(ngModel)]="targetVehicle" name="targetVehicle">
-                <option *ngFor="let vehicle of targetVehicles" [ngValue]="vehicle">{{vehicle.__id || "(None)"}}</option>
+                <option *ngFor="let vehicle of targetVehicles" [ngValue]="vehicle">{{vehicle.__id?(vehicle.__id+"   (" + vehicle.mo_id + ")"):"-- (None) --"}}</option>
               </select>
             </td>
           </tr>
