@@ -99,6 +99,8 @@ router.post("/poi/upload", upload.single('file'), function(req, res) {
 	var deleteIds = [];
 	var numEntries = 0;
 	var promises = [];
+	const mo_id = req.body.mo_id;
+	const serialnumber = req.body.serialnumber;
 	const flushFeatures = function() {
 		if (features.length == 0) {
 			return;
@@ -138,21 +140,19 @@ router.post("/poi/upload", upload.single('file'), function(req, res) {
 			return;
 		}
 
-		let id = entries.length > 5 ? entries[5] : null;
+		let id = entries.length > 3 ? entries[3] : null;
 		if (id) {
 			deleteIds.push(id);
 		} else {
 			id = chance.guid();
 		}
 		let properties = {};
-		if (entries.length > 4) {
-			properties.serialnumber = entries[4];
-		}
-		if (entries.length > 3) {
-			properties.mo_id = entries[3];
-		}
-		if (entries.length > 2) {
-			properties.name = entries[2];
+		if (entries.length > 2) properties.name = entries[2];
+		if (serialnumber) properties.serialnumber = serialnumber;
+		if (mo_id) {
+			properties.mo_id = mo_id;
+			let strs = mo_id.split(":");
+			id = id + "-" + strs[strs.length-1];
 		}
 		let feature = contextMapping._generateFeature(id, "Point", [longitude, latitude], properties);
 		features.push(feature);

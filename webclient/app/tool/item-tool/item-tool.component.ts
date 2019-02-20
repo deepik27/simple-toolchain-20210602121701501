@@ -122,7 +122,7 @@ export class ItemToolComponent implements OnInit {
       return;
     }
     this.inputPOIFile = null;
-    this.poiService.uploadPOIFile(event.target.files[0])
+    this.poiService.uploadPOIFile(event.target.files[0], this.targetVehicle.__mo_id, this.targetVehicle.serial_number)
     .subscribe((result: any) => {
       if (result.created > 0) {
         alert("POIs were created.");
