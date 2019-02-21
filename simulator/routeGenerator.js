@@ -77,6 +77,10 @@ routeGenerator.prototype.stop = function () {
 	this.prevLoc.speed = 0;
 	this.driving = false;
 	if (this.callback) {
+		var p = this._getRoutePosition();
+		if (p) {
+			this.callback({ data: { latitude: p.lat, longitude: p.lon, speed: 0, heading: p.heading, destination: p.destination }, type: 'position' });
+		}
 		this.callback({ data: { driving: this.driving, routing: this.routing }, type: "state" });
 	}
 };
