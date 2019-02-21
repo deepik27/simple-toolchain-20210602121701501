@@ -82,6 +82,7 @@
                 <button [disabled]="requestSending" (click)="poifile.click()" >Import from CSV</button>
                 <input type="file" id="uploadFile" style="display:none" (change)="uploadPOIFile($event)" [(ngModel)]="inputPOIFile" placeholder="Upload POIs" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" #poifile>
               </span>
+              <button [disabled]="requestSending" (click)="onDeletePOI()">Delete</button>
             </td>
           </tr>
           <tr class="toolItemRow">
@@ -131,14 +132,6 @@
                   <button [disabled]="requestSending" style="margin-left:10px;" (click)="onCreateItem()">Create</button>
                 </td>
               </tr>
-<!--
-              <tr class="toolItemRow" [hidden]="creationMode!=='poi'">
-                <td colspan="2" class="toolItemLabel">
-                  <button [disabled]="requestSending||!targetVehicle" (click)="onDeleteSelectedVehiclePOI()" style="white-space: nowrap">Delete POI for target vehicle</button>
-                  <button [disabled]="requestSending" (click)="onDeleteAllPOI()" style="white-space: nowrap">Delete all</button>
-                </td>
-              </tr>
--->
             </tbody>
           </table>
         </div>  

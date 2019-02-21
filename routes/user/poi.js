@@ -65,7 +65,7 @@ router.get("/poi", authenticate, function(req, res){
 		if (result.features.length > 0)
 			return res.send(convertPOI(result.features[0]));
 		else
-			return res.send();
+			return res.send({});
 	}).catch(function(error) {
 		handleError(res, error);
 	})
@@ -85,10 +85,10 @@ router.post("/poi", authenticate, function(req, res){
 	});
 });
 
-router["delete"]("/poi", authenticate, function(req, res){
+router.delete("/poi", authenticate, function(req, res){
 	contextMapping.deletePoi({ "poi_id": req.query.poi_id })
 	.then(function(result) {
-		return res.send(result);
+		return res.send(result || {});
 	}).catch(function(error) {
 		handleError(res, error);
 	});
