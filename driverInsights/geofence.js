@@ -13,8 +13,8 @@ var _ = require("underscore");
 var Q = new require('q');
 var moment = require("moment");
 
-var dbClient = require('./../cloudantHelper.js');
 var ruleGenerator = require('./ruleGenerator.js');
+var dbClient = app_module_require('utils/cloudantHelper.js');
 const asset = app_module_require("cvi-node-lib").asset;
 var version = app_module_require('utils/version.js');
 
