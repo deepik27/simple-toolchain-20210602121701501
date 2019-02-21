@@ -16,6 +16,8 @@ const simulatedVehicle = require('./simulatedVehicle.js');
 const asset = app_module_require("cvi-node-lib").asset;
 const Queue = app_module_require('utils/queue.js');
 const vehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
+const driverBehavior = app_module_require('cvi-node-lib').driverBehavior;
+var version = app_module_require('utils/version.js');
 
 const debug = require('debug')('simulatorEngine');
 debug.log = console.log.bind(console);
@@ -24,6 +26,9 @@ const SIMLATOR_STATUS_OPEN = 'open';
 const SIMLATOR_STATUS_OPENING = 'opening';
 const SIMLATOR_STATUS_CLOSING = 'closing';
 const SIMLATOR_STATUS_CLOSE = 'close';
+
+const DATETIME_FORMAT = "YYYY-MM-DDTHH:mm:SS.SSSZ";
+const MODEL_MONTH = 6;
 
 /**
  * Simulator engine class tha manages vehicles per client.
@@ -138,10 +143,14 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 
 	// Create simulated vehicles
 	this.simulatedVehicles = {};
-	return Q.all(promises).then((result) => {
+	let deferred = Q.defer();
+	Q.all(promises).then((result) => {
+		let fromtime = moment().format(DATETIME_FORMAT);
+		let totime = moment().subtract(MODEL_MONTH, "months").format(DATETIME_FORMAT);
 		let vehicles = {};
 		let vehicleIdArray = [];
-		_.each(result[0].data, (vehicle) => {
+
+		let models = _.map(result[0].data, (vehicle) => {
 			let v = vehicles[vehicle.mo_id] = new simulatedVehicle(vehicle, result[1], callback);
 			vehicleIdArray.push(vehicle.mo_id);
 
@@ -149,13 +158,25 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 			let loc = this._calcPosition([longitude, latitude], distance * Math.random(), 360 * Math.random());
 			console.log("simulated vehicle=" + vehicle.mo_id + ", lon=" + loc[0] + ", lat=" + loc[1]);
 			v.setCurrentPosition(loc[0], loc[1], 360 * Math.random());
+
+			// Generate MPP/DP model for trajectory pattern-based route search
+			return version.laterOrEqual("3.0") ? driverBehavior.generateMPPDPModel({mo_id: v.mo_id, from: fromtime, to: totime}) : Q();
 		});
-		this.simulatedVehicles = vehicles;
-		this.simulatedVehicleIdArray = vehicleIdArray;
-		this.state = SIMLATOR_STATUS_OPEN;
-		this.updateTime();
-		return this.getInformation();
+
+		return Q.all(models).catch(error => {
+			// Error occurs when no trip for specified vehicle was found
+//			console.error(JSON.stringify(error));
+		}).done((result) => {
+			this.simulatedVehicles = vehicles;
+			this.simulatedVehicleIdArray = vehicleIdArray;
+			this.state = SIMLATOR_STATUS_OPEN;
+			this.updateTime();
+			deferred.resolve(this.getInformation());
+		});
+	}).catch((error) => {
+		deferred.reject(error);
 	});
+	return deferred.promise;
 };
 
 /**
