@@ -313,10 +313,14 @@ routeGenerator.prototype._findRouteBetweenPoints = function (retryCount, start, 
 	Q.when(contextMapping.routeSearch(params), function (data) {
 		var routeArray = [];
 		data.link_shapes.forEach(function (shapes) {
-			shapes.shape.forEach(function (shape) {
-				if (shape)
-					routeArray.push(shape);
-			});
+			if (!shapes.shape)
+				return;
+			if (routeArray.length > 0) {
+				// The last point in the previous shape and the first point in the next shape represent the same point.
+				// Therefore, remove the last point in the previous shape before adding new shape.
+				routeArray.pop();
+			}
+			routeArray = routeArray.concat(shapes.shape);
 		});
 		if (routeArray.length >= 2) {
 			deferred.resolve({ id: searchId, route: routeArray });
