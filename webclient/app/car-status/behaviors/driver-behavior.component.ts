@@ -558,7 +558,7 @@ export class DriverBehaviorComponent implements OnInit {
 					route.push(this.createRouteLine(detail.route[i], detail.route[i+1], this.BEHAVIOR_DETAIL_STYLE));
 				}
 				return route;
-			}.bind(this)));
+			}));
 			this.behaviorLayer.getSource().addFeatures(features);
 	}
 
