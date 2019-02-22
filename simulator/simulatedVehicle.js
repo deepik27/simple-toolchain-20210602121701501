@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 IBM Corp. All Rights Reserved.
+ * Copyright 2017,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -210,7 +210,7 @@ simulatedVehicle.prototype.getVehicleInformation = function(properties) {
 	}
 	if (!properties || properties.length === 0 || _.contains(properties, "properties")) {
 		info.properties = {};
-		_.each(this.propProviders, function(p, key) {
+		_.each(this.propProviders, (p, key) => {
 			let prop = {};
 			if (!isNaN(p.minValue)) {
 				prop.minValue = p.minValue;
@@ -253,7 +253,7 @@ simulatedVehicle.prototype.getRouteData = function() {
 	let deferred = Q.defer();
 	if (this._getState() === VEHICLE_STATE_SEARCH) {
 		// Return later if route being searched
-		this._waitingForRoute.push({param: deferred, func: function(data, error, deferred) {
+		this._waitingForRoute.push({param: deferred, func: (data, error, deferred) => {
 			if (error)
 				deferred.reject(error);
 			else
@@ -283,9 +283,9 @@ simulatedVehicle.prototype.setDestination = function(longitude, latitude, headin
  * Set options for route search (e.g. avoid_events, route_loop)
  */
 simulatedVehicle.prototype.setRouteOptions = function(options, donotResetRoute) {
-	_.each(options, function(value, key) {
+	_.each(options, (value, key) => {
 		this.route.setOption(key, value);
-	}.bind(this));
+	});
 	return donotResetRoute ? Q() : this.updateRoute();
 };
 
@@ -301,7 +301,7 @@ simulatedVehicle.prototype.getetRouteOptions = function() {
  * this vehicle as fixed values.
  */
 simulatedVehicle.prototype.setProperties = function(properties) {
-	_.each(properties, function(value, key) {
+	_.each(properties, (value, key) => {
 		if (value === undefined) {
 			delete this.fixedProps[key];
 		} else {
@@ -310,7 +310,7 @@ simulatedVehicle.prototype.setProperties = function(properties) {
 				this.propProviders[key].updateValue(value);
 			}
 		}
-	}.bind(this));
+	});
 };
 
 /**
@@ -318,9 +318,9 @@ simulatedVehicle.prototype.setProperties = function(properties) {
  * these values are calculated automaticaly by corresponding prop simulators
  */
 simulatedVehicle.prototype.unsetProperties = function(properties) {
-	_.each(properties, function(key) {
+	_.each(properties, (key) => {
 		delete this.fixedProps[key];
-	}.bind(this));
+	});
 };
 
 /**

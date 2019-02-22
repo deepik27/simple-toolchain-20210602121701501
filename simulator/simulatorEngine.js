@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 IBM Corp. All Rights Reserved.
+ * Copyright 2017,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -118,21 +118,20 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 	};
 
 	// Set up callback method for events from each vehicle
-	const callback = (data) => {
-		let vehicleId = data.vehicleId;
+	const callback = (type, vehicleId, data) => {
 		let watchObject = this.watchMap[vehicleId];
 		let watchMethod = null;
-		if (watchObject && (!watchObject.properties || _.contains(watchObject.properties, data.type))) {
+		if (watchObject && (!watchObject.properties || _.contains(watchObject.properties, type))) {
 			watchMethod = watchObject.callback;
 		}
-		let handler = messageHandler[data.type];
+		let handler = messageHandler[type];
 		if (_.isFunction(handler)) {
-			if (handler.call(messageHandler, vehicleId, data.data, watchMethod)) {
+			if (handler.call(messageHandler, vehicleId, data, watchMethod)) {
 				return;
 			}
 		}
 		if (watchMethod) {
-			watchMethod.call(this, data);
+			watchMethod.call(this, {type: type, vehicleId, vehicleId, data: data});
 		}
 	};
 
@@ -156,13 +155,13 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 
 			// start listening events from the vehicle
 			v.listen().on('probe', (vid, probe, destination) => {
-				callback({vehicleId: vid, data: {probe: probe, desination: destination}, type: 'probe'});
+				callback('probe', vid, {probe: probe, desination: destination});
 			});
 			v.listen().on('route', (vid, route) => {
-				callback({vehicleId: vid, data: route, type: 'route'});
+				callback('route', vid, route);
 			});
 			v.listen().on('state', (vid, state) => {
-				callback({vehicleId: vid, data: state, type: 'state'});
+				callback('state', vid, state);
 			});
 
 			// Calculate location and heading randomly and set them to each vehicle
@@ -200,7 +199,7 @@ simulatorEngine.prototype.close = function (timeout) {
 		this.state = SIMLATOR_STATUS_CLOSE;
 		this.updateTime();
 		deferred.resolve(this.getInformation());
-	})["catch"](function (err) {
+	}).catch((err) => {
 		deferred.reject(err);
 	}).done(() => {
 		this.state = SIMLATOR_STATUS_CLOSE;
@@ -413,7 +412,7 @@ simulatorEngine.prototype.control = function (vehicleId, method, allowedWhenRunn
 					return { vehicleId: id, result: result };
 				});
 			}
-		}), function (p) { return !!p; });
+		}), (p) => { return !!p; });
 	}
 
 	return Q.all(promises).then((results) => {
