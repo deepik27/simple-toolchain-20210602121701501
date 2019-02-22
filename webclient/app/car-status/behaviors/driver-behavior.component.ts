@@ -70,6 +70,7 @@ export class DriverBehaviorComponent implements OnInit {
 	tripRouteHttpError: string;
 	behaviorHttpError: string;
 	popoverElemetId = 'carmonitorpop';
+	internationalUnit:boolean = false;
 
   constructor(private http: HttpClient, 
 						private route: ActivatedRoute, 
@@ -157,7 +158,7 @@ export class DriverBehaviorComponent implements OnInit {
 		this.mapItemHelpers["poi"] = new MapPOIHelper(this.map, this.mapPOILayer, this.poiService);
 
     // add helpers
-		this.mapHelper = new MapHelper(this.map, function(coordinate, feature, layer) {
+		this.mapHelper = new MapHelper(this.map, (coordinate, feature, layer) => {
       let item = feature.get("item");
       if (item) {
         let helper = this.mapItemHelpers[item.getItemType()];
@@ -166,7 +167,7 @@ export class DriverBehaviorComponent implements OnInit {
         }
       }
       return true;
-    }.bind(this));
+    });
 
     this.initPopup();
   }
@@ -193,13 +194,13 @@ export class DriverBehaviorComponent implements OnInit {
           content: content.content
         });
         if (pinned) {
-          pop.on('shown.bs.popover', function(){
+          pop.on('shown.bs.popover', () => {
             let c = $(elem).parent().find('.popover .close');
-            c && c.on('click', function(){
+            c && c.on('click', () => {
               closeCallback && closeCallback();
             });
             let r = $(elem).parent().find('.popover .remove');
-            r && r.on('click', function(e) {
+            r && r.on('click', (e) => {
               let helper = helpers[item.getItemType()];
               if (helper) {
                 helper.removeItemsFromView([item]);
@@ -242,7 +243,7 @@ export class DriverBehaviorComponent implements OnInit {
             if (props && props.length > 0) {
               let title = helper.getItemLabel() + " (" + item.getId() + ")";
               let details: string = "<table><tbody>";
-              props.forEach(function(prop) {
+              props.forEach((prop) => {
                 details += "<tr><th style='white-space: nowrap;text-align:right;'><span style='margin-right:10px;'>" + _.escape(prop.key.toUpperCase()) +
                                     ":</span></th><td>" + _.escape(prop.value) + "</td></tr>";
               });
@@ -291,6 +292,63 @@ export class DriverBehaviorComponent implements OnInit {
 		}
 	}
 
+	_convertFeature(tripFeature) {
+		let name = tripFeature.feature_name.split('_').join(' ');
+		let value = {value: tripFeature.feature_value, unit: ""};
+		let sortorder = 1000;
+
+		const _formatTime = (v) => {
+			let nVal = parseFloat(v);
+			if (nVal > 3600) {
+				return {value: (Math.ceil(nVal / 3600 * 100) / 100), unit: "hours"};
+			} else if (nVal > 60) {
+				return {value: (Math.ceil(nVal / 60 * 100) / 100), unit: "minutes"};
+			}
+			return {value: v, unit:"seconds"};
+		};
+		const _formatDistance = (v) => {
+			let nVal = parseFloat(v) / 1000 
+			if (!this.internationalUnit) nVal *= 0.6213711922;
+			return {value: (Math.ceil(nVal * 100) / 100), unit: this.internationalUnit ? "km" : "miles"};
+		};
+		const _formatSpeed = (v) => {
+			let nVal = parseFloat(v);
+			if (!this.internationalUnit) nVal *= 0.6213711922;
+			return {value: (Math.ceil(nVal * 10) / 10), unit: this.internationalUnit ? "km/h" : "mph"};
+		};
+		switch(tripFeature.feature_name) {
+			case "distance":
+				sortorder = 1;
+				value = _formatDistance(tripFeature.feature_value);
+				break;
+			case "average_speed":
+				sortorder = 2;
+				value = _formatSpeed(tripFeature.feature_value);
+				break;
+			case "max_speed":
+				sortorder = 3;
+				value = _formatSpeed(tripFeature.feature_value);
+				break;
+			case "time_span":
+				sortorder = 4;
+				value = _formatTime(tripFeature.feature_value);
+				break;
+			case "idle_time":
+				sortorder = 5;
+				value = _formatTime(tripFeature.feature_value);
+				break;
+				case "rush_hour_driving":
+				sortorder = 6;
+				value = _formatTime(tripFeature.feature_value);
+				break;
+			case "night_driving_time":
+				sortorder = 7;
+				value = _formatTime(tripFeature.feature_value);
+				break;
+		}
+		return {name: name, value: value.value, unit: value.unit, sortorder: sortorder}; 
+	}
+
 	_loadDriverBehavior(mo_id, trip_id) {
 		this.loading = true;
 		this.behaviors = [];
@@ -328,11 +386,11 @@ export class DriverBehaviorComponent implements OnInit {
 					});
 					detailList = detailList.filter(detail => {return probe.timestamp < 	detail.end_time;});
 				});
-				var byName = _.groupBy(behaviorDetails, function(d){ return d.behavior_name; });
+				var byName = _.groupBy(behaviorDetails, (d) => { return d.behavior_name; });
 
-				this.behaviors = _.sortBy(_.pairs(byName).map(function(p){
+				this.behaviors = _.sortBy(_.pairs(byName).map((p) => {
 					return {name: p[0], details: p[1]};
-				}), function(behavior) {
+				}), (behavior) => {
 					return behavior.name;
 				});
 				this.selectedBehavior = this.behaviors[0];
@@ -343,12 +401,12 @@ export class DriverBehaviorComponent implements OnInit {
 					return; // no trip_features
 				}
 				var tripFeatures = [].concat(data.trip_features);
-				this.tripFeatures = _.sortBy(_.filter(tripFeatures.map(function(p){
-					return {name: p.feature_name, value: p.feature_value};
-				}), function(feature) {
-					return !_.contains(["month_of_year", "day_of_week", "day_of_month"], feature.name);
-				}), function(feature) {
-					return feature.name;
+				this.tripFeatures = _.sortBy(_.filter(tripFeatures, (feature) => {
+					return !_.contains(["month_of_year", "day_of_week", "day_of_month"], feature.feature_name);
+				}).map((p) => {
+					return this._convertFeature(p);
+				}), (feature) => {
+					return feature.sortorder;
 				});
 			}, error => {
 				if (error.status === 400) {
@@ -494,7 +552,7 @@ export class DriverBehaviorComponent implements OnInit {
 			this.behaviorLayer.getSource().clear();
 			if(!details) return;
 			
-			let features:any = _.flatten([].concat(details.details).map(function(detail){
+			let features:any = _.flatten([].concat(details.details).map((detail) => {
 				let route = [];
 				for(let i=0; i<detail.route.length-1; i++){
 					route.push(this.createRouteLine(detail.route[i], detail.route[i+1], this.BEHAVIOR_DETAIL_STYLE));
