@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VehicleActionRule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.ibm.com/mobility/rule/VehicleActionRule.xsd">
+  <RuleID>{alert_rule_id}</RuleID>
+  <RuleType>{alert_rule_id}</RuleType>
+  <Condition>
+  	<ValueCondition>
+  		<Attribute object="Vehicle">[CarProbe.fuel@double/Vehicle.FUELTANK@double]</Attribute>
+  		<Operator>GT</Operator>
+			<Value>0.1</Value>
+  	</ValueCondition>
+		<ValueCondition>
+  		<Attribute object="Vehicle">[CarProbe.fuel@double/Vehicle.FUELTANK@double]</Attribute>
+  		<Operator>LE</Operator>
+			<Value>0.2</Value>
+  	</ValueCondition>
+  </Condition>
+  <Action>
+  	<VehicleAction>
+  		<Message>Check fuel!</Message>
+  		<Parameter><Key>mo_id</Key><Value>CarProbe.Vehicle_id_ext</Value></Parameter>
+			<Parameter><Key>message_type</Key><Value>check_fuel</Value></Parameter>
+			<Parameter><Key>source_id</Key><Value>check_fuel</Value></Parameter>
+			<Parameter><Key>longitude</Key><Value>CarProbe.Longitude</Value></Parameter>
+			<Parameter><Key>latitude</Key><Value>CarProbe.Latitude</Value></Parameter>
+			<Parameter><Key>severity</Key><Value>Medium</Value></Parameter>
+			<Parameter><Key>timestamp</Key><Value>CarProbe.timestamp</Value></Parameter>
+			<Parameter><Key>ts</Key><Value>CarProbe.ts</Value></Parameter>
+  	</VehicleAction>
+  </Action>
+</VehicleActionRule>
