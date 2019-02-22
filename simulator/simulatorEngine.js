@@ -151,8 +151,19 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 		let vehicleIdArray = [];
 
 		let models = _.map(result[0].data, (vehicle) => {
-			let v = vehicles[vehicle.mo_id] = new simulatedVehicle(vehicle, result[1], callback);
+			let v = vehicles[vehicle.mo_id] = new simulatedVehicle(vehicle, result[1]);
 			vehicleIdArray.push(vehicle.mo_id);
+
+			// start listening events from the vehicle
+			v.listen().on('probe', (vid, probe, destination) => {
+				callback({vehicleId: vid, data: {probe: probe, desination: destination}, type: 'probe'});
+			});
+			v.listen().on('route', (vid, route) => {
+				callback({vehicleId: vid, data: route, type: 'route'});
+			});
+			v.listen().on('state', (vid, state) => {
+				callback({vehicleId: vid, data: state, type: 'state'});
+			});
 
 			// Calculate location and heading randomly and set them to each vehicle
 			let loc = this._calcPosition([longitude, latitude], distance * Math.random(), 360 * Math.random());

@@ -8,21 +8,22 @@
  * You may not use this file except in compliance with the license.
  */
 
-var Q = require('q');
-var _ = require('underscore');
-var fs = require('fs');
-var moment = require("moment");
-var Chance = require('chance');
-var routeGenerator = require('./routeGenerator.js');
+const Q = require('q');
+const _ = require('underscore');
+const fs = require('fs');
+const moment = require("moment");
+const Chance = require('chance');
+const EventEmitter = require('events').EventEmitter;
+const routeGenerator = require('./routeGenerator.js');
 
-var debug = require('debug')('simulatedVehicle');
+const debug = require('debug')('simulatedVehicle');
 debug.log = console.log.bind(console);
 
 // Vehicle state
-var VEHICLE_STATE_STOP = 'stop';
-var VEHICLE_STATE_SEARCH = 'routing';
-var VEHICLE_STATE_IDLE = 'idling';
-var VEHICLE_STATE_DRIVE = 'driving';
+const VEHICLE_STATE_STOP = 'stop';
+const VEHICLE_STATE_SEARCH = 'routing';
+const VEHICLE_STATE_IDLE = 'idling';
+const VEHICLE_STATE_DRIVE = 'driving';
 
 /**
  * Constructor
@@ -31,22 +32,26 @@ var VEHICLE_STATE_DRIVE = 'driving';
  * @param driver driver assigned to this vehicle
  * @param callback callback method to get information (e.g. probe, route) from this simulated vehicle
  */
-function simulatedVehicle(vehicle, driver, callback) {
+function simulatedVehicle(vehicle, driver) {
 	this.vehicle = vehicle;
 	this.driver = driver;
 	this._waitingForRoute = [];
 
-	var mo_id = vehicle.mo_id;
+	let mo_id = vehicle.mo_id;
 	if(vehicle.siteid){
 		mo_id = vehicle.siteid + ":" + mo_id;
 	}
-	var driver_id = driver ? driver.driver_id : null;
+	let driver_id = driver ? driver.driver_id : null;
 	this.route = new routeGenerator(mo_id, driver_id);
 
 	this.loadProperties();
-	this.setupCallback(callback);
+	this.eventEmitter = new EventEmitter();
+	this.setupCallback();
 }
 
+simulatedVehicle.prototype.listen = function() {
+	return this.eventEmitter;
+};
 /**
  * Start running
  */
@@ -81,7 +86,7 @@ simulatedVehicle.prototype.stop = function(parameters) {
 		}
 		return Q.reject("vehicle is not running. mo_id=" + this.vehicle.mo_id);
 	}
-	var trip_id = this.trip_id;
+	let trip_id = this.trip_id;
 	this.route.stop();
 	delete this.trip_id;
 	console.log("vehicle is stopped. mo_id=" + this.vehicle.mo_id);
@@ -91,70 +96,55 @@ simulatedVehicle.prototype.stop = function(parameters) {
 /**
  * Set up callback to give information to client
  */
-simulatedVehicle.prototype.setupCallback = function(callback) {
-	if (!_.isFunction(callback)) {
-		this.route.listen(null);
-		console.warn("callback is not specified. mo_id=" + this.vehicle.mo_id);
-		return;
-	}
-
-	var vehicleId = this.vehicle.mo_id;
-	var mo_id = this.vehicle.mo_id;
+simulatedVehicle.prototype.setupCallback = function() {
+	let vehicleId = this.vehicle.mo_id;
+	let mo_id = this.vehicle.mo_id;
 	if(this.vehicle.siteid){
 		mo_id = this.vehicle.siteid + ":" + mo_id;
 	}
-	var driver_id = this.driver ? this.driver.driver_id : null;
-	var self = this;
-	var handlers = {
-		position: function(data, error) {
-			var ts = Date.now();
-			var probe = {
-					ts: ts,
-					timestamp: moment(ts).format('YYYY-MM-DDTHH:mm:ss.SSSZ'), // ISO8601
-					trip_id: self.trip_id,
-					speed: data.speed || 0,
-					mo_id: mo_id,
-					driver_id: driver_id,
-					longitude: data.longitude,
-					latitude: data.latitude,
-					heading: data.heading || 0
-			};
-			if(self.prevProps) {
-				var props = _.clone(self.prevProps);
-				_.each(props, function(value, key) {
-					if (self.fixedProps[key] === undefined) {
-						if (self.propProviders[key] !== undefined) {
-							props[key] = self.propProviders[key].updateValue(props[key]);
-						}
-					} else {
-						props[key] = self.fixedProps[key];
-					}
-				});
-				self.prevProps = probe.props = props;
-			}
-			callback({vehicleId: vehicleId, data: {probe: probe, destination: data.destination}, type: 'probe'});
-			return true;
-		},
-		route: function(data, error) {
-			var list = this._waitingForRoute;
-			this._waitingForRoute = [];
-			
-			_.each(list, function(obj) {
-				obj.func.call(this, data.route, error, obj.param);
-			}.bind(this));
-		},
-		state: function(data, error) {
-			callback({vehicleId: vehicleId, data: self._getState(), type: 'state'});
-			return true;
-		}
-	};
+	let driver_id = this.driver ? this.driver.driver_id : null;
 
-	this.route.listen(function(data) {
-		var handler = handlers[data.type];
-		if (!_.isFunction(handler) || !handler.call(self, data.data, data.error)) {
-			data.vehicleId = vehicleId;
-			callback(data);
+	this.route.listen().on('position', (data, error) => {
+		let ts = Date.now();
+		let probe = {
+				ts: ts,
+				timestamp: moment(ts).format('YYYY-MM-DDTHH:mm:ss.SSSZ'), // ISO8601
+				trip_id: this.trip_id,
+				speed: data.speed || 0,
+				mo_id: mo_id,
+				driver_id: driver_id,
+				longitude: data.longitude,
+				latitude: data.latitude,
+				heading: data.heading || 0
+		};
+		if(this.prevProps) {
+			let props = _.clone(this.prevProps);
+			_.each(props, (value, key) => {
+				if (this.fixedProps[key] === undefined) {
+					if (this.propProviders[key] !== undefined) {
+						props[key] = this.propProviders[key].updateValue(props[key]);
+					}
+				} else {
+					props[key] = this.fixedProps[key];
+				}
+			});
+			this.prevProps = probe.props = props;
 		}
+		this.eventEmitter.emit('probe', vehicleId, probe, data.destination);
+	});
+
+	this.route.listen().on('route', (data, error) => {
+		let list = this._waitingForRoute;
+		this._waitingForRoute = [];
+		
+		_.each(list, (obj) => {
+			obj.func.call(this, data.route, error, obj.param);
+		});
+		this.eventEmitter.emit('route', vehicleId, data);
+	});
+
+	this.route.listen().on('state', (data, error) => {
+		this.eventEmitter.emit('state', vehicleId, this._getState());
 	});
 };
 
@@ -167,20 +157,19 @@ simulatedVehicle.prototype.loadProperties = function() {
 	this.propProviders = {};
 
 	// load properties
-	var self = this;
-	var folder = __dirname + '/props';
-	fs.readdir(folder, function(err, files) {
+	let folder = __dirname + '/props';
+	fs.readdir(folder, (err, files) => {
 	    if (err) {
 	    	return;
 	    }
-	    _.each(_.filter(files, function(file) {
-	    	var filepath = folder + '/' + file;
+	    _.each(_.filter(files, (file) => {
+	    	let filepath = folder + '/' + file;
 	    	if (fs.statSync(filepath).isFile() && /.*\.js$/.test(file)) {
-	    		var prop = require(filepath);
-	    		var p = new prop();
-	    		var name = _.isFunction(p.getName) ? p.getName() : file.substring(0, file.lastIndexOf('.js'));
-	    		self.propProviders[name] = p;
-	    		self.prevProps[name] = p.getValue();
+	    		let prop = require(filepath);
+	    		let p = new prop();
+	    		let name = _.isFunction(p.getName) ? p.getName() : file.substring(0, file.lastIndexOf('.js'));
+	    		this.propProviders[name] = p;
+	    		this.prevProps[name] = p.getValue();
 	    	}
 	    }));
 	});
@@ -197,7 +186,7 @@ simulatedVehicle.prototype.loadProperties = function() {
  * properties: properties to be added to car probe
  */
 simulatedVehicle.prototype.getVehicleInformation = function(properties) {
-	var info = {};
+	let info = {};
 	if (!properties || properties.length === 0 || _.contains(properties, "vehicleId")) {
 		info.vehicleId = this.vehicle.mo_id;
 	}
@@ -222,7 +211,7 @@ simulatedVehicle.prototype.getVehicleInformation = function(properties) {
 	if (!properties || properties.length === 0 || _.contains(properties, "properties")) {
 		info.properties = {};
 		_.each(this.propProviders, function(p, key) {
-			var prop = {};
+			let prop = {};
 			if (!isNaN(p.minValue)) {
 				prop.minValue = p.minValue;
 			}
@@ -261,7 +250,7 @@ simulatedVehicle.prototype.updateRoute = function(keepAnchors) {
  * Update route according to route search options
  */
 simulatedVehicle.prototype.getRouteData = function() {
-	var deferred = Q.defer();
+	let deferred = Q.defer();
 	if (this._getState() === VEHICLE_STATE_SEARCH) {
 		// Return later if route being searched
 		this._waitingForRoute.push({param: deferred, func: function(data, error, deferred) {
