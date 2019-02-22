@@ -45,7 +45,16 @@ router.get('/analysis/behaviors/:mo_id', authenticate, function(req, res) {
 });
 
 router.get("/analysis/triproutes/:mo_id", function(req, res) {
-	driverInsightsAnalysis.getTripRoute(req.params.mo_id, req.query.trip_id, req.query.lastHours)
+	driverInsightsAnalysis.getTripRoute(req.params.mo_id, req.query.trip_id, req.query.offset, req.query.limit)
+	.then(function(result) {
+		return res.send(result);
+	}).catch(function(error) {
+		handleError(res, error);
+	})
+});
+
+router.get("/analysis/triplength/:mo_id", function(req, res) {
+	driverInsightsAnalysis.getTripRouteLength(req.params.mo_id, req.query.trip_id)
 	.then(function(result) {
 		return res.send(result);
 	}).catch(function(error) {

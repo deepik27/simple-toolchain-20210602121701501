@@ -24,6 +24,8 @@ import { POIService } from '../../shared/iota-poi.service';
 import { DriverBehaviorService } from '../../shared/iota-driver-behavior.service';
 import { LocationService, MapArea } from '../../shared/location.service';
 import { AlertService } from '../../shared/alert.service';
+import { _resolveDefaultAnimationDriver } from '@angular/platform-browser/src/browser';
+import { resolve6 } from 'dns';
 
 declare var $; // jQuery from <script> tag in the index.html
 // as bootstrap type definitoin doesn't extend jQuery $'s type definition
@@ -349,22 +351,90 @@ export class DriverBehaviorComponent implements OnInit {
 		return {name: name, value: value.value, unit: value.unit, sortorder: sortorder}; 
 	}
 
+	_loadTriopDetails(mo_id, trip_id) {	
+		return new Promise((resolve, reject) => {
+			let allPromises = [];
+
+			// Get entire trip route
+			allPromises.push(new Promise((resolve2, reject2) => {
+				const MAX_LENGTH = 1000;
+				this.driverBehaviorService.getCarProbeHistoryCount(mo_id, trip_id).subscribe(data => {
+					let promises = [];
+					let offset = 0;
+					while (offset < data.count) {
+						promises.push(new Promise((resolve3, reject3) => {
+							this.driverBehaviorService.getCarProbeHistory(mo_id, trip_id, offset, MAX_LENGTH).subscribe(data => {
+								resolve3(data);
+							}, error => {
+								reject3(error);
+							});
+						})); 
+						offset += MAX_LENGTH;
+					}
+	
+					Promise.all(promises).then((trips) => {
+						let tripRoute = [];
+						trips.forEach((trip) => {
+							tripRoute = tripRoute.concat(trip);
+						});
+						resolve2(tripRoute);
+					});
+				}, error => {
+					reject2(error);
+				});
+			}));
+	
+			// Get Driving Behavior
+			allPromises.push(new Promise((resolve2, reject2) => {
+				this.driverBehaviorService.getDrivingBehavior(mo_id, trip_id).subscribe(data => {
+					resolve2(data);
+				}, error => {
+					reject2(error);
+				});
+			}));
+	
+			// Wait for trip and behaviors are retrieved
+			Promise.all(allPromises).then((data) => {
+				resolve({trip: data[0], behavior: data[1]});
+			}).catch(error => {
+				reject(error);
+			});
+		});	
+	}
+
 	_loadDriverBehavior(mo_id, trip_id) {
 		this.loading = true;
 		this.behaviors = [];
 		this.tripFeatures = [];
-		this.driverBehaviorService.getCarProbeHistory(mo_id, trip_id).subscribe(data => {
+
+		// Load entire trip route and behaviors on the route
+		this._loadTriopDetails(mo_id, trip_id).then(data => {
+			let trip = (<any>data).trip;
+			let behavior = (<any>data).behavior;
+
+			// Draw entire trip route path on the map
 			try {
-				this.updateTripRoute(data);
+				this.updateTripRoute(trip);
 			} finally {
 				this.loading = false;
 			}
-			this.driverBehaviorService.getDrivingBehavior(mo_id, trip_id).subscribe(data => {
-				if (!data || !data.ctx_sub_trips) {
-					return; // no content
-				}
-				var subTrips = [].concat(data.ctx_sub_trips);
-				var behaviorDetails = _.flatten(_.pluck(subTrips, 'driving_behavior_details'));
+
+			// Show trip features on the table
+			if (behavior.trip_features) {
+				let tripFeatures = behavior.trip_features;
+				this.tripFeatures = _.sortBy(_.filter(tripFeatures, (feature) => {
+					return !_.contains(["month_of_year", "day_of_week", "day_of_month"], (<any>feature).feature_name);
+				}).map((p) => {
+					return this._convertFeature(p);
+				}), (feature) => {
+					return feature.sortorder;
+				});
+			}
+
+			// Show behaviors on the table
+			if (behavior.ctx_sub_trips) {
+				let subTrips = behavior.ctx_sub_trips;
+				let behaviorDetails = _.flatten(_.pluck(subTrips, 'driving_behavior_details'));
 				behaviorDetails = behaviorDetails.sort((a, b) => {return a.start_time - b.start_time;});
 				let detailIndex = 0;
 				let detailList = [];
@@ -386,8 +456,8 @@ export class DriverBehaviorComponent implements OnInit {
 					});
 					detailList = detailList.filter(detail => {return probe.timestamp < 	detail.end_time;});
 				});
-				var byName = _.groupBy(behaviorDetails, (d) => { return d.behavior_name; });
-
+				let byName = _.groupBy(behaviorDetails, (d) => { return d.behavior_name; });
+	
 				this.behaviors = _.sortBy(_.pairs(byName).map((p) => {
 					return {name: p[0], details: p[1]};
 				}), (behavior) => {
@@ -395,31 +465,13 @@ export class DriverBehaviorComponent implements OnInit {
 				});
 				this.selectedBehavior = this.behaviors[0];
 				this.setSelectedBehavior(this.selectedBehavior);
-				
-				// features
-				if (!data.trip_features) {
-					return; // no trip_features
-				}
-				var tripFeatures = [].concat(data.trip_features);
-				this.tripFeatures = _.sortBy(_.filter(tripFeatures, (feature) => {
-					return !_.contains(["month_of_year", "day_of_week", "day_of_month"], feature.feature_name);
-				}).map((p) => {
-					return this._convertFeature(p);
-				}), (feature) => {
-					return feature.sortorder;
-				});
-			}, error => {
-				if (error.status === 400) {
-					// The trajectory may be too short to analyze. 
-				} else {
-					this.behaviorHttpError = error.message || error._body || error;
-				}
-			});
-
+			}
+			
+			// Set alerts on the table
 			let from = this.trip[0].timestamp;
 			let to = this.trip[this.trip.length-1].timestamp;
 			this.alertService.getAlert({from: from, to: to, mo_id: mo_id, includeClosed: true, limit: 200}).subscribe(data => {
-				var alerts = data.alerts;
+				let alerts = data.alerts;
 				alerts.sort((a, b) => {return a.ts - b.ts;});
 				let alertIndex = 0;
 				let alertList = [];
@@ -441,7 +493,7 @@ export class DriverBehaviorComponent implements OnInit {
 					});
 					alertList = alertList.filter(alert => {return alert.closed_ts < 0 || probe.timestamp < alert.closed_ts;});
 				});
-				var byType = _.groupBy(alerts, "description");
+				let byType = _.groupBy(alerts, "description");
 				this.alerts = _.sortBy(_.pairs(byType).map(p => {
 					let type;
 					if(p[1][0].type === "geofence"){
@@ -454,7 +506,7 @@ export class DriverBehaviorComponent implements OnInit {
 					return {name: p[0], type: type, details: p[1]};
 				}), "type");
 			});
-		}, error => {
+		}).catch(error => {
 			this.loading = false;
 			this.tripRouteHttpError = error.message || error._body || error;
 		});

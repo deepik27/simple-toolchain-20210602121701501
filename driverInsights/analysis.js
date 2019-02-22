@@ -46,12 +46,13 @@ _.extend(driverInsightsAnalysis, {
 		return driverBehavior.requestOnlineJobPerTrip(params);
 	},
 
-	getTripRoute: function (mo_id, trip_id, lastHours) {
-		var params = { mo_id: mo_id, trip_id: trip_id, filter: "B:timestamp,B:latitude,B:longitude,B:matched_latitude,B:matched_longitude" };
-		if (lastHours > 0) {
-			params.from = moment().subtract(1, 'hours').toISOString();
-			params.to = moment().toISOString();
-		}
+	getTripRoute: function (mo_id, trip_id, offset, limit) {
+		var params = { mo_id: mo_id, trip_id: trip_id, offset: offset, limit: limit, filter: "B:timestamp,B:latitude,B:longitude,B:matched_latitude,B:matched_longitude" };
 		return driverBehavior.getTripCarProbe(params);
+	},
+
+	getTripRouteLength: function (mo_id, trip_id) {
+		var params = { mo_id: mo_id, trip_id: trip_id};
+		return driverBehavior.getTripCarProbeCount(params);
 	}
 });
