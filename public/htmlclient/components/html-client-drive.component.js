@@ -119,7 +119,7 @@
 						let vehicle = simulatedVehicle.getVehicle();
 						let tank = vehicle.properties && vehicle.properties.fueltank;
 						if (tank) {
-							$scope.rules[1].label = "Fuel (Troubled if smaller than " + tank / 2 + ", Critical if smaller than " + tank / 10 + ")";
+							$scope.rules[1].label = "Fuel (Troubled if smaller than " + tank / 5 + ", Critical if smaller than " + tank / 10 + ")";
 						}
 						postStatusMessage();
 					},
