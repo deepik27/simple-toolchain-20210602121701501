@@ -11,7 +11,7 @@
 		<ValueCondition>
   		<Attribute object="Vehicle">[CarProbe.fuel@double/Vehicle.FUELTANK@double]</Attribute>
   		<Operator>LE</Operator>
-			<Value>0.5</Value>
+			<Value>0.2</Value>
   	</ValueCondition>
   </Condition>
   <Action>
