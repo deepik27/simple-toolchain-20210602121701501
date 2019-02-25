@@ -190,7 +190,7 @@ class DeviceManager {
 				const deviceInfo = vehicle.serial_number ? { "serialNumber": vehicle.serial_number } : {};
 				device = await iotfAppClient.registerDevice(VENDOR_NAME, vehicle.mo_id, null, deviceInfo);
 			}
-			return this._extractAccessInfo(Object.assign(device, vehicle));
+			return this._extractAccessInfo(Object.assign(device || {}, vehicle));
 		}
 		return Promise.reject({ "statusCode": 404, "message": `Vehicle with TCU_ID=${tcuId} is not found.` });
 	}
