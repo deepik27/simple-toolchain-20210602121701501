@@ -17,7 +17,7 @@ var path = require('path');
 var _ = require('underscore');
 var qr = require('qr-image');
 
-var router = module.exports.router = require('express').Router();
+var router = module.exports = require('express').Router();
 var basicAuth = require('basic-auth');
 var appEnv = require("cfenv").getAppEnv();
 
@@ -68,7 +68,6 @@ router.get('/qr/getPlatformCredentials', /*authenticate,*/ function (req, res) {
 	img.pipe(res);
 });
 
-module.exports.router = router;
 module.exports.authenticate = authenticate; // export the authentication router
 module.exports.eula = eula; // export the eula middleware
 
