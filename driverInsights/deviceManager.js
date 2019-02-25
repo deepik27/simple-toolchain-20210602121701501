@@ -44,7 +44,7 @@ class DeviceManager {
 		let vendor = await cviAsset.getVendor(VENDOR_NAME).catch(async error => {
 			if (error.statusCode === 404) {
 				return await cviAsset.addVendor({
-					"vendor": VENDOR_NAME,
+					"vendor": chance.hash({ length: 12 }),
 					"type": "Vendor",
 					"status": "Active",
 					"description": VENDOR_NAME
