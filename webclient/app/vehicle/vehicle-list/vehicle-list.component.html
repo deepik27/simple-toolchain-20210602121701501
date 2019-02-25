@@ -13,6 +13,7 @@
 			</select>
 			<span> vehicles per page</span>
 		</span>
+		<span class="showID"><input type="checkbox" [(ngModel)]="showMoId">Show vehicle ID</span>
 		<span id="controlButtons">
 			<button (click)="selected_mo_id=null;onShowPrev()" [disabled]="requestSending||pageNumber<2">&lt;Prev</button>
 			<button (click)="selected_mo_id=null;onShowNext()" [disabled]="requestSending||!hasNext">Next&gt;</button>
@@ -24,7 +25,7 @@
 			<tr>
 				<th class="firstRow">#</th>
 				<th>
-					<span class="sortable" (click)="onOrderBy('__id')">ID</span>
+					<span class="sortable" (click)="onOrderBy(showMoId?'mo_id':'__id')">{{showMoId?'Vehicle ID':'Serial#'}}</span>
 					<span [ngClass]="orderByKey==='__id'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 				</th>
 				<th>
@@ -44,10 +45,8 @@
 		</thead>
 		<tbody>
 			<tr *ngFor="let vehicle of (vehicles|orderBy:orderByKey:!ascendingOrder); let i = index">
-				<td class="firstRow dataTableCel">
-					<span title="mo_id:{{vehicle.mo_id}}">{{numRecInPage * (pageNumber - 1) + i + 1}}</span>
-				</td>
-				<td class="dataTableCel">{{vehicle.__id||'-'}}</td>
+				<td class="firstRow dataTableCel">{{numRecInPage * (pageNumber - 1) + i + 1}}</td>
+				<td class="dataTableCel"><span title="{{showMoId?vehicle.__id:vehicle.__mo_id}}">{{(showMoId?vehicle.mo_id:vehicle.__id)||'-'}}</span></td>
 				<td class="dataTableCel">{{vehicle.__vendorname||'-'}}</td>
 				<td class="dataTableCel">{{vehicle.model||'-'}}</td>
 				<td class="dataTableCel">

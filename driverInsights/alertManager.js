@@ -12,7 +12,7 @@ var alertManager = module.exports = {};
 var _ = require("underscore");
 var Q = require("q");
 var moment = require("moment");
-var dbClient = require('./../cloudantHelper.js');
+var dbClient = app_module_require('utils/cloudantHelper.js');
 const vehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
 
 var debug = require('debug')('alertmanager');

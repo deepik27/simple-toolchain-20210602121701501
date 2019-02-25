@@ -59,8 +59,10 @@ export class POIService {
     });
   }
 
-  public uploadPOIFile(file) {
+  public uploadPOIFile(file, mo_id, serialnumber) {
     let formData: FormData = new FormData();
+    formData.append("mo_id", mo_id);
+    formData.append("serialnumber", serialnumber);
     formData.append("file", file, file.name);
     let headers = new Headers();
     headers.set("Accept", "application/json");

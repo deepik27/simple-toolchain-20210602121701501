@@ -54,8 +54,20 @@ export class DriverBehaviorService {
     });
   }
 
-  public getCarProbeHistory(vehicleId, tripId): Observable<any> {
+  public getCarProbeHistory(vehicleId, tripId, offset, limit): Observable<any> {
     let url = "/user/analysis/triproutes/" + vehicleId + "?trip_id=" + tripId;
+    if (!isNaN(offset)) url += "&offset=" + offset;
+    if (!isNaN(limit)) url += "&limit=" + limit;
+    console.log("get car probe history: " + url);
+
+    return this.http.get(url).map(data => {
+      let resJson = data.json();
+      return resJson;
+    });
+  }
+
+  public getCarProbeHistoryCount(vehicleId, tripId): Observable<any> {
+    let url = "/user/analysis/triplength/" + vehicleId + "?trip_id=" + tripId;
     console.log("get car probe history: " + url);
 
     return this.http.get(url).map(data => {

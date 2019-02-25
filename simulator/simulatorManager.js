@@ -8,20 +8,20 @@
  * You may not use this file except in compliance with the license.
  */
 
-var simulatorManager = module.exports = {};
+const simulatorManager = module.exports = {};
 
-var Q = require('q');
-var _ = require('underscore');
-var appEnv = require("cfenv").getAppEnv();
-var WebSocketServer = require('ws').Server;
-var simulatorEngine = require('./simulatorEngine.js');
+const Q = require('q');
+const _ = require('underscore');
+const appEnv = require("cfenv").getAppEnv();
+const WebSocketServer = require('ws').Server;
+const simulatorEngine = require('./simulatorEngine.js');
 	
-var debug = require('debug')('simulatedVehicleManager');
+const debug = require('debug')('simulatedVehicleManager');
 debug.log = console.log.bind(console);
 
-var DEFAULT_CLIENT_ID = 'default_simulator';
-var DEFAULT_NUM_VEHICLES = (process.env.DEFAULT_SIMULATOR_VEHICLES && parseInt(process.env.DEFAULT_SIMULATOR_VEHICLES)) || 5;
-var DEFAULT_TIMEOUT = (process.env.DEFAULT_SIMULATOR_TIMEOUT && parseInt(process.env.DEFAULT_SIMULATOR_TIMEOUT)) || 10;
+const DEFAULT_CLIENT_ID = 'default_simulator';
+const DEFAULT_NUM_VEHICLES = (process.env.DEFAULT_SIMULATOR_VEHICLES && parseInt(process.env.DEFAULT_SIMULATOR_VEHICLES)) || 5;
+const DEFAULT_TIMEOUT = (process.env.DEFAULT_SIMULATOR_TIMEOUT && parseInt(process.env.DEFAULT_SIMULATOR_TIMEOUT)) || 10;
 
 /*
  * Manage simulator engines per client
@@ -47,7 +47,7 @@ _.extend(simulatorManager, {
 		if (numVehicles < 1) numVehicles = 5;
 		simulatorInfoMap = this.simulatorInfoMap;
 		clientId = clientId || DEFAULT_CLIENT_ID;
-		var simulatorInfo = simulatorInfoMap[clientId];
+		let simulatorInfo = simulatorInfoMap[clientId];
 		if (simulatorInfo && simulatorInfo.simulator && simulatorInfo.simulator.isValid()) {
 			if (noErrorOnExist) {
 				simulatorInfo.simulator.setTimeout(timeoutInMinutes);
@@ -57,9 +57,9 @@ _.extend(simulatorManager, {
 			return Q.reject({statusCode: 400, message: "simulator already exist."});
 		}
 
-		var excludes = [];
-		var invalidSimulatorKeys = [];
-		_.each(simulatorInfoMap, function(value, key) {
+		let excludes = [];
+		let invalidSimulatorKeys = [];
+		_.each(simulatorInfoMap, (value, key) => {
 			if (value.simulator.isValid()) {
 				excludes = _.union(excludes, _.pluck(value.simulator.getVehicleList(-1, 0, ['vehicleId']), 'vehicleId'));
 			}
@@ -68,20 +68,20 @@ _.extend(simulatorManager, {
 				invalidSimulatorKeys.push(key); 
 			}
 		});
-		_.each(invalidSimulatorKeys, function(key) {
+		_.each(invalidSimulatorKeys, (key) => {
 			delete simulatorInfoMap[key];
 		});
 
 		// create a simulator if not exist
-		var deferred = Q.defer();
+		let deferred = Q.defer();
 		simulator = new simulatorEngine(clientId, timeoutInMinutes);
 		simulatorInfoMap[clientId] = {clientId: clientId, simulator: simulator};
-		Q.when(simulator.open(numVehicles, excludes, longitude, latitude, distance), function(result) {
+		Q.when(simulator.open(numVehicles, excludes, longitude, latitude, distance), (result) => {
 			deferred.resolve(result);
-		})["catch"](function(err){
+		}).catch((err) => {
 			delete simulatorInfoMap[clientId];
 			deferred.reject(err);
-		}).done();		
+		});		
 		return deferred.promise;
 	},
 
@@ -92,7 +92,7 @@ _.extend(simulatorManager, {
 		clientId = clientId || DEFAULT_CLIENT_ID;
 
 		simulatorInfoMap = this.simulatorInfoMap;
-		var simulatorInfo = simulatorInfoMap[clientId];
+		let simulatorInfo = simulatorInfoMap[clientId];
 		if (!simulatorInfo) {
 			return Q.reject({statusCode: 404, message: "simulator does not exist."});
 		}
@@ -103,21 +103,15 @@ _.extend(simulatorManager, {
 			delete this.intervalHandle;
 		}
 		
-		var deferred = Q.defer();
-		Q.when(simulatorInfo.simulator.close(), function(result) {
-			deferred.resolve(result);
-		})["catch"](function(err){
-			deferred.reject(err);
-		}).done();
-		return deferred.promise;
+		return Q.when(simulatorInfo.simulator.close());
 	},
 
 	/**
 	 * Get list of simulator information
 	 */
 	getSimulatorList: function() {
-		var simulatorList = [];
-		_.each(this.simulatorInfoMap, function(simulatorInfo, key) {
+		let simulatorList = [];
+		_.each(this.simulatorInfoMap, (simulatorInfo, key) => {
 			simulatorList.push({clientId: key, simulatorInfo: simulatorInfo.simulator.getInformation()});
 		});
 		return simulatorList;
@@ -128,7 +122,7 @@ _.extend(simulatorManager, {
 	 */
 	getSimulator: function(clientId) {
 		clientId = clientId || DEFAULT_CLIENT_ID;
-		var simulatorInfo = this.simulatorInfoMap[clientId];
+		let simulatorInfo = this.simulatorInfoMap[clientId];
 		if (!simulatorInfo) {
 			return Q.reject({statusCode: 404, message: "simulator not found"});
 		}
@@ -149,27 +143,26 @@ _.extend(simulatorManager, {
 		this.wsServer = new WebSocketServer({
 			server: server,
 			path: path,
-			verifyClient : function (info, callback) { //only allow internal clients from the server origin
-				var isLocal = appEnv.url.toLowerCase().indexOf('://localhost') !== -1;
-				var allow = isLocal || (info.origin.toLowerCase() === appEnv.url.toLowerCase());
+			verifyClient : (info, callback) => { //only allow internal clients from the server origin
+				let isLocal = appEnv.url.toLowerCase().indexOf('://localhost') !== -1;
+				let allow = isLocal || (info.origin.toLowerCase() === appEnv.url.toLowerCase());
 				if(!allow){
 					console.error("rejected web socket connection form external origin " + info.origin + " only connection form internal origin " + appEnv.url + " are accepted");
 				}
 				if(!callback){
 					return allow;
 				}
-				var statusCode = (allow) ? 200 : 403;
+				let statusCode = (allow) ? 200 : 403;
 				callback (allow, statusCode);
 			}
 		});
 		
-		var self = this;
-		var sendClosedMessageToClient = function(clientId, message, json) {
+		const sendClosedMessageToClient = (clientId, message, json) => {
 			if (json) {
 				message = JSON.stringify(message);
 			}
 			try {
-				_.each(self.wsServer.clients, function(client) {
+				_.each(this.wsServer.clients, (client) => {
 					if (client.callbackOnClose && client.clientId === clientId) {
 						client.send(message);
 					}
@@ -179,17 +172,17 @@ _.extend(simulatorManager, {
 			}
 		};
 
-		var flushQueue = function() {
+		const flushQueue = () => {
 			try {
-				var clientsById = _.groupBy(self.wsServer.clients, "clientId");
-				_.each(clientsById, function(clients, clientId) {
-					var myMessageQueue = self.messageQueue[clientId];
+				let clientsById = _.groupBy(this.wsServer.clients, "clientId");
+				_.each(clientsById, (clients, clientId) => {
+					let myMessageQueue = this.messageQueue[clientId];
 					if (!myMessageQueue || _.isEmpty(myMessageQueue)) {
 						return;
 					}
-					self.messageQueue[clientId] = {};
-					_.each(clients, function(client) {
-						var vehicleMessage = myMessageQueue[client.vehicleId];
+					this.messageQueue[clientId] = {};
+					_.each(clients, (client) => {
+						let vehicleMessage = myMessageQueue[client.vehicleId];
 						if (!_.isEmpty(vehicleMessage)) {
 							client.send(JSON.stringify({data: vehicleMessage}));
 						}
@@ -200,8 +193,8 @@ _.extend(simulatorManager, {
 			}
 		};
 		
-		var sendMessageToClient = function(clientId, vehicleId, message, json) {
-			var myMessageQueue = self.messageQueue[clientId];
+		const sendMessageToClient = (clientId, vehicleId, message, json) => {
+			let myMessageQueue = this.messageQueue[clientId];
 			if (!myMessageQueue) {
 				return;
 			}
@@ -212,23 +205,23 @@ _.extend(simulatorManager, {
 			}
 		};
 
-		var callbackOnClose = function(clientId, timeout) {
+		const callbackOnClose = (clientId, timeout) => {
 			sendClosedMessageToClient(clientId, {type: 'closed', reason: timeout ? 'timeout' : 'normal'}, true);
-			if (self.simulatorInfoMap[clientId]) {
-				delete self.simulatorInfoMap[clientId];
+			if (this.simulatorInfoMap[clientId]) {
+				delete this.simulatorInfoMap[clientId];
 			}
 		};
 		
-		var watchMethod = function(client, enable) {
-			var clientId = client.clientId || DEFAULT_CLIENT_ID;
-			var vehicleId = client.vehicleId;
-			simulatorInfoMap = self.simulatorInfoMap;
-			var simulatorInfo = simulatorInfoMap[clientId];
+		const watchMethod = (client, enable) => {
+			let clientId = client.clientId || DEFAULT_CLIENT_ID;
+			let vehicleId = client.vehicleId;
+			simulatorInfoMap = this.simulatorInfoMap;
+			let simulatorInfo = simulatorInfoMap[clientId];
 			if (simulatorInfo) {
 				if (client.callbackOnClose) {
 					simulatorInfo.simulator.setCallbackOnClose(enable ? callbackOnClose : undefined);
 				} else {
-					simulatorInfo.simulator.watch(vehicleId, client.properties, enable ? function(data) { 
+					simulatorInfo.simulator.watch(vehicleId, client.properties, enable ? (data) => { 
 						if (data.error) {
 							console.error("error: " + JSON.stringify(data.error));
 						}
@@ -243,17 +236,17 @@ _.extend(simulatorManager, {
 		//
 		// Assign clientId and vehicleId to the client for each connection
 		//
-		this.wsServer.on('connection', function(client){
-			client.on('close', function () {
+		this.wsServer.on('connection', (client) => {
+			client.on('close', () => {
 				console.log("client is disconnected. id=" + client.clientId + ", vid=" + client.vehicleId);
 				watchMethod(client, false);
 		    });
-			client.on('message', function (message) {
+			client.on('message', (message) => {
 				try {
-					var messageObj = JSON.parse(message);
+					let messageObj = JSON.parse(message);
 					if (messageObj.type === 'heartbeat') {
-						simulatorInfoMap = self.simulatorInfoMap;
-						var simulatorInfo = simulatorInfoMap[messageObj.clientId];
+						simulatorInfoMap = this.simulatorInfoMap;
+						let simulatorInfo = simulatorInfoMap[messageObj.clientId];
 						if (simulatorInfo) {
 							simulatorInfo.simulator.updateTime(true);
 //							console.log("recieved heartbeat message. clientId = " + messageObj.clientId);
@@ -267,11 +260,11 @@ _.extend(simulatorManager, {
 		    });
 			
 			debug('got wss connectoin at: ' + client.upgradeReq.url);
-			var url = client.upgradeReq.url;
-			var qsIndex = url.indexOf('?');
+			let url = client.upgradeReq.url;
+			let qsIndex = url.indexOf('?');
 			if(qsIndex >= 0) {
-				_.each(url.substring(qsIndex + 1).split('&'), function(qs) {
-					var params = qs.split('=');
+				_.each(url.substring(qsIndex + 1).split('&'), (qs) => {
+					let params = qs.split('=');
 					if (params.length == 2) {
 						if(params[0] === 'clientId')
 							client.clientId = params[1];
@@ -283,14 +276,14 @@ _.extend(simulatorManager, {
 							client.callbackOnClose = params[1] === 'true';
 					}
 				});
-				if (client.clientId && !self.messageQueue[client.clientId]) {
-					self.messageQueue[client.clientId] = {};
+				if (client.clientId && !this.messageQueue[client.clientId]) {
+					this.messageQueue[client.clientId] = {};
 				}
 			}
 			watchMethod(client, true);
 
-			if (!self.intervalHandle) {
-				self.intervalHandle = setInterval(_.bind(flushQueue, self), 1000);
+			if (!this.intervalHandle) {
+				this.intervalHandle = setInterval(_.bind(flushQueue, this), 1000);
 			}
 		});
 	}

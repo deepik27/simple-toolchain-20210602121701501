@@ -65,7 +65,7 @@ router.get("/poi", authenticate, function(req, res){
 		if (result.features.length > 0)
 			return res.send(convertPOI(result.features[0]));
 		else
-			return res.send();
+			return res.send({});
 	}).catch(function(error) {
 		handleError(res, error);
 	})
@@ -85,10 +85,10 @@ router.post("/poi", authenticate, function(req, res){
 	});
 });
 
-router["delete"]("/poi", authenticate, function(req, res){
+router.delete("/poi", authenticate, function(req, res){
 	contextMapping.deletePoi({ "poi_id": req.query.poi_id })
 	.then(function(result) {
-		return res.send(result);
+		return res.send(result || {});
 	}).catch(function(error) {
 		handleError(res, error);
 	});
@@ -99,6 +99,8 @@ router.post("/poi/upload", upload.single('file'), function(req, res) {
 	var deleteIds = [];
 	var numEntries = 0;
 	var promises = [];
+	const mo_id = req.body.mo_id;
+	const serialnumber = req.body.serialnumber;
 	const flushFeatures = function() {
 		if (features.length == 0) {
 			return;
@@ -122,10 +124,12 @@ router.post("/poi/upload", upload.single('file'), function(req, res) {
 		}
 	}
 
-	// longitude, latitude, name, mo_id, serialnumber, id
+	/******************************************************
+	 csv line format: longitude,latitude,name,id-prefix
+	*******************************************************/
 	const callbabck = function(line, flush) {
 		// comment line
-		if (line.charAt(0) == "#") {
+		if (line.charAt(0) == "#" || line.length === 0) {
 			return;
 		}
 		const entries = line.split(",");
@@ -138,21 +142,19 @@ router.post("/poi/upload", upload.single('file'), function(req, res) {
 			return;
 		}
 
-		let id = entries.length > 5 ? entries[5] : null;
+		let id = entries.length > 3 ? entries[3] : null;
 		if (id) {
 			deleteIds.push(id);
 		} else {
 			id = chance.guid();
 		}
 		let properties = {};
-		if (entries.length > 4) {
-			properties.serialnumber = entries[4];
-		}
-		if (entries.length > 3) {
-			properties.mo_id = entries[3];
-		}
-		if (entries.length > 2) {
-			properties.name = entries[2];
+		if (entries.length > 2) properties.name = entries[2];
+		if (serialnumber) properties.serialnumber = serialnumber;
+		if (mo_id) {
+			properties.mo_id = mo_id;
+			let strs = mo_id.split(":");
+			id = id + "-" + strs[strs.length-1];
 		}
 		let feature = contextMapping._generateFeature(id, "Point", [longitude, latitude], properties);
 		features.push(feature);
@@ -175,7 +177,9 @@ router.post("/poi/upload", upload.single('file'), function(req, res) {
 		const stream = fs.createReadStream(req.file.path);
 		stream.on("data", function(data) {
 			previous += data;
-			previous.split('\n').forEach(function(line) {
+			let lines = previous.split('\n');
+			previous = lines.pop();
+			lines.forEach(function(line, index) {
 				callbabck(line.replace('\r', '').trim(), false);
 			});
 		});

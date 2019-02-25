@@ -121,13 +121,18 @@ export class ItemToolComponent implements OnInit {
     if (!event.target.files || event.target.files.length == 0) {
       return;
     }
+    let mo_id = this.targetVehicle ? this.targetVehicle.__mo_id : null;
+    let serialnumber = this.targetVehicle ? this.targetVehicle.serial_number : null;
+    let targetname = serialnumber || mo_id;
+
     this.inputPOIFile = null;
-    this.poiService.uploadPOIFile(event.target.files[0])
+    this.poiService.uploadPOIFile(event.target.files[0], mo_id, serialnumber)
     .subscribe((result: any) => {
       if (result.created > 0) {
-        alert("POIs were created.");
         let helper = this.itemMap.mapItemHelpers["poi"];
         helper.updateView();
+
+        alert("POIs " + (targetname?(" for " + targetname + " "):"") + "were created.");
       } else {
         alert("No POI was included.");
       }
@@ -164,22 +169,23 @@ export class ItemToolComponent implements OnInit {
         }
     });
   }
-
-  onDeleteSelectedVehiclePOI() {
-    this._onDeletePOI(this.targetVehicle.__mo_id);
-  }
-
-  onDeleteAllPOI() {
-    this._onDeletePOI(null);
-  }
   
-  private _onDeletePOI(mo_id) {
-		var size = this.itemMap.map.getSize();
+  onDeletePOI(event) {
+    let mo_id = this.targetVehicle && this.targetVehicle.__mo_id;
+    let serialnumber = this.targetVehicle && this.targetVehicle.serial_number;
+    if (!mo_id) {
+      if (!confirm("No vehicle is selected. Do you want to delete all POIs?")) {
+        return;
+      }
+    }
+    let targetname = serialnumber || mo_id;
+
+		let size = this.itemMap.map.getSize();
 		if (!size || isNaN(size[0]) || isNaN(size[1])) {
 			return;
 		}
-		var ext = this.itemMap.map.getView().calculateExtent(size);
-		var extent = ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326');
+		let ext = this.itemMap.map.getView().calculateExtent(size);
+		let extent = ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326');
 
 		let center_latitude = (extent[1] + extent[3]) / 2;
     let center_longitude = (extent[0] + extent[2]) / 2;
@@ -189,20 +195,27 @@ export class ItemToolComponent implements OnInit {
     let properties;
     if (mo_id) properties = {mo_id: mo_id};
 
-		let params = {
-			latitude: center_latitude,
-			longitude: center_longitude,
-			radius: radius,
-			properties: properties
-		}
-    this.poiService.queryPOIs(params).map(data => {
+    return this.poiService.queryPOIs({
+      latitude: center_latitude,
+      longitude: center_longitude,
+      radius: radius,
+      properties: properties
+    }).subscribe((data: any) => {
+      if (!data || data.length == 0) {
+        alert("No POI was found.")
+        return;
+      }
       let poi_ids = data.map(function(poi) {
-        return poi.poi_id;
+        return poi.id;
       }).join(",");
-      this.poiService.deletePOI(poi_ids).map(data => {
+      this.poiService.deletePOI(poi_ids).subscribe((data: any) => {
         let helper = this.itemMap.mapItemHelpers["poi"];
         helper.updateView();
+
+        alert("POIs " + (targetname?(" for " + targetname + " "):"") + "were deleted.");
       });
+    }, (error: any) => {
+      console.error(error);
     });
   }
 

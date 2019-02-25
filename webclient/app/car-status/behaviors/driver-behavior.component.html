@@ -63,17 +63,21 @@
 		</div>
 		<!-- driving behavior map -->
 		<div *ngIf="!loading" class="trip-details">
-			<div class="list-group">
-				<div class="list-group-item behavior-list-header">
-					<div>Driving profile</div>
-					<div>Value</div>
-				</div>	
-				<span class="list-group-item behavior-list-item"
+				<table style="width:100%;">
+					<tbody>
+					<tr class="list-group-item behavior-list-header">
+						<td style="width:50%">Driving profile</td>
+						<td style="width:35%;text-align:right;">Value</td>
+						<td style="width:15%"></td>
+					</tr>
+					<tr class="list-group-item behavior-list-item"
 					*ngFor="let feature of tripFeatures">
-					<div>{{feature.name}}</div>
-					<div>{{ _isFiniteNumber(feature.value) ? (feature.value|number:'1.0-2') : (feature.value) }}</div>
-				</span>
-			</div>
+					<td style="width:50%">{{feature.name}}</td>
+					<td style="width:35%;text-align:right;">{{ _isFiniteNumber(feature.value) ? (feature.value|number:'1.0-2') : (feature.value) }}</td>
+					<td style="width:15%;margin-left:10px;">{{feature.unit}}</td>
+				</tr>
+				</tbody>
+			</table>
 		</div>
 	</div>
 </div>
