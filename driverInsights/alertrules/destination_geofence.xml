@@ -3,7 +3,7 @@
 <VehicleActionRule>
 		<RuleID>{alert_rule_id}</RuleID>
 		<RuleType>{alert_rule_id}</RuleType>
-  	<Name>Approaching destination geofence rule</Name>
+  	<Name>Geofence rule for approaching destination</Name>
    	<Description></Description>
 		<Condition pattern="geofence">
 			<LocationCondition range="in">
