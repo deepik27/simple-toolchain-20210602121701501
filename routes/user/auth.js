@@ -15,6 +15,7 @@
 var fs = require('fs-extra');
 var path = require('path');
 var _ = require('underscore');
+var qr = require('qr-image');
 
 var router = module.exports.router = require('express').Router();
 var basicAuth = require('basic-auth');
@@ -24,8 +25,8 @@ var APP_USER = process.env.APP_USER || "starter";
 var APP_PASSWORD = process.env.APP_PASSWORD || "Starter4Iot";
 
 //basic authentication
-var authenticate = function(req,res,next){
-	if(APP_USER === 'none' && APP_PASSWORD === "none")
+var authenticate = function (req, res, next) {
+	if (APP_USER === 'none' && APP_PASSWORD === "none")
 		return next();
 	function unauthorized(res) {
 		res.set('WWW-Authenticate', 'Basic realm=Authorization Required. Find README.md for the user name and password');
@@ -42,17 +43,30 @@ var authenticate = function(req,res,next){
 	}
 };
 
-var eula = function(req,res,next){
-	if(req.cookies.eulaStatus === 'Accepted')
+var eula = function (req, res, next) {
+	if (req.cookies.eulaStatus === 'Accepted')
 		return next();
-	if(!req.accepts('html') || req.xhr)
+	if (!req.accepts('html') || req.xhr)
 		return next();
-	fs.readFile(path.join(__dirname, '../../LICENSE'), 'ascii', function(err, license){
-		if(err) return res.status(500).send(err);
+	fs.readFile(path.join(__dirname, '../../LICENSE'), 'ascii', function (err, license) {
+		if (err) return res.status(500).send(err);
 		license = '<p>' + _.escape('' + license).split('\n').join('</p>\n<p>') + '</p>';
-		res.render('eula', {license: license});
+		res.render('eula', { license: license });
 	});
 }
+
+/**
+ * Get the QR Code image for mobile app to connect to platform
+ */
+router.get('/qr/getPlatformCredentials', /*authenticate,*/ function (req, res) {
+	const route = appEnv.url;
+
+	const text = ["1", route, APP_USER, APP_PASSWORD].join(",");
+
+	const img = qr.image(text, { type: 'png', ec_level: 'H', size: 3, margin: 0 });
+	res.writeHead(200, { 'Content-Type': 'image/png' })
+	img.pipe(res);
+});
 
 module.exports.router = router;
 module.exports.authenticate = authenticate; // export the authentication router

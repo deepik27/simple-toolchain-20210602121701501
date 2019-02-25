@@ -19,6 +19,7 @@
  */
 module.exports = [
   require('./asset.js'),
+  require('./auth.js'),
   require('./event.js'),
   require('./poi.js'),
   require('./geofence.js'),

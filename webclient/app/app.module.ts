@@ -7,12 +7,12 @@
  *
  * You may not use this file except in compliance with the license.
  */
-import { NgModule }       from '@angular/core';
-import { BrowserModule }  from '@angular/platform-browser';
-import { FormsModule }    from '@angular/forms';
-import { HttpModule }    from '@angular/http';
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { HttpModule } from '@angular/http';
 
-import { AppComponent }        from './app.component';
+import { AppComponent } from './app.component';
 import { MapPageModule } from './map/map-page.module';
 import { CarStatusPageModule } from './car-status/car-status-page.module';
 import { AlertPageModule } from './alert/alert-page.module';
@@ -28,11 +28,12 @@ import { BaseRequestOptions, RequestOptions, RequestOptionsArgs } from '@angular
 import { LocationService } from './shared/location.service';
 import { RealtimeDeviceDataProviderService } from './shared/realtime-device-manager.service';
 import { CarStatusDataService } from './car-status/summary/car-status-data.service';
+import { SettingsPageModule } from './settings/settings-page.module';
 
 class AppRequestOptions extends BaseRequestOptions {
-  merge(options?:RequestOptionsArgs):RequestOptions {
+  merge(options?: RequestOptionsArgs): RequestOptions {
     let webApiHost = DEFAULT_APP_CONFIG.webApiHost;
-    if(webApiHost){
+    if (webApiHost) {
       options.url = window.location.protocol + '//' + webApiHost + options.url;
     }
     var result = super.merge(options);
@@ -47,7 +48,7 @@ class AppRequestOptions extends BaseRequestOptions {
     FormsModule,
     HttpModule,
     routing,
-    MapPageModule, CarStatusPageModule, AlertPageModule, VehiclePageModule, MapItemPageModule,
+    MapPageModule, CarStatusPageModule, AlertPageModule, VehiclePageModule, MapItemPageModule, SettingsPageModule,
   ],
   declarations: [
     AppComponent,
@@ -58,7 +59,7 @@ class AppRequestOptions extends BaseRequestOptions {
     { provide: APP_CONFIG, useValue: DEFAULT_APP_CONFIG },
     LocationService, RealtimeDeviceDataProviderService, CarStatusDataService
   ],
-  bootstrap: [ AppComponent ]
+  bootstrap: [AppComponent]
 })
 export class AppModule {
 }

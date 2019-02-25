@@ -30,15 +30,16 @@ import { AlertService } from './shared/alert.service';
 export class AppComponent {
   title = "IBM IoT Connected Vehicle Insights - Fleet Management Starter Application - Monitoring";
   sidebarItems = [
-           { title: "Map", route: "map", icon: 'icon-location', active: false },
-           { title: "Car Status", route: "carStatus", icon: "icon-car", active: false},
-           { title: "Alert", route: "alert", icon: "icon-idea", active: false},
-           { title: "Vehicle", route: "vehicle", icon: 'icon-car', active: false },
-           { title: "Control", route: "tool", icon: 'icon-location', active: false }
-       ];
+    { title: "Map", route: "map", icon: 'icon-location', active: false },
+    { title: "Car Status", route: "carStatus", icon: "icon-car", active: false },
+    { title: "Alert", route: "alert", icon: "icon-idea", active: false },
+    { title: "Vehicle", route: "vehicle", icon: 'icon-car', active: false },
+    { title: "Control", route: "tool", icon: 'icon-location', active: false },
+    { title: "Settings", route: "settings", icon: "icon-manage", active: false }
+  ];
   menuOpened = false;
 
-  constructor(){
+  constructor() {
   }
 
   ngOnInit() {
@@ -48,7 +49,7 @@ export class AppComponent {
     var mainContent = document.getElementById('mainContent');
 
     var self = this;
-    menuButton.onclick = function(e){
+    menuButton.onclick = function (e) {
       e.preventDefault();
 
       if (!self.menuOpened) {
@@ -69,43 +70,43 @@ export class AppComponent {
     var modalCalls = document.querySelectorAll('.em-Modal-Call');
     var modalCallsArray = Array.prototype.slice.call(modalCalls, 0);
 
-    modalCallsArray.forEach(function(el) {
-        if (document.getElementById(el.rel)) {
-            el.onclick=function(e){
-                e.preventDefault();
+    modalCallsArray.forEach(function (el) {
+      if (document.getElementById(el.rel)) {
+        el.onclick = function (e) {
+          e.preventDefault();
 
-                document.body.style.overflowY = "hidden";
+          document.body.style.overflowY = "hidden";
 
-                document.getElementById(el.rel).classList.add('em-Modal-show');
-                document.getElementById(el.rel).querySelector('.em-Modal-Content').classList.add('em-Modal-Content-show');
-                document.getElementById(el.rel).querySelector('.em-Modal-Close').classList.add('em-Modal-Close-show');
+          document.getElementById(el.rel).classList.add('em-Modal-show');
+          document.getElementById(el.rel).querySelector('.em-Modal-Content').classList.add('em-Modal-Content-show');
+          document.getElementById(el.rel).querySelector('.em-Modal-Close').classList.add('em-Modal-Close-show');
 
-                var close = function(event?) {
-                    if (event) {
-                        event.preventDefault();
-                    }
+          var close = function (event?) {
+            if (event) {
+              event.preventDefault();
+            }
 
-                    document.body.style.overflowY = "scroll";
+            document.body.style.overflowY = "scroll";
 
-                    document.getElementById(el.rel).querySelector('.em-Modal-Close').classList.remove('em-Modal-Close-show');
-                    document.getElementById(el.rel).classList.remove('em-Modal-show');
-                    document.getElementById(el.rel).querySelector('.em-Modal-Content').classList.remove('em-Modal-Content-show');
-                };
+            document.getElementById(el.rel).querySelector('.em-Modal-Close').classList.remove('em-Modal-Close-show');
+            document.getElementById(el.rel).classList.remove('em-Modal-show');
+            document.getElementById(el.rel).querySelector('.em-Modal-Content').classList.remove('em-Modal-Content-show');
+          };
 
-                document.onkeydown = function(event: any) {
-                    event = event || window.event;
-                    if (event.keyCode == 27) {
-                        close();
-                    }
-                };
+          document.onkeydown = function (event: any) {
+            event = event || window.event;
+            if (event.keyCode == 27) {
+              close();
+            }
+          };
 
-                document.getElementById(el.rel).querySelector('.em-Modal-Content .em-Modal-Close').addEventListener("click", close);
+          document.getElementById(el.rel).querySelector('.em-Modal-Content .em-Modal-Close').addEventListener("click", close);
 
-                Array.prototype.slice.call(document.querySelectorAll('.em-Modal-Content ul.modalMenu a'), 0).forEach(function(modalLink) {
-                    modalLink.addEventListener("click", close);
-                });
-            };
-        }
+          Array.prototype.slice.call(document.querySelectorAll('.em-Modal-Content ul.modalMenu a'), 0).forEach(function (modalLink) {
+            modalLink.addEventListener("click", close);
+          });
+        };
+      }
     });
   }
 }
