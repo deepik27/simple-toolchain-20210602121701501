@@ -551,7 +551,8 @@ routeGenerator.prototype._getRoutePosition = function () {
 		return this.prevLoc;
 	}
 	var harshAccelRadioButton = false;
-	const SPEED_CAP = 161; 	// speed cap is 161 km/h (about 100 MPH)
+	const MAX_SPEED_CAP = 161; 	// maximum speed cap is 161 km/h (about 100 MPH)
+	const MIN_SPEED_CAP = 17; 	// minimum speed cap is 16 km/h (about 10 MPH)
 	if(this.acceleration !== 0){
 		harshAccelRadioButton = true;
 	}
@@ -577,33 +578,38 @@ routeGenerator.prototype._getRoutePosition = function () {
 		loc.speed = speed;
 	} else {
 		// When acceleration is set from simulator UI.
-		var acceleration = this.getAcceleration();
-		if((this._toMeterPerSec(speed) - this._toMeterPerSec(prevLoc.speed)) > acceleration){
+		let acceleration = this._toKilometerPerHour(this.acceleration);
+		if((speed - prevLoc.speed) > acceleration){
 			// Calculated acceleration exceeds harsh acceleration value set from simulator UI. 
 			// Simulate harsh acceleration
-			let accel_speed = this._toMeterPerSec(prevLoc.speed) + acceleration;
-			if(accel_speed > this._toMeterPerSec(SPEED_CAP)){
-				// Accelerated speed breaks speed CAP
+			let accel_speed = prevLoc.speed + acceleration;
+			if(accel_speed > MAX_SPEED_CAP){
+				// Accelerated speed breaks max speed CAP
 				// We will see this when acceleration is set using bigger values such as 10
 				// Accelerated speed will be capped. 
-				accel_speed = this._toMeterPerSec(SPEED_CAP);
+				accel_speed = MAX_SPEED_CAP;
+			}
+			if(accel_speed < MIN_SPEED_CAP){
+				// Accelerated speed breaks minimum speed CAP
+				// Accelerated speed will be capped. 
+				accel_speed = MIN_SPEED_CAP;
 			} 
 			let bearing = this._calcHeading(prevLoc, loc);
-			let loc2 = this._calcDestinationPoint(prevLoc, accel_speed, bearing);
+			let loc2 = this._calcDestinationPoint(prevLoc, this._toMeterPerSec(accel_speed), bearing);
 			this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
-			loc2.speed = this._toKilometerPerHour(accel_speed);
+			loc2.speed = accel_speed;
 			loc = loc2;
 		} else {
 			// Calculated acceleration is smaller than harsh acceleration value set from simulator UI. 
-			if(speed > SPEED_CAP){
+			if(speed > MAX_SPEED_CAP){
 				// Speed breaks speed CAP
 				// We will see this when acceleration is set using bigger values such as 10
 				// Speed will be capped. 
-				let accel_speed = this._toMeterPerSec(SPEED_CAP);
+				let accel_speed = MAX_SPEED_CAP;
 				let bearing = this._calcHeading(prevLoc, loc);
-				let loc2 = this._calcDestinationPoint(prevLoc, accel_speed, bearing);
+				let loc2 = this._calcDestinationPoint(prevLoc, this._toMeterPerSec(accel_speed), bearing);
 				this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
-				loc2.speed = this._toKilometerPerHour(accel_speed);
+				loc2.speed = accel_speed;
 				loc = loc2;
 			} else {
 				// This is where currently harsh breaks are happening!
