@@ -107,6 +107,19 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 			}
 			return true;
 		},
+		route: function (vehicleId, data, callbback) {
+			let queue = this.queueMap[vehicleId];
+			if (queue) {
+				queue.push({
+					params: asset.updateVehicle(vehicleId, {properties: {dest_lon: undefined, dest_lat: undefined}}),
+					run: function (promise) {
+						return promise;
+					}
+				});	
+			} else {
+				asset.updateVehicle(vehicleId, {properties: {dest_lon: undefined, dest_lat: undefined}});
+			}
+		},
 		state: function (vehicleId, state, callback) {
 			if (state === 'idling') {
 				let queue = this.queueMap[vehicleId];
@@ -155,7 +168,7 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 
 			// start listening events from the vehicle
 			v.listen().on('probe', (vid, probe, destination) => {
-				callback('probe', vid, {probe: probe, desination: destination});
+				callback('probe', vid, {probe: probe, destination: destination});
 			});
 			v.listen().on('route', (vid, route) => {
 				callback('route', vid, route);
