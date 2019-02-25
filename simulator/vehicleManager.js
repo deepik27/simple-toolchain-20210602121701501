@@ -8,20 +8,20 @@
  * You may not use this file except in compliance with the license.
  */
 
-var simulatedVehicleManager = module.exports = {};
+const simulatedVehicleManager = module.exports = {};
 
-var Q = require('q');
-var _ = require('underscore');
-var fs = require('fs-extra');
-var Chance = require('chance');
+const Q = require('q');
+const _ = require('underscore');
+const fs = require('fs-extra');
+const Chance = require('chance');
 const asset = app_module_require("cvi-node-lib").asset;
 
-var debug = require('debug')('simulatedVehicleManager');
+const debug = require('debug')('simulatedVehicleManager');
 debug.log = console.log.bind(console);
 
-var DRIVER_NAME = process.env.SIMULATOR_DRIVER || "simulated_driver";
-var VENDOR_NAME = process.env.SIMULATOR_VENDOR || "IBM";
-var NUM_OF_SIMULATOR = 5;
+const DRIVER_NAME = process.env.SIMULATOR_DRIVER || "simulated_driver";
+const VENDOR_NAME = process.env.SIMULATOR_VENDOR || "IBM";
+const NUM_OF_SIMULATOR = 5;
 
 _.extend(simulatedVehicleManager, {
 	clients: {},
@@ -30,71 +30,66 @@ _.extend(simulatedVehicleManager, {
 		numVehicles = numVehicles || NUM_OF_SIMULATOR;
 
 		var deferred = Q.defer();
-		var self = this;
-		Q.when(this._getSimulationVendor(VENDOR_NAME), function (vendor) {
+		// Get a vendor for simulator
+		Q.when(this._getSimulationVendor(VENDOR_NAME), (vendor) => {
 			if (vendor) {
 				debug("There is vendor: " + VENDOR_NAME);
-				Q.when(self._getVehicleList('inactive', excludes, vendor), function (vehicles) {
+
+				// Get Vehicles associated with the vendor for simulator
+				Q.when(this._getVehicleList('active', excludes, vendor), (vehicles) => {
 					if (vehicles.length < numVehicles) {
 						// create additional vehicles
-						deferred.resolve(self._getAvailableVehicles(numVehicles, vehicles, excludes, vendor));
+						deferred.resolve(this._getAvailableVehicles(numVehicles, vehicles, excludes, vendor));
 					} else if (vehicles.length > numVehicles) {
 						deferred.resolve({ data: vehicles.slice(0, numVehicles) });
 					} else {
 						deferred.resolve({ data: vehicles });
 					}
-				})["catch"](function (err) {
+				}).catch((err) => {
 					var status = (err.response && (err.response.status || err.response.statusCode)) || 500;
 					if (status === 404) {
 						// assume vehicle is not available
-						deferred.resolve(self._getAvailableVehicles(numVehicles, null, excludes, vendor));
+						deferred.resolve(this._getAvailableVehicles(numVehicles, null, excludes, vendor));
 					} else {
-						deferred.reject(self._getError(err));
+						deferred.reject(this._getError(err));
 					}
-				}).done();
+				});
 			} else {
 				debug("Create a vendor for simulator");
-				var chance = new Chance();
+				let chance = new Chance();
 				vendor = chance.hash({ length: 12 });
-				var params = {
+				let params = {
 					"type": "Vendor",
 					"status": "Active",
 					"vendor": vendor,
 					"name": VENDOR_NAME
 				};
-				Q.when(asset.addVendor(params), function (response) {
+				Q.when(asset.addVendor(params), (response) => {
 					debug("A vendor for simulator is created");
-					deferred.resolve(self._getAvailableVehicles(numVehicles, null, excludes, vendor));
-				})["catch"](function (err) {
-					deferred.reject(self._getError(err));
-				}).done();
+					deferred.resolve(this._getAvailableVehicles(numVehicles, null, excludes, vendor));
+				})["catch"]((err) => {
+					deferred.reject(this._getError(err));
+				});
 			}
-		})["catch"](function (err) {
-			var status = (err.response && (err.response.status || err.response.statusCode)) || 500;
-			deferred.reject(self._getError(err));
-		}).done();
-		return deferred.promise;
-	},
-
-	_getSimulationVendor: function () {
-		var deferred = Q.defer();
-		Q.when(asset.getVendorList({ name: VENDOR_NAME }), function (response) {
-			if (response && response.data && response.data.length > 0) {
-				deferred.resolve(response.data[0].vendor);
-			} else {
-				deferred.resolve();
-			}
-		})["catch"](function (err) {
-			deferred.reject(err);
+		}).catch((err) => {
+			deferred.reject(this._getError(err));
 		});
 		return deferred.promise;
 	},
 
+	_getSimulationVendor: function () {
+		return Q.when(asset.getVendorList({ name: VENDOR_NAME }), (response) => {
+			if (response && response.data && response.data.length > 0) {
+				return response.data[0].vendor;
+			}
+		});
+	},
+
 	_getVehicleList: function (status, excludes, vendor) {
-		return Q.when(asset.getVehicleList({ "vendor": vendor, "status": status }), function (response) {
-			var vehicles = response && response.data || [];
+		return Q.when(asset.getVehicleList({ "vendor": vendor, "status": status }), (response) => {
+			let vehicles = response && response.data || [];
 			if (excludes && excludes.length > 0) {
-				vehicles = _.filter(vehicles, function (vehicle) { return !_.contains(excludes, vehicle.mo_id); });
+				vehicles = _.filter(vehicles, (vehicle) => { return !_.contains(excludes, vehicle.mo_id); });
 			}
 			return vehicles;
 		});
@@ -102,91 +97,56 @@ _.extend(simulatedVehicleManager, {
 
 	_getError: function (err) {
 		//{message: msg, error: error, response: response}
-		var response = err.response;
-		var status = (response && (response.status || response.statusCode)) || 500;
-		var message = err.message || (err.data && err.data.message) || err;
+		let response = err.response;
+		let status = (response && (response.status || response.statusCode)) || 500;
+		let message = err.message || (err.data && err.data.message) || err;
 		return { statusCode: status, message: message };
 	},
 
 	_getAvailableVehicles: function (numVehicles, exsiting_vehicles, excludes, vendor) {
-		var self = this;
-		return Q.when(this._createSimulatedVehicles(numVehicles, exsiting_vehicles, excludes, vendor))
-			.then(function () {
-				debug("get inactive cars again");
-				return self._getVehicleList('inactive', excludes, vendor);
-			}).then(function (response) {
+		let num = exsiting_vehicles ? (numVehicles - exsiting_vehicles.length) : numVehicles;
+		return Q.when(num > 0 && this._createNewSimulatedVehicles(num, vendor))
+			.then(() => {
+				debug("get active cars again");
+				return this._getVehicleList('active', excludes, vendor);
+			}).then((response) => {
 				debug("_getAvailableVehicles: " + response);
 				return { data: response };
 			});
 	},
 
-	_createSimulatedVehicles: function (numVehicles, exsiting_vehicles, excludes, vendor) {
-		var num = exsiting_vehicles ? (numVehicles - exsiting_vehicles.length) : numVehicles;
-		debug("Get inactive simulated cars [" + num + "]");
-		if (num === 0) {
-			return Q();
-		}
-		var self = this;
-		return Q.when(self._deactivateFleeSimulatedVehicles(num, excludes, vendor)).then(function (num) {
-			return self._createNewSimulatedVehicles(num, vendor);
-		});
-	},
-
-	_deactivateFleeSimulatedVehicles: function (num, excludes, vendor) {
-		var deferred = Q.defer();
-		debug("Try to find free active simulated cars [" + num + "]");
-		Q.when(this._getVehicleList('active', excludes, vendor), function (vehicles) {
-			debug("Active vehicles: " + JSON.stringify(vehicles));
-			var defList = [];
-			for (var i = 0; i < vehicles.length && num > 0; i++) {
-				var mo_id = vehicles[i].mo_id;
-				if (!_.contains(excludes, mo_id)) {
-					num--;
-					debug("try to inactivate: " + mo_id);
-					defList.push(asset.updateVehicle(mo_id, { "status": "inactive" }));
-				}
-			}
-			Q.all(defList).then(function () {
-				deferred.resolve(num);
-			});
-		})["catch"](function (err) {
-			debug("No active free simulated cars.");
-			deferred.resolve(num);
-		}).done();
-		return deferred.promise;
-	},
-
 	_createNewSimulatedVehicles: function (num, vendor) {
 		debug("Simulated car will be created [" + num + "]");
-		var chance = new Chance();
-		var deferred = Q.defer();
-		var defList = [];
-		for (var i = 0; i < num; i++) {
-			var vehicle = {
+		let chance = new Chance();
+		let deferred = Q.defer();
+		let defList = [];
+		for (let i = 0; i < num; i++) {
+			let vehicle = {
 				"vendor": vendor,
-				"serial_number": "s-" + chance.hash({ length: 6 })
+				"serial_number": "s-" + chance.hash({ length: 6 }),
+				"status" : "active"
 			};
-			var properties = this._getDeviceModelInfo();
+			let properties = this._getDeviceModelInfo();
 			vehicle.model = "Simulated Vehicle";
 			if (asset.acceptVehicleProperties()) {
 				vehicle.properties = properties;
 			}
 			defList.push(asset.addVehicle(vehicle));
 		}
-		Q.all(defList).then(function () {
+		Q.all(defList).then(() => {
 			debug("created " + num + " vehicles");
 			deferred.resolve();
-		})["catch"](function (err) {
+		}).catch((err) => {
 			debug("Failed to create simulated car");
 			deferred.reject(err);
-		}).done();
+		});
 		return deferred.promise;
 	},
 
 	deviceModelSamples: null, // caches the template file in memory
 	deviceModelSamplesNextSampleIndex: 0,
 	_getDeviceModelInfo: function () {
-		var samples = this.deviceModelSamples;
+		let samples = this.deviceModelSamples;
 		if (!Array.isArray(samples)) {
 			samples = fs.readJsonSync(__dirname + '/_simulatedVehicleModels.json').templates;
 			if (!samples) {
@@ -202,47 +162,42 @@ _.extend(simulatedVehicleManager, {
 	},
 
 	_createSimulatedDriver: function () {
-		var deferred = Q.defer();
-		var chance = new Chance();
-		var driver_id = chance.hash({ length: 12 });
+		let chance = new Chance();
+		let driver_id = chance.hash({ length: 12 });
 
-		var promise = asset.addDriver({ "name": DRIVER_NAME, "driver_id": driver_id, "status": "Active" });
-		Q.when(promise, function (response) {
-			var data = { driver_id: response.driver_id, name: DRIVER_NAME };
+		let promise = asset.addDriver({ "name": DRIVER_NAME, "driver_id": driver_id, "status": "Active" });
+		return Q.when(promise, (response) => {
+			let data = { driver_id: response.driver_id, name: DRIVER_NAME };
 			debug("Simulated driver was created");
-			deferred.resolve(data);
-		})["catch"](function (err) {
-			deferred.reject(err);
-		}).done();
-		return deferred.promise;
+			return data;
+		});
 	},
 
 	getSimulatorDriver: function () {
-		var self = this;
-		var deferred = Q.defer();
-		Q.when(asset.getDriverList({ "name": DRIVER_NAME }), function (response) {
+		let deferred = Q.defer();
+		Q.when(asset.getDriverList({ "name": DRIVER_NAME }), (response) => {
 			if (response && response.data && response.data.length > 0) {
 				deferred.resolve(response.data[0]);
 			} else {
-				Q.when(self._createSimulatedDriver(), function (driver) {
+				Q.when(this._createSimulatedDriver(), (driver) => {
 					deferred.resolve(driver);
-				})["catch"](function (err) {
+				}).catch((err) => {
 					deferred.reject(err);
 				});
 			}
-		})["catch"](function (err) {
-			var status = (err.response && (err.response.status || err.response.statusCode)) || 500;
+		}).catch((err) => {
+			let status = (err.response && (err.response.status || err.response.statusCode)) || 500;
 			if (status === 404) {
 				// assume driver is not available
-				Q.when(self._createSimulatedDriver(), function (driver) {
+				Q.when(this._createSimulatedDriver(), (driver) => {
 					deferred.resolve(driver);
-				})["catch"](function (err) {
+				}).catch((err) => {
 					deferred.reject(err);
 				});
 			} else {
 				deferred.reject(err);
 			}
-		}).done();
+		});
 		return deferred.promise;
 	}
 });

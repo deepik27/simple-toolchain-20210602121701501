@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 IBM Corp. All Rights Reserved.
+ * Copyright 2017,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -8,22 +8,27 @@
  * You may not use this file except in compliance with the license.
  */
 
-var Q = require('q');
-var _ = require('underscore');
-var moment = require("moment");
-var vehicleManager = require('./vehicleManager.js');
-var simulatedVehicle = require('./simulatedVehicle.js');
+const Q = require('q');
+const _ = require('underscore');
+const moment = require("moment");
+const vehicleManager = require('./vehicleManager.js');
+const simulatedVehicle = require('./simulatedVehicle.js');
 const asset = app_module_require("cvi-node-lib").asset;
-var Queue = app_module_require('utils/queue.js');
+const Queue = app_module_require('utils/queue.js');
 const vehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
+const driverBehavior = app_module_require('cvi-node-lib').driverBehavior;
+var version = app_module_require('utils/version.js');
 
-var debug = require('debug')('simulatorEngine');
+const debug = require('debug')('simulatorEngine');
 debug.log = console.log.bind(console);
 
-var SIMLATOR_STATUS_OPEN = 'open';
-var SIMLATOR_STATUS_OPENING = 'opening';
-var SIMLATOR_STATUS_CLOSING = 'closing';
-var SIMLATOR_STATUS_CLOSE = 'close';
+const SIMLATOR_STATUS_OPEN = 'open';
+const SIMLATOR_STATUS_OPENING = 'opening';
+const SIMLATOR_STATUS_CLOSING = 'closing';
+const SIMLATOR_STATUS_CLOSE = 'close';
+
+const DATETIME_FORMAT = "YYYY-MM-DDTHH:mm:SS.SSSZ";
+const MODEL_MONTH = 6;
 
 /**
  * Simulator engine class tha manages vehicles per client.
@@ -55,10 +60,10 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 	this.distance = distance;
 
 	// message handler
-	var messageHandler = {
+	const messageHandler = {
 		queueMap: {},
 		probe: function (vehicleId, data, callback) {
-			var queue = this.queueMap[vehicleId];
+			let queue = this.queueMap[vehicleId];
 			if (!queue) {
 				queue = new Queue();
 				this.queueMap[vehicleId] = queue;
@@ -102,9 +107,22 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 			}
 			return true;
 		},
+		route: function (vehicleId, data, callbback) {
+			let queue = this.queueMap[vehicleId];
+			if (queue) {
+				queue.push({
+					params: asset.updateVehicle(vehicleId, {properties: {dest_lon: undefined, dest_lat: undefined}}),
+					run: function (promise) {
+						return promise;
+					}
+				});	
+			} else {
+				asset.updateVehicle(vehicleId, {properties: {dest_lon: undefined, dest_lat: undefined}});
+			}
+		},
 		state: function (vehicleId, state, callback) {
 			if (state === 'idling') {
-				var queue = this.queueMap[vehicleId];
+				let queue = this.queueMap[vehicleId];
 				if (queue) {
 					delete this.queueMap[vehicleId];
 				}
@@ -113,65 +131,90 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 	};
 
 	// Set up callback method for events from each vehicle
-	var self = this;
-	var callback = function (data) {
-		var vehicleId = data.vehicleId;
-		var watchObject = self.watchMap[vehicleId];
-		var watchMethod = null;
-		if (watchObject && (!watchObject.properties || _.contains(watchObject.properties, data.type))) {
+	const callback = (type, vehicleId, data) => {
+		let watchObject = this.watchMap[vehicleId];
+		let watchMethod = null;
+		if (watchObject && (!watchObject.properties || _.contains(watchObject.properties, type))) {
 			watchMethod = watchObject.callback;
 		}
-		var handler = messageHandler[data.type];
+		let handler = messageHandler[type];
 		if (_.isFunction(handler)) {
-			if (handler.call(messageHandler, vehicleId, data.data, watchMethod)) {
+			if (handler.call(messageHandler, vehicleId, data, watchMethod)) {
 				return;
 			}
 		}
 		if (watchMethod) {
-			watchMethod.call(self, data);
+			watchMethod.call(this, {type: type, vehicleId, vehicleId, data: data});
 		}
 	};
 
 	// Prepare vehicles and a driver to run
-	var promises = [];
+	let promises = [];
 	promises.push(Q.when(vehicleManager.getSimulatedVehicles(this.clientId, numVehicles, excludes)));
 	promises.push(Q.when(vehicleManager.getSimulatorDriver()));
 
 	// Create simulated vehicles
 	this.simulatedVehicles = {};
-	return Q.all(promises).then(function (result) {
-		var vehicles = {};
-		var vehicleIdArray = [];
-		_.each(result[0].data, function (vehicle) {
-			var v = vehicles[vehicle.mo_id] = new simulatedVehicle(vehicle, result[1], callback);
+	let deferred = Q.defer();
+	Q.all(promises).then((result) => {
+		let fromtime = moment().format(DATETIME_FORMAT);
+		let totime = moment().subtract(MODEL_MONTH, "months").format(DATETIME_FORMAT);
+		let vehicles = {};
+		let vehicleIdArray = [];
+
+		let models = _.map(result[0].data, (vehicle) => {
+			let v = vehicles[vehicle.mo_id] = new simulatedVehicle(vehicle, result[1]);
 			vehicleIdArray.push(vehicle.mo_id);
 
+			// start listening events from the vehicle
+			v.listen().on('probe', (vid, probe, destination) => {
+				callback('probe', vid, {probe: probe, destination: destination});
+			});
+			v.listen().on('route', (vid, route) => {
+				callback('route', vid, route);
+			});
+			v.listen().on('state', (vid, state) => {
+				callback('state', vid, state);
+			});
+
 			// Calculate location and heading randomly and set them to each vehicle
-			var loc = this._calcPosition([longitude, latitude], distance * Math.random(), 360 * Math.random());
+			let loc = this._calcPosition([longitude, latitude], distance * Math.random(), 360 * Math.random());
 			console.log("simulated vehicle=" + vehicle.mo_id + ", lon=" + loc[0] + ", lat=" + loc[1]);
 			v.setCurrentPosition(loc[0], loc[1], 360 * Math.random());
-		}.bind(this));
-		this.simulatedVehicles = vehicles;
-		this.simulatedVehicleIdArray = vehicleIdArray;
-		this.state = SIMLATOR_STATUS_OPEN;
-		this.updateTime();
-		return this.getInformation();
-	}.bind(this));
+
+			// Generate MPP/DP model for trajectory pattern-based route search
+			return version.laterOrEqual("3.0") ? driverBehavior.generateMPPDPModel({mo_id: v.mo_id, from: fromtime, to: totime}) : Q();
+		});
+
+		return Q.all(models).catch(error => {
+			// Error occurs when no trip for specified vehicle was found
+//			console.error(JSON.stringify(error));
+		}).done((result) => {
+			this.simulatedVehicles = vehicles;
+			this.simulatedVehicleIdArray = vehicleIdArray;
+			this.state = SIMLATOR_STATUS_OPEN;
+			this.updateTime();
+			deferred.resolve(this.getInformation());
+		});
+	}).catch((error) => {
+		deferred.reject(error);
+	});
+	return deferred.promise;
 };
 
 /**
  * Close this simulator
  */
 simulatorEngine.prototype.close = function (timeout) {
-	var deferred = Q.defer();
+	let deferred = Q.defer();
 	this.state = SIMLATOR_STATUS_CLOSING;
-	Q.when(this.stop(), function () {
+	Q.when(this.stop(), () => {
 		this.state = SIMLATOR_STATUS_CLOSE;
 		this.updateTime();
 		deferred.resolve(this.getInformation());
-	}.bind(this))["catch"](function (err) {
+	}).catch((err) => {
 		deferred.reject(err);
-	}).done(function () {
+	}).done(() => {
 		this.state = SIMLATOR_STATUS_CLOSE;
 		this.simulatedVehicles = {};
 		this.simulatedVehicleIdArray = [];
@@ -179,7 +222,7 @@ simulatorEngine.prototype.close = function (timeout) {
 		if (this.callbackOnClose) {
 			this.callbackOnClose(this.clientId, timeout);
 		}
-	}.bind(this));
+	});
 	return deferred.promise;
 };
 
@@ -195,12 +238,12 @@ simulatorEngine.prototype.updateBaseLocation = function (longitude, latitude, di
 	this.latitude = latitude;
 	this.distance = distance;
 
-	_.each(this.simulatedVehicles, function (vehicle, id) {
+	_.each(this.simulatedVehicles, (vehicle, id) => {
 		// Calculate location and heading randomly and set them to each vehicle
-		var loc = this._calcPosition([longitude, latitude], distance * Math.random(), 360 * Math.random());
+		let loc = this._calcPosition([longitude, latitude], distance * Math.random(), 360 * Math.random());
 		console.log("simulated vehicle=" + id + ", lon=" + loc[0] + ", lat=" + loc[1]);
 		vehicle.setCurrentPosition(loc[0], loc[1], 360 * Math.random());
-	}.bind(this));
+	});
 	this.updateTime();
 };
 
@@ -235,16 +278,16 @@ simulatorEngine.prototype.getVehicleList = function (numInPages, pageIndex, prop
 		pageIndex = 0;
 	}
 
-	var startIndex = numInPages * pageIndex;
-	var endIndex = startIndex + numInPages;
+	let startIndex = numInPages * pageIndex;
+	let endIndex = startIndex + numInPages;
 	if (endIndex > this.simulatedVehicleIdArray.length) {
 		endIndex = this.simulatedVehicleIdArray.length;
 	}
 
-	var vehicleList = [];
-	for (var i = startIndex; i < endIndex; i++) {
-		var vehicleId = this.simulatedVehicleIdArray[i];
-		var simulatedVehicle = this.simulatedVehicles[vehicleId];
+	let vehicleList = [];
+	for (let i = startIndex; i < endIndex; i++) {
+		let vehicleId = this.simulatedVehicleIdArray[i];
+		let simulatedVehicle = this.simulatedVehicles[vehicleId];
 		vehicleList.push(simulatedVehicle.getVehicleInformation(properties));
 	}
 	return vehicleList;
@@ -257,7 +300,7 @@ simulatorEngine.prototype.getVehicleList = function (numInPages, pageIndex, prop
  *              comma separated combination of these values (vehicleId, vehicle, state, position, options) can be specified
  */
 simulatorEngine.prototype.getVehicleInformation = function (vehicleId, properties) {
-	var simulatedVehicle = this.simulatedVehicles[vehicleId];
+	let simulatedVehicle = this.simulatedVehicles[vehicleId];
 	if (!simulatedVehicle) {
 		return null;
 	}
@@ -268,7 +311,7 @@ simulatorEngine.prototype.getVehicleInformation = function (vehicleId, propertie
  * Get route data
  */
 simulatorEngine.prototype.getRouteData = function (vehicleId) {
-	var simulatedVehicle = this.simulatedVehicles[vehicleId];
+	let simulatedVehicle = this.simulatedVehicles[vehicleId];
 	if (!simulatedVehicle) {
 		return Q.reject({ statusCode: 404, message: "No vehicle was found." });
 	}
@@ -279,10 +322,8 @@ simulatorEngine.prototype.getRouteData = function (vehicleId) {
  * Start a vehicle/vehicles
  */
 simulatorEngine.prototype.start = function (vehicleId, parameters) {
-	return this.control(vehicleId, function (vehicle, id) {
-		return Q.when(asset.updateVehicle(id, { "status": "active" }), function () {
-			return Q(vehicle.start(parameters));
-		});
+	return this.control(vehicleId, (vehicle, id) => {
+		return Q(vehicle.start(parameters));
 	}, false, true);
 };
 
@@ -290,18 +331,8 @@ simulatorEngine.prototype.start = function (vehicleId, parameters) {
  * Stop a vehicle/vehicles
  */
 simulatorEngine.prototype.stop = function (vehicleId, parameters) {
-	return this.control(vehicleId, function (vehicle, id) {
-		return Q.when(vehicle.stop(parameters), function (result) {
-			var deferred = Q.defer();
-			Q.when(asset.updateVehicle(id, { "status": "inactive" }), function () {
-			})["catch"](function (err) {
-				console.error(err);
-			}).done(function () {
-				// return success event when disabling vehicle status
-				deferred.resolve(result);
-			});
-			return deferred.promise;
-		});
+	return this.control(vehicleId, (vehicle, id) => {
+		return vehicle.stop(parameters);
 	}, true, false);
 };
 
@@ -309,7 +340,7 @@ simulatorEngine.prototype.stop = function (vehicleId, parameters) {
  * Set properties for a vehicle/vehicles (e.g. fuel, engineTemp)
  */
 simulatorEngine.prototype.setProperties = function (vehicleId, properties) {
-	return this.control(vehicleId, function (vehicle) {
+	return this.control(vehicleId, (vehicle) => {
 		return vehicle.setProperties(properties);
 	}, true, true);
 };
@@ -318,7 +349,7 @@ simulatorEngine.prototype.setProperties = function (vehicleId, properties) {
  * Unet properties for a vehicle/vehicles
  */
 simulatorEngine.prototype.unsetProperties = function (vehicleId, properties) {
-	return this.control(vehicleId, function (vehicle) {
+	return this.control(vehicleId, (vehicle) => {
 		return vehicle.unsetProperties(properties);
 	}, true, true);
 };
@@ -327,7 +358,7 @@ simulatorEngine.prototype.unsetProperties = function (vehicleId, properties) {
  * Set vehicle position
  */
 simulatorEngine.prototype.setPosition = function (vehicleId, position) {
-	return this.control(vehicleId, function (vehicle) {
+	return this.control(vehicleId, (vehicle) => {
 		return vehicle.setCurrentPosition(position.longitude, position.latitude, position.heading, position.doNotResetRoute);
 	}, false, true);
 };
@@ -336,7 +367,7 @@ simulatorEngine.prototype.setPosition = function (vehicleId, position) {
  * Set waypoints
  */
 simulatorEngine.prototype.setWaypoints = function (vehicleId, waypoints) {
-	return this.control(vehicleId, function (vehicle) {
+	return this.control(vehicleId, (vehicle) => {
 		return vehicle.setWaypoints(waypoints);
 	}, true, true);
 };
@@ -345,7 +376,7 @@ simulatorEngine.prototype.setWaypoints = function (vehicleId, waypoints) {
  * Set route options (origin, destination, options)
  */
 simulatorEngine.prototype.setRouteOptions = function (vehicleId, options) {
-	return this.control(vehicleId, function (vehicle) {
+	return this.control(vehicleId, (vehicle) => {
 		if (options.options) {
 			vehicle.setRouteOptions(options.options, true);
 		}
@@ -363,7 +394,7 @@ simulatorEngine.prototype.setRouteOptions = function (vehicleId, options) {
  * Set acceleration
  */
 simulatorEngine.prototype.setAcceleration = function (vehicleId, properties) {
-	return this.control(vehicleId, function (vehicle) {
+	return this.control(vehicleId, (vehicle) => {
 		return vehicle.setAcceleration(properties);
 	}, true, false);
 };
@@ -373,9 +404,9 @@ simulatorEngine.prototype.setAcceleration = function (vehicleId, properties) {
  * Control a vehicle/vehicles.
  */
 simulatorEngine.prototype.control = function (vehicleId, method, allowedWhenRunning, allowedWhenStopping) {
-	var promises = [];
+	let promises = [];
 	if (vehicleId) {
-		var vehicle = this.simulatedVehicles[vehicleId];
+		let vehicle = this.simulatedVehicles[vehicleId];
 		if (!vehicle) {
 			return Q.reject({ statusCode: 404, message: "Vehicle is not found" });
 		} else if (!allowedWhenRunning && vehicle.isRunning()) {
@@ -383,26 +414,26 @@ simulatorEngine.prototype.control = function (vehicleId, method, allowedWhenRunn
 		} else if (!allowedWhenStopping && !vehicle.isRunning()) {
 			return Q.reject({ statusCode: 400, message: "Vehicle is not running" });
 		}
-		promises.push(Q.when(method(vehicle, vehicleId), function (result) {
+		promises.push(Q.when(method(vehicle, vehicleId), (result) => {
 			return { vehicleId: vehicleId, result: result };
 		}));
 	} else {
-		promises = _.filter(_.map(this.simulatedVehicles, function (vehicle, id) {
-			var isRunning = vehicle.isRunning();
+		promises = _.filter(_.map(this.simulatedVehicles, (vehicle, id) => {
+			let isRunning = vehicle.isRunning();
 			if ((allowedWhenRunning && isRunning) || (allowedWhenStopping && !isRunning)) {
-				return Q.when(method(vehicle, id), function (result) {
+				return Q.when(method(vehicle, id), (result) => {
 					return { vehicleId: id, result: result };
 				});
 			}
-		}), function (p) { return !!p; });
+		}), (p) => { return !!p; });
 	}
 
-	return Q.all(promises).then(function (results) {
+	return Q.all(promises).then((results) => {
 		this.updateTime();
-		var data = {};
-		_.each(results, function (v) { data[v.vehicleId] = v.result; });
+		let data = {};
+		_.each(results, (v) => { data[v.vehicleId] = v.result; });
 		return { numVehicles: results.length, data: data };
-	}.bind(this));
+	});
 };
 
 simulatorEngine.prototype.watch = function (vehicleId, properties, callback) {
@@ -413,7 +444,7 @@ simulatorEngine.prototype.watch = function (vehicleId, properties, callback) {
 			delete this.watchMap[vehicleId];
 		}
 	} else {
-		_.each(this.simulatedVehicles, function (vehicle, id) {
+		_.each(this.simulatedVehicles, (vehicle, id) => {
 			if (_.isFunction(callback)) {
 				this.watchMap[vehicleId] = { properties: properties, callback: callback };
 			} else {
@@ -438,7 +469,7 @@ simulatorEngine.prototype.setTimeout = function (timeoutInMinutes) {
  * Update modified time. Reset a timer to handle timeout. If timeout happens, the simulator is automatically stopped.
  */
 simulatorEngine.prototype.updateTime = function (notModified) {
-	var currentTime = Date.now();
+	let currentTime = Date.now();
 	if (!notModified) {
 		this.lastModified = currentTime;
 	}
@@ -448,10 +479,10 @@ simulatorEngine.prototype.updateTime = function (notModified) {
 		delete this.timeoutObject;
 	}
 	if (this.timeout > 0 && this.isValid()) {
-		this.timeoutObject = setTimeout(function () {
+		this.timeoutObject = setTimeout(() => {
 			console.log("simulator is automatically closed due to timeout.");
 			this.close(true);
-		}.bind(this), this.timeout);
+		}, this.timeout);
 		console.log("timer is reset. clientId=" + this.clientId + ", timeout=" + moment(currentTime + this.timeout).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 		return Q({ timeout: currentTime + this.timeout });
 	}
@@ -459,22 +490,22 @@ simulatorEngine.prototype.updateTime = function (notModified) {
 };
 
 simulatorEngine.prototype._calcPosition = function (start, distance, bearing) {
-	var R = 6378e3;
-	var d = distance;
-	var angular_distance = d / R;
+	let R = 6378e3;
+	let d = distance;
+	let angular_distance = d / R;
 	bearing = this._toRadians(bearing);
-	var s_lon = this._toRadians(start[0]);
-	var s_lat = this._toRadians(start[1]);
-	var sin_s_lat = Math.sin(s_lat);
-	var cos_s_lat = Math.cos(s_lat);
-	var cos_angular_distance = Math.cos(angular_distance);
-	var sin_angular_distance = Math.sin(angular_distance);
-	var sin_bearing = Math.sin(bearing);
-	var cos_bearing = Math.cos(bearing);
-	var sin_e_lat = sin_s_lat * cos_angular_distance + cos_s_lat * sin_angular_distance * cos_bearing;
+	let s_lon = this._toRadians(start[0]);
+	let s_lat = this._toRadians(start[1]);
+	let sin_s_lat = Math.sin(s_lat);
+	let cos_s_lat = Math.cos(s_lat);
+	let cos_angular_distance = Math.cos(angular_distance);
+	let sin_angular_distance = Math.sin(angular_distance);
+	let sin_bearing = Math.sin(bearing);
+	let cos_bearing = Math.cos(bearing);
+	let sin_e_lat = sin_s_lat * cos_angular_distance + cos_s_lat * sin_angular_distance * cos_bearing;
 
-	var e_lat = this._toDegree(Math.asin(sin_e_lat));
-	var e_lon = this._toDegree(s_lon + Math.atan2(sin_bearing * sin_angular_distance * cos_s_lat,
+	let e_lat = this._toDegree(Math.asin(sin_e_lat));
+	let e_lon = this._toDegree(s_lon + Math.atan2(sin_bearing * sin_angular_distance * cos_s_lat,
 		cos_angular_distance - sin_s_lat * sin_e_lat));
 	e_lon = (e_lon + 540) % 360 - 180;
 	return [e_lon, e_lat];

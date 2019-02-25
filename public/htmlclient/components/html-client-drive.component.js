@@ -75,12 +75,8 @@
 						timeText = traveltime + " seconds";
 					}
 					let distanceText = "";
-					let distance = Math.ceil(route.distance);
-					if (distance > 1000) {
-						distanceText = distance / 1000 + " km";
-					} else {
-						distanceText = distance + " m";
-					}
+					let distance = route.distance / 1000 * 0.6213711922;
+					distanceText = Math.ceil(distance * 100) / 100 + " miles";
 					$scope.routeDetails = " (travel time: " + timeText + ", distance: " + distanceText + ")";
 				}
 
