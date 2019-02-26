@@ -250,21 +250,9 @@ The starter app also provides a mobile app to connect to an OBDII dongle plugged
 1. Click **Connect New**.
 1. Select *IBM Watson IoT Platform* service, and then click **Create** to bind the service.
 
-### Create a device type for your device
-
-When you start the OBDII Fleet Management App for the first time, your device is automatically registered to the Watson IoT Platform service with the default device type, which is __OBDII__. Create a device type for your device by completing the following steps:
-
-1. Open the Watson IoT Platform dashboard on IBM Cloud.
-1. Click **Device**.
-1. Click **Device Types**.
-1. Click **+Create Type**.
-1. Click **Create device type**.
-1. In the **Name** field, enter 'OBDII'.
-1. Leave the other fields as default and click **Next** at the bottom right until a device type is created.
-
 ### Set up the OBDII Fleet Management App
 
-To build and install the OBDII Fleet Management App on an Android phone, see the following repository.
+To build and install the OBDII Fleet Management App on a mobile phone, see the following repositories.
  - For Android phone : [IBM IoT Connected Vehicle Insights - OBDII Fleet Management App for Android](https://github.com/ibm-watson-iot/iota-starter-obd-android).
  - For iOS phone :  [IBM IoT Connected Vehicle Insights - OBDII Fleet Management App for iOS](https://github.com/ibm-watson-iot/iota-starter-obd-ios).
 
@@ -272,17 +260,11 @@ To build and install the OBDII Fleet Management App on an Android phone, see the
 
 ### Connect the device to the IBM IoT Connected Vehicle Insights service
 
-When you start the OBDII Fleet Management App for the first time, your device is registered automatically to the IoT Platform service that you have specified in the mobile app, and a corresponding vehicle is created automatically when you connect your device to the IoT Platform.
+When you start the OBDII Fleet Management App for the first time, your device is registered automatically to the IoT Platform service that you have specified in the mobile app, and a corresponding vehicle is created automatically.
 
 Now that your device is connected to the Watson IoT Platform, go to the  **Map** or **Car Status** page in the app and see the status.
 
-If you no longer need a device, go to the Watson IoT Platform dashboard and delete your device manually. After you delete a device, update the vehicles in the IBM IoT Connected Vehicle Insights service, as follows:
-
-1. Open the Fleet Management Starter Application on your browser.
-1. On the left navigation bar, click **Vehicle**.
-1. On the top right side of the page, click **Sync with IoT Platform**.
-
-A vehicle corresponding to deleted device must be removed from a table. Also, if you have added a device to the Watson IoT Platform manually, the vehicle is added to the table.
+If you no longer need a device, go to **Vehicle** page in your Fleet Management Starter Application on your browser and delete your vehicle manually. A device corresponding to deleted vehicle must be removed from your IoT Platform.
 
 ## Reporting defects
 To report a defect with the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application, go to the [Issues section](https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/issues) section.
