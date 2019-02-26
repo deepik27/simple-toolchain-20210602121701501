@@ -259,8 +259,9 @@ var initWebSocketServer = function (server, path) {
 					deleted: undefined,
 				});
 				try {
-					client.send(msgs);
-					debug('  sent WSS message. ' + msgs);
+					if (client.readyState != 3 /* CLOSED */) {
+						client.send(msgs);
+					}
 				} catch (e) {
 					console.error('Failed to send wss message: ', e);
 				}
