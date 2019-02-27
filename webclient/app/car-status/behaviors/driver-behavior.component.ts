@@ -295,10 +295,17 @@ export class DriverBehaviorComponent implements OnInit {
 	}
 
 	_convertFeature(tripFeature) {
-		let name = tripFeature.feature_name.split('_').join(' ');
-		let value = {value: tripFeature.feature_value, unit: ""};
-		let sortorder = 1000;
-
+		const _formatName = (v) => {
+			if (v === "day_of_week") {
+				return "Day of the week";
+			}
+			let name = v.split('_').join(' ');
+			if (name.length > 0) {
+				name = name.charAt(0).toUpperCase() + name.substr(1).toLowerCase();
+			}
+			return name;
+		}
+		// second to minutes/hours
 		const _formatTime = (v) => {
 			let nVal = parseFloat(v);
 			if (nVal > 3600) {
@@ -308,47 +315,68 @@ export class DriverBehaviorComponent implements OnInit {
 			}
 			return {value: v, unit:"seconds"};
 		};
+		// m to mile
 		const _formatDistance = (v) => {
-			let nVal = parseFloat(v) / 1000 
+			let nVal = parseFloat(v) / 1000; 
 			if (!this.internationalUnit) nVal *= 0.6213711922;
 			return {value: (Math.ceil(nVal * 100) / 100), unit: this.internationalUnit ? "km" : "miles"};
 		};
+		// km/h to mph
 		const _formatSpeed = (v) => {
 			let nVal = parseFloat(v);
 			if (!this.internationalUnit) nVal *= 0.6213711922;
 			return {value: (Math.ceil(nVal * 10) / 10), unit: this.internationalUnit ? "km/h" : "mph"};
 		};
+		const _formatDayOfWeek = (v) => {
+			switch (v) {
+				case "1": return {value: "Sunday", unit: ""};
+				case "2": return {value: "Monday", unit: ""};
+				case "3": return {value: "Tuesday", unit: ""};
+				case "4": return {value: "Wednesday", unit: ""};
+				case "5": return {value: "Thursday", unit: ""};
+				case "6": return {value: "Friday", unit: ""};
+				case "7": return {value: "Saturday", unit: ""};
+			}
+			return v;
+		}
+
+		let value = {value: tripFeature.feature_value, unit: ""};
+		let sortorder = 1000;
 		switch(tripFeature.feature_name) {
-			case "distance":
+			case "day_of_week":
 				sortorder = 1;
+				value = _formatDayOfWeek(tripFeature.feature_value);
+				break;
+			case "distance":
+				sortorder = 2;
 				value = _formatDistance(tripFeature.feature_value);
 				break;
 			case "average_speed":
-				sortorder = 2;
-				value = _formatSpeed(tripFeature.feature_value);
-				break;
-			case "max_speed":
 				sortorder = 3;
 				value = _formatSpeed(tripFeature.feature_value);
 				break;
-			case "time_span":
+			case "max_speed":
 				sortorder = 4;
-				value = _formatTime(tripFeature.feature_value);
+				value = _formatSpeed(tripFeature.feature_value);
 				break;
-			case "idle_time":
+			case "time_span":
 				sortorder = 5;
 				value = _formatTime(tripFeature.feature_value);
 				break;
-				case "rush_hour_driving":
+			case "idle_time":
 				sortorder = 6;
 				value = _formatTime(tripFeature.feature_value);
 				break;
-			case "night_driving_time":
+				case "rush_hour_driving":
 				sortorder = 7;
 				value = _formatTime(tripFeature.feature_value);
 				break;
+			case "night_driving_time":
+				sortorder = 8;
+				value = _formatTime(tripFeature.feature_value);
+				break;
 		}
-		return {name: name, value: value.value, unit: value.unit, sortorder: sortorder}; 
+		return {name: _formatName(tripFeature.feature_name), value: value.value, unit: value.unit, sortorder: sortorder}; 
 	}
 
 	_loadTriopDetails(mo_id, trip_id) {	
@@ -423,7 +451,7 @@ export class DriverBehaviorComponent implements OnInit {
 			if (behavior.trip_features) {
 				let tripFeatures = behavior.trip_features;
 				this.tripFeatures = _.sortBy(_.filter(tripFeatures, (feature) => {
-					return !_.contains(["month_of_year", "day_of_week", "day_of_month"], (<any>feature).feature_name);
+					return !_.contains(["month_of_year", "day_of_month"], (<any>feature).feature_name);
 				}).map((p) => {
 					return this._convertFeature(p);
 				}), (feature) => {
