@@ -139,7 +139,7 @@ public class HttpActionNotifyClient extends AbstractClient {
 					}
 				};
 				try {
-					SSLContext context = SSLContext.getInstance("TLS");
+					SSLContext context = SSLContext.getInstance("TLSv1.2");
 					context.init(null, tm, new SecureRandom());
 					factory = context.getSocketFactory();
 				} catch (KeyManagementException e) {
