@@ -14,6 +14,8 @@ const Q = require('q');
 const _ = require('underscore');
 const WebSocketServer = require('ws').Server;
 const appEnv = require("cfenv").getAppEnv();
+const Queue = app_module_require('utils/queue.js');
+const requestQueue = new Queue();
 
 const router = module.exports = require('express').Router();
 const authenticate = require('./auth.js').authenticate;
@@ -24,8 +26,6 @@ const driverInsightsAlert = require('../../driverInsights/fleetalert.js');
 const handleError = require('./error.js').handleError;
 const debug = require('debug')('route:probe');
 debug.log = console.log.bind(console);
-
-var AGGREGATION_THRESHOLD = isNaN(process.env.AGGREGATION_THRESHOLD) ? 500 : process.env.AGGREGATION_THRESHOLD;
 
 /**
  * {
@@ -92,8 +92,8 @@ router.post('/notifiedActions', authenticate, function (req, res) {
 });
 
 /**
+ * Request car probe monitoring
  * Examples:
- *  List all the cars
  *   http://localhost:6003/monitoring/cars/query?min_lat=-90&max_lat=90&min_lng=-180&max_lng=180
  */
 router.get('/carProbe', authenticate, function (req, res) {
@@ -126,35 +126,12 @@ router.get('/carProbe', authenticate, function (req, res) {
 	} else {
 		initWebSocketServer(req.app.server, wssUrl);
 	}
-
-	getCarProbe(qs, true).then(function (probes) {
-		// send normal response
-		var ts;
-		var count;
-		var devices;
-		var aggregated = !!probes.aggregated;
-		if (aggregated) {
-			var deviceInfo = probeAggregator.convertToDeviceInfo(probes.summary);
-			count = deviceInfo.count;
-			devices = deviceInfo.devices;
-		} else {
-			ts = _.max(_.map(probes, function (d) { return d.lastEventTime || d.t || d.ts; }));
-			count = probes.length;
-			devices = probes;
-		}
-
-		res.send({
-			aggregated: aggregated,
-			count: count,
-			devices: devices,
-			serverTime: (isNaN(ts) || !isFinite(ts)) ? Date.now() : ts,
-			wssPath: wssUrl + '?' + path
-		});
-	}).catch(function (error) {
-		res.send(400, error);
-	}).done();
+	res.send({serverTime: Date.now(), wssPath: wssUrl + '?' + path});
 });
 
+/**
+* Open Monitor Debbug UI
+*/
 router.get('/carProbeMonitor', authenticate, function (req, res) {
 	var qs = req.url.substring('/carProbeMonitor?'.length);
 	res.render('carProbeMonitor', { appName: appEnv.name, qs: qs });
@@ -208,16 +185,20 @@ router.wsServer = null;
  * Create WebSocket server
  */
 var initWebSocketServer = function (server, path) {
+	// Cancel existing requests
+	requestQueue.clear();
+
 	if (router.wsServer !== null) {
 		return; // already created
 	}
 
-	var TIMEOUT = 1000;
-	var timerWebSockEmitFunc = function () {
+	const TIMEOUT = 1000;
+	const timerWebSockEmitFunc = function () {
 		//
 		// This is invoked every TIMEOUT milliseconds to send the latest car probes to server
 		//
 		Q.allSettled(router.wsServer.clients.map(function (client) {
+			// Method to get request parameter to search car probes
 			function getQs() {
 				if (client.mo_id) {
 					return { "mo_id": client.mo_id };
@@ -234,14 +215,22 @@ var initWebSocketServer = function (server, path) {
 					max_latitude: 90, max_longitude: 180
 				};
 			}
-			if (client.aggregationNeeded) {
-				return Q();
+			// Method to send a message over websocket
+			function notifyMessage(json) {
+				var msgs = JSON.stringify(json);
+				try {
+					if (client.readyState != 3 /* CLOSED */) {
+						client.send(msgs);
+					}
+				} catch (e) {
+					console.error('Failed to send wss message: ', e);
+				}
 			}
-			return getCarProbe(getQs(), true).then(function (probes) {
+			// Method to send car probe over websocket
+			function notifyCarProbe(probes, regions) {
 				var count;
 				var devices;
 				var aggregated = !!probes.aggregated;
-				client.aggregationNeeded = aggregated;
 				if (aggregated) {
 					var deviceInfo = probeAggregator.convertToDeviceInfo(probes.summary);
 					count = deviceInfo.count;
@@ -251,21 +240,66 @@ var initWebSocketServer = function (server, path) {
 					devices = probes;
 				}
 
-				// construct message
-				var msgs = JSON.stringify({
+				notifyMessage({
+					type: "probe",
+					region_id: regions ? regions.id : undefined, 
 					aggregated: aggregated,
 					count: (count),
 					devices: (devices),
 					deleted: undefined,
 				});
-				try {
-					if (client.readyState != 3 /* CLOSED */) {
-						client.send(msgs);
-					}
-				} catch (e) {
-					console.error('Failed to send wss message: ', e);
+			}
+
+			requestQueue.clear();
+			let regions = null;
+			let promises = [];
+			let qs = getQs();
+
+			if (qs.min_longitude && qs.min_latitude && qs.max_longitude && qs.max_latitude) {
+				regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude,qs.max_latitude);
+				if (regions.type !== "single" && probeAggregator.equals(regions, client.calculatedRegions)) {
+					return Q();
 				}
-			})['catch'](function (err) {
+				client.calculatedRegions = regions;
+				notifyMessage({type: "region", region_id: regions.id, state: "start"});
+
+				// Notify probes per region
+				const CELL_LAT = Math.min(regions.lat_d, 1);
+				const CELL_LON = Math.min(regions.lon_d, 1);
+				for (let lon = qs.min_longitude; lon <= qs.max_longitude; lon += CELL_LON) {
+					for (let lat = qs.min_latitude; lat <= qs.max_latitude; lat += CELL_LAT) {
+						let subqs = _.clone(qs);
+						subqs.min_latitude = lat;
+						subqs.max_latitude = (qs.max_latitude - lat > CELL_LAT) ? (lat + CELL_LAT) : qs.max_latitude;
+						subqs.min_longitude = lon;
+						subqs.max_longitude = (qs.max_longitude - lon > CELL_LON) ? (lon + CELL_LON) : qs.max_longitude;
+						requestQueue.push({
+							params: subqs,
+							run: function(params) {
+								return getCarProbe(params, true, regions, notifyCarProbe);
+							}
+						});
+					}
+				}
+
+				// Monitor all requests are completed or canceled
+				let deferred = Q.defer();
+				promises.push(deferred.promise);
+				requestQueue.push({
+					run: function() {
+						deferred.resolve();
+					},
+					canceled: function() {
+						regions && notifyMessage({type: "region", region_id: regions.id, state: "cancel"});
+						deferred.resolve();
+					}
+				});
+			} else {
+				promises.push(getCarProbe(qs, true, null, notifyCarProbe));
+			}
+			return Q.all(promises).then(result => {
+				return regions && notifyMessage({type: "region", region_id: regions.id, state: "end"});
+			}).catch((err) => {
 				console.error('Failed to get car probe', err);
 			});
 		})).done(function () {
@@ -273,7 +307,7 @@ var initWebSocketServer = function (server, path) {
 			setTimeout(timerWebSockEmitFunc, TIMEOUT);
 		});
 	};
-	setTimeout(timerWebSockEmitFunc, TIMEOUT);
+	setTimeout(timerWebSockEmitFunc, 1000);
 
 	//
 	// Create WebSocket server
@@ -308,12 +342,6 @@ var initWebSocketServer = function (server, path) {
 				var j = decodeURI(url.substr(qsIndex + 8)); // 8 is length of "?region="
 				var extent = JSON.parse(j);
 				client.extent = normalizeExtent(extent);
-				var regions = probeAggregator.createRegions(
-					client.extent.min_lng,
-					client.extent.min_lat,
-					client.extent.max_lng,
-					client.extent.max_lat);
-				client.aggregationNeeded = !!regions;
 			} catch (e) {
 				console.error('Error on parsing extent in wss URL', e);
 			}
@@ -322,74 +350,91 @@ var initWebSocketServer = function (server, path) {
 			if (qsIndex >= 0) {
 				const mo_id = decodeURI(url.substr(qsIndex + 7)); // 7 is length of "?mo_id="
 				client.mo_id = mo_id;
-				client.aggregationNeeded = false;
 			}
 		}
 	});
 }
 
-function getCarProbe(qs, addAlerts) {
-	let regions;
-	if (qs.min_longitude && qs.min_latitude && qs.max_longitude && qs.max_latitude) {
-		regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude, qs.max_latitude);
+/**
+ * Get car probe with specified parameters
+ */
+function getCarProbe(qs, addAlerts, regions, callback) {
+	let promises = [];
+	if (regions && qs.min_longitude && qs.min_latitude && qs.max_longitude && qs.max_latitude) {
+		const CELL_LAT = 0.1;
+		const CELL_LON = 0.1;
+		for (let lon = qs.min_longitude; lon <= qs.max_longitude; lon += CELL_LON) {
+			for (let lat = qs.min_latitude; lat <= qs.max_latitude; lat += CELL_LAT) {
+				let subqs = _.clone(qs);
+				subqs.min_latitude = lat;
+				subqs.max_latitude = (qs.max_latitude - lat > CELL_LAT) ? (lat + CELL_LAT) : qs.max_latitude;
+				subqs.min_longitude = lon;
+				subqs.max_longitude = (qs.max_longitude - lon > CELL_LON) ? (lon + CELL_LON) : qs.max_longitude;
+				promises.push(vehicleDataHub.getCarProbe(subqs));
+			}
+		}
+	} else {
+		promises.push(vehicleDataHub.getCarProbe(qs));
 	}
-	var probes = Q(vehicleDataHub.getCarProbe(qs).then(function (probes) {
+
+	return Q.all(promises).then((result) => {
+		let probes = [];
+		result.forEach(p => { 
+			probes = probes.concat(p); 
+		});
+
 		// send normal response
-		(probes || []).forEach(function (p) {
+		(probes || []).forEach((p) => {
 			if (p.timestamp) {
 				p.ts = Date.parse(p.timestamp);
 				p.deviceID = p.mo_id;
 			}
 		});
-		if (!regions && AGGREGATION_THRESHOLD > 1 && probes.length > AGGREGATION_THRESHOLD) {
-			regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude, qs.max_latitude, -1);
-		}
-		if (regions) {
+		if (regions && regions.type !== "single") {
 			return probeAggregator.aggregate(regions, probes);
 		}
 		return probes;
-	}));
-	if (addAlerts) {
-		probes = Q(probes.then(function (result) {
-			if (result.summary) {
-				return result;
-			}
-			var probes = result;
-			if (!probes || probes.length == 0)
-				return probes;
+	}).then((probes) => {
+		if (!addAlerts || (regions && regions.type !== "single") || !probes || probes.length == 0) {
+			callback && callback(probes, regions);
+			return probes;
+		}
 
-			var mo_ids = probes.map(function (probe) { return probe.mo_id; });
-			return driverInsightsAlert.getAlertsForVehicles(mo_ids, /*includeClosed*/false, 200).then(function (result) {
-				// result: { alerts: [ { closed_ts: n, description: s, mo_id: s, severity: s, timestamp: s, ts: n, type: s }, ...] }
-				var alertsByMoId = _.groupBy(result.alerts || [], function (alert) { return alert.mo_id; });
-				probes.forEach(function (probe) {
-					var alertsForMo = alertsByMoId[probe.mo_id] || {}; // lookup
-					if (alertsForMo) { // list of alerts
-						var alertCounts = _.countBy(alertsForMo, function (alert) {
-							return alert.severity;
-						});
-						alertCounts.items = alertsForMo; // details if needed
+		// Add alerts to probes
+		var mo_ids = probes.map((probe) => { return probe.mo_id; });
+		return driverInsightsAlert.getAlertsForVehicles(mo_ids, /*includeClosed*/false, 200).then((result) => {
+			// result: { alerts: [ { closed_ts: n, description: s, mo_id: s, severity: s, timestamp: s, ts: n, type: s }, ...] }
+			var alertsByMoId = _.groupBy(result.alerts || [], (alert) => { return alert.mo_id; });
+			probes.forEach((probe) => {
+				var alertsForMo = alertsByMoId[probe.mo_id] || {}; // lookup
+				if (alertsForMo) { // list of alerts
+					var alertCounts = _.countBy(alertsForMo, (alert) => {
+						return alert.severity;
+					});
+					alertCounts.items = alertsForMo; // details if needed
 
-						// calculate summary
-						var alertsByType = _.groupBy(alertsForMo, function (alert) { return alert.type; });
-						// severity: High: 100, Medium: 10, Low: 1, None: 0 for now
-						var severityByType = _.mapObject(alertsByType, function (alerts, type) {
-							if (alerts && alerts.length === 0) return undefined;
-							return _.max(alerts, function (alert) {
-								var s = alerts.severity && alerts.severity.toLowerCase();
-								return s === 'high' ? 100 : (s === 'medium' ? 10 : (s === 'low' ? 1 : 0));
-							}).severity;
-						});
-						alertCounts.byType = severityByType;
-						//
-						probe.info = _.extend(probe.info || {}, { alerts: alertCounts }); // inject alert counts
-					}
-				})
-				return probes;
+					// calculate summary
+					var alertsByType = _.groupBy(alertsForMo, (alert) => { return alert.type; });
+					// severity: High: 100, Medium: 10, Low: 1, None: 0 for now
+					var severityByType = _.mapObject(alertsByType, (alerts, type) => {
+						if (alerts && alerts.length === 0) return undefined;
+						return _.max(alerts, (alert) => {
+							var s = alerts.severity && alerts.severity.toLowerCase();
+							return s === 'high' ? 100 : (s === 'medium' ? 10 : (s === 'low' ? 1 : 0));
+						}).severity;
+					});
+					alertCounts.byType = severityByType;
+					//
+					probe.info = _.extend(probe.info || {}, { alerts: alertCounts }); // inject alert counts
+				}
 			});
-		}));
-	}
-	return probes;
+
+			callback && callback(probes, regions);
+			return probes;
+		});
+	}).catch((error) => {
+		console.error(error);
+	});
 }
 
 

@@ -25,7 +25,7 @@ queue.prototype.push = function(request) {
 
 queue.prototype.clear = function(request) {
 	_.each(this.queue, function(request) {
-		request.canceled && request.canceled();
+		request.canceled && request.canceled(request.params);
 	});
 	this.queue = [];
 };

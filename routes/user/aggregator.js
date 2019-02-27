@@ -11,15 +11,17 @@
  * REST APIs using Driver Behavior service as backend
  */
 
-var probeAggregator = module.exports = {};
+const probeAggregator = module.exports = {};
 
-var Q = require('q');
-var _ = require('underscore');
+const Q = require('q');
+const _ = require('underscore');
+const Chance = require('chance');
+const chance = new Chance();
 
-var GRID_NUM = process.env.GRID_NUM || 8;
-var AGGREGATION_DISTANCE_THRESHOLD = process.env.AGGREGATION_DISTANCE_THRESHOLD || 100000; // 100km by default
+const GRID_NUM = process.env.GRID_NUM || 8;
+const AGGREGATION_DISTANCE_THRESHOLD = process.env.AGGREGATION_DISTANCE_THRESHOLD || 100000; // 100km by default
 
-var debug = require('debug')('aggregator');
+const debug = require('debug')('aggregator');
 debug.log = console.log.bind(console);
 
 _.extend(probeAggregator, {
@@ -99,7 +101,12 @@ _.extend(probeAggregator, {
 		var distance_lat = this.calcDistance(min_lon, min_lat, min_lon, max_lat);
 		var distance = Math.min(distance_lon, distance_lat);
 		if (distance < length) {
-			return null;
+			return {id: chance.guid(), type: "single", 
+				start_lon: min_lon, start_lat: min_lat, 
+				min_lon: min_lon, min_lat: min_lat,
+				max_lon: max_lon, max_lat: max_lat, 
+				lon_d: max_lon - min_lon, lat_d: max_lat - min_lat, 
+				regions: {"single": {id: "single", lon_index: 0, lat_index: 0, geometry: {min_lon: min_lon, min_lat: min_lat, max_lon: max_lon, max_lat: max_lat}}}};
 		}
 		
 		var n_grid = GRID_NUM > 1 ? GRID_NUM : 8;
@@ -158,7 +165,8 @@ _.extend(probeAggregator, {
 				geo_min_lat -= 180;
 			}
 		}
-		return {start_lon: start_lon, start_lat: start_lat, 
+		return {id: chance.guid(), type: "multi", 
+				start_lon: start_lon, start_lat: start_lat, 
 				min_lon: min_lon, min_lat: min_lat,
 				max_lon: max_lon, max_lat: max_lat, 
 				lon_d: lon_d, lat_d: lat_d, regions: regions};
@@ -223,7 +231,7 @@ _.extend(probeAggregator, {
 //		_.each(groups, function(g) {
 //			console.log("lon1=" + g.geometry.min_lon + ", lat1=" + g.geometry.min_lat + ", lon2=" + g.geometry.max_lon + ", lat2=" + g.geometry.max_lat + ", count=" + g.count);
 //		});
-		return {aggregated: true, summary: {count: probes.length, groups: groups}};
+		return {aggregated: true, region_id: regions.id, summary: {count: probes.length, groups: groups}};
 	},
 	
 	convertToDeviceInfo: function(summary) {
@@ -254,6 +262,21 @@ _.extend(probeAggregator, {
 		return {count: summary.count, devices: devices};
 	},
 	
+	equals: function(regions1, regions2) {
+		if (regions1 === regions2) {
+			return true;
+		}
+		if (!regions1 || !regions2) {
+			return false;
+		}
+		return regions1.min_lon === regions2.min_lon && 
+				regions1.min_lat === regions2.min_lat && 
+				regions1.max_lon === regions2.max_lon &&
+				regions1.max_lat === regions2.max_lat &&
+				regions1.lon_d === regions2.lon_d && 
+				regions1.lat_d === regions2.lat_d;
+	},
+
 	_getRegion: function(regions, probe) {
 		var lon = probe.matched_longitude || probe.longitude;
 		var lat = probe.matched_latitude || probe.latitude;
