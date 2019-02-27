@@ -42,5 +42,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/ibm-watson-iot/iota-starter-server-fm.git"
+  },
+  "engines": {
+    "node": "8.11.4"
   }
 }
