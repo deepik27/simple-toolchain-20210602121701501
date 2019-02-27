@@ -5,7 +5,7 @@
  *
  * (C) Copyright IBM Corp. 2013,2017
  *
- * The source code for this program is not published or otherwise 
+ * The source code for this program is not published or otherwise
  * divested of its trade secrets, irrespective of what has been deposited
  * with the U.S. Copyright Office.
  ************************************************************************/
@@ -66,7 +66,7 @@ public class HttpActionNotifyClient extends AbstractClient {
 	private final String PROP_POST_USER = "postUser";
 	private final String PROP_POST_PASSWORD = "postPassword";
 
-	private final String DEFAULT_USER_AGENT = "IoT4A Starter App Fleet Management";
+	private final String DEFAULT_USER_AGENT = "IBM IoT Connected Vehicle Insights Client";
 	private final String NOT_SUPPORTED = "<message>Access not Supported!</message>";
 
 	private URL postUrl = null;
@@ -126,12 +126,12 @@ public class HttpActionNotifyClient extends AbstractClient {
 							// TODO Should be implemented properly
 							return null;
 						}
-						
+
 						@Override
 						public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
 							// TODO Should be implemented properly
 						}
-						
+
 						@Override
 						public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
 							// TODO Should be implemented properly
@@ -156,14 +156,14 @@ public class HttpActionNotifyClient extends AbstractClient {
 	}
 	/**
 	 * Call from Mobility Servlet when GET comes
-	 * 
+	 *
 	 * @param HttpServletRequest
 	 * @return String
 	 */
 	public Object call(Object o) {
 		return call(o, null);
 	}
-	
+
 	public Object call(Object o, Object e_o) {
 		ClientResponse res = new ClientResponse();
 		String cmd = null;
@@ -193,7 +193,7 @@ public class HttpActionNotifyClient extends AbstractClient {
 			res.setContents(result.getContents());
 			res.setPreferred_HTTP_status_code(ClientResponse.SC_OK);
 		}
-		
+
 		return res;
 	}
 
@@ -214,7 +214,7 @@ public class HttpActionNotifyClient extends AbstractClient {
 			return 1;
 		}
 		logger.info("Post an action to: " + postUrl);
-		
+
 		HttpURLConnection connection = null;
 		try {
 			connection = (HttpURLConnection)postUrl.openConnection();
@@ -242,11 +242,11 @@ public class HttpActionNotifyClient extends AbstractClient {
 			String body = (String)action.getContents();
 			connection.setRequestProperty("Content-Type", "application/json");
 			connection.setRequestProperty("Content-Length", String.valueOf(body.length()));
-			
+
 			try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8))){
 				writer.write(body);
 				writer.flush();
-				
+
 				int responseCode = connection.getResponseCode();
 				if(responseCode >= 200 && responseCode < 300){
 					try(Reader reader = new InputStreamReader(connection.getInputStream())){
@@ -287,9 +287,9 @@ public class HttpActionNotifyClient extends AbstractClient {
 			return mapper.writeValueAsString(byMoid);
 		}
 	}
-	
+
 	@Override
 	public void terminate() {
 	}
-	
+
 }
