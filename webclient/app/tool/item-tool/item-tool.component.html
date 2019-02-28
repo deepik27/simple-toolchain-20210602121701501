@@ -79,10 +79,10 @@
           <tr class="toolItemRow">
             <td colspan="2" class="toolItemLabel">
               <span>
-                <button [disabled]="requestSending" (click)="poifile.click()" >Import from CSV</button>
+                <button [disabled]="requestSending" (click)="poifile.click()" >Import POIs from CSV</button>
                 <input type="file" id="uploadFile" style="display:none" (change)="uploadPOIFile($event)" [(ngModel)]="inputPOIFile" placeholder="Upload POIs" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" #poifile>
               </span>
-              <button [disabled]="requestSending" (click)="onDeletePOI()">Delete</button>
+              <button [disabled]="requestSending" (click)="onDeletePOI()">Delete POIs</button>
             </td>
           </tr>
           <tr class="toolItemRow">
