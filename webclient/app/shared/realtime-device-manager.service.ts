@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -140,9 +140,10 @@ export class RealtimeDeviceDataProviderService {
 					// websock client to keep the device locations latest
 					var ws = this.activeWsClient = Observable.webSocket(wssUrl);
 					this.activeWsSubscribe = ws.subscribe((data: any) => {
-						this.provider.addDeviceSamples(data.devices, true);
-						if (this.appConfig.DEBUG) {
-							console.log('DEBUG-MAP: got devices data from WS: n=' + data.devices.length);
+						if (data.type === "region") {
+							this.provider.setRegionState(data.region_id, data.state);
+						} else if (data.type === "probe") {
+							this.provider.addDeviceSamples(data.region_id, data.devices, false);
 						}
 						this.wsRetryCount = 0; // connected
 					}, (e) => {
@@ -195,7 +196,7 @@ export class RealtimeDeviceDataProviderService {
 		return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise().then((resp) => {
 			let data = resp.json();
 			if (data.devices) {
-				this.provider.addDeviceSamples(data.devices, true);
+				this.provider.addDeviceSamples(data.region_id, data.devices, true);
 			}
 			return data; // return resp so that subsequent can use the resp
 		});
@@ -233,7 +234,7 @@ export class RealtimeDeviceDataProviderService {
 			this.activeWsSubscribe = null;
 		}
 		if (this.activeWsClient) {
-			if (this.activeWsClient.socket && this.activeWsClient.socket) {
+			if (this.activeWsClient.socket && this.activeWsClient.socket.readyState === 1) {
 				this.activeWsClient.socket.close();
 			}
 			this.activeWsClient = null;

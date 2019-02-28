@@ -16,6 +16,7 @@ const authenticate = require('./auth.js').authenticate;
 const vehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
 const contextMapping = app_module_require("cvi-node-lib").contextMapping;
 const asset = app_module_require("cvi-node-lib").asset;
+const probeAggregator = require('./aggregator.js');
 
 const handleError = require('./error.js').handleError;
 const debug = require('debug')('route:event');
@@ -26,6 +27,11 @@ debug.log = console.log.bind(console);
 //
 router.get("/event/query", authenticate, function(req, res) {
 	const q = req.query;
+	let regions = probeAggregator.createRegions(q.min_longitude, q.min_latitude, q.max_longitude, q.max_latitude);
+	if (regions && regions.type !== "single") {
+		return res.send([]);
+	}
+
 	vehicleDataHub.getEvent({
 		"min_latitude": q.min_latitude,
 		"min_longitude": q.min_longitude,

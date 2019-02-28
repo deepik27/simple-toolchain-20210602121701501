@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -17,6 +17,7 @@ import * as _ from 'underscore';
  */
 export class RealtimeDeviceDataProvider {
     devices = <{ [key: string]: RealtimeDeviceData }>{};
+    deviceSamplesCache = {id: undefined, devices: []};
 
     getDevice(id) {
         return this.devices[id];
@@ -24,7 +25,23 @@ export class RealtimeDeviceDataProvider {
     getDevices() {
         return Object.keys(this.devices).map(id => this.devices[id]);
     }
-    addDeviceSamples(newDeviceSamples, syncAllDevices = false) {
+    setRegionState(region_id, state) {
+        if (state === "start") {
+            if (this.deviceSamplesCache.id) {
+                this._syncDevices(this.deviceSamplesCache.devices);
+            }
+            this.deviceSamplesCache = {id: region_id, devices: []};
+        } else if (state === "end") {
+            this._syncDevices(this.deviceSamplesCache.devices);
+            this.deviceSamplesCache = {id: undefined, devices: []};
+        } else if (state === "cancel") {
+            this.deviceSamplesCache = {id: undefined, devices: []};
+        }
+    }
+    addDeviceSamples(region_id, newDeviceSamples, syncAllDevices) {
+        if (region_id && region_id !== this.deviceSamplesCache.id) {
+            return;
+        }
         newDeviceSamples.forEach(sample => {
             if (!sample)
                 return;
@@ -82,17 +99,20 @@ export class RealtimeDeviceDataProvider {
                 device = this.devices[sample.deviceID] = sample.aggregated ? new RealtimeDeviceGroupData(sample) : new RealtimeDeviceData(sample);
             }
         });
+        this.deviceSamplesCache.devices = this.deviceSamplesCache.devices.concat(newDeviceSamples);
         if (syncAllDevices) {
-            // delete devices not in the newDeviceSamples
-            let devicesMap = _.groupBy(newDeviceSamples, (sample: any) => sample.deviceID);
-            Object.keys(this.devices).forEach(deviceID => {
-                if (!devicesMap[deviceID]) {
-                    delete this.devices[deviceID];
-                }
-            });
+            this._syncDevices(newDeviceSamples);
         }
     };
-
+    _syncDevices(devices) {
+        // delete devices not in the newDeviceSamples
+        let devicesMap = _.groupBy(devices, (sample: any) => sample.deviceID);
+        Object.keys(this.devices).forEach(deviceID => {
+            if (!devicesMap[deviceID]) {
+                delete this.devices[deviceID];
+            }
+        });
+    }
 }
 
 /* --------------------------------------------------------------
