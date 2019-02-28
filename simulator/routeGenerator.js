@@ -635,7 +635,7 @@ routeGenerator.prototype._calcDestinationPoint = function(startPoint, distance, 
 
 routeGenerator.prototype._calcSpeed = function(speed, prevLocSpeed, acceleration) {
 	const MAX_SPEED_CAP = 161; 	// maximum speed cap is 161 km/h (about 100 MPH)
-	const MIN_SPEED_CAP = 8; 	// minimum speed cap is 16 km/h (about 5 MPH)
+	const MIN_SPEED_CAP = 8; 	// minimum speed cap is 8 km/h (about 5 MPH)
 	var accel_speed;
 	if(acceleration !== 0){
 		// acceleration is set from simulation UI
