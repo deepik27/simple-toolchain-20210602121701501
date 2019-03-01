@@ -10,7 +10,7 @@
 import { Component, Input } from '@angular/core';
 import { HttpClient } from '../../shared/http-client';
 import { Response, Headers, RequestOptions } from '@angular/http';
-import { Observable }     from 'rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
 import { OrderByPipe } from '../../utils/order-by.pipe';
 import { MomentPipe } from '../../utils/moment.pipe';
 
@@ -48,14 +48,14 @@ export class VehicleListComponent {
   ngOnInit() {
     this.selected_mo_id = null
     this._getVendors()
-    .subscribe((vendors: Array<Vendor>) => {
-      vendors.unshift(new Vendor({}));
-      this.vendors = vendors;
-      this._updateVehicleList(1);
-    }, (error: any) => {
-      this.vendors = [];
-      this._updateVehicleList(1);
-    });
+      .subscribe((vendors: Array<Vendor>) => {
+        vendors.unshift(new Vendor({}));
+        this.vendors = vendors;
+        this._updateVehicleList(1);
+      }, (error: any) => {
+        this.vendors = [];
+        this._updateVehicleList(1);
+      });
   }
 
   onOrderBy(key) {
@@ -66,14 +66,14 @@ export class VehicleListComponent {
   // refresh table
   onReload(event) {
     this._getVendors()
-    .subscribe((vendors: Array<Vendor>) => {
-      vendors.unshift(new Vendor({}));
-      this.vendors = vendors;
-      this._updateVehicleList(1);
-    }, (error: any) => {
-      this.vendors = [];
-      this._updateVehicleList(1);
-    });
+      .subscribe((vendors: Array<Vendor>) => {
+        vendors.unshift(new Vendor({}));
+        this.vendors = vendors;
+        this._updateVehicleList(1);
+      }, (error: any) => {
+        this.vendors = [];
+        this._updateVehicleList(1);
+      });
   }
 
   onNumPageChanged(num: number) {
@@ -98,19 +98,19 @@ export class VehicleListComponent {
     this.requestSending = true;
     this.errorMessage = null;
     this._getVendors()
-    .subscribe((vendors: Array<Vendor>) => {
-      vendors.unshift(new Vendor({}));
-      this.vendors = vendors;
-      this.requestSending = false;
-      this.workingVehicle = new Vehicle({}, []);
-      this.isWorkingWithVehicle = true;
-    }, (error: any) => {
+      .subscribe((vendors: Array<Vendor>) => {
+        vendors.unshift(new Vendor({}));
+        this.vendors = vendors;
+        this.requestSending = false;
+        this.workingVehicle = new Vehicle({}, []);
+        this.isWorkingWithVehicle = true;
+      }, (error: any) => {
         this.requestSending = false;
         if (error.status === 404) { // No vendor is registered
           this.workingVehicle = new Vehicle({}, []);
           this.isWorkingWithVehicle = true;
         }
-    });
+      });
   }
 
   // Open a vehicle dialog for updating
@@ -118,22 +118,22 @@ export class VehicleListComponent {
     this.requestSending = true;
     this.errorMessage = null;
     this._getVendors()
-    .subscribe((vendors: Array<Vendor>) => {
-      vendors.unshift(new Vendor({}));
-      this.vendors = vendors;
-      this.requestSending = false;
-      this.workingVehicle = new Vehicle(this._getVehicle(mo_id), this.vendors);
-      this.isWorkingWithVehicle = true;
-    }, (error: any) => {
+      .subscribe((vendors: Array<Vendor>) => {
+        vendors.unshift(new Vendor({}));
+        this.vendors = vendors;
+        this.requestSending = false;
+        this.workingVehicle = new Vehicle(this._getVehicle(mo_id), this.vendors);
+        this.isWorkingWithVehicle = true;
+      }, (error: any) => {
         this.requestSending = false;
         if (error.status === 404) { // No vendor is registered
           this.workingVehicle = new Vehicle(this._getVehicle(mo_id), this.vendors);
           this.isWorkingWithVehicle = true;
         }
-    });
+      });
   }
 
-    // Create a vehicle
+  // Create a vehicle
   onSubmitVehicle() {
     this.isWorkingWithVehicle = false;
     if (this.workingVehicle.mo_id) {
@@ -168,18 +168,18 @@ export class VehicleListComponent {
     this.requestSending = true;
     this.errorMessage = null;
     this.http.post("/user/device/sync", null, null)
-    .subscribe((response: Response) => {
-      // Update vehicle list when succeeded
-      this._updateVehicleList(1);
-      if (isRequestOwner) {
-        this.requestSending = false;
-      }
-    }, (error: any) => {
-      this.errorMessage = error.message || error._body || error;
-      if (isRequestOwner) {
-        this.requestSending = false;
-      }
-    });
+      .subscribe((response: Response) => {
+        // Update vehicle list when succeeded
+        this._updateVehicleList(1);
+        if (isRequestOwner) {
+          this.requestSending = false;
+        }
+      }, (error: any) => {
+        this.errorMessage = error.message || error._body || error;
+        if (isRequestOwner) {
+          this.requestSending = false;
+        }
+      });
   }
 
   private _updateVehicleList(pageNumber: number) {
@@ -187,14 +187,14 @@ export class VehicleListComponent {
     this.requestSending = true;
     this.errorMessage = null;
     this._getVehicles(this.numRecInPage, pageNumber)
-    .subscribe((vehicles: Array<Vehicle>) => {
+      .subscribe((vehicles: Array<Vehicle>) => {
         this.vehicles = vehicles;
         this.pageNumber = pageNumber;
         this.hasNext = this.numRecInPage <= this.vehicles.length;
         if (isRequestRoot) {
           this.requestSending = false;
         }
-    }, (error: any) => {
+      }, (error: any) => {
         if (error.status === 400) {
           alert("Thre are no more vehicles.");
         } else if (pageNumber === 1 && error.status === 404) {
@@ -206,7 +206,7 @@ export class VehicleListComponent {
         if (isRequestRoot) {
           this.requestSending = false;
         }
-    });
+      });
   }
 
   // find a vehicle from list
@@ -226,35 +226,35 @@ export class VehicleListComponent {
       .map((response: any) => {
         let resJson = response.json();
         return resJson && resJson.data.map(v => {
-            return new Vehicle(v, this.vendors);
+          return new Vehicle(v, this.vendors);
         });
-    });
+      });
   }
 
   // Create a vehicle with given data
   private _createNewVehicle(vehicle: Vehicle) {
     // remove internally used property
     let url = "/user/vehicle";
-    let body = JSON.stringify({vehicle: vehicle.getData()});
-    let headers = new Headers({"Content-Type": "application/json"});
-    let options = new RequestOptions({headers: headers});
+    let body = JSON.stringify({ vehicle: vehicle.getData() });
+    let headers = new Headers({ "Content-Type": "application/json" });
+    let options = new RequestOptions({ headers: headers });
 
     let isRequestOwner = !this.requestSending;
     this.requestSending = true;
     this.errorMessage = null;
     this.http.post(url, body, options)
-    .subscribe((response: Response) => {
-      // Update vehicle list when succeeded
-      this._updateVehicleList(1);
-      if (isRequestOwner) {
-        this.requestSending = false;
-      }
-    }, (error: any) => {
-      this.errorMessage = error.message || error._body || error;
-      if (isRequestOwner) {
-        this.requestSending = false;
-      }
-    });
+      .subscribe((response: Response) => {
+        // Update vehicle list when succeeded
+        this._updateVehicleList(1);
+        if (isRequestOwner) {
+          this.requestSending = false;
+        }
+      }, (error: any) => {
+        this.errorMessage = error.message || error._body || error;
+        if (isRequestOwner) {
+          this.requestSending = false;
+        }
+      });
   }
 
   // update a vehicle with given data
@@ -262,25 +262,25 @@ export class VehicleListComponent {
     vehicle.mo_id = mo_id;
     let url = "/user/vehicle/" + mo_id;
     let body = JSON.stringify(vehicle.getData());
-    let headers = new Headers({"Content-Type": "application/json"});
-    let options = new RequestOptions({headers: headers});
+    let headers = new Headers({ "Content-Type": "application/json" });
+    let options = new RequestOptions({ headers: headers });
 
     let isRequestOwner = !this.requestSending;
     this.requestSending = true;
     this.errorMessage = null;
     this.http.put(url, body, options)
-    .subscribe((response: Response) => {
-      // Update vehicle list when succeeded
-      this._updateVehicleList(this.pageNumber);
-      if (isRequestOwner) {
-        this.requestSending = false;
-      }
-    }, (error: any) => {
-      this.errorMessage = error.message || error._body || error;
-      if (isRequestOwner) {
-        this.requestSending = false;
-      }
-    });
+      .subscribe((response: Response) => {
+        // Update vehicle list when succeeded
+        this._updateVehicleList(this.pageNumber);
+        if (isRequestOwner) {
+          this.requestSending = false;
+        }
+      }, (error: any) => {
+        this.errorMessage = error.message || error._body || error;
+        if (isRequestOwner) {
+          this.requestSending = false;
+        }
+      });
   }
 
   // delete a vehicle
@@ -289,34 +289,34 @@ export class VehicleListComponent {
     this.requestSending = true;
     this.errorMessage = null;
     this.http.delete("/user/vehicle/" + mo_id)
-    .subscribe((response: Response) => {
-      // Update vehicle list when succeeded
-      if (this.vehicles.length === 1 && this.pageNumber > 1) {
-        this._updateVehicleList(this.pageNumber-1);
-      } else {
-        this._updateVehicleList(this.pageNumber);
-      }
-      if (isRequestOwner) {
-        this.requestSending = false;
-      }
-    }, (error: any) => {
-      this.errorMessage = error.message || error._body || error;
-      if (isRequestOwner) {
-        this.requestSending = false;
-      }
-    });
+      .subscribe((response: Response) => {
+        // Update vehicle list when succeeded
+        if (this.vehicles.length === 1 && this.pageNumber > 1) {
+          this._updateVehicleList(this.pageNumber - 1);
+        } else {
+          this._updateVehicleList(this.pageNumber);
+        }
+        if (isRequestOwner) {
+          this.requestSending = false;
+        }
+      }, (error: any) => {
+        this.errorMessage = error.message || error._body || error;
+        if (isRequestOwner) {
+          this.requestSending = false;
+        }
+      });
   }
 
   // Get vendor list
   private _getVendors() {
     let url = "/user/vendor?num_rec_in_page=50&num_page=1";
     return this.http.get(url)
-    .map((response: Response) => {
-      let resJson = response.json();
-      return resJson && resJson.data.map(v => {
+      .map((response: Response) => {
+        let resJson = response.json();
+        return resJson && resJson.data.map(v => {
           return new Vendor(v);
+        });
       });
-    });
   }
 }
 
@@ -326,6 +326,7 @@ class Vehicle {
   __mo_id: string;
   __vendorname: string = "";
   mo_id: string; // The ID of the vehicle that is automatically generated by the system.
+  iotcvaltmoid: string; // An alternative alias of the vehicle
   siteid: string; // site id only for SaaS environment
   internal_mo_id: number; // The numerical ID of the vehicle that is automatically generated by the system.
   vendor: string = ""; // The vendor ID of the vehicle that is created from within the vendor's system.
@@ -345,7 +346,7 @@ class Vehicle {
       this[key] = props[key];
     }
     this.__id = this.serial_number || this.mo_id;
-    this.__mo_id = this.siteid ? (this.siteid + ':' + this.mo_id) : this.mo_id;
+    this.__mo_id = this.iotcvaltmoid || (this.siteid ? (this.siteid + ':' + this.mo_id) : this.mo_id);
 
     if (this.vendor) {
       _.each(vendors, v => {
@@ -360,7 +361,7 @@ class Vehicle {
   }
 
   getData() {
-    let data:any = {};
+    let data: any = {};
     for (let key in this) {
       if (key.lastIndexOf("__", 0) !== 0) {
         data[key] = this[key];

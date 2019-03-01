@@ -7,6 +7,7 @@ const cviAsset = app_module_require("cvi-node-lib").asset;
 const iotfAppClient = app_module_require('iotfclient').iotfAppClient;
 
 const VENDOR_NAME = process.env.SIMULATOR_VENDOR || "IBM";
+const DEVICE_TYPE = process.env.DEVICE_TYPE || "TCU";
 const ERROR_ON_VEHICLE_INCONSISTENT = process.env.ERROR_ON_VEHICLE_INCONSISTENT || false;
 
 class DeviceManager {
@@ -18,20 +19,20 @@ class DeviceManager {
 			const iotf_service = vcapSvc["iotf-service"] && vcapSvc["iotf-service"][0].credentials;
 			if (iotf_service) {
 				this.mqttAccessInfo = {
-					vendor: VENDOR_NAME,
+					vendor: DEVICE_TYPE,
 					endpoint: iotf_service.org,
 					username: "use-token-auth"
 				};
 			}
 		} else if (process.env.IOTP_SERVICE_ORG) {
 			this.mqttAccessInfo = {
-				vendor: VENDOR_NAME,
+				vendor: DEVICE_TYPE,
 				endpoint: process.env.IOTP_SERVICE_ORG,
 				username: "use-token-auth"
 			}
 		}
 		this.httpAccessInfo = {
-			vendor: VENDOR_NAME,
+			vendor: DEVICE_TYPE,
 			endpoint: cviAsset.assetConfig.vdh.baseURL + "/carProbe",
 			username: cviAsset.assetConfig.vdh.username,
 			password: cviAsset.assetConfig.vdh.password
@@ -55,9 +56,9 @@ class DeviceManager {
 		debug(vendor);
 
 		if (this.isIoTPlatformAvailable()) {
-			let deviceType = await iotfAppClient.getDeviceType(VENDOR_NAME).catch(async error => {
+			let deviceType = await iotfAppClient.getDeviceType(DEVICE_TYPE).catch(async error => {
 				if (error.status === 404) {
-					return await iotfAppClient.registerDeviceType(VENDOR_NAME);
+					return await iotfAppClient.registerDeviceType(DEVICE_TYPE);
 				}
 				return Promise.reject(error);
 			});
@@ -77,7 +78,7 @@ class DeviceManager {
 			return;
 		}
 		const vehicles = await cviAsset.getVehicleList({ "vendor": VENDOR_NAME });
-		const devices = await iotfAppClient.getAllDevices({ "typeId": VENDOR_NAME });
+		const devices = await iotfAppClient.getAllDevices({ "typeId": DEVICE_TYPE });
 
 		const vehiclemap = {};
 		vehicles.data.forEach(vehicle => {
@@ -86,7 +87,7 @@ class DeviceManager {
 		const deleteDevices = [];
 		devices.results.forEach(device => {
 			if (!vehiclemap[device.deviceId.toUpperCase()]) {
-				deleteDevices.push({ "typeId": VENDOR_NAME, "deviceId": device.deviceId });
+				deleteDevices.push({ "typeId": DEVICE_TYPE, "deviceId": device.deviceId });
 			}
 		});
 		if (deleteDevices.length > 0) {
@@ -112,7 +113,7 @@ class DeviceManager {
 	 */
 	async addVehicle(tcuId, vehicle, protocol) {
 		vehicle = Object.assign({
-			"mo_id": chance.hash({ length: 10 }).toUpperCase(),
+			"mo_id": chance.hash({ length: 6 }).toUpperCase(),
 			"serial_number": "s-" + chance.hash({ length: 6 }),
 			"status": "active",
 			"model": "TCU",
@@ -121,6 +122,7 @@ class DeviceManager {
 		vehicle.vendor = VENDOR_NAME; // Force use vendor specified in the application side
 		if (cviAsset.acceptVehicleProperties()) {
 			vehicle.properties["TCU_ID"] = tcuId;
+			vehicle.properties["fueltank"] = 60;
 		} else {
 			delete vehicle.properties;
 		}
@@ -134,7 +136,7 @@ class DeviceManager {
 			if (!this.isIoTPlatformAvailable()) {
 				return { "statusCode": 400, "message": "IoT Platform is not available. Use HTTP to send car probe." };
 			}
-			device = await iotfAppClient.getDevice(VENDOR_NAME, vehicle.mo_id).catch(error => {
+			device = await iotfAppClient.getDevice(DEVICE_TYPE, vehicle.mo_id).catch(error => {
 				if (error && error.status === 404) {
 					return null;
 				}
@@ -143,7 +145,7 @@ class DeviceManager {
 				if (ERROR_ON_VEHICLE_INCONSISTENT) {
 					return Promise.reject({ "statusCode": 409, "message": `Device with id=${vehicle.mo_id} has already been existing.` });
 				} else {
-					await iotfAppClient.unregisterDevice(VENDOR_NAME, vehicle.mo_id);
+					await iotfAppClient.unregisterDevice(DEVICE_TYPE, vehicle.mo_id);
 				}
 			}
 
@@ -151,7 +153,7 @@ class DeviceManager {
 			if (vehicle.serial_number) {
 				deviceInfo.serialNumber = vehicle.serial_number;
 			}
-			device = await iotfAppClient.registerDevice(VENDOR_NAME, vehicle.mo_id, null, deviceInfo);
+			device = await iotfAppClient.registerDevice(DEVICE_TYPE, vehicle.mo_id, null, deviceInfo);
 		}
 
 		return this._extractAccessInfo(Object.assign(device, response));
@@ -175,7 +177,7 @@ class DeviceManager {
 			const mo_id = vehicle.mo_id;
 			let device;
 			if (protocol === "mqtt" && this.isIoTPlatformAvailable()) {
-				device = await iotfAppClient.getDevice(VENDOR_NAME, mo_id).catch(async error => {
+				device = await iotfAppClient.getDevice(DEVICE_TYPE, mo_id).catch(async error => {
 					if (error && error.status === 404) {
 						if (ERROR_ON_VEHICLE_INCONSISTENT) {
 							return Promise.reject({ "statusCode": 404, "message": "CVI Vehicle and IoTP Device are inconcistent." });
@@ -185,10 +187,10 @@ class DeviceManager {
 					return Promise.reject(error);
 				});
 				if (device) {
-					await iotfAppClient.unregisterDevice(VENDOR_NAME, vehicle.mo_id);
+					await iotfAppClient.unregisterDevice(DEVICE_TYPE, vehicle.mo_id);
 				}
 				const deviceInfo = vehicle.serial_number ? { "serialNumber": vehicle.serial_number } : {};
-				device = await iotfAppClient.registerDevice(VENDOR_NAME, vehicle.mo_id, null, deviceInfo);
+				device = await iotfAppClient.registerDevice(DEVICE_TYPE, vehicle.mo_id, null, deviceInfo);
 			}
 			return this._extractAccessInfo(Object.assign(device || {}, vehicle));
 		}
@@ -204,7 +206,7 @@ class DeviceManager {
 			let vehicle = vehicles.data[0];
 			vehicle = await cviAsset.deleteVehicle(vehicle.mo_id);
 			if (this.isIoTPlatformAvailable()) {
-				await iotfAppClient.unregisterDevice(VENDOR_NAME, vehicle.mo_id);
+				await iotfAppClient.unregisterDevice(DEVICE_TYPE, vehicle.mo_id);
 			}
 			return vehicle;
 		} else {
@@ -214,7 +216,7 @@ class DeviceManager {
 	async deleteVehicle(mo_id) {
 		const vehicle = await cviAsset.deleteVehicle(mo_id);
 		if (this.isIoTPlatformAvailable()) {
-			await iotfAppClient.unregisterDevice(VENDOR_NAME, mo_id).catch(error => {
+			await iotfAppClient.unregisterDevice(DEVICE_TYPE, mo_id).catch(error => {
 				if (error.statusCode === 404) {
 					// The vehicle is not associated with IoTP
 					return null;

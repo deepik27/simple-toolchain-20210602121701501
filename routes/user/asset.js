@@ -28,6 +28,17 @@ router.post("/vehicle", authenticate, function (req, res) {
 			handleError(res, error);
 		})
 });
+/**
+ * Delete all IoTP devices that are not binded to CVI vehicle by mo_id
+ */
+router.post("/device/sync", authenticate, async (req, res) => {
+	try {
+		const result = await deviceManager.deleteUnusedDevices();
+		res.send({ "message": result });
+	} catch (error) {
+		handleError(res, error);
+	}
+});
 router.post("/device/:tcuId", authenticate, async (req, res) => {
 	try {
 		const tcuId = req.params.tcuId;
@@ -109,19 +120,6 @@ router["delete"]("/vehicle/:vehicleId", authenticate, async (req, res) => {
 router.get("/capability/device", authenticate, function (req, res) {
 	res.send({ available: deviceManager.isIoTPlatformAvailable() });
 });
-
-/**
- * Delete all IoTP devices that are not binded to CVI vehicle by mo_id
- */
-router.post("/device/sync", authenticate, async (req, res) => {
-	try {
-		const result = await deviceManager.deleteUnusedDevices();
-		res.send({ "message": result });
-	} catch (error) {
-		handleError(res, error);
-	}
-});
-
 
 router.post("/driver", authenticate, function (req, res) {
 	asset.addDriver(req.body && req.body.driver)
