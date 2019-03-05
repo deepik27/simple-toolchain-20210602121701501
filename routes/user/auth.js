@@ -57,6 +57,8 @@ var eula = function (req, res, next) {
 
 /**
  * Get the QR Code image for mobile app to connect to platform
+ * Generated QR Code contains plain username and password of this starter server application
+ * because this api is for demo purpose for convenience to switch application servers by mobile application
  */
 router.get('/qr/getPlatformCredentials', /*authenticate,*/ function (req, res) {
 	const route = appEnv.url;
