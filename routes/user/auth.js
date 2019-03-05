@@ -63,7 +63,9 @@ var eula = function (req, res, next) {
 router.get('/qr/getPlatformCredentials', /*authenticate,*/ function (req, res) {
 	const route = appEnv.url;
 
-	const text = ["1", route, APP_USER, APP_PASSWORD].join(",");
+	const user = APP_USER == "none" ? "" : APP_USER;
+	const pass = APP_PASSWORD == "none" ? "" : APP_PASSWORD;
+	const text = ["1", route, user, pass].join(",");
 
 	const img = qr.image(text, { type: 'png', ec_level: 'H', size: 3, margin: 0 });
 	res.writeHead(200, { 'Content-Type': 'image/png' })
