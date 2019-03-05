@@ -26,6 +26,8 @@
 				<Parameter><Key>mo_id</Key><Value>CarProbe.Vehicle_id_ext</Value></Parameter>
 				<Parameter><Key>message_type</Key><Value>geofence</Value></Parameter>
 				<Parameter><Key>source_id</Key><Value>CarProbe.Vehicle_id_ext</Value></Parameter>
+				<Parameter><Key>longitude</Key><Value>CarProbe.Longitude</Value></Parameter>
+				<Parameter><Key>latitude</Key><Value>CarProbe.Latitude</Value></Parameter>
 				<Parameter><Key>timestamp</Key><Value>CarProbe.timestamp</Value></Parameter>
 				<Parameter><Key>ts</Key><Value>CarProbe.ts</Value></Parameter>
       </VehicleAction>
