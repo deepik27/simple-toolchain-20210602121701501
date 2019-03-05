@@ -489,7 +489,7 @@ routeGenerator.prototype._selectRecommendedPath = function(trip) {
 };
 
 routeGenerator.prototype._getReferenceSpeed = function (index, speed) {
-	let defReferenceSpeed = 120;
+	let defReferenceSpeed = 161;
 	loc = this.tripRoute[index];
 	if (index === 0) {
 		return defReferenceSpeed;
@@ -554,8 +554,11 @@ routeGenerator.prototype._getRoutePosition = function () {
 	var loc = this.tripRoute[this.tripRouteIndex];
 	var speed = this._getDistance(loc, prevLoc)*0.001*3600;
 	var acceleration = this._toKilometerPerHour(this.acceleration);
-	var accel_speed = this._calcSpeed(speed, prevLoc.speed, acceleration);
-	if(accel_speed < speed){
+	let calcSpeedResult = {accel_speed: speed, existingPoint: true};
+	calcSpeedResult = this._calcSpeed(speed, prevLoc.speed, acceleration);
+	var accel_speed = calcSpeedResult.accel_speed;
+	let existingPoint = calcSpeedResult.existingPoint;
+	if(!existingPoint){
 		//calcDestination point
 		let bearing = this._calcHeading(prevLoc, loc);
 		let loc2 = this._calcDestinationPoint(prevLoc, this._toMeterPerSec(accel_speed), bearing);
@@ -564,7 +567,7 @@ routeGenerator.prototype._getRoutePosition = function () {
 		loc = loc2;
 	} else {
 		// current speed cannot be accelerated
-		loc.speed = speed;
+			loc.speed = accel_speed;
 	}
 	this.prevLoc = loc;	
 	loc.heading = this._calcHeading(prevLoc, loc);
@@ -637,43 +640,47 @@ routeGenerator.prototype._calcSpeed = function(speed, prevLocSpeed, acceleration
 	const MAX_SPEED_CAP = 161; 	// maximum speed cap is 161 km/h (about 100 MPH)
 	const MIN_SPEED_CAP = 8; 	// minimum speed cap is 8 km/h (about 5 MPH)
 	var accel_speed;
+	let existingPoint = false;
+	if(this.tripRouteIndex >= this.tripRoute.length-1){
+		existingPoint = true;
+		return {accel_speed: speed, existingPoint: existingPoint};
+	}
 	if(acceleration !== 0){
 		// acceleration is set from simulation UI
-		if((speed - prevLocSpeed) > acceleration){
-			// Calculated acceleration exceeds harsh acceleration value set from simulator UI. 
-			// Simulate harsh acceleration
-			accel_speed = prevLocSpeed + acceleration;
-			if(accel_speed > MAX_SPEED_CAP){
-				// Accelerated speed breaks max speed CAP
-				// We will see this when acceleration is set using bigger values such as 10
-				// Accelerated speed will be capped. 
-				accel_speed = MAX_SPEED_CAP;
+		accel_speed = prevLocSpeed + acceleration;
+		if(accel_speed > MAX_SPEED_CAP){
+			accel_speed = MAX_SPEED_CAP;
+		}
+		if(accel_speed < MIN_SPEED_CAP){
+			accel_speed = MIN_SPEED_CAP;
+		}
+		let can_speed = speed;
+		while(can_speed < accel_speed && this.tripRouteIndex < this.tripRoute.length-1){
+			let cur_loc = this.tripRoute[this.tripRouteIndex];
+			let next_loc = this.tripRoute[this.tripRouteIndex+1];
+			cur_heading = this._calcHeading(cur_loc, next_loc);
+			let diff_heading = Math.abs(cur_heading - this.prevLoc.heading);
+			if (diff_heading > 2){
+				accel_speed = can_speed;
+				existingPoint = true;
+				break;
 			}
-			if(accel_speed < MIN_SPEED_CAP){
-				// Accelerated speed breaks minimum speed CAP
-				// Accelerated speed will be capped. 
-				accel_speed = MIN_SPEED_CAP;
-			} 
-		} else {
-			// Calculated acceleration is smaller than harsh acceleration value set from simulator UI. 
-			if(speed > MAX_SPEED_CAP){
-				// Speed breaks speed CAP
-				// We will see this when acceleration is set using bigger values such as 10
-				// Speed will be capped. 
-				accel_speed = MAX_SPEED_CAP;
-			}
+			can_speed = can_speed + this._getDistance(next_loc, cur_loc)*0.001*3600;
+			this.tripRouteIndex++;
 		}
 	} else {
 		// acceleration is set to 0, use random value instead
 		let referenceSpeed = this._getReferenceSpeed(this.tripRouteIndex, speed);
 		let rand_acceleration = Math.floor(Math.random() * 10 + 10);
 		accel_speed = speed;
+		existingPoint = true;
 		while(accel_speed>referenceSpeed || (accel_speed - prevLocSpeed) > rand_acceleration){
 			// too harsh acceleration, then insert intermediate point
 			accel_speed = accel_speed / 2.0;
+			existingPoint = false;
 		}
 	}
-	return accel_speed;
+	return {accel_speed: accel_speed, existingPoint: existingPoint};
 };
 
 routeGenerator.prototype._toRadians = function(n) {
