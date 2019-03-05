@@ -656,10 +656,12 @@ routeGenerator.prototype._calcSpeed = function(speed, prevLocSpeed, acceleration
 		}
 		let can_speed = speed;
 		while(can_speed < accel_speed && this.tripRouteIndex < this.tripRoute.length-1){
+			let prev_loc = this.tripRoute[this.tripRouteIndex-1];
 			let cur_loc = this.tripRoute[this.tripRouteIndex];
 			let next_loc = this.tripRoute[this.tripRouteIndex+1];
+			prev_heading = this._calcHeading(prev_loc, cur_loc); 
 			cur_heading = this._calcHeading(cur_loc, next_loc);
-			let diff_heading = Math.abs(cur_heading - this.prevLoc.heading);
+			let diff_heading = Math.abs(cur_heading - prev_heading);
 			if (diff_heading > 2){
 				accel_speed = can_speed;
 				existingPoint = true;
