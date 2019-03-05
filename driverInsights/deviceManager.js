@@ -48,7 +48,8 @@ class DeviceManager {
 					"vendor": chance.hash({ length: 12 }),
 					"type": "Vendor",
 					"status": "Active",
-					"name": VENDOR_NANE
+					"name": VENDOR_NANE,
+					"description": VENDOR_NAME
 				});
 			}
 			return Promise.reject(error);
