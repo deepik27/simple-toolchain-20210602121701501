@@ -42,19 +42,17 @@ class DeviceManager {
 	}
 
 	async _initialize() {
-		let vendors = await cviAsset.getVendorList({ name: VENDOR_NAME }).catch(async error => {
-			if (error.statusCode === 404) {
-				return await cviAsset.addVendor({
-					"vendor": chance.hash({ length: 12 }),
-					"type": "Vendor",
-					"status": "Active",
-					"name": VENDOR_NANE,
-					"description": VENDOR_NAME
-				});
-			}
-			return Promise.reject(error);
-		});
+		let vendors = await cviAsset.getVendorList({ "name": VENDOR_NAME });
 		debug(vendors);
+		if (!vendors || !vendors.data || vendors.data.length <= 0) {
+			await cviAsset.addVendor({
+				"vendor": chance.hash({ length: 12 }),
+				"type": "Vendor",
+				"status": "Active",
+				"name": VENDOR_NAME,
+				"description": VENDOR_NAME
+			});
+		}
 
 		if (this.isIoTPlatformAvailable()) {
 			let deviceType = await iotfAppClient.getDeviceType(DEVICE_TYPE).catch(async error => {
