@@ -44,9 +44,12 @@ class DeviceManager {
 	async _initialize() {
 		let vendors = await cviAsset.getVendorList({ "name": VENDOR_NAME });
 		debug(vendors);
-		if (!vendors || !vendors.data || vendors.data.length <= 0) {
+		if (vendors && vendors.data && vendors.data.length > 0) {
+			this.vendor_id = vendors.data[0].vendor;
+		} else {
+			this.vendor_id = chance.hash({ length: 12 });
 			await cviAsset.addVendor({
-				"vendor": chance.hash({ length: 12 }),
+				"vendor": this.vendor_id,
 				"type": "Vendor",
 				"status": "Active",
 				"name": VENDOR_NAME,
@@ -116,9 +119,9 @@ class DeviceManager {
 			"serial_number": "s-" + chance.hash({ length: 6 }),
 			"status": "active",
 			"model": "TCU",
+			"vendor": this.vendor_id,
 			"properties": {}
 		}, vehicle || {});
-		vehicle.vendor = VENDOR_NAME; // Force use vendor specified in the application side
 		if (cviAsset.acceptVehicleProperties()) {
 			vehicle.properties["TCU_ID"] = tcuId;
 			vehicle.properties["fueltank"] = 60;
