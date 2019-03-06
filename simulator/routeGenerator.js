@@ -238,6 +238,14 @@ routeGenerator.prototype._createRoutes = function (locs, loop) {
 		}
 		this.allRoutes = routes;
 
+		let prevLoc = null;
+		_.forEach(routes, (route) => { 
+			route.route = _.filter(route.route, function (loc) {
+				let diff = !prevLoc || prevLoc.lon !== loc.lon || prevLoc.lat !== loc.lat;
+				prevLoc = loc;
+				return diff;
+		});});
+	
 		this.tripRouteIndex = 0;
 		routeArray = routes[0].route;
 		if (routeArray.length > 0) {
@@ -489,7 +497,7 @@ routeGenerator.prototype._selectRecommendedPath = function(trip) {
 };
 
 routeGenerator.prototype._getReferenceSpeed = function (index, speed) {
-	let defReferenceSpeed = 120;
+	let defReferenceSpeed = 161;
 	loc = this.tripRoute[index];
 	if (index === 0) {
 		return defReferenceSpeed;
@@ -550,54 +558,26 @@ routeGenerator.prototype._getRoutePosition = function () {
 	if (!this.prevLoc || !this.tripRoute || this.tripRoute.length < 2) {
 		return this.prevLoc;
 	}
-	var harshAccelRadioButton = false;
-	if(this.acceleration !== 0){
-		harshAccelRadioButton = true;
-	}
 	var prevLoc = this.prevLoc;
 	var loc = this.tripRoute[this.tripRouteIndex];
 	var speed = this._getDistance(loc, prevLoc)*0.001*3600;
-	if(!harshAccelRadioButton){
-		var referenceSpeed = this._getReferenceSpeed(this.tripRouteIndex, speed);
-		var acceleration = Math.floor(Math.random() * 10 + 10);
-		while((speed - prevLoc.speed) < (acceleration * -1) && this.tripRouteIndex < this.tripRoute.length-1){ 
-			// too harsh brake, then skip the pointpoint
-			this.tripRouteIndex++;
-			loc = this.tripRoute[this.tripRouteIndex];
-			speed = this._getDistance(loc, prevLoc)*0.001*3600;
-		}
-		while(speed>referenceSpeed || (speed - prevLoc.speed) > acceleration){
-			// too harsh acceleration, then insert intermediate point
-			var loc2 = {lat: (+loc.lat+prevLoc.lat)/2, lon: (+loc.lon+prevLoc.lon)/2};
-			speed = this._getDistance(loc2, prevLoc)*0.001*3600;
-			this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
-			loc = loc2;
-		}
-		loc.speed = speed;
+	var acceleration = this._toKilometerPerHour(this.acceleration);
+	let calcSpeedResult = this._calcSpeed(speed, prevLoc.speed, acceleration);
+	if(calcSpeedResult.stopAtLoc){
+		loc = this.tripRoute[this.tripRouteIndex];
 	} else {
-		// When acceleration is set from simulator UI.
-		let acceleration = this._toKilometerPerHour(this.acceleration);
-		var accel_speed = this._calcSpeed(speed, prevLoc.speed, acceleration);
-		if(accel_speed !== speed){
-			//calcDestination point
-			let bearing = this._calcHeading(prevLoc, loc);
-			let loc2 = this._calcDestinationPoint(prevLoc, this._toMeterPerSec(accel_speed), bearing);
-			this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
-			loc2.speed = accel_speed;
-			loc = loc2;
-		} else {
-			loc.speed = speed;
-		}
-		
-	}
+		loc = this._calcDestinationPoint(calcSpeedResult.prev_loc, this._toMeterPerSec(calcSpeedResult.accel_speed), calcSpeedResult.heading);
+	} 
+	loc.speed = calcSpeedResult.speed;
+	loc.heading = calcSpeedResult.heading;
 	this.prevLoc = loc;	
-	loc.heading = this._calcHeading(prevLoc, loc);
-	this.tripRouteIndex++;	
+	if (calcSpeedResult.stopAtLoc)
+		this.tripRouteIndex++;	
 	if(this.tripRouteIndex >= this.tripRoute.length){
-		if (this.destination && !(this.options && this.options.route_loop)) {
-			this.tripRouteIndex--;
-		} else {
+		if (this.options && this.options.route_loop) {
 			this.tripRouteIndex = 0;
+		} else {
+			this.tripRouteIndex--;
 		}
 	}
 	return loc;
@@ -659,40 +639,73 @@ routeGenerator.prototype._calcDestinationPoint = function(startPoint, distance, 
 
 routeGenerator.prototype._calcSpeed = function(speed, prevLocSpeed, acceleration) {
 	const MAX_SPEED_CAP = 161; 	// maximum speed cap is 161 km/h (about 100 MPH)
-	const MIN_SPEED_CAP = 17; 	// minimum speed cap is 16 km/h (about 10 MPH)
+	const MIN_SPEED_CAP = 8; 	// minimum speed cap is 8 km/h (about 5 MPH)
 	var accel_speed;
-	if((speed - prevLocSpeed) > acceleration){
-		// Calculated acceleration exceeds harsh acceleration value set from simulator UI. 
-		// Simulate harsh acceleration
+
+	let stopAtLoc = false;
+	let prev_loc = this.prevLoc;
+	let cur_loc = this.tripRoute[this.tripRouteIndex];
+	let heading = this._calcHeading(prev_loc, cur_loc); 
+
+	if(acceleration !== 0){
+		// acceleration is set from simulation UI
 		accel_speed = prevLocSpeed + acceleration;
 		if(accel_speed > MAX_SPEED_CAP){
-			// Accelerated speed breaks max speed CAP
-			// We will see this when acceleration is set using bigger values such as 10
-			// Accelerated speed will be capped. 
 			accel_speed = MAX_SPEED_CAP;
 		}
 		if(accel_speed < MIN_SPEED_CAP){
-			// Accelerated speed breaks minimum speed CAP
-			// Accelerated speed will be capped. 
 			accel_speed = MIN_SPEED_CAP;
-			if(speed < accel_speed){
-				// when minumum speed cap is bigger than speed
-				accel_speed = speed;
-			}
-		} 
-	} else {
-		// Calculated acceleration is smaller than harsh acceleration value set from simulator UI. 
-		if(speed > MAX_SPEED_CAP){
-			// Speed breaks speed CAP
-			// We will see this when acceleration is set using bigger values such as 10
-			// Speed will be capped. 
-			accel_speed = MAX_SPEED_CAP;
-		} else {
-			// This is where currently harsh breaks are happening!
-			accel_speed = speed;
 		}
+		let can_speed = speed;
+		speed = accel_speed;
+		let sum_speed = 0;
+		while(can_speed < accel_speed && prev_loc){
+			sum_speed += can_speed;
+			let nextIndex = this.tripRouteIndex + 1;
+			if(this.tripRouteIndex >= this.tripRoute.length-1){
+				if (this.options && this.options.route_loop) {
+					nextIndex = 0;
+				} else {
+					accel_speed = can_speed;
+					speed = sum_speed;
+					stopAtLoc = true;
+					break;
+				}
+			}
+		
+			let next_loc = this.tripRoute[nextIndex];
+			let cur_heading = this._calcHeading(cur_loc, next_loc);
+			let diff_heading = Math.abs(cur_heading - heading);
+			if (diff_heading > 2){
+				accel_speed = can_speed;
+				speed = sum_speed;
+				stopAtLoc = true;
+				break;
+			}
+			accel_speed -= can_speed;
+			can_speed = this._getDistance(next_loc, cur_loc)*0.001*3600;
+			this.tripRouteIndex = nextIndex;
+
+			prev_loc = cur_loc;
+			heading = cur_heading;
+			cur_loc = next_loc;
+		}
+	} else {
+		// acceleration is set to 0, use random value instead
+		let referenceSpeed = this._getReferenceSpeed(this.tripRouteIndex, speed);
+		if(referenceSpeed === 0){
+			console.log("Reference speed is zero!");
+		}
+		let rand_acceleration = Math.floor(Math.random() * 10 + 10);
+		stopAtLoc = true;
+		while(speed>referenceSpeed || (speed - prevLocSpeed) > rand_acceleration){
+			// too harsh acceleration, then insert intermediate point
+			speed = speed / 2.0;
+			stopAtLoc = false;
+		}
+		accel_speed = speed;
 	}
-	return accel_speed;
+	return {accel_speed: accel_speed, speed: speed, heading: heading, prev_loc: prev_loc, stopAtLoc: stopAtLoc};
 };
 
 routeGenerator.prototype._toRadians = function(n) {
