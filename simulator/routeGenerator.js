@@ -238,6 +238,14 @@ routeGenerator.prototype._createRoutes = function (locs, loop) {
 		}
 		this.allRoutes = routes;
 
+		let prevLoc = null;
+		_.forEach(routes, (route) => { 
+			route.route = _.filter(route.route, function (loc) {
+				let diff = !prevLoc || prevLoc.lon !== loc.lon || prevLoc.lat !== loc.lat;
+				prevLoc = loc;
+				return diff;
+		});});
+	
 		this.tripRouteIndex = 0;
 		routeArray = routes[0].route;
 		if (routeArray.length > 0) {
@@ -494,6 +502,9 @@ routeGenerator.prototype._getReferenceSpeed = function (index, speed) {
 	if (index === 0) {
 		return defReferenceSpeed;
 	} else if (!isNaN(loc.referenceSpeed)) {
+		if(loc.referenceSpeed ===0){
+			console.log("loc.referenceSpeed is zero!");
+		}
 		return loc.referenceSpeed;
 	}
 
@@ -534,15 +545,24 @@ routeGenerator.prototype._getReferenceSpeed = function (index, speed) {
 		}
 		if (diff < 110) {
 			loc.referenceSpeed = Math.min(Math.floor(distance * 2), defReferenceSpeed);
+			if(loc.referenceSpeed ===0){
+				console.log("loc.referenceSpeed is zero!");
+			}
 			return loc.referenceSpeed;
 		} else if (diff < 135) {
 			loc.referenceSpeed = Math.min(Math.floor(distance * 3), defReferenceSpeed);
+			if(loc.referenceSpeed ===0){
+				console.log("loc.referenceSpeed is zero!");
+			}
 			return loc.referenceSpeed;
 		}
 		p1 = p2;
 	}
 
 	loc.referenceSpeed = defReferenceSpeed;
+	if(loc.referenceSpeed ===0){
+		console.log("loc.referenceSpeed is zero!");
+	}
 	return loc.referenceSpeed;
 };
 
@@ -562,7 +582,8 @@ routeGenerator.prototype._getRoutePosition = function () {
 		//calcDestination point
 		let bearing = this._calcHeading(prevLoc, loc);
 		let loc2 = this._calcDestinationPoint(prevLoc, this._toMeterPerSec(accel_speed), bearing);
-		this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
+		// TODO: stop splicing
+		//this.tripRoute.splice(this.tripRouteIndex, 0, loc2);
 		loc2.speed = accel_speed;
 		loc = loc2;
 	} else {
@@ -571,12 +592,14 @@ routeGenerator.prototype._getRoutePosition = function () {
 	}
 	this.prevLoc = loc;	
 	loc.heading = this._calcHeading(prevLoc, loc);
-	this.tripRouteIndex++;	
+	if(existingPoint){
+		this.tripRouteIndex++;	
+	}
 	if(this.tripRouteIndex >= this.tripRoute.length){
-		if (this.destination && !(this.options && this.options.route_loop)) {
-			this.tripRouteIndex--;
-		} else {
+		if (this.options && this.options.route_loop) {
 			this.tripRouteIndex = 0;
+		} else {
+			this.tripRouteIndex--;
 		}
 	}
 	return loc;
@@ -655,7 +678,7 @@ routeGenerator.prototype._calcSpeed = function(speed, prevLocSpeed, acceleration
 			accel_speed = MIN_SPEED_CAP;
 		}
 		let can_speed = speed;
-		while(can_speed < accel_speed && this.tripRouteIndex < this.tripRoute.length-1){
+		while(can_speed < accel_speed && this.tripRouteIndex < this.tripRoute.length-1 && this.tripRouteIndex > 0){
 			let prev_loc = this.tripRoute[this.tripRouteIndex-1];
 			let cur_loc = this.tripRoute[this.tripRouteIndex];
 			let next_loc = this.tripRoute[this.tripRouteIndex+1];
@@ -668,11 +691,15 @@ routeGenerator.prototype._calcSpeed = function(speed, prevLocSpeed, acceleration
 				break;
 			}
 			can_speed = can_speed + this._getDistance(next_loc, cur_loc)*0.001*3600;
+			
 			this.tripRouteIndex++;
 		}
 	} else {
 		// acceleration is set to 0, use random value instead
 		let referenceSpeed = this._getReferenceSpeed(this.tripRouteIndex, speed);
+		if(referenceSpeed === 0){
+			console.log("Reference speed is zero!");
+		}
 		let rand_acceleration = Math.floor(Math.random() * 10 + 10);
 		accel_speed = speed;
 		existingPoint = true;
