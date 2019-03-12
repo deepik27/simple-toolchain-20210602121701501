@@ -4,8 +4,8 @@
 		<!-- Accel (GE 4.0) -->
 		<!-- ************************************* -->	
         <VehicleActionRule>
-			<RuleType>1</RuleType>
-			<RuleID>11</RuleID>
+			<RuleType>{alert_rule_id}</RuleType>
+			<RuleID>{alert_rule_id}</RuleID>
 			<Description>Action for Execution</Description>
 			<Target>
 			</Target>
