@@ -1,49 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.ibm.com/mobility/rule/VehicleActionRule.xsd">
-        <VehicleActionRule>
-			<RuleType>{alert_rule_id}</RuleType>
-			<RuleID>{alert_rule_id}</RuleID>
-			<Description>Action for Execution</Description>
-			<Target>
-			</Target>
-			<Execution>
-				<Exec>
-					<ComplexMethodClass>com.ibm.mobility.agent.accel.MovingAverageAcceleration</ComplexMethodClass>
-					<InitParameter>
-						<Key>MaxRecord</Key>
-						<Value>5</Value>
-					</InitParameter>
-				</Exec>
-			</Execution>
-			<Condition>
-				<ValueCondition>
-					<Attribute object="CarProbe">RuleID</Attribute>
-					<Operator>EQ</Operator>
-					<Value>1</Value>
-				</ValueCondition> 
-			</Condition>
-			<Action>
-				<VehicleAction>
-					<Message>GetStates</Message>
-					<Parameter>
-						<Key>Speed</Key>
-						<Value>Vehicle.Edge.*Speed</Value>
-					</Parameter>	
-					<Parameter>
-						<Key>Acceleration</Key>
-						<Value>Vehicle.Edge.*Accel</Value>
-					</Parameter>					
-					<Parameter>
-						<Key>AvgSpeed</Key>
-						<Value>Vehicle.Edge.*AvgSpeed</Value>
-					</Parameter>	
-					<Parameter>
-						<Key>AvgAccel</Key>
-						<Value>Vehicle.Edge.*AvgAccel</Value>
-					</Parameter>
-				</VehicleAction>
-			</Action>
-		</VehicleActionRule>
 		<!-- ************************************* -->
 		<!-- Accel (GE 4.0) -->
 		<!-- ************************************* -->	
