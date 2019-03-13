@@ -182,8 +182,13 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 			console.log("simulated vehicle=" + vehicle.mo_id + ", lon=" + loc[0] + ", lat=" + loc[1]);
 			v.setCurrentPosition(loc[0], loc[1], 360 * Math.random());
 
+			if (!version.laterOrEqual("3.0")) {
+				return Q();
+			}
 			// Generate MPP/DP model for trajectory pattern-based route search
-			return version.laterOrEqual("3.0") ? driverBehavior.generateMPPDPModel({mo_id: v.mo_id, from: fromtime, to: totime}) : Q();
+			return Q(driverBehavior.deletePredictionCache()).done(() => {
+				return driverBehavior.generateMPPDPModel({mo_id: v.mo_id, from: fromtime, to: totime});
+			});
 		});
 
 		return Q.all(models).catch(error => {
