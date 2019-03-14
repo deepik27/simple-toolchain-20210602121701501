@@ -2,7 +2,7 @@
 <project name="project" default="main" basedir=".">
 	<description>
 		NOTE: This file is only for GHE
-		Overwrite the dest repo content with the 
+		Overwrite the dest repo content with the
 	</description>
 
 	<property file="_ghe_copy_repo.properties"/>
@@ -10,7 +10,7 @@
 	# src (dev)
 	src.user=<ghe user>
 	src.pass=<ghe pass>
-	
+
 	# destination (mirror)
 	dest.user=<ghe user>
 	dest.pass=<ghe pass>
@@ -21,21 +21,24 @@
 	<property name="dest.user" value=""/>
 	<property name="dest.pass" value=""/>
 	-->
-	
+
 	<tstamp>
 		<format property="TAG_NAME" pattern="yyyyMMdd_HHmm" locale="en" timezone="Etc/GMT-9"/>
 	</tstamp>
-	
+
 	<property name="src.url" value="https://github.ibm.com/Watson-IoT/iota-starter-server-fleetmanagement"/>
 	<property name="src.opts" value="--depth 1 -b release --single-branch"/>
 	<property name="src.clone" location="_tmp.src_clone.${TAG_NAME}"/>
-	
+
 	<property name="dest.url" value="https://github.ibm.com/Watson-IoT/iota-starter-server-fleetmanagement"/>
 	<property name="dest.opts" value="-b mirror-saas --single-branch"/>
 	<property name="dest.clone" location="_tmp.dest_clone.${TAG_NAME}"/>
-	
-	<!-- ================================= 
-          target: main              
+
+	<property name="cvi-node-lib.url" value="https://github.ibm.com/Watson-IoT/cvi-node-lib"/>
+	<property name="cvi-node-lib.opts" value="--depth 1 -b release --single-branch"/>
+	<property name="cvi-node-lib.clone" location="_tmp.cvi-node-lib_clone.${TAG_NAME}"/>
+	<!-- =================================
+          target: main
          ================================= -->
 	<target name="main" depends="" description="description">
 		<echo>Start copying repo w/ tag ${TAG_NAME}...</echo>
@@ -53,6 +56,8 @@
 			<param name="repo.opts" value="${dest.opts}"/>
 			<param name="repo.clone" value="${dest.clone}"/>
 		</antcall>
+
+		<antcall target="cvi-node-lib"/>
 
 		<antcall target="copy_contents"/>
 		<antcall target="push_contents"/>
@@ -79,7 +84,7 @@
 			<arg value="${TAG_NAME}"/>
 		</exec>
 	</target>
-	
+
 	<target name="push_contents" depends="commit_contents" unless="${nopush}">
 		<exec executable="git" dir="${src.clone}">
 			<arg line="push origin ${TAG_NAME}"/>
@@ -127,7 +132,7 @@
 				<include name="**/.gitignore"/>
 			</fileset>
 		</delete>
-		
+
 		<!-- add all files to target -->
 		<copy todir="${dest.clone}" overwrite="true" includeEmptyDirs="false">
 			<fileset dir="${src.clone}">
@@ -183,6 +188,58 @@
 			<arg value="${_repo}"/>
 			<arg path="${repo.clone}"/>
 		</exec>
+	</target>
+
+	<target name="cvi-node-lib">
+		<antcall target="git.clone">
+			<param name="repo.url" value="${cvi-node-lib.url}"/>
+			<param name="repo.user" value="${src.user}"/>
+			<param name="repo.pass" value="${src.pass}"/>
+			<param name="repo.opts" value="${cvi-node-lib.opts}"/>
+			<param name="repo.clone" value="${cvi-node-lib.clone}"/>
+		</antcall>
+		<antcall target="check.clone">
+			<param name="repo.clone" value="${cvi-node-lib.clone}"/>
+		</antcall>
+		<delete failonerror="false">
+			<fileset dir="${src.clone}/app_modules/cvi-node-lib">
+				<include name="**/*"/>
+			</fileset>
+		</delete>
+		<copy todir="${src.clone}/app_modules/cvi-node-lib" overwrite="true" includeEmptyDirs="false">
+			<fileset dir="${cvi-node-lib.clone}">
+				<include name="lib/**/*"/>
+				<include name="**/index.js"/>
+			</fileset>
+		</copy>
+		<script language="javascript">
+			<![CDATA[
+			var srcdir = project.getProperty("src.clone");
+			var filename = srcdir + java.io.File.separator + "package.json";
+			var reader, writer;
+			try{
+				reader = new java.io.BufferedReader(new java.io.FileReader(new java.io.File(filename)));
+				var json = "";
+				var line;
+				while((line = reader.readLine()) != null){
+					json += line;
+				}
+				var packagejson = JSON.parse(json);
+				if(packagejson.dependencies["cvi-node-lib"]){
+					delete packagejson.dependencies["cvi-node-lib"];
+				}
+				writer = new java.io.BufferedWriter(new java.io.FileWriter(new java.io.File(filename)));
+				writer.write(JSON.stringify(packagejson, null, "  "));
+			}finally{
+				if(reader != null){
+					reader.close();
+				}
+				if(writer != null){
+					writer.close();
+				}
+			}
+			]]>
+		</script>
 	</target>
 
 </project>
