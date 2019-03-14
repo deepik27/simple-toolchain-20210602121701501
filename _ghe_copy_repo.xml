@@ -212,8 +212,10 @@
 				<include name="**/index.js"/>
 			</fileset>
 		</copy>
+
 		<script language="javascript">
 			<![CDATA[
+			project.log("Remove dependency to cvi-node-lib from package.json");
 			var srcdir = project.getProperty("src.clone");
 			var filename = srcdir + java.io.File.separator + "package.json";
 			var reader, writer;
@@ -240,6 +242,13 @@
 			}
 			]]>
 		</script>
+
+		<echo>Remove cvi-node-lib from .gitignore</echo>
+		<replace
+			file="${src.clone}/.gitignore"
+			token="/app_modules/cvi-node-lib"
+			value=""
+			summary="on" />
 	</target>
 
 </project>
