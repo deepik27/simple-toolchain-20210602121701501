@@ -23,7 +23,7 @@ The Fleet Management Starter Application uses the following IBM Cloud services:
 ## Prerequisites
 To deploy and use the Fleet Management Starter Application, you need an instance of IBM IoT Connected Vehicle Insights that is deployed and running on either IBM SaaS.
 
-## Deploying the app
+## Deploying the app <!-- linked as anchor from configuration step -->
 
 Deploy the Fleet Management Starter Application on IBM Cloud either automatically or manually, as outlined in the following instructions.
 
@@ -171,49 +171,25 @@ A fragment of the gateway.properties file exists under `conf` folder of the `Htt
 After deploying the app on IBM Cloud, you must configure the app to connect to your IBM IoT Connected Vehicle Insights SaaS service instance.
 
 ### Configuring IBM IoT Connected Vehicle Insights endpoints and credentials
-{: #config_endpoints}
 To connect to your IBM IoT Connected Vehicle Insights service instance, the starter app reads the REST API endpoints and credentials from an environment variable on IBM Cloud. Configure the environment variables as follows:
 
 1. Open the [IBM Cloud dashboard][bluemix_dashboard_url] in your browser.
-1. Open the IBM IoT Connected Vehicle Insights service.
+1. Open your fleet management app deployed at [Deploying the app](#deploying-the-app) step.
 1. Select **Runtime** tab at the left navigation bar.
 1. Click **Environment variables**.
 1. Add the following environment variable:
 
-```
-USER_PROVIDED_VCAP_SERVICES = <endpoint definition in JSON format>
-```
-Define the endpoints in the following JSON format. Note that you must remove any line breaks that are at the end of each line to set to the environment value on IBM Cloud.
-```
-{
-    "iotforautomotive": [
-        {
-            "credentials": {
-                "api": <IBM IoT Connected Vehicle Insights endpoint>,
-                "username": <user name>,
-                "password": <passsword>,
-                "maximo": {
-                  "orgid": <organization for IBM IoT Connected Vehicle Insights>
-                  "classificationid": <classification for Vehicle Data>
-                  "username": <user name for Maximo API >,
-                  "password": <passsword for Maximo API >
-                }
-            }
-        }
-    ]
-}
-```
 To obtain the correct values, contact your system administrator.
 
 Key | Description of Value
 ----- | -----
-api | A URL to call the REST API for IBM IoT Connected Vehicle Insights, which must end with a forward slash character (/)
-username | User name for accessing the Vehicle Data Hub (VDH) and other IBM IoT Connected Vehicle Insights endpoints
-password | Password for accessing the VDH and other IBM IoT Connected Vehicle Insights endpoints
-maximo/orgid | IBM IoT Connected Vehicle Insights Organization specified in IBM Maximo Asset Management
-maximo/classificationid | Classification for vehicle data defined in Maximo Asset Management
-maximo/username | User name for accessing the Maximo Asset Management API
-maximo/password | Password for accessing the Maximo Asset Management API
+AUTOMOTTIVE_URL | A URL to call the REST API for IBM IoT Connected Vehicle Insights, which must end with a forward slash character (/)
+AUTOMOTIVE_USERNAME | User name for accessing the Vehicle Data Hub (VDH) and other IBM IoT Connected Vehicle Insights endpoints
+AUTOMOTIVE_PASSWORD | Password for accessing the VDH and other IBM IoT Connected Vehicle Insights endpoints
+AUTOMOTIVE_MAX_ORGID | IBM IoT Connected Vehicle Insights Organization specified in IBM Maximo Asset Management
+AUTOMOTIVE_MAX_CLASSIFICATION_ID | Classification for vehicle data defined in Maximo Asset Management
+AUTOMOTIVE_MAX_USERNAME | User name for accessing the Maximo Asset Management API
+AUTOMOTIVE_MAX_PASSWORD | Password for accessing the Maximo Asset Management API
 
 ### (Optional) Securing the connection to the IBM IoT Connected Vehicle Insights service
 The IBM Secure Gateway service provides secure connectivity and establishes a tunnel between your IBM Cloud organization and the remote location that you want to connect to. Before you use the Secure Gateway service, contact your IBM IoT Connected Vehicle Insights system administrator. For more information, see [Secure Gateway](https://console.ng.bluemix.net/catalog/services/secure-gateway/).
