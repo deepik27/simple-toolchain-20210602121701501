@@ -230,6 +230,12 @@
 				if(packagejson.dependencies["cvi-node-lib"]){
 					delete packagejson.dependencies["cvi-node-lib"];
 				}
+				if(packagejson.scripts.preinstall && packagejson.scripts.preinstall.indexOf("cvi-node-lib") > 0){
+					delete packagejson.scripts.preinstall;
+				}
+				if(packagejson.scripts.postinstall && packagejson.scripts.postinstall.indexOf("cvi-node-lib") > 0){
+					delete packagejson.scripts.postinstall;
+				}
 				writer = new java.io.BufferedWriter(new java.io.FileWriter(new java.io.File(filename)));
 				writer.write(JSON.stringify(packagejson, null, "  "));
 			}finally{
