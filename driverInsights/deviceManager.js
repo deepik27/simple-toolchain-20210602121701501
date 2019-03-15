@@ -6,6 +6,7 @@ debug.log = console.log.bind(console);
 const cviAsset = app_module_require("cvi-node-lib").asset;
 const iotfAppClient = app_module_require('iotfclient').iotfAppClient;
 
+const SEND_PROBE_USER_AGENT = process.env.SEND_PROBE_USER_AGENT || "IBM IoT Connected Vehicle Insights Client";
 const VENDOR_NAME = process.env.SIMULATOR_VENDOR || "IBM";
 const DEVICE_TYPE = process.env.DEVICE_TYPE || "TCU";
 const ERROR_ON_VEHICLE_INCONSISTENT = process.env.ERROR_ON_VEHICLE_INCONSISTENT || false;
@@ -26,14 +27,17 @@ class DeviceManager {
 			}
 		} else if (process.env.IOTP_SERVICE_ORG) {
 			this.mqttAccessInfo = {
+				tenant_id: cviAsset.assetConfig.tenant_id || "public",
 				vendor: DEVICE_TYPE,
 				endpoint: process.env.IOTP_SERVICE_ORG,
 				username: "use-token-auth"
 			}
 		}
 		this.httpAccessInfo = {
+			tenant_id: cviAsset.assetConfig.tenant_id || "public",
 			vendor: DEVICE_TYPE,
 			endpoint: cviAsset.assetConfig.vdh.baseURL + "/carProbe",
+			userAgent: SEND_PROBE_USER_AGENT,
 			username: cviAsset.assetConfig.vdh.username,
 			password: cviAsset.assetConfig.vdh.password
 		};
