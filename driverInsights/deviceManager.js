@@ -20,6 +20,7 @@ class DeviceManager {
 			const iotf_service = vcapSvc["iotf-service"] && vcapSvc["iotf-service"][0].credentials;
 			if (iotf_service) {
 				this.mqttAccessInfo = {
+					tenant_id: cviAsset.assetConfig.tenant_id || "public",
 					vendor: DEVICE_TYPE,
 					endpoint: iotf_service.org,
 					username: "use-token-auth"
