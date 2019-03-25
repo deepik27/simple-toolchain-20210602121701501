@@ -22,6 +22,7 @@ debug.log = console.log.bind(console);
 const DRIVER_NAME = process.env.SIMULATOR_DRIVER || "simulated_driver";
 const VENDOR_NAME = process.env.SIMULATOR_VENDOR || "IBM";
 const NUM_OF_SIMULATOR = 5;
+const TCU_MODEL_NAME = "TCU";
 
 _.extend(simulatedVehicleManager, {
 	clients: {},
@@ -88,9 +89,7 @@ _.extend(simulatedVehicleManager, {
 	_getVehicleList: function (status, excludes, vendor) {
 		return Q.when(asset.getVehicleList({ "vendor": vendor, "status": status }), (response) => {
 			let vehicles = response && response.data || [];
-			if (excludes && excludes.length > 0) {
-				vehicles = _.filter(vehicles, (vehicle) => { return !_.contains(excludes, vehicle.mo_id); });
-			}
+			vehicles = _.filter(vehicles, (vehicle) => { return !_.contains(excludes, vehicle.mo_id) && TCU_MODEL_NAME != vehicle.model; });
 			return vehicles;
 		});
 	},
