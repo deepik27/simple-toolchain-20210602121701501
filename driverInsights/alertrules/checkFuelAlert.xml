@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <VehicleActionRule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.ibm.com/mobility/rule/VehicleActionRule.xsd">
   <RuleID>{alert_rule_id}</RuleID>
-  <RuleType>{alert_rule_id}</RuleType>
+  <RuleType>{alert_rule_type}</RuleType>
   <Condition>
   	<ValueCondition>
   		<Attribute object="Vehicle">[CarProbe.fuel@double/Vehicle.FUELTANK@double]</Attribute>

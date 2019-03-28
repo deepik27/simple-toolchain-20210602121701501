@@ -9,7 +9,7 @@
 -->
 <Rules>
 	<VehicleActionRule>
-		<RuleType>{alert_rule_id}</RuleType>
+		<RuleType>{alert_rule_type}</RuleType>
 		<RuleID>{alert_rule_id}</RuleID>
 		<Name>High Engine Temperature</Name>
 		<Description>Engine temperature is too high</Description>

@@ -317,9 +317,14 @@ var initWebSocketServer = function (server, path) {
 		path: path,
 		verifyClient: function (info, callback) { //only allow internal clients from the server origin
 			var isLocal = appEnv.url.toLowerCase().indexOf('://localhost') !== -1;
-			var allow = isLocal || (info.origin.toLowerCase() === appEnv.url.toLowerCase());
+			let isFromValidOrigin = ((typeof info.origin !== 'undefined') && (info.origin.toLowerCase() === appEnv.url.toLowerCase())) ? true : false;
+			var allow = isLocal || isFromValidOrigin;
 			if (!allow) {
-				console.error("rejected web socket connection form external origin " + info.origin + " only connection form internal origin " + appEnv.url + " are accepted");
+				if(typeof info.origin !== 'undefined'){
+					console.error("rejected web socket connection from external origin " + info.origin + " only connection from internal origin " + appEnv.url + " are accepted");
+				} else {
+					console.error("rejected web socket connection from unknown origin. Only connection from internal origin " + appEnv.url + " are accepted");												
+				}
 			}
 			if (!callback) {
 				return allow;
@@ -334,6 +339,12 @@ var initWebSocketServer = function (server, path) {
 	//
 	wss.on('connection', function (client) {
 		debug('got wss connectoin at: ' + client.upgradeReq.url);
+		client.on('error', () => {
+			console.log("[Monitor] Error with client id=" + client.clientId);
+		});
+		client.on('message', (message) => {
+			console.log("[Monitor] Received message: "+message);
+		});
 		// assign extent obtained from the web sock request URL, to this client
 		var url = client.upgradeReq.url;
 		var qsIndex = url.lastIndexOf('?region=');
