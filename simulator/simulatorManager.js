@@ -145,9 +145,14 @@ _.extend(simulatorManager, {
 			path: path,
 			verifyClient : (info, callback) => { //only allow internal clients from the server origin
 				let isLocal = appEnv.url.toLowerCase().indexOf('://localhost') !== -1;
-				let allow = isLocal || (info.origin.toLowerCase() === appEnv.url.toLowerCase());
+				let isFromValidOrigin = ((typeof info.origin !== 'undefined') && (info.origin.toLowerCase() === appEnv.url.toLowerCase())) ? true : false;
+				let allow = isLocal || isFromValidOrigin;
 				if(!allow){
-					console.error("rejected web socket connection form external origin " + info.origin + " only connection form internal origin " + appEnv.url + " are accepted");
+					if(typeof info.origin !== 'undefined'){
+						console.error("rejected web socket connection from external origin " + info.origin + " only connection from internal origin " + appEnv.url + " are accepted");
+					} else {
+						console.error("rejected web socket connection from unknown origin. Only connection from internal origin " + appEnv.url + " are accepted");												
+					}
 				}
 				if(!callback){
 					return allow;
@@ -240,7 +245,10 @@ _.extend(simulatorManager, {
 			client.on('close', () => {
 				console.log("client is disconnected. id=" + client.clientId + ", vid=" + client.vehicleId);
 				watchMethod(client, false);
-		    });
+				});
+			client.on('error', () => {
+				console.log("error with client id=" + client.clientId + ", vid=" + client.vehicleId);
+				});
 			client.on('message', (message) => {
 				try {
 					let messageObj = JSON.parse(message);
