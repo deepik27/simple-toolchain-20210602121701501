@@ -4,7 +4,7 @@
 		<!-- Accel (GE 4.0) -->
 		<!-- ************************************* -->	
         <VehicleActionRule>
-			<RuleType>{alert_rule_id}</RuleType>
+			<RuleType>{alert_rule_type}</RuleType>
 			<RuleID>{alert_rule_id}</RuleID>
 			<Description>Action for Execution</Description>
 			<Target>
@@ -15,6 +15,10 @@
 					<InitParameter>
 						<Key>MaxRecord</Key>
 						<Value>5</Value>
+					</InitParameter>
+					<InitParameter>
+						<Key>RuleType</Key>
+						<Value>{alert_rule_type}</Value>
 					</InitParameter>
 				</Exec>
 			</Execution>			
@@ -44,8 +48,8 @@
 		<!-- Accel (LE -4.0) -->
 		<!-- ************************************* -->	
         <VehicleActionRule>
-			<RuleType>1</RuleType>
-			<RuleID>12</RuleID>
+			<RuleType>{alert_rule_type}</RuleType>
+			<RuleID>{alert_rule_id}</RuleID>
 			<Description>Action for Execution</Description>
 			<Target>
 			</Target>
@@ -55,6 +59,10 @@
 					<InitParameter>
 						<Key>MaxRecord</Key>
 						<Value>5</Value>
+					</InitParameter>
+					<InitParameter>
+						<Key>RuleType</Key>
+						<Value>{alert_rule_type}</Value>
 					</InitParameter>
 				</Exec>
 			</Execution>			

@@ -153,12 +153,19 @@ _.extend(driverInsightsAlert, {
 					if (err) {
 						console.error("Error: Reading an alert rule(" + file + ") is failed. " + err);
 					}
-					var alert_rule_id = ALERT_RULE_ID_RANGE_MIN + alert_rule_id_offset++;
-					if (alert_rule_id > ALERT_RULE_ID_RANGE_MAX) {
-						console.error("Alert rule id cannot be assigned.");
+					let alert_rule_type = ALERT_RULE_ID_RANGE_MIN + alert_rule_id_offset;
+					
+					data = data.replace(/\{alert_rule_type\}/g, alert_rule_type);
+					let total_alert_rule_id = data.match(/\{alert_rule_id\}/g).length;
+					let i;
+					for(i=0;i < total_alert_rule_id; i++){
+							var alert_rule_id = ALERT_RULE_ID_RANGE_MIN + alert_rule_id_offset++;
+							if (alert_rule_id > ALERT_RULE_ID_RANGE_MAX) {
+									console.error("Alert rule id cannot be assigned.");
+							}
+							data = data.replace(/\{alert_rule_id\}/, alert_rule_id);
 					}
-					var rule = { description: ALERT_RULE_DESCRIPTION + alert_rule_id, type: "Action", status: "active" };
-					data = data.replace(/\{alert_rule_id\}/g, alert_rule_id);
+					let rule = { description: ALERT_RULE_DESCRIPTION + alert_rule_id, type: "Action", status: "active" };
 					asset.addRule(rule, data);
 				})
 			});
