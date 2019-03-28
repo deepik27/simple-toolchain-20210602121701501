@@ -157,8 +157,8 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 	this.simulatedVehicles = {};
 	let deferred = Q.defer();
 	Q.all(promises).then((result) => {
-		let fromtime = moment().format(DATETIME_FORMAT);
-		let totime = moment().subtract(MODEL_MONTH, "months").format(DATETIME_FORMAT);
+		let totime = moment().format(DATETIME_FORMAT);
+		let fromtime = moment().subtract(MODEL_MONTH, "months").format(DATETIME_FORMAT);
 		let vehicles = {};
 		let vehicleIdArray = [];
 
