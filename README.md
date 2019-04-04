@@ -17,7 +17,6 @@ The Fleet Management Starter Application uses the IBM IoT Connected Vehicle Insi
 The Fleet Management Starter Application uses the following IBM Cloud services:
 
 - [Cloudant NoSQL DB](https://console.ng.bluemix.net/catalog/services/cloudant-nosql-db/)
-- [Secure Gateway(Optional)](https://console.ng.bluemix.net/catalog/services/secure-gateway/)
 - [IBM Watson IoT Platform (Optional)](https://console.ng.bluemix.net/catalog/services/internet-of-things-platform/)
 
 ## Prerequisites
@@ -43,7 +42,7 @@ Next: Go to [Connecting to IBM IoT Connected Vehicle Insights service](#connect2
 To manually deploy the Fleet Management Starter Application on IBM Cloud, complete all of the following steps:
 
 1. Log in to IBM Cloud. If you do not have an existing IBM Cloud account, click [Register][bluemix_signup_url] and follow the instructions to create an account.
-2. Download and install the [Cloud-foundry CLI][cloud_foundry_url] tool.
+2. Download and install the [IBM Cloud CLI][cloud_foundry_url] tool.
 3. Clone the Fleet Management Starter Application to your local environment by using the following console command:
 
   ```
@@ -81,19 +80,20 @@ To manually deploy the Fleet Management Starter Application on IBM Cloud, comple
 8. By using the command line tool, connect to IBM Cloud and log in when prompted:
 
   ```
-  $ cf api https://api.ng.bluemix.net
-  $ cf login
+  $ ibmcloud api https://api.ng.bluemix.net
+  $ ibmcloud login
+  $ ibmcloud target --cf
   ```
 
 9. Create an instance of the Cloudant NoSQL DB service in IBM Cloud:
 
   ```
-  $ cf create-service cloudantNoSQLDB Lite FleetCloudantDB
+  $ ibmcloud cf create-service cloudantNoSQLDB Lite FleetCloudantDB
   ```
 
 11. Push the starter app to IBM Cloud by using the following command:
   ```
-  $ cf push --no-start
+  $ ibmcloud cf push --no-start
   ```
   **Important:** When you run the `push` command, you must include the `--no-start` option as you must complete further steps manually before you start the app.
 
@@ -111,7 +111,7 @@ To build and deploy the plugins, complete the following steps:
 
 ### Prerequisites
 1. The IBM IoT Connected Vehicle Insights Plugin Deployment Tool must be installed on your IBM IoT Connected Vehicle Insights SaaS instance. Contact the system administrator for your IBM IoT Connected Vehicle Insights SaaS service to make a request to install it.
-1. The IBM IoT Connected Vehicle Insights Plugin Development Tool must be installed on your eclipse IDE, as outlined in the <u>IBM IoT Connected Vehicle Insights Plug-In Programmer's Guide</u>. To get access to the guide and the tool, contact your IBM IoT Connected Vehicle Insights system administrator.
+1. The IBM IoT Connected Vehicle Insights Plugin Development Tool must be installed on your eclipse IDE, as outlined in the [IBM IoT Connected Vehicle Insights Knowledge Center](https://www.ibm.com/support/knowledgecenter/SSNQ4V_gbs/iot-automotive/customizing/plugin_dev_tool.html). To get access to the tool, contact your IBM IoT Connected Vehicle Insights system administrator.
 1. The Fleet Management Starter Application Git repository must be downloaded on your local environment. If you need to download the repository, you can clone it by using the following console command:
     ```
     git clone https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git
@@ -191,10 +191,6 @@ AUTOMOTIVE_MAX_CLASSIFICATION_ID | Classification for vehicle data defined in Ma
 AUTOMOTIVE_MAX_USERNAME | User name for accessing the Maximo Asset Management API
 AUTOMOTIVE_MAX_PASSWORD | Password for accessing the Maximo Asset Management API
 
-### (Optional) Securing the connection to the IBM IoT Connected Vehicle Insights service
-The IBM Secure Gateway service provides secure connectivity and establishes a tunnel between your IBM Cloud organization and the remote location that you want to connect to. Before you use the Secure Gateway service, contact your IBM IoT Connected Vehicle Insights system administrator. For more information, see [Secure Gateway](https://console.ng.bluemix.net/catalog/services/secure-gateway/).
-
-
 ## Configuring authentication
 
 To secure the app, authentication is enabled by default for the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application. The default user credentials are as follows:
@@ -249,30 +245,8 @@ To report a defect with the IBM IoT Connected Vehicle Insights - Fleet Managemen
 To debug problems, check the IBM Cloud app logs. To view the logs, run the following command from the Cloud Foundry CLI:
 
   ```
-  $ cf logs <application-name> --recent
+  $ ibmcloud app logs --recent <application-name>
   ```
-For more information about how to troubleshoot your application, see the [Troubleshooting section](https://www.ng.bluemix.net/docs/troubleshoot/tr.html) in the IBM Cloud documentation.
-
-## Privacy Notice
-
-The IBM IoT Connected Vehicle Insights - Fleet Management Starter Application includes code to track deployments to [IBM Cloud](https://www.bluemix.net/) and other Cloud Foundry platforms.
-
-For each instance that you deploy, the following information is sent to a [Deployment Tracker](https://github.com/IBM/metrics-collector-service) service on each deployment:
-
-* Node.js package version
-* Node.js repository URL
-* Application Name (`application_name`)
-* Application GUID (`application_id)`
-* Application instance index number (`instance_index`)
-* Space ID (`space_id`) or OS username
-* Application Version (`application_version`)
-* Application URIs (`application_uris`)
-* Cloud Foundry API (`cf_api`)
-* Labels of bound services
-* Number of instances for each bound service and associated plan information
-* Metadata in the repository.yaml file
-
-This data is collected from the `package.json` and `repository.yaml` file in the sample application and the `VCAP_APPLICATION` and `VCAP_SERVICES` environment variables in IBM Cloud and other Cloud Foundry platforms. This data is used by IBM to track metrics around deployments of sample applications to IBM Cloud to measure the usefulness of our examples, so that we can continuously improve the content we offer to you. Only deployments of sample applications that include code to ping the Deployment Tracker service will be tracked.
 
 ## Providing feedback to IBM
 
@@ -300,15 +274,14 @@ By default, when you build an app by using the Fleet Management starter app samp
 The IBM NPS widget is produced in partnership with [Medallia](http://www.medallia.com/). For information about the widget and the data that it collects, see [Privacy Policy - Medallia](http://www.medallia.com/privacy/).
 
 ## Useful links
-- [IBM Cloud](https://bluemix.net/)
-- [IBM Cloud Documentation](https://www.ng.bluemix.net/docs/)
-- [IBM Cloud Developers Community](http://developer.ibm.com/bluemix)
-- [IBM Watson Internet of Things](http://www.ibm.com/internet-of-things/)
-- [IBM Watson IoT Platform](http://www.ibm.com/internet-of-things/iot-solutions/watson-iot-platform/)
-- [IBM Watson IoT Platform Developers Community](https://developer.ibm.com/iotplatform/)
-- [IBM Secure Gateway](https://console.ng.bluemix.net/docs/services/SecureGateway/secure_gateway.html)
-- [IBM Marketplace: IBM IoT Connected Vehicle Insights](https://www.ibm.com/us-en/marketplace/iot-automotive-industry)
+- [IBM Cloud](https://cloud.ibm.com)
+- [IBM Cloud Documentation](https://cloud.ibm.com/docs)
+- [IBM Cloud Developers Community](https://developer.ibm.com/depmodels/cloud)
+- [IBM Watson Internet of Things](http://www.ibm.com/internet-of-things)
+- [IBM Watson IoT Platform](https://www.ibm.com/internet-of-things/solutions/iot-platform/watson-iot-platform)
+- [IBM Watson IoT Platform Developers Community](https://developer.ibm.com/iotplatform)
+- [IBM Marketplace: IBM IoT Connected Vehicle Insights](https://www.ibm.com/us-en/marketplace/iot-for-automotive)
 
-[bluemix_dashboard_url]: https://console.ng.bluemix.net/dashboard/
-[bluemix_signup_url]: https://console.ng.bluemix.net/registration/
-[cloud_foundry_url]: https://github.com/cloudfoundry/cli
+[bluemix_dashboard_url]: https://cloud.ibm.com/resources
+[bluemix_signup_url]: https://cloud.ibm.com/registration
+[cloud_foundry_url]: https://cloud.ibm.com/docs/cli?topic=cloud-cli-install-ibmcloud-cli
