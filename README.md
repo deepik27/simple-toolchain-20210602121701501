@@ -16,13 +16,13 @@ The Fleet Management Starter Application uses the IBM IoT Connected Vehicle Insi
 
 The Fleet Management Starter Application uses the following IBM Cloud services:
 
-- [Cloudant NoSQL DB](https://console.ng.bluemix.net/catalog/services/cloudant-nosql-db/)
-- [IBM Watson IoT Platform (Optional)](https://console.ng.bluemix.net/catalog/services/internet-of-things-platform/)
+- [Cloudant NoSQL DB](https://cloud.ibm.com/catalog/services/cloudant)
+- [IBM Watson IoT Platform (Optional)](https://cloud.ibm.com/catalog/services/internet-of-things-platform)
 
 ## Prerequisites
 To deploy and use the Fleet Management Starter Application, you need an instance of IBM IoT Connected Vehicle Insights that is deployed and running on IBM SaaS.
 
-## Deploying the app <!-- linked as anchor from configuration step -->
+## <a id="deploying-the-app"></a>Deploying the app
 
 Deploy the Fleet Management Starter Application on IBM Cloud either automatically or manually, as outlined in the following instructions.
 
