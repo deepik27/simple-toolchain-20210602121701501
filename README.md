@@ -21,7 +21,7 @@ The Fleet Management Starter Application uses the following IBM Cloud services:
 - [IBM Watson IoT Platform (Optional)](https://console.ng.bluemix.net/catalog/services/internet-of-things-platform/)
 
 ## Prerequisites
-To deploy and use the Fleet Management Starter Application, you need an instance of IBM IoT Connected Vehicle Insights that is deployed and running on either IBM SaaS.
+To deploy and use the Fleet Management Starter Application, you need an instance of IBM IoT Connected Vehicle Insights that is deployed and running on IBM SaaS.
 
 ## Deploying the app <!-- linked as anchor from configuration step -->
 
