@@ -273,6 +273,9 @@ By default, when you build an app by using the Fleet Management starter app samp
 
 The IBM NPS widget is produced in partnership with [Medallia](http://www.medallia.com/). For information about the widget and the data that it collects, see [Privacy Policy - Medallia](http://www.medallia.com/privacy/).
 
+## Questions, comments or suggestions
+For your questions, comments or suggestions to us, visit [IBM Community for IBM IoT Connected Vehicle Insights](https://community.ibm.com/community/user/imwuc/communities/globalgrouphome?CommunityKey=eaea64a5-fb9b-4d78-b1bd-d87dc70e8171).
+
 ## Useful links
 - [IBM Cloud](https://cloud.ibm.com)
 - [IBM Cloud Documentation](https://cloud.ibm.com/docs)
