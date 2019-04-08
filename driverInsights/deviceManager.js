@@ -84,16 +84,31 @@ class DeviceManager {
 		if (!this.isIoTPlatformAvailable()) {
 			return;
 		}
-		const vehicles = await cviAsset.getVehicleList({ "vendor": VENDOR_NAME });
-		const devices = await iotfAppClient.getAllDevices({ "typeId": DEVICE_TYPE });
 
-		const vehiclemap = {};
-		vehicles.data.forEach(vehicle => {
-			vehiclemap[vehicle.mo_id.toUpperCase()] = vehicle;
-		});
+		const vehiclearray = [];
+		const params = { "model": DEVICE_TYPE, num_rec_in_page: 100, num_page: 1 }
+		while (true) {
+			try {
+				const vehicles = await cviAsset.getVehicleList(params);	
+				vehicles.data.forEach(vehicle => {
+					vehiclearray.push(vehicle.mo_id.toUpperCase());
+				});
+				params.num_page++;
+				if (vehicles.data.length < params.num_rec_in_page) {
+					break;
+				}
+			} catch(e) {
+				if (!e.response || e.response.statusCode !== 400)
+					return Promise.reject(error);
+				// Probably end of pages
+				break;
+			}
+		}
+
 		const deleteDevices = [];
+		const devices = await iotfAppClient.getAllDevices({ "typeId": DEVICE_TYPE });
 		devices.results.forEach(device => {
-			if (!vehiclemap[device.deviceId.toUpperCase()]) {
+			if (!vehiclearray.includes(device.deviceId.toUpperCase())) {
 				deleteDevices.push({ "typeId": DEVICE_TYPE, "deviceId": device.deviceId });
 			}
 		});
