@@ -194,7 +194,7 @@ class DeviceManager {
 				return;
 			}
 		});
-		if (vehicles.data && vehicles.data.length > 0) {
+		if (vehicles && vehicles.data && vehicles.data.length > 0) {
 			const vehicle = vehicles.data[0];
 			const mo_id = vehicle.mo_id;
 			let device;
