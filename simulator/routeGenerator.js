@@ -209,7 +209,7 @@ routeGenerator.prototype._resetRoute = function (keepAnchors) {
 	let slat = this.prevLoc.lat;
 	let slng = this.prevLoc.lon;
 	let sheading = this.prevLoc.heading;
-	let loop = !this.destination && this.options && this.options.route_loop;
+	let loop = this.options && this.options.route_loop;
 
 	this.routing = true;
 	return Q.when(this._generateAnchors(slat, slng, sheading, keepAnchors), (locs) => {

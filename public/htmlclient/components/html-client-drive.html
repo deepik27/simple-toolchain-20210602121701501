@@ -20,16 +20,19 @@
 	<!-- Map -->
 	<div style="margin-top:15px;margin-bottom:15px;">
 		<div id="locationMap" class="locationMap">
-		<!-- Map Overlay -->
-		<button class="button mapCurrentLocation" ng-show="!traceCurrentLocation" ng-click="onCurrentLocation()">Current Location</button>
-		<div class="mapProbe" ng-show="isDriving">
-						Location=({{drivingEvent.latitude||0}},{{drivingEvent.longitude||0}})<br> 
-						Speed={{(drivingEvent.speed/1.609344).toPrecision(3)}} MPH<br>
-						Heading={{(drivingEvent.heading).toPrecision(3)}}<br>
-						Fuel={{drivingEvent.props.fuel}}<br>
-						Engine Temperature={{(drivingEvent.props.engineTemp*9/5+32).toPrecision(3)}} F</div>
-		<div class="mapMessage" ng-show="routeSearching">Searching route...</div>
-		<div id="infopopup"></div>
+			<!-- Map Overlay -->
+			<button class="button mapCurrentLocation" ng-show="!traceCurrentLocation" ng-click="onCurrentLocation()">Current Location</button>
+			<div class="mapProbe" ng-show="isDriving">
+							Location=({{drivingEvent.latitude||0}},{{drivingEvent.longitude||0}})<br> 
+							Speed={{(drivingEvent.speed/1.609344).toPrecision(3)}} MPH<br>
+							Heading={{(drivingEvent.heading).toPrecision(3)}}<br>
+							Fuel={{drivingEvent.props.fuel}}<br>
+							Engine Temperature={{(drivingEvent.props.engineTemp*9/5+32).toPrecision(3)}} F</div>
+			<div class="mapMessage" ng-show="routeSearching">Searching route...</div>
+			<div class="ol-zoom ol-unselectable ol-control zoom2fit">
+				<button class="zoom-to-fit" ng-click="onZoomToFit()" title="Zoom To Fit">&#x2922;</button>
+			</div>
+			<div id="infopopup"></div>
 		</div>
 		<div style="font-size: 11pt; font-weight: 400; margin-top:10px">
 			Route Selection:

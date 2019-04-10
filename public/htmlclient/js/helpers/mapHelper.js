@@ -14,6 +14,7 @@
 var MapHelper = function (map) {
   // the map
   this.map = map;
+  this.postChangeViewHandlers = [];
 };
 
 /**
@@ -172,4 +173,102 @@ MapHelper.prototype.addPopOver = function addPopOver(options, showPopOver, destr
     stopUpdateTimer = function () { }; // nop
   }
 
+};
+
+MapHelper.prototype.moveMap = function moveMap(region) {
+  if(region.extent){
+    var mapExt = ol.proj.transformExtent(region.extent, 'EPSG:4326', 'EPSG:3857'); // back to coordinate
+    var view = this.map.getView();
+    if (view.fit){
+      view.fit(mapExt, this.map.getSize());
+    } else if (view.fitExtent){
+      view.setCenter([(mapExt[0]+mapExt[2])/2, (mapExt[1]+mapExt[3])/2]);
+      view.fitExtent(mapExt, this.map.getSize());
+    } else {
+      view.setCenter([(mapExt[0]+mapExt[2])/2, (mapExt[1]+mapExt[3])/2]);
+      view.setZoom(15);
+    }
+    this._firePendingPostChangeViewEvents(10);
+  }else if(region.center){
+    var mapCenter = ol.proj.fromLonLat(region.center, undefined);
+    var view = this.map.getView();
+    view.setCenter(mapCenter);
+    view.setZoom(region.zoom || DEFAULT_ZOOM);
+    this._firePendingPostChangeViewEvents(10);
+  }else{
+    console.error('  Failed to start tracking an unknown region: ', region);
+  }
+};
+
+// schedule deferrable postChangeView event
+MapHelper.prototype._onMapViewChange = function _onMapViewChange() {
+  // schedule deferrable event
+  if(this._postChangeViewTimer){
+    clearTimeout(this._postChangeViewTimer);
+  }
+  this._postChangeViewTimer = setTimeout(function(){
+    this._firePendingPostChangeViewEvents(); // fire now
+  }.bind(this), this.moveRefreshDelay);
+};
+
+// schedule indeferrable postChangeView event
+MapHelper.prototype._firePendingPostChangeViewEvents = function _firePendingPostChangeViewEvents(delay) {
+  // cancel schedule as firing event shortly!
+  if(this._postChangeViewTimer){
+    clearTimeout(this._postChangeViewTimer);
+    this._postChangeViewTimer = null;
+  }
+  if(delay){
+    if(delay < this.moveRefreshDelay){
+      // schedule non-deferrable event
+      setTimeout(function(){ // this is non-deferrable
+        this._firePendingPostChangeViewEvents(); // fire now
+      }.bind(this), delay);
+    }else{
+      this._onMapViewChange(); // delegate to normal one
+    }
+  }else{
+    // finally fire event!
+    var size = this.map.getSize();
+    if(!size){
+      console.warn('failed to get size from map. skipping post change view event.');
+      return;
+    }
+    // wait for map's handling layous, and then send extent event
+    setTimeout((function(){
+      var ext = this.map.getView().calculateExtent(size);
+      var extent = this.normalizeExtent(ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326'));
+      if(this._postChangeViewLastExtent != extent){
+        console.log('Invoking map extent change event', extent);
+        this.postChangeViewHandlers.forEach(function(handler){
+          handler(extent);
+        });
+        this._postChangeViewLastExtent = extent;
+      }
+    }).bind(this),100);
+  }
+};
+
+MapHelper.prototype.normalizeExtent = function normalizeExtent(extent) {
+  let loc1 = this.normalizeLocation([extent[0], extent[1]]);
+  let loc2 = this.normalizeLocation([extent[2], extent[3]]);
+  extent[0] = loc1[0];
+  extent[1] = loc1[1];
+  extent[2] = loc2[0];
+  extent[3] = loc2[1];
+  return extent;
+};
+
+MapHelper.prototype.normalizeLocation = function normalizeLocation(loc) {
+  let lng = loc[0] % 360;
+  if (lng < -180) lng += 360;
+  else if (lng > 180) lng -= 360;
+
+  let lat = loc[1] % 180;
+  if (lat < -90) lat += 180;
+  else if (lat > 90) lat -= 180;
+
+  loc[0] = lng;
+  loc[1] = lat;
+  return loc;
 };

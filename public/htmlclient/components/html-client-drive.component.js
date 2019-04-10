@@ -517,6 +517,17 @@
 					$scope.traceCurrentLocation = true;
 					showLocation(simulatedVehicle.getCurrentPosition());
 				};
+				// Zoom the map to show entire route
+				$scope.onZoomToFit = function () {
+					lockPosition = false;
+					$scope.traceCurrentLocation = false;
+
+					let tripRouteExtent = tripLayer.getSource().getExtent();
+					if(tripRouteExtent){
+						let extent = ol.proj.transformExtent(tripRouteExtent, 'EPSG:3857', 'EPSG:4326');
+						mapHelper.moveMap({extent: extent});
+					}
+				};
  
 				// Event handlers
 				function onMouseDown(e) {

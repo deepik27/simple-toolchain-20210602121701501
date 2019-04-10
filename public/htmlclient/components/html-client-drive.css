@@ -114,8 +114,16 @@
 .locationMap .ol-zoom {
     left: auto;
     top: auto;
-    right: 30px;
-    bottom: 60px;
+    right: 25px;
+    bottom: 40px;
+}
+
+.locationMap .ol-zoom.zoom2fit {
+  left: auto;
+  top: auto;
+  right: 25px;
+  bottom: 96px;
+  z-index: 1;
 }
 
 .locationMap .ol-attribution {
@@ -251,6 +259,11 @@
 }
 .ol-zoom .ol-zoom-out {
   border-radius: 0 0 2px 2px;
+}
+.ol-zoom .zoom-to-fit {
+  padding-left: 0.1em;
+  padding-bottom: 0.1em;
+  border-radius: 2px 2px 0 0;
 }
 
 
