@@ -2,6 +2,7 @@
 
 The Fleet Management Starter Application for the IBM® IoT Connected Vehicle Insights SaaS offering demonstrates how quickly you can build an app on IBM Cloud to manage and monitor a fleet of vehicles in real time.
 
+
 ## Overview
 
 The Fleet Management Starter Application uses the IBM IoT Connected Vehicle Insights SaaS offering together with IBM Cloud services to provide a sample solution for fleet operation management and personnel. By using the application,  you can easily track and view the following information:
@@ -19,10 +20,84 @@ The Fleet Management Starter Application uses the following IBM Cloud services:
 - [Cloudant NoSQL DB](https://cloud.ibm.com/catalog/services/cloudant)
 - [IBM Watson IoT Platform (Optional)](https://cloud.ibm.com/catalog/services/internet-of-things-platform)
 
-## Prerequisites
-To deploy and use the Fleet Management Starter Application, you need an instance of IBM IoT Connected Vehicle Insights that is deployed and running on IBM SaaS.
 
-## <a id="deploying-the-app"></a>Deploying the app
+## Prerequisites
+To deploy and use the Fleet Management Starter Application, you need the following prerequisites.
+- An instance of IBM IoT Connected Vehicle Insights that is deployed and running on IBM SaaS.
+- An application Admin user is created. For more information about how to create an application Admin user, see Knowledge Center.
+
+
+## STEP-1. Create Application REST API User
+
+### Create a security group for REST API users
+1. Log in to Maximo as an application admin user.
+2. Select Go To > Security > Security Groups.
+3. Click the 'New Group' icon.
+4. Input a group name, for example `APPUSERGROUP`
+5. Open the Sites tab, select the check box for 'Authorize Group for All Sites'.
+6. Open the Storerooms tab, select the check box for 'Authorize Group for All Storerooms'. 
+7. Open the GL Components tab, select the check box for 'Authorize Group for All GL Component Types'.
+8. Open the Applications tab, within the application table select the following applications individually. When you select an application, a set of application options display. For each application, select the related option in the following table, or select the check box for the listed options. 
+|  Application       |  Application option to select   |
+|----------------------------|-------------------------------|
+|Assets (Automotive) |Grant Listed Options to this Application |
+|Event Types (Automotive) |Read access to Event Type |
+|Organizations (Automotive) |Read access to Multisite setup |
+|Rule Definitions (Automotive) |Grant Listed Options to this Application |
+|Companies (SP) |Grant Listed Options to this Application |
+|People (SP) |Grant Listed Options to this Application |
+ 9. Open the Object Structures tab, in the table select the following object structures individually. When you select an object structure, a set of object structure options display. For each object structure, select the related options in the following table.
+|  Object Structure       |  Object Structure options to select   |
+|----------------------------|-------------------------------|
+|MXCLASSIFICATION |Read MXCLASSIFICATION  |
+|MXVENDOR |Delete MXVENDOR, Insert MXVENDOR, Read MXVENDOR, Save MXVENDOR |
+|MXORGANISATION |Read MXORGANISATION |
+ 10. Save changes.  
+
+### Create an application user to access Maximo REST API
+1. Log in to Maximo as an application admin user.
+2. Select Go To > Security > Users.
+3. Click the 'New User' icon.
+4. Open the 'User' tab and in the 'User Name' field, enter a user name.
+5. For the user, select 'Set Password'and unselect the following password options.
+- 'E-mail Password to User?', if allowed by your environment.
+- 'Password Should Expire After First Login?'
+6. Within User Settings, in the 'Default Insert Site' field, select DEFREG.
+7. Open the 'Groups' tab and click the 'Select Groups' button.
+8. Select the group that you created in the previous set of steps, for example `APPUSERGROUP`. 
+9. Click OK.
+10. Save changes.
+
+
+## STEP-2. Setup Maximo for the Starter App
+
+### Configure Custom Vehicle Attributes
+1. Log in to Maximo as an application admin user.
+2. Select Go To > Administration > Classifications (SP)
+3. Click the 'New Classification' icon.
+4. In the 'Classification' field, enter a classification name, for example FLEET VEHICLE. 
+5. This classification ID will be used in an environment value for the starter app. 
+6. In the 'Organisation' field, select an organisation. The default organisation is IOTFA.
+7. In the 'Region/Site' field, select a site. The default site is DEFREG.
+8. In the 'Use With' table, click 'New Row' and in the 'Use with Object' field select ASSET. 
+9. In the 'Attributes' table, click 'New Row' to add each attribute and related 'Data Type' value that is listed in the following table. Also, for each attribute deslect 'Use in Specifications'.
+|  Attribute      |  Data Type   |
+|-----------------|--------------|
+|FUELTANK |NUMERIC  |
+|MILEAGE |NUMERIC |
+|YEAR |NUMERIC |
+|THUMBNAILURL |ALN  |
+|DEST_LAT |NUMERIC |
+|DEST_LON |NUMERIC |
+|TCU_ID |ALN |
+
+### Get Organization ID
+1. Log in to Maximo as an application admin user.
+2. Select Go To > Administration > Organizations (Automotive)
+3. Find the oranization ID, for example IOTFA. The organization ID will be used in an environment value for the starter app. 
+
+
+## <a id="deploying-the-app"></a> STEP-3. Deploying the app
 
 Deploy the Fleet Management Starter Application on IBM Cloud either automatically or manually, as outlined in the following instructions.
 
@@ -40,7 +115,6 @@ Next: Go to [Connecting to IBM IoT Connected Vehicle Insights service](#connect2
 ### Manually deploy the starter app on IBM Cloud
 
 To manually deploy the Fleet Management Starter Application on IBM Cloud, complete all of the following steps:
-
 1. Log in to IBM Cloud. If you do not have an existing IBM Cloud account, click [Register][bluemix_signup_url] and follow the instructions to create an account.
 2. Download and install the [IBM Cloud CLI][cloud_foundry_url] tool.
 3. Clone the Fleet Management Starter Application to your local environment by using the following console command:
@@ -99,7 +173,8 @@ To manually deploy the Fleet Management Starter Application on IBM Cloud, comple
 
 **Result:** Your very own instance of the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application is now deployed on IBM Cloud.
 
-## Deploying custom plugins to your IBM IoT Connected Vehicle Insights instance
+
+## STEP-4. Deploying custom plugins to your IBM IoT Connected Vehicle Insights instance
 To run the Fleet Management Starter Application with your IBM IoT Connected Vehicle Insights instance, the following two custom plugins must be deployed to your IBM IoT Connected Vehicle Insights instance. The source code of the plugins is contained in `plugins` folder under the Fleet Management Starter Application repository.
 
 |          Plugin        | Component              | Description                          |
@@ -166,7 +241,8 @@ A fragment of the gateway.properties file exists under `conf` folder of the `Htt
 1. Deploy export the `FleetAlert` jar to an Agent server.
 1. Restart IBM IoT Connected Vehicle Insights components using IBM IoT Connected Vehicle Insights Plugin Deploy Tool as needed.
 
-## <a id="connect2cvi"></a> Connecting the app to your IBM IoT Connected Vehicle Insights service
+
+## <a id="connect2cvi"></a> STEP-5. Connecting the app to your IBM IoT Connected Vehicle Insights service
 
 After deploying the app on IBM Cloud, you must configure the app to connect to your IBM IoT Connected Vehicle Insights SaaS service instance.
 
@@ -191,7 +267,8 @@ AUTOMOTIVE_MAX_CLASSIFICATION_ID | Classification for vehicle data defined in Ma
 AUTOMOTIVE_MAX_USERNAME | User name for accessing the Maximo Asset Management API
 AUTOMOTIVE_MAX_PASSWORD | Password for accessing the Maximo Asset Management API
 
-## Configuring authentication
+
+## STEP-6. Configuring authentication
 
 To secure the app, authentication is enabled by default for the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application. The default user credentials are as follows:
 
@@ -203,14 +280,16 @@ starter | Starter4Iot
 
 - To remove authentication, set both the `APP_USER` and `APP_PASSWORD` environment variables to 'none'.
 
-## <a name="run"></a> Starting the app
+
+## <a name="run"></a> STEP-7. Starting the app
 
 - To start the Fleet Management Starter Application, open the [IBM Cloud dashboard][bluemix_dashboard_url] and start the app.
 
 Congratulations! You are now ready to use your own instance of the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application. To connect to the app, enter the following URL in your browser:
 `http://<host>.mybluemix.net` in your browser.
 
-## (Optional) Connecting to an OBDII dongle that is plugged in to your car
+
+## STEP-8. (Optional) Connecting to an OBDII dongle that is plugged in to your car
 
 The starter app also provides a mobile app to connect to an OBDII dongle plugged in to your car. The mobile app sends data from an OBDII dongle to the Fleet Management Starter Application through the Watson IoT Platform service and you can see the data in the app. Complete the steps below to enable this optional feature.
 
@@ -238,8 +317,10 @@ Now that your device is connected to the Watson IoT Platform, go to the  **Map**
 
 If you no longer need a device, go to **Vehicle** page in your Fleet Management Starter Application on your browser and delete your vehicle manually. A device corresponding to deleted vehicle must be removed from your IoT Platform.
 
+
 ## Reporting defects
 To report a defect with the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application, go to the [Issues section](https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/issues) section.
+
 
 ## Troubleshooting
 To debug problems, check the IBM Cloud app logs. To view the logs, run the following command from the Cloud Foundry CLI:
@@ -247,6 +328,7 @@ To debug problems, check the IBM Cloud app logs. To view the logs, run the follo
   ```
   $ ibmcloud app logs --recent <application-name>
   ```
+
 
 ## Providing feedback to IBM
 
@@ -273,8 +355,10 @@ By default, when you build an app by using the Fleet Management starter app samp
 
 The IBM NPS widget is produced in partnership with [Medallia](http://www.medallia.com/). For information about the widget and the data that it collects, see [Privacy Policy - Medallia](http://www.medallia.com/privacy/).
 
+
 ## Questions, comments or suggestions
 For your questions, comments or suggestions to us, visit [IBM Community for IBM IoT Connected Vehicle Insights](https://community.ibm.com/community/user/imwuc/communities/globalgrouphome?CommunityKey=eaea64a5-fb9b-4d78-b1bd-d87dc70e8171).
+
 
 ## Useful links
 - [IBM Cloud](https://cloud.ibm.com)
