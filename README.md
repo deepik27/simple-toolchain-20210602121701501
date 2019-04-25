@@ -37,21 +37,23 @@ To deploy and use the Fleet Management Starter Application, you need the followi
 5. Open the Sites tab, select the check box for 'Authorize Group for All Sites'.
 6. Open the Storerooms tab, select the check box for 'Authorize Group for All Storerooms'. 
 7. Open the GL Components tab, select the check box for 'Authorize Group for All GL Component Types'.
-8. Open the Applications tab, within the application table select the following applications individually. When you select an application, a set of application options display. For each application, select the related option in the following table, or select the check box for the listed options. 
-|  Application       |  Application option to select   |
-|----------------------------|-------------------------------|
-|Assets (Automotive) |Grant Listed Options to this Application |
-|Event Types (Automotive) |Read access to Event Type |
-|Organizations (Automotive) |Read access to Multisite setup |
-|Rule Definitions (Automotive) |Grant Listed Options to this Application |
-|Companies (SP) |Grant Listed Options to this Application |
-|People (SP) |Grant Listed Options to this Application |
- 9. Open the Object Structures tab, in the table select the following object structures individually. When you select an object structure, a set of object structure options display. For each object structure, select the related options in the following table.
-|  Object Structure       |  Object Structure options to select   |
-|----------------------------|-------------------------------|
-|MXCLASSIFICATION |Read MXCLASSIFICATION  |
-|MXVENDOR |Delete MXVENDOR, Insert MXVENDOR, Read MXVENDOR, Save MXVENDOR |
-|MXORGANISATION |Read MXORGANISATION |
+8. Open the Applications tab, within the application table select the following applications individually. When you select an application, a set of application options display. For each application, select the related option in the following table, or select the check box for the listed options.  
+
+   |  Application       |  Application option to select   |
+   |----------------------------|-------------------------------|
+   |Assets (Automotive) |Grant Listed Options to this Application |
+   |Event Types (Automotive) |Read access to Event Type |
+   |Organizations (Automotive) |Read access to Multisite setup |
+   |Rule Definitions (Automotive) |Grant Listed Options to this Application |
+   |Companies (SP) |Grant Listed Options to this Application |
+   |People (SP) |Grant Listed Options to this Application |
+9. Open the Object Structures tab, in the table select the following object structures individually. When you select an object structure, a set of object structure options display. For each object structure, select the related options in the following table.  
+ 
+   |  Object Structure       |  Object Structure options to select   |
+   |----------------------------|-------------------------------|
+   |MXCLASSIFICATION |Read MXCLASSIFICATION  |
+   |MXVENDOR |Delete MXVENDOR, Insert MXVENDOR, Read MXVENDOR, Save MXVENDOR |
+   |MXORGANISATION |Read MXORGANISATION |
  10. Save changes.  
 
 ### Create an application user to access Maximo REST API
@@ -80,16 +82,17 @@ To deploy and use the Fleet Management Starter Application, you need the followi
 6. In the 'Organisation' field, select an organisation. The default organisation is IOTFA.
 7. In the 'Region/Site' field, select a site. The default site is DEFREG.
 8. In the 'Use With' table, click 'New Row' and in the 'Use with Object' field select ASSET. 
-9. In the 'Attributes' table, click 'New Row' to add each attribute and related 'Data Type' value that is listed in the following table. Also, for each attribute deslect 'Use in Specifications'.
-|  Attribute      |  Data Type   |
-|-----------------|--------------|
-|FUELTANK |NUMERIC  |
-|MILEAGE |NUMERIC |
-|YEAR |NUMERIC |
-|THUMBNAILURL |ALN  |
-|DEST_LAT |NUMERIC |
-|DEST_LON |NUMERIC |
-|TCU_ID |ALN |
+9. In the 'Attributes' table, click 'New Row' to add each attribute and related 'Data Type' value that is listed in the following table. Also, for each attribute deslect 'Use in Specifications'.  
+
+   |  Attribute      |  Data Type   |
+   |-----------------|--------------|
+   |FUELTANK |NUMERIC  |
+   |MILEAGE |NUMERIC |
+   |YEAR |NUMERIC |
+   |THUMBNAILURL |ALN  |
+   |DEST_LAT |NUMERIC |
+   |DEST_LON |NUMERIC |
+   |TCU_ID |ALN |
 
 ### Get Organization ID
 1. Log in to Maximo as an application admin user.
