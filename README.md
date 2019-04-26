@@ -24,7 +24,8 @@ The Fleet Management Starter Application uses the following IBM Cloud services:
 ## Prerequisites
 To deploy and use the Fleet Management Starter Application, you need the following prerequisites.
 - An instance of IBM IoT Connected Vehicle Insights that is deployed and running on IBM SaaS.
-- An application Admin user is created. For more information about how to create an application Admin user, see Knowledge Center.
+- An application Admin user is created. For more information about how to create an application Admin user, see IBM Knowledge Center.
+- You must have an IBM Cloud account. To sign up and get your account, go to https://www.ibm.com/cloud/ 
 
 
 ## STEP-1. Create Application REST API User
@@ -260,15 +261,15 @@ To connect to your IBM IoT Connected Vehicle Insights service instance, the star
 
 To obtain the correct values, contact your system administrator.
 
-Key | Description of Value
------ | -----
-AUTOMOTTIVE_URL | A URL to call the REST API for IBM IoT Connected Vehicle Insights, which must end with a forward slash character (/)
-AUTOMOTIVE_USERNAME | User name for accessing the Vehicle Data Hub (VDH) and other IBM IoT Connected Vehicle Insights endpoints
-AUTOMOTIVE_PASSWORD | Password for accessing the VDH and other IBM IoT Connected Vehicle Insights endpoints
-AUTOMOTIVE_MAX_ORGID | IBM IoT Connected Vehicle Insights Organization specified in IBM Maximo Asset Management
-AUTOMOTIVE_MAX_CLASSIFICATION_ID | Classification for vehicle data defined in Maximo Asset Management
-AUTOMOTIVE_MAX_USERNAME | User name for accessing the Maximo Asset Management API
-AUTOMOTIVE_MAX_PASSWORD | Password for accessing the Maximo Asset Management API
+Key | Description of Value | Example 
+----- | ------------------------------------- | -----
+AUTOMOTTIVE_URL | A URL to call the REST API for IBM IoT Connected Vehicle Insights, which must end with a forward slash character (/) | [https://xxxx.automotive.](https://xxxx.automotive.internetofthings.ibmcloud.com/) <br> [internetofthings.ibmcloud.com/](https://xxxx.automotive.internetofthings.ibmcloud.com/)
+AUTOMOTIVE_USERNAME | User name for accessing the Vehicle Data Hub (VDH) and other IBM IoT Connected Vehicle Insights endpoints | iotcvusr 
+AUTOMOTIVE_PASSWORD | Password for accessing the VDH and other IBM IoT Connected Vehicle Insights endpoints | CVIPassword  
+AUTOMOTIVE_MAX_ORGID | IBM IoT Connected Vehicle Insights Organization specified in IBM Maximo Asset Management | IOTFA 
+AUTOMOTIVE_MAX_CLASSIFICATION_ID | Classification for vehicle data defined in Maximo Asset Management | FLEET VEHICLE 
+AUTOMOTIVE_MAX_USERNAME | User name for accessing the Maximo Asset Management API | starter 
+AUTOMOTIVE_MAX_PASSWORD | Password for accessing the Maximo Asset Management API | StarterPassword 
 
 
 ## STEP-6. Configuring authentication
@@ -286,7 +287,12 @@ starter | Starter4Iot
 
 ## <a name="run"></a> STEP-7. Starting the app
 
-- To start the Fleet Management Starter Application, open the [IBM Cloud dashboard][bluemix_dashboard_url] and start the app.
+To start the Fleet Management Starter Application, complete one of the following steps.
+- Open the [IBM Cloud dashboard][bluemix_dashboard_url] and start the app.
+- Start the app from the terminal, use the following `ibmcloud`commands.
+    1. Get starter application name, enter `$ ibmcloud cf apps`.
+    2. Start application, enter `$ ibmcloud cf start $STARTER_APPLICATION_NAME`
+
 
 Congratulations! You are now ready to use your own instance of the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application. To connect to the app, enter the following URL in your browser:
 `http://<host>.mybluemix.net` in your browser.
@@ -295,6 +301,34 @@ Congratulations! You are now ready to use your own instance of the IBM IoT Conne
 ## STEP-8. (Optional) Connecting to an OBDII dongle that is plugged in to your car
 
 The starter app also provides a mobile app to connect to an OBDII dongle plugged in to your car. The mobile app sends data from an OBDII dongle to the Fleet Management Starter Application through the Watson IoT Platform service and you can see the data in the app. Complete the steps below to enable this optional feature.
+
+### Prerequisite for MQTT capability
+You can send car probe data from mobile apps using MQTT. To enable MQTT capability on your fleet management starter app, complete the following pre-requsite steps.
+1. Create IoT Platform services and bind your application.
+```
+$ ibmcloud cf create-service iotf-service iotf-service-free FleetIoTPlatform
+$ ibmcloud cf bind-service <app_name> FleetIoTPlatform
+$ ibmcloud cf restage <app_name>
+```
+2. Create IoT Platform API Key.
+   a. From IBM Cloud Dashboard, start IoT Platform.
+   b. From the sidebar, select Apps.
+   c. Click 'Generate API Key'.
+   d. click 'Next'.
+   e. Select 'Standar Application for Role'.
+   f. Click 'Generate Key'.
+   g. Copy API Key and Authentication Token.
+3. Enable MQTT Client on the CVI.
+   - Update the following VDH configuration files.  
+    
+   | gateway.properties      |  pos_mapping_def.xml   |
+   |----------------------------|-------------------------------|
+   |Increment client.num |Append attributes for tenant_id, <br> engineTemp and fuel in SEND_CARPROBE command|
+   |Add DefaultMQTTClient configuration |   |
+   
+   - Deploy the VDH configuration files to VDH by using the plug-in deploy REST API.
+   - Resart VDH by using the plug-in deploy REST API.
+   
 
 ### Bind the Watson IoT Platform service to the app
 
