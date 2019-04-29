@@ -24,7 +24,7 @@ The Fleet Management Starter Application uses the following IBM Cloud services:
 ## Prerequisites
 To deploy and use the Fleet Management Starter Application, you need the following prerequisites.
 - An instance of IBM IoT Connected Vehicle Insights that is deployed and running on IBM SaaS.
-- An application Admin user is created. For more information about how to create an application Admin user, see IBM Knowledge Center.
+- An application Admin user is created. For more information about how to create an application Admin user, see the topic [Creating an application admin user](https://www.ibm.com/support/knowledgecenter/SSNQ4V_bas/iot-automotive/managing/assets/maximo_create_app_admin_user.html) in the IBM Knowledge Center.
 - You must have an IBM Cloud account. To sign up and get your account, go to https://www.ibm.com/cloud/ 
 
 
@@ -196,22 +196,32 @@ To build and deploy the plugins, complete the following steps:
     git clone https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git
     ```
 
-### Import custom plugin projects to your eclipse IDE
-1. Launch the eclipse that contains IBM IoT Connected Vehicle Insights Plugin Development Tool.
-1. Open Git perspective (**Window > Perspective > Open Perspective > Other...**).
-1. From the **Git Repositories** view, click **Add an existing local Git repository**. Alternatively, you can also clone the repository by selecting **Clone a Git repository**.
-1. Specify a directory that contains the Fleet Management Starter Application Git repository.
-1. Select the Fleet Management Starter Application Git repository and click **Finish**.
-1. Right click the added repository on Git Repositories view and select **Import Projects...**.
-1. Select **Import existing Eclipse projects** and click **Next**.
-1. Select `FleetAlert` and `HttpActionNotifyClient` and click **Finish**.
+### Install the IBM IoT Connected Vehicle Insights Plugin SDK on your eclipse IDE.
+1. Install the Eclipse for Java EE developers
+1. Download the IoT4A Plug-in Development Tool ZIP file, see https://apps.na.collabserv.com/communities/service/html/communityview?communityUuid=8eba8e51-b567-4f19-82ac-e258fe4175e3#fullpageWidgetId=Wdef888a456c6_4fbc_a5b0_7fb5bd269680&folder=cf80a246-92dd-4493-85a1-c2d9ec9dc668. To get access to the tool, contact your IBM IoT Connected Vehicle Insights system administrator.
+1. Under <eclipse home>/dropins, create a folder named “IoT4ADevTool” 
+1. Expand the zip to <eclipse home>/dropins/IoT4ADevTool/. 
+   ```
+    <eclipse home>/dropins/IoT4ADevTool/ecipse/features/…  
+    <eclipse home>/dropins/IoT4ADevTool/ecipse/plugins/…
+    ```
+1. Start Eclipse.
+       
+### Import plug-in projects for the starter app into eclipse workspace
+1. In Eclipse, select File > Import.
+1. Select General>Existing Projects into Workspace.
+1. Click Next.
+1. In 'Select root directory', enter <fleet management directory>/plugins 
+1. Select `FleetAlert` and `HttpActionNotifyClient`.
+1. Click **Finish**.
 
 ### Export custom plugin jars
-1. Open Java perspective (**WIndow > Perspective > Open Perspective > Other...**) in your eclipse.
-1. Right click the `HttpActionNotifyClient` project in **Package Explorer** view and select **Export...**.
-1. Select **Java > JAR file** and click **Next**.
+1. In Elipse, within the package explorer view, right click FleetAlert project and select Expor.
+1. Select **Java > JAR file** 
+1. Click **Next**.
+1. Ensure FleetAlert is checked. 
 1. Input a file name in the **JAR file** field and click **Finish**.
-1. In the same manner, export the `FleetAlert` project as a JAR file.
+1. In the same manner, export the `HttpActionNotifyClient` project.
 
 ### Update a VDH configuration file (gatway.properties)
 1. Download a copy of the `gateway.properties` file that you deployed on the VDH server by using IBM IoT Connected Vehicle Insights Plugin Deploy Tool.
