@@ -126,7 +126,6 @@ To automatically deploy the Fleet Management Starter Application on IBM Cloud, c
     1. Within the IBM Cloud landing page, expand the IBM Cloud navigation menu.
     1. In the navigation menu, select 'DevOps'.
     1. Within the DevOps navigation menu, select 'Toolchains'.
-    1. Select 'Toolchains'
     1. Select 'Delivery Pipeline'.
     1. Select your `iota-starter-server-fm-saas-`.
     1. In the Deploy Stage widget, select 'View logs and history'. 
