@@ -107,9 +107,32 @@ Deploy the Fleet Management Starter Application on IBM Cloud either automaticall
 
 ### Automatically deploy the starter app on IBM Cloud
 
-To automatically deploy the Fleet Management Starter Application on IBM Cloud, click [![Deploy to IBM Cloud](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git).
+The automatic deployment option creates an instance of the app and the required IBM Cloud services, and also binds the services to the starter app automatically.
+To automatically deploy the Fleet Management Starter Application on IBM Cloud, click [![Deploy to IBM Cloud](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git) and complete step 1, you only complete step 2 if step 1 fails.
+1. Within the IBM Cloud landing page, enter details in each field, then select 'Deploy'. For more information about field details, see the following table. 
 
-The automatic deployment option creates an instance of the app and the required IBM Cloud services, and also binds the services to the starter app automatically. After the automated deployment, complete the following steps to configure the app to manually to connect to your IBM IoT Connected Vehicle Insights SaaS service.
+   |  Field name      |  Sample details  |
+   |-----------------|--------------|
+   |Toolchain Name |Leave the default entry.  |
+   |Select Region |Select region nearest to you |
+   |Select a resource group |Use the default entry, if you have not purchased another option. |
+   |App name |Leave the default entry.  |
+   |IBM Cloud API Key |Select 'Create'. A key displays. Select 'Create'. |
+   |Region |Select region nearest to you. |
+   |Organization |Select choice from the drop-down menu. |
+   |Space |Select choice from the drop-down menu. |
+
+1. If step 1 fails to complete, then complete the following steps.
+    1. Within the IBM Cloud landing page, expand the IBM Cloud navigation menu.
+    1. In the navigation menu, select 'DevOps'.
+    1. Within the DevOps navigation menu, select 'Toolchains'.
+    1. Select 'Toolchains'
+    1. Select 'Delivery Pipeline'.
+    1. Select your `iota-starter-server-fm-saas-`.
+    1. In the Deploy Stage widget, select 'View logs and history'. 
+    1. If you see timing issues like `FleetCloudantDB is not ready...`, then select 'Run option again'.  
+
+After the automated deployment, complete the following steps to configure the app to manually connect to your IBM IoT Connected Vehicle Insights SaaS service.
 
 1. Open the IBM Cloud dashboard in your browser.
 2. To stop the app, click **ACTIONS** > **Stop App**.
