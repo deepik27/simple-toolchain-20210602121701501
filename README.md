@@ -330,7 +330,14 @@ Congratulations! You are now ready to use your own instance of the IBM IoT Conne
 `http://<host>.mybluemix.net` in your browser.
 
 
-## STEP-8. (Optional) Connecting to an OBDII dongle that is plugged in to your car
+## STEP-8. Set up the OBDII Fleet Management App
+
+To build and install the OBDII Fleet Management App on a mobile phone, see the following repositories.
+ - For Android phone, see [IBM IoT Connected Vehicle Insights - OBDII Fleet Management App for Android](https://github.com/ibm-watson-iot/iota-starter-obd-android).
+ - For iOS phone, see [IBM IoT Connected Vehicle Insights - OBDII Fleet Management App for iOS](https://github.com/ibm-watson-iot/iota-starter-obd-ios).  The OBDII Fleet Management App for iOS will become available at a future date.
+
+
+## STEP-9. (Optional) Connecting to an OBDII dongle that is plugged in to your car
 
 The starter app also provides a mobile app to connect to an OBDII dongle plugged in to your car. The mobile app sends data from an OBDII dongle to the Fleet Management Starter Application through the Watson IoT Platform service and you can see the data in the app. Complete the steps below to enable this optional feature.
 
@@ -373,8 +380,8 @@ $ ibmcloud cf restage <app_name>
 ### Set up the OBDII Fleet Management App
 
 To build and install the OBDII Fleet Management App on a mobile phone, see the following repositories.
- - For Android phone : [IBM IoT Connected Vehicle Insights - OBDII Fleet Management App for Android](https://github.com/ibm-watson-iot/iota-starter-obd-android).
- - For iOS phone :  [IBM IoT Connected Vehicle Insights - OBDII Fleet Management App for iOS](https://github.com/ibm-watson-iot/iota-starter-obd-ios).
+ - For Android phone, see [IBM IoT Connected Vehicle Insights - OBDII Fleet Management App for Android](https://github.com/ibm-watson-iot/iota-starter-obd-android).
+ - For iOS phone, see  [IBM IoT Connected Vehicle Insights - OBDII Fleet Management App for iOS](https://github.com/ibm-watson-iot/iota-starter-obd-ios). The OBDII Fleet Management App for iOS will become available at a future date.
 
  After deploying the Fleet Management Starter Application, start OBDII Fleet Management App on your phone.
 
