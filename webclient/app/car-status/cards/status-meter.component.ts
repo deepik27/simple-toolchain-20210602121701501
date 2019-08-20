@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -9,8 +9,8 @@
  */
 import { Component, Input, OnInit, OnDestroy, AfterContentInit, ViewChild, OnChanges, SimpleChange } from '@angular/core';
 
-import { Observable } from 'rxjs/Observable';
-import { Subject } from 'rxjs/Subject';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 var chartComponentNextId = 0;
 
@@ -92,7 +92,7 @@ export class StatusMeterComponent implements OnInit, OnDestroy, AfterContentInit
   }
 
   ngAfterContentInit() {
-    this.subscription = this.subject.debounceTime(100).distinctUntilChanged().subscribe(value => {
+    this.subscription = this.subject.pipe(debounceTime(100), distinctUntilChanged()).subscribe(value => {
       var gaugeDiv = (this.speedometerDiv && this.speedometerDiv.nativeElement);
       var barDiv = (this.thermometerDiv && this.thermometerDiv.nativeElement);
       if (gaugeDiv) {

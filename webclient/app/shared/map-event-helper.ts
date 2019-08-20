@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -12,6 +12,7 @@ import { Injectable } from "@angular/core";
 import { EventService } from "./iota-event.service";
 import{ MapItemHelper } from "./map-item-helper";
 import{ Item } from "./map-item-helper";
+import { map } from 'rxjs/operators';
 
 @Injectable()
 export class MapEventHelper extends MapItemHelper<Event> {
@@ -132,18 +133,18 @@ export class MapEventHelper extends MapItemHelper<Event> {
         min_longitude: min_longitude,
         max_latitude: max_latitude,
         max_longitude: max_longitude
-    }).map(data => {
+    }).pipe(map(data => {
       return data.map(function(event) {
         return new Event(event);
       });
-    });
+    }));
   }
 
   // query items within given area
   public getItem(id: string) {
-    return this.eventService.getEvent(id).map(data => {
+    return this.eventService.getEvent(id).pipe(map(data => {
       return new Event(data);
-    });
+    }));
   }
 
   public createItemFeatures(event: Event) {

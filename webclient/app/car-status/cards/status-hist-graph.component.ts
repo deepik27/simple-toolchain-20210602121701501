@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -9,7 +9,8 @@
  */
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 
-import { Observable } from 'rxjs/Observable';
+import { interval } from 'rxjs';
+import { map, startWith, delay } from 'rxjs/operators';
 
 @Component({
   moduleId: module.id,
@@ -121,7 +122,7 @@ export class StatusHistoryGrahpComponent implements OnInit, OnDestroy {
       this.items.push({ ts: now - this.historyCount + i - 1, ratio: 0, value: '-', statusClass: {}, active: i !== 0 });
     }
 
-    this.subscription = Observable.interval(this.interval).startWith(-1).map(() => {
+    this.subscription = interval(this.interval).pipe(startWith(-1), map(() => {
       var ratio = Math.max(0, Math.min(1, (this.value - this.minValue) / (this.maxValue - this.minValue)));
       var alertLevel = this.alertLevel;
       var statusClass = { red: alertLevel === 'critical', orange: alertLevel === 'troubled', green: alertLevel === 'normal', blue: undefined };
@@ -138,7 +139,7 @@ export class StatusHistoryGrahpComponent implements OnInit, OnDestroy {
       let firstItem = this.items[0];
       firstItem.active = false;
       this.items.shift();
-    }).delay(Math.min(this.interval / 2, 500)).subscribe(() => {
+    }), delay(Math.min(this.interval / 2, 500))).subscribe(() => {
       // start animation
     })
   }

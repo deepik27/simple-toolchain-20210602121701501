@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -9,8 +9,8 @@
  */
 import { Component, OnInit, OnDestroy, OnChanges, SimpleChange, Input } from '@angular/core';
 
-import { Observable } from 'rxjs/Observable';
-import { Subject } from 'rxjs/Subject';
+import { Subject, of } from 'rxjs';
+import { map, switchMap, catchError } from 'rxjs/operators';
 import { CarStatusDataService } from './car-status-data.service';
 
 import * as _ from 'underscore';
@@ -33,21 +33,21 @@ export class CarListComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnInit() {
     this.selectedDeviesSubscription = this.selectionSubject
-      .map(x => { console.log(x); return x; })
+      .pipe(map(x => { console.log(x); return x; }),
 //      .debounceTime(500)
 //      .distinctUntilChanged()
-      .switchMap(sel => {
+      switchMap(sel => {
           console.log('Switching to ' , sel);
           if(sel.value){
             return this.carStatusDataService.getDevices(sel.prop, sel.value, 5);
           }
-          return Observable.of([]);
+          return of([]);
         }
-      )
-      .catch(error => {
+      ),
+      catchError(error => {
         console.log(error);
-        return Observable.of([]);
-      })
+        return of([]);
+      }))
       .subscribe(devices => {
         this.devices = devices.map(device => device);
         console.log('Setting probes to; ', this.devices);

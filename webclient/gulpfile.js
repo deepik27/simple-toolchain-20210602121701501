@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -10,7 +10,6 @@
 var SystemBuilder = require('systemjs-builder'),
     gulp = require('gulp'),
     rename = require('gulp-rename'),
-    gulpSequence = require('gulp-sequence'),
     rimraf = require('rimraf'),
     cleanCSS = require('gulp-clean-css'),
     concatCss = require('gulp-concat-css');
@@ -39,11 +38,9 @@ gulp.task('clean', function(cb){
   rimraf(paths.dist, cb);
 })
 
-gulp.task('vendor', function(cb){
-    gulp.src(paths.vendor.js)
-      .pipe(gulp.dest(paths.dist + '/js'));
-    gulp.src(paths.vendor.css)
-      .pipe(gulp.dest(paths.dist + '/css'));
+gulp.task('vendor', function(){
+  return gulp.src(paths.vendor.js)
+    .pipe(gulp.dest(paths.dist + '/js'));
 });
 
 gulp.task('app-res', function(){
@@ -97,5 +94,5 @@ gulp.task('cssBundler:watch', function () {
   gulp.watch('css/*.css', ['cssBundler']);
 });
 
-gulp.task('default', gulpSequence('clean', ['vendor', 'app-bundler', 'app-index', 'cssBundler'/*, 'cssBundler:watch'*/]));
-gulp.task('dist', gulpSequence('default', 'app-res'));
+gulp.task('default', gulp.series('clean', 'vendor', 'app-bundler', 'app-index', 'cssBundler'/*, 'cssBundler:watch'*/));
+gulp.task('dist', gulp.series('default', 'app-res'));

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -8,7 +8,8 @@
  * You may not use this file except in compliance with the license.
  */
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable, interval } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 
 import { RealtimeDeviceData, RealtimeDeviceDataProvider } from '../../shared/realtime-device';
 import { RealtimeDeviceDataProviderService } from '../../shared/realtime-device-manager.service';
@@ -40,18 +41,18 @@ export class CarStatusDataService {
     this.realtimeDeviceDataProvider = this.realtimeDataProviderService.getProvider();
   }
 
-  getProbe(mo_id: string, interval = 1): Observable<any> {
-    return Observable.interval(interval * 1000).startWith(0)
-      .map(x => {
+  getProbe(mo_id: string, nInterval: number = 1): Observable<any> {
+    return interval(nInterval * 1000).pipe(startWith(0), 
+      map(x => {
         this.realtimeDataProviderService.scheduleVehicleDataLoading(mo_id);
         var device = this.realtimeDeviceDataProvider.getDevice(mo_id);
         return device && device.latestSample;
-      })
+      }));
   }
 
-  private getDevicesByConds(conds: StatusGroup[], interval = 1): Observable<any> {
-    return Observable.interval(interval * 1000).startWith(0)
-      .map(x => {
+  private getDevicesByConds(conds: StatusGroup[], nInterval: number = 1): Observable<any> {
+    return interval(nInterval * 1000).pipe(startWith(0), 
+      map(x => {
         let devices = this.realtimeDeviceDataProvider.getDevices();
         let devicesByLabel  = _.groupBy(this.realtimeDeviceDataProvider.getDevices(), device => {
               this.realtimeDataProviderService.scheduleVehicleDataLoading(device.deviceID);
@@ -63,7 +64,7 @@ export class CarStatusDataService {
               return undefined;
             });
         return devicesByLabel;
-      });
+      }));
   }
 
   private getCondsFromType(type: string){
@@ -78,7 +79,7 @@ export class CarStatusDataService {
   getColumns(type: string, interval = 1): Observable<any[][]>{
     let conds = this.getCondsFromType(type);
     return this.getDevicesByConds(conds, interval)
-    .map(devicesByLabel => {
+    .pipe(map(devicesByLabel => {
       var result = [];
       for (var i=0; i<conds.length; i++){
         let label = conds[i].label;
@@ -86,16 +87,16 @@ export class CarStatusDataService {
         result.push([label, (devices ? devices.length : 0) + 0]);
       }
       return result;
-    });
+    }));
   }
 
   getDevices(type: string, selection: string, interval = 1): Observable<RealtimeDeviceData[]> {
     let conds = this.getCondsFromType(type);
     return this.getDevicesByConds(conds, interval)
-      .map(devicesByLabel => {
+      .pipe(map(devicesByLabel => {
         let r = devicesByLabel[selection];
         console.log('CarStatusDataService is returning ', r);
         return r ? r : [];
-      });
+      }));
   }
 }

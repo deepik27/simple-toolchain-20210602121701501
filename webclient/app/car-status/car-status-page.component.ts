@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -10,9 +10,6 @@
 import { Component } from '@angular/core';
 
 import { CarStatusDataService } from './summary/car-status-data.service';
-import { LocationService, MapArea } from '../shared/location.service';
-
-import { RealtimeDeviceDataProviderService } from '../shared/realtime-device-manager.service';
 
 @Component({
   moduleId: module.id,

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -8,7 +8,7 @@
  * You may not use this file except in compliance with the license.
  */
 import * as ol from 'openlayers';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 
 /**
  * The default zoom value when the map `region` is set by `center`
@@ -464,7 +464,7 @@ export class MapHelper {
       var timer = 0;
       startUpdateTimer = function(){
         stopUpdateTimer();
-        timer = setTimeout(callUpdate, options.updateInterval);
+        timer = <any>setTimeout(callUpdate, options.updateInterval);
       };
       stopUpdateTimer = function(){
         if(timer){
@@ -474,7 +474,7 @@ export class MapHelper {
       };
       var callUpdate = function(){
         updatePopOver(elm, currentPopoverFeature, currentPinned);
-        timer = setTimeout(callUpdate, options.updateInterval);
+        timer = <any>setTimeout(callUpdate, options.updateInterval);
       };
     }else {
       startUpdateTimer = function(){}; // nop
@@ -590,7 +590,7 @@ export class MapHelper {
           if(scheduleUpdateSizeTimer){
             clearTimeout(scheduleUpdateSizeTimer);
           }
-          scheduleUpdateSizeTimer = setTimeout(function(){
+          scheduleUpdateSizeTimer = <any>setTimeout(function(){
             this_.map.updateSize();
             scheduleUpdateSizeTimer = 0;
           }, timeout);

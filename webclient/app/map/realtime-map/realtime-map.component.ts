@@ -12,7 +12,8 @@ import { Router } from '@angular/router';
 
 import * as ol from 'openlayers';
 import * as _ from 'underscore';
-import { Observable } from 'rxjs/Observable';
+import { interval } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { MapHelper } from '../../shared/map-helper';
 import { MapEventHelper } from '../../shared/map-event-helper';
@@ -148,7 +149,7 @@ export class RealtimeMapComponent implements OnInit {
 		var opt = new ol.Object();
 		var mapTargetElement = document.getElementById(this.mapElementId);
 
-		this.map = new ol.Map({
+		this.map = new ol.Map(<olx.MapOptions>{
 			controls: ol.control.defaults({
 				attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
 					collapsible: false
@@ -193,7 +194,7 @@ export class RealtimeMapComponent implements OnInit {
 		/*
 		* Monitor devices to update affected events. If there are affected events, highlight the events
 		*/
-		let eventMonitor = Observable.interval(2000).map(() => {
+		let eventMonitor = interval(2000).pipe(map(() => {
 			// get all the alerts here
 			return _.union(_.flatten(this.animatedDeviceManager.getDevices()
 				.filter(device => (device.latestSample.info &&
@@ -206,7 +207,7 @@ export class RealtimeMapComponent implements OnInit {
 						.map(alert => { return alert.source.id; });
 					return _.uniq(ids);
 				})));
-		});
+		}));
 		eventMonitor.subscribe(data => {
 			let helper = this.mapItemHelpers["event"];
 			if (helper) {
@@ -393,7 +394,7 @@ export class RealtimeMapComponent implements OnInit {
 		let getSeverityColor = (sev: number) => ['green', 'blue', 'orange', 'red'][sev];
 
 		let severityToValue = { Critical: 3, High: 'red', Medium: 'orange', Low: 'orange', Info: 'blue' };
-		let alertsProvider = Observable.interval(2000).map(() => {
+		let alertsProvider = interval(2000).pipe(map(() => {
 			// get all the alerts here
 			let result = this.animatedDeviceManager.getDevices()
 				.filter(device => (device.latestSample.info &&
@@ -431,7 +432,7 @@ export class RealtimeMapComponent implements OnInit {
 					}
 				});
 			return result;
-		});
+		}));
 
 		// setup alert popover
 		// - 2. setup popover

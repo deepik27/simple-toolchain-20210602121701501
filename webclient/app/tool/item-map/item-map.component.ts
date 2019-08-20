@@ -108,7 +108,7 @@ export class ItemMapComponent implements OnInit {
 
     // create a map
     let mouseInteration = new interaction();
-    this.map =  new ol.Map({
+    this.map =  new ol.Map(<olx.MapOptions>{
       interactions: ol.interaction.defaults(undefined).extend([mouseInteration]),
       target: document.getElementById(this.mapElementId),
       layers: [

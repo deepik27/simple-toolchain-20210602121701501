@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -9,8 +9,8 @@
  */
 import { Component, EventEmitter, AfterContentInit, Input, Output, ViewChild, ContentChild } from '@angular/core';
 
-import { RealtimeDeviceData, RealtimeDeviceDataProvider } from '../../shared/realtime-device';
 import { CarStatusDataService } from './car-status-data.service';
+import { distinctUntilChanged } from 'rxjs/operators';
 
 import * as c3 from 'c3';
 
@@ -79,7 +79,7 @@ export class ChartItemComponent implements AfterContentInit {
       this.chart = c3.generate(opts);
       // keep sending data
       this.dataSubscription = this.carStatusData.getColumns(this.aggrKey)
-        .distinctUntilChanged((x, y) => _.isEqual(x, y))
+        .pipe(distinctUntilChanged((x, y) => _.isEqual(x, y)))
         .subscribe(data => {
           this.chart.load({columns: data});
         });

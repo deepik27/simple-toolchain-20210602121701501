@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -7,9 +7,9 @@
  *
  * You may not use this file except in compliance with the license.
  */
-import { OpaqueToken } from '@angular/core';
+import { InjectionToken } from '@angular/core';
 
-export let APP_CONFIG = new OpaqueToken('app.config');
+export let APP_CONFIG = new InjectionToken('app.config');
 
 export interface AppConfig {
   DEBUG: boolean;

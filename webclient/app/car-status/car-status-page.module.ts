@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -13,9 +13,6 @@ import { BrowserModule }  from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 import { FormsModule }    from '@angular/forms';
 
-import { HttpModule }    from '@angular/http';
-import { UtilsModule } from '../utils/utils.module';
-
 import { CarStatusSummaryComponent } from './summary/car-status-summary.component';
 import { CarListComponent } from './summary/car-list.component';
 import { ChartItemComponent } from './summary/chart-item.component';
@@ -24,8 +21,6 @@ import { StatusHistoryGrahpComponent } from './cards/status-hist-graph.component
 import { CarStatusComponent } from './car-status.component';
 import { CarStatusPageComponent } from './car-status-page.component';
 import { DriverBehaviorComponent } from './behaviors/driver-behavior.component';
-
-import { CarStatusDataService } from './summary/car-status-data.service';
 
 import { carStatusRouting } from './car-status-page.routing';
 

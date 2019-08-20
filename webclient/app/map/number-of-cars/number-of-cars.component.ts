@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -9,8 +9,8 @@
  */
 import { Component, OnInit, OnDestroy, Input, Output, OnChanges, SimpleChange } from '@angular/core';
 
-import { Observable } from 'rxjs/Observable';
-import { Subject } from 'rxjs/Subject';
+import { Observable, Subject, of, combineLatest,  } from 'rxjs';
+import { map, switchMap, debounceTime, distinctUntilChanged, catchError } from 'rxjs/operators';
 
 import { Counts } from './counts';
 import { NumberOfCarsService } from './number-of-cars.service';
@@ -50,14 +50,14 @@ export class NumberOfCarsComponent implements OnInit, OnDestroy, OnChanges {
 
     if(this.region){
        this.regionCounts$ = this.regionSubject
-        .debounceTime(500)
-        .distinctUntilChanged()
-        .switchMap(region => this.numberOfCarsService.getNumberOfCars(region, 2))
-        .catch(error => {
+        .pipe(debounceTime(500),
+        distinctUntilChanged(),
+        switchMap(region => this.numberOfCarsService.getNumberOfCars(region, 2)),
+        catchError(error => {
           console.log(error);
-          return Observable.of(<Counts>{});
-        })
-        .map(v => [v]); // CAUTION: convert to an array so that we can use ngFor in template
+          return of(<Counts>{});
+        }),
+        map(v => <Counts[]>[v])); // CAUTION: convert to an array so that we can use ngFor in template
     }
 
     // initialize Obserbable for multiple
@@ -76,12 +76,12 @@ export class NumberOfCarsComponent implements OnInit, OnDestroy, OnChanges {
       //   })
       //   .catch(error => {
       //     console.log(error);
-      //     return Observable.of(<Counts[]>{});
+      //     return of(<Counts[]>{});
       //   });
       var obss = this.regions.map(region => {
         return this.numberOfCarsService.getNumberOfCars(region, 2);
       });
-      this.regionsCounts$ = Observable.combineLatest(obss, function(...values){
+      this.regionsCounts$ = combineLatest(obss, function(...values){
         return <Counts[]>values;
       });
     }

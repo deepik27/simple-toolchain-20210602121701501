@@ -12,8 +12,6 @@ import * as ol from 'openlayers';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Component, Input, Output, OnInit, OnChanges, OnDestroy, SimpleChange, ViewChild } from '@angular/core';
 import { HttpClient } from '../../shared/http-client';
-import { Response, Headers, RequestOptions } from '@angular/http';
-import { Observable }     from 'rxjs/Observable';
 import { MapHelper } from '../../shared/map-helper';
 import { MapEventHelper } from '../../shared/map-event-helper';
 import { EventService } from '../../shared/iota-event.service';
@@ -24,8 +22,6 @@ import { POIService } from '../../shared/iota-poi.service';
 import { DriverBehaviorService } from '../../shared/iota-driver-behavior.service';
 import { LocationService, MapArea } from '../../shared/location.service';
 import { AlertService } from '../../shared/alert.service';
-import { _resolveDefaultAnimationDriver } from '@angular/platform-browser/src/browser';
-import { resolve6 } from 'dns';
 
 declare var $; // jQuery from <script> tag in the index.html
 // as bootstrap type definitoin doesn't extend jQuery $'s type definition
@@ -137,7 +133,7 @@ export class DriverBehaviorComponent implements OnInit {
 
  		let area:any = this.locationService.getCurrentAreaRawSync();
    // create a map
-    this.map =  new ol.Map({
+    this.map =  new ol.Map(<olx.MapOptions>{
       target: document.getElementById(this.mapElementId),
       layers: [
         new ol.layer.Tile({
@@ -154,7 +150,7 @@ export class DriverBehaviorComponent implements OnInit {
         center: ol.proj.fromLonLat((area && area.center) || [0, 0], undefined),
         zoom: ((area && area.zoom) || DEFAULT_ZOOM)
       }),
-    });
+		});
 		this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
     this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, {itemLabel: "Boundary"});
 		this.mapItemHelpers["poi"] = new MapPOIHelper(this.map, this.mapPOILayer, this.poiService);

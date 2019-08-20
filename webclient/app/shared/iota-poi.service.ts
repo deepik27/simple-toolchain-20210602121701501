@@ -9,8 +9,9 @@
  */
 import { Injectable } from "@angular/core";
 import { HttpClient } from "./http-client";
-import { Response, Headers, RequestOptions } from "@angular/http";
-import { Observable } from "rxjs/Observable";
+import { Headers, RequestOptions } from "@angular/http";
+import { Observable } from "rxjs/index.js";
+import { map } from 'rxjs/operators';
 
 @Injectable()
 export class POIService {
@@ -18,10 +19,10 @@ export class POIService {
   }
 
   public getCapability() {
-    return this.http.get("/user/capability/poi").map(data => {
+    return this.http.get("/user/capability/poi").pipe(map(data => {
         let resJson = data.json();
         return resJson;
-    });
+    }));
    }
 
   public queryPOIs(params): Observable<any> {
@@ -31,20 +32,20 @@ export class POIService {
     let headers = new Headers({"Content-Type": "application/JSON;charset=utf-8"});
     let options = new RequestOptions({headers: headers});
 
-    return this.http.post(url, params, options).map(data => {
+    return this.http.post(url, params, options).pipe(map(data => {
         let resJson = data.json();
         return resJson;
-    });
+    }));
   }
 
   public getPOI(poi_id: string) {
     let url = "/user/poi?poi_id=" + poi_id;
     console.log("get poi: " + url);
 
-    return this.http.get(url).map(data => {
+    return this.http.get(url).pipe(map(data => {
         let resJson = data.json();
         return resJson;
-    });
+    }));
   }
 
   public createPOI(poi) {
@@ -53,10 +54,10 @@ export class POIService {
     let headers = new Headers({"Content-Type": "application/JSON;charset=utf-8"});
     let options = new RequestOptions({headers: headers});
 
-    return this.http.post(url, body, options).map(data => {
+    return this.http.post(url, body, options).pipe(map(data => {
       let resJson = data.json();
       return resJson;
-    });
+    }));
   }
 
   public uploadPOIFile(file, mo_id, serialnumber) {
@@ -68,17 +69,17 @@ export class POIService {
     headers.set("Accept", "application/json");
     let options = new RequestOptions({ headers: headers });
 
-    return this.http.post("/user/poi/upload", formData, options).map(data => {
+    return this.http.post("/user/poi/upload", formData, options).pipe(map(data => {
       let resJson = data.json();
       return resJson;
-    });
+    }));
   }
 
   public deletePOI(poi_id) {
-    return this.http.delete("/user/poi?poi_id=" + poi_id).map(data => {
+    return this.http.delete("/user/poi?poi_id=" + poi_id).pipe(map(data => {
       let resJson = data.json();
       return resJson;
-    });
+    }));
   }
 
   /*

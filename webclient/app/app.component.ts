@@ -7,8 +7,6 @@
  *
  * You may not use this file except in compliance with the license.
  */
-import './shared/rxjs-extensions';
-
 import { Component, OnInit } from '@angular/core';
 
 import { HttpClient } from './shared/http-client';

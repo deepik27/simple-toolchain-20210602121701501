@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -47,8 +47,9 @@
   // packages tells the System loader how to load when no filename and/or no extension
   var packages = {
     'app':                        { main: 'main.js',  defaultExtension: 'js' },
-    'rxjs':                       { defaultExtension: 'js' },
-    //'angular2-in-memory-web-api': { main: 'index.js', defaultExtension: 'js' },
+    'rxjs':                       { main: 'index.js',  defaultExtension: 'js' },
+    'rxjs/operators':             { main: 'index.js',  defaultExtension: 'js' },
+    'rxjs/websocket':             { main: 'index.js',  defaultExtension: 'js' },
   };
   // define metadata for Subresource Integrity
   var meta = {
