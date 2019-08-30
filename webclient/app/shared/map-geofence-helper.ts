@@ -1,9 +1,9 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -11,8 +11,8 @@ import * as ol from "openlayers";
 import { Injectable } from "@angular/core";
 import { Observable } from 'rxjs/Observable';
 import { GeofenceService } from "./iota-geofence.service";
-import{ MapItemHelper } from "./map-item-helper";
-import{ Item } from "./map-item-helper";
+import { MapItemHelper } from "./map-item-helper";
+import { Item } from "./map-item-helper";
 
 @Injectable()
 export class MapGeofenceHelper extends MapItemHelper<Geofence> {
@@ -37,28 +37,28 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
     let self = this;
     let getFeatureStyle = function getFeatureStyle(feature: ol.Feature) {
       self.targetStyle = new ol.style.Style({
-          fill: new ol.style.Fill({
-            color: [255, 0, 128, 0.1]
-          })
+        fill: new ol.style.Fill({
+          color: [255, 0, 128, 0.1]
+        })
       });
       self.geometryBorderStyle = new ol.style.Style({
-          stroke: new ol.style.Stroke({
-            color: [255, 0, 128, 0.7],
-            width: 2
-          })
+        stroke: new ol.style.Stroke({
+          color: [255, 0, 128, 0.7],
+          width: 2
+        })
       });
       self.tentativeStyle = new ol.style.Style({
-          fill: new ol.style.Fill({
-            color: [100, 0, 100, 0.05]
-          }),
-          stroke: new ol.style.Stroke({
-            color: [100, 0, 100, 0.3],
-            width: 2,
-            lineDash: [5, 5]
-          })
+        fill: new ol.style.Fill({
+          color: [100, 0, 100, 0.05]
+        }),
+        stroke: new ol.style.Stroke({
+          color: [100, 0, 100, 0.3],
+          width: 2,
+          lineDash: [5, 5]
+        })
       });
 
-      return function(feature, resolution) {
+      return function (feature, resolution) {
         let style = self.getFeatureStyle(feature);
         if (style) {
           feature.setStyle(style);
@@ -68,22 +68,22 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
     }(undefined);
     this.itemLayer.setStyle(getFeatureStyle);
 
-    this.featureExtension = options.editable && <any>function() {
+    this.featureExtension = options.editable && <any>function () {
       let handleStyle = new ol.style.Style({
         text: new ol.style.Text({
-            fill: new ol.style.Fill({color: "#404040"}),
-            scale: 1.0,
-            textAlign: "center",
-            textBaseline: "middle",
-            text: "\u25cf",
-            font: "18px monospace"
+          fill: new ol.style.Fill({ color: "#404040" }),
+          scale: 1.0,
+          textAlign: "center",
+          textBaseline: "middle",
+          text: "\u25cf",
+          font: "18px monospace"
         })
       });
       return {
-        decorate: function(item: any, features: ol.Feature[]) {
+        decorate: function (item: any, features: ol.Feature[]) {
           if (item.geometry) {
             let areaFeature = null;
-            _.each(features, function(feature) {
+            _.each(features, function (feature) {
               if (feature.get("border")) {
 
                 let handles: ol.Feature[] = [];
@@ -95,10 +95,12 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
                   // create new geometry
                   let itemGeometry = item.geometry;
                   let p = ol.proj.toLonLat(point, undefined);
-                  let newGeometry = {min_longitude: itemGeometry.min_longitude,
-                                    min_latitude: itemGeometry.min_latitude,
-                                    max_longitude: itemGeometry.max_longitude,
-                                    max_latitude: itemGeometry.max_latitude};
+                  let newGeometry = {
+                    min_longitude: itemGeometry.min_longitude,
+                    min_latitude: itemGeometry.min_latitude,
+                    max_longitude: itemGeometry.max_longitude,
+                    max_latitude: itemGeometry.max_latitude
+                  };
                   if (index === 0) {
                     newGeometry.min_longitude = p[0];
                     newGeometry.min_latitude = p[1];
@@ -129,7 +131,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
                   handlePoints.push(ol.proj.fromLonLat([newGeometry.min_longitude, newGeometry.max_latitude], undefined));
                   handlePoints.push(ol.proj.fromLonLat([newGeometry.max_longitude, newGeometry.max_latitude], undefined));
                   handlePoints.push(ol.proj.fromLonLat([newGeometry.max_longitude, newGeometry.min_latitude], undefined));
-                  _.each(handles, function(handle, i) {
+                  _.each(handles, function (handle, i) {
                     (<any>handle.getGeometry()).setCoordinates(handlePoints[i]);
                   });
                 };
@@ -149,9 +151,11 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
 
                   // Update radius of curcle feature
                   let new_radius = Math.min(dx, dy);
-                  let newGeometry = {longitude: itemGeometry.longitude,
-                                    latitude: itemGeometry.latitude,
-                                    radius: new_radius};
+                  let newGeometry = {
+                    longitude: itemGeometry.longitude,
+                    latitude: itemGeometry.latitude,
+                    radius: new_radius
+                  };
 
 
                   // update coordinates of item feature
@@ -174,7 +178,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
                   handlePoints.push(ol.proj.fromLonLat([min_x, max_y], undefined));
                   handlePoints.push(ol.proj.fromLonLat([max_x, max_y], undefined));
                   handlePoints.push(ol.proj.fromLonLat([max_x, min_y], undefined));
-                  _.each(handles, function(handle, i) {
+                  _.each(handles, function (handle, i) {
                     (<any>handle.getGeometry()).setCoordinates(handlePoints[i]);
                   });
                 };
@@ -203,8 +207,8 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
                   return;
                 }
 
-                _.each(points, function(coordinates: ol.Coordinate, index) {
-                  let handle = new ol.Feature({geometry: new ol.geom.Point(coordinates), resizeHandle: {item: item, index: index, constraint: constraint}, decorates: feature});
+                _.each(points, function (coordinates: ol.Coordinate, index) {
+                  let handle = new ol.Feature({ geometry: new ol.geom.Point(coordinates), resizeHandle: { item: item, index: index, constraint: constraint }, decorates: feature });
                   handle.setStyle(handleStyle);
                   handles.push(handle);
                   features.push(handle);
@@ -242,12 +246,12 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
       return Observable.of([]);
     }
     return this.geofenceService.queryGeofences({
-        min_latitude: min_latitude,
-        min_longitude: min_longitude,
-        max_latitude: max_latitude,
-        max_longitude: max_longitude
+      min_latitude: min_latitude,
+      min_longitude: min_longitude,
+      max_latitude: max_latitude,
+      max_longitude: max_longitude
     }).map(data => {
-      return data.map(function(geofence) {
+      return data.map(function (geofence) {
         return new Geofence(geofence);
       });
     });
@@ -266,12 +270,12 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
   public createItemFeatures(geofence: Geofence) {
     let features = [];
     let polygon = this.createPolygonFeature(geofence.geometry_type, geofence.geometry, geofence.target ? geofence.target.area : null, geofence.direction);
-    let feature = new ol.Feature({geometry: polygon, item: geofence});
+    let feature = new ol.Feature({ geometry: polygon, item: geofence });
     features.push(feature);
 
     // create border
     let borderPolygon = new ol.geom.Polygon([this.createGeofenceCoordinate(geofence.geometry, geofence.geometry_type)]);
-    let borderFeature = new ol.Feature({geometry: borderPolygon, item: geofence, border: geofence.geometry, decorates: feature});
+    let borderFeature = new ol.Feature({ geometry: borderPolygon, item: geofence, border: geofence.geometry, decorates: feature });
     feature.set("decorators", [borderFeature]);
     features.push(borderFeature);
 
@@ -298,7 +302,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
     let features = [];
     let polygonCoordinates = this.createGeofenceCoordinate(loc.geometry, loc.geometry_type);
     let polygon = new ol.geom.Polygon([polygonCoordinates]);
-    let feature = new ol.Feature({geometry: polygon});
+    let feature = new ol.Feature({ geometry: polygon });
     features.push(feature);
     return features;
   }
@@ -316,8 +320,8 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
       let position_y = ol.proj.fromLonLat(this.calcPosition([geometry.longitude, geometry.latitude], geometry.radius, 0), undefined);
       let distance_y = position_y[1] - center[1];
       for (let i = 0; i < numPoints; i++) {
-          angle = angle + angleStep;
-          polygonCoordinates.push([center[0] + distance_x * Math.cos(angle * Math.PI / 180), center[1] + distance_y * Math.sin(angle * Math.PI / 180)]);
+        angle = angle + angleStep;
+        polygonCoordinates.push([center[0] + distance_x * Math.cos(angle * Math.PI / 180), center[1] + distance_y * Math.sin(angle * Math.PI / 180)]);
       }
     } else if (geometry_type === "rectangle") {
       polygonCoordinates.push(ol.proj.fromLonLat([geometry.min_longitude, geometry.min_latitude], undefined));
@@ -335,7 +339,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
 
   public getHoverProps(geofence: Geofence) {
     let props = [];
-    props.push({key: "direction", value: geofence.direction});
+    props.push({ key: "direction", value: geofence.direction });
     return props;
   }
 
@@ -350,9 +354,9 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
         distance /= 3;
       }
       return <any>{
-          longitude: (area.max_longitude + area.min_longitude) / 2,
-          latitude: (area.max_latitude + area.min_latitude) / 2,
-          radius: distance / 2
+        longitude: (area.max_longitude + area.min_longitude) / 2,
+        latitude: (area.max_latitude + area.min_latitude) / 2,
+        radius: distance / 2
       };
     } else if (geometry_type === "rectangle") {
       if (distance - margin * 2 < 0) {
@@ -363,10 +367,10 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
       let min_y = this.calcPosition([area.min_longitude, area.min_latitude], margin, 0)[1];
       let max_y = this.calcPosition([area.min_longitude, area.max_latitude], margin, 180)[1];
       return <any>{
-          min_longitude: min_x,
-          min_latitude: min_y,
-          max_longitude: max_x,
-          max_latitude: max_y
+        min_longitude: min_x,
+        min_latitude: min_y,
+        max_longitude: max_x,
+        max_latitude: max_y
       };
     }
   }
@@ -382,10 +386,10 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
       let left = this.calcPosition([geometry.longitude, geometry.latitude], geometry.radius + margin, 270);
       let right = this.calcPosition([geometry.longitude, geometry.latitude], geometry.radius + margin, 90);
       return {
-          min_longitude: left[0],
-          min_latitude: bottom[1],
-          max_longitude: right[0],
-          max_latitude: top[1]
+        min_longitude: left[0],
+        min_latitude: bottom[1],
+        max_longitude: right[0],
+        max_latitude: top[1]
       };
     } else if (geometry_type === "rectangle") {
       let area0 = this.calcPosition([geometry.min_longitude, geometry.max_latitude], margin, 0);
@@ -393,10 +397,10 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
       let area2 = this.calcPosition([geometry.max_longitude, geometry.min_latitude], margin, 180);
       let area3 = this.calcPosition([geometry.min_longitude, geometry.min_latitude], margin, 270);
       return {
-          min_longitude: area3[0],
-          min_latitude: area2[1],
-          max_longitude: area1[0],
-          max_latitude: area0[1]
+        min_longitude: area3[0],
+        min_latitude: area2[1],
+        max_longitude: area1[0],
+        max_latitude: area0[1]
       };
     }
   }
@@ -466,7 +470,7 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
 
     let e_lat = this._toDegree(Math.asin(sin_e_lat));
     let e_lon = this._toDegree(s_lon + Math.atan2(sin_bearing * sin_angular_distance * cos_s_lat,
-                             cos_angular_distance - sin_s_lat * sin_e_lat));
+      cos_angular_distance - sin_s_lat * sin_e_lat));
     e_lon = (e_lon + 540) % 360 - 180;
     return [e_lon, e_lat];
   }

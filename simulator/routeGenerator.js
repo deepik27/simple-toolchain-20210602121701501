@@ -3,7 +3,7 @@
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -63,7 +63,7 @@ routeGenerator.prototype.start = function (params) {
 				}
 			}
 		}, interval);
-		this.eventEmitter.emit('state', {driving: this.driving, routing: this.routing });
+		this.eventEmitter.emit('state', { driving: this.driving, routing: this.routing });
 	};
 
 	if (!this.routing && (!this.allRoutes || this.allRoutes.length == 0)) {
@@ -82,7 +82,7 @@ routeGenerator.prototype.stop = function () {
 	this.driving = false;
 	let p = this._getRoutePosition();
 	if (p) {
-		this.eventEmitter.emit('position', {latitude: p.lat, longitude: p.lon, speed: 0, heading: p.heading, destination: p.destination });
+		this.eventEmitter.emit('position', { latitude: p.lat, longitude: p.lon, speed: 0, heading: p.heading, destination: p.destination });
 	}
 	this.eventEmitter.emit('state', { driving: this.driving, routing: this.routing });
 };
@@ -147,16 +147,16 @@ routeGenerator.prototype._getRandomLoc = function (slat, slng) {
 	return { lat: dlat, lon: dlng };
 };
 
-routeGenerator.prototype.setAcceleration = function(acceleration) {
+routeGenerator.prototype.setAcceleration = function (acceleration) {
 	let parsedAccel = parseFloat(acceleration);
-	if( !isNaN(parsedAccel) ){
+	if (!isNaN(parsedAccel)) {
 		this.acceleration = parsedAccel;
 	} else {
 		this.acceleration = 0;
 	}
 };
 
-routeGenerator.prototype.getAcceleration = function() {
+routeGenerator.prototype.getAcceleration = function () {
 	return this.acceleration;
 };
 
@@ -167,8 +167,8 @@ routeGenerator.prototype._generateAnchors = function (slat, slng, sheading, keep
 		let prevLoc = { lat: slat, lon: slng, heading: sheading };
 		locs.push(prevLoc);
 		this.waypoints.forEach(function (p) {
-			prevLoc.destination = {lat: p.latitude, lon: p.longitude};
-			if (p.poi_id) prevLoc.destination.props = {poi_id: p.poi_id};
+			prevLoc.destination = { lat: p.latitude, lon: p.longitude };
+			if (p.poi_id) prevLoc.destination.props = { poi_id: p.poi_id };
 			prevLoc = { lat: p.latitude, lon: p.longitude, heading: p.heading };
 			locs.push(prevLoc);
 		});
@@ -239,13 +239,14 @@ routeGenerator.prototype._createRoutes = function (locs, loop) {
 		this.allRoutes = routes;
 
 		let prevLoc = null;
-		_.forEach(routes, (route) => { 
+		_.forEach(routes, (route) => {
 			route.route = _.filter(route.route, function (loc) {
 				let diff = !prevLoc || prevLoc.lon !== loc.lon || prevLoc.lat !== loc.lat;
 				prevLoc = loc;
 				return diff;
-		});});
-	
+			});
+		});
+
 		this.tripRouteIndex = 0;
 		routeArray = routes[0].route;
 		if (routeArray.length > 0) {
@@ -358,7 +359,7 @@ routeGenerator.prototype._findRouteMultiplePoints = function (locs, loop) {
 
 	let addPoint = function (loc) {
 		if (loc.poi_id) {
-			params.points.push({props: {poi_id: loc.poi_id}});
+			params.points.push({ props: { poi_id: loc.poi_id } });
 		} else {
 			params.points.push({ latitude: loc.lat, longitude: loc.lon, heading: loc.heading });
 		}
@@ -401,8 +402,8 @@ routeGenerator.prototype._findRouteMultiplePoints = function (locs, loop) {
 			let routeArray = [];
 			let distance = 0;
 			let traveltime = 0;
-	
-					// Each trip represents a route between two POIs.
+
+			// Each trip represents a route between two POIs.
 			_.forEach(route.found ? route.found.trips : [], (trip, index) => {
 				// There might be multiple paths for a trip. Find the best path in the triop from the paths.
 				let path = this._selectRecommendedPath(trip);
@@ -410,7 +411,7 @@ routeGenerator.prototype._findRouteMultiplePoints = function (locs, loop) {
 					if (referred && referred.trips.length > index) {
 						path = this._selectRecommendedPath(referred.trips[index]);
 					} else {
-						path = {links: []};
+						path = { links: [] };
 					}
 				}
 				if (!path) return;
@@ -438,7 +439,7 @@ routeGenerator.prototype._findRouteMultiplePoints = function (locs, loop) {
 				// Add destination point to the origin point to change destination
 				if (tripArray.length > 0) {
 					let dp = trip.destination_point;
-					tripArray[0].destination = {lat: dp.latitude, lon: dp.longitude, props: dp.props};
+					tripArray[0].destination = { lat: dp.latitude, lon: dp.longitude, props: dp.props };
 				}
 				routeArray = routeArray.concat(tripArray);
 			});
@@ -459,8 +460,8 @@ routeGenerator.prototype._findRouteWithParams = function (mode, params) {
 	Q.when(contextMapping.findRoute(params), (data) => {
 		let route = this._selectRoute(data.routes);
 		if (!route || _.every(route.trips, (trip) => { return !trip.paths || trip.paths.length == 0; })) {
-			return deferred.resolve({mode: mode});
-		}	
+			return deferred.resolve({ mode: mode });
+		}
 		return deferred.resolve({ mode: mode, found: route });
 	}).catch((error) => {
 		console.error("Error in route search: " + error);
@@ -469,7 +470,7 @@ routeGenerator.prototype._findRouteWithParams = function (mode, params) {
 	return deferred.promise;
 };
 
-routeGenerator.prototype._selectRoute = function(routes) {
+routeGenerator.prototype._selectRoute = function (routes) {
 	if (!routes || routes.length == 0) {
 		return;
 	}
@@ -477,7 +478,7 @@ routeGenerator.prototype._selectRoute = function(routes) {
 	return routes[0];
 };
 
-routeGenerator.prototype._selectRecommendedPath = function(trip) {
+routeGenerator.prototype._selectRecommendedPath = function (trip) {
 	if (!trip.paths || trip.paths.length == 0) {
 		return;
 	}
@@ -560,20 +561,20 @@ routeGenerator.prototype._getRoutePosition = function () {
 	}
 	var prevLoc = this.prevLoc;
 	var loc = this.tripRoute[this.tripRouteIndex];
-	var speed = this._getDistance(loc, prevLoc)*0.001*3600;
+	var speed = this._getDistance(loc, prevLoc) * 0.001 * 3600;
 	var acceleration = this._toKilometerPerHour(this.acceleration);
 	let calcSpeedResult = this._calcSpeed(speed, prevLoc.speed, acceleration);
-	if(calcSpeedResult.stopAtLoc){
+	if (calcSpeedResult.stopAtLoc) {
 		loc = this.tripRoute[this.tripRouteIndex];
 	} else {
 		loc = this._calcDestinationPoint(calcSpeedResult.prev_loc, this._toMeterPerSec(calcSpeedResult.accel_speed), calcSpeedResult.heading);
-	} 
+	}
 	loc.speed = calcSpeedResult.speed;
 	loc.heading = calcSpeedResult.heading;
-	this.prevLoc = loc;	
+	this.prevLoc = loc;
 	if (calcSpeedResult.stopAtLoc)
-		this.tripRouteIndex++;	
-	if(this.tripRouteIndex >= this.tripRoute.length){
+		this.tripRouteIndex++;
+	if (this.tripRouteIndex >= this.tripRoute.length) {
 		if (this.options && this.options.route_loop) {
 			this.tripRouteIndex = 0;
 		} else {
@@ -583,15 +584,15 @@ routeGenerator.prototype._getRoutePosition = function () {
 	return loc;
 };
 
-routeGenerator.prototype._calcHeading = function(p1, p2){
+routeGenerator.prototype._calcHeading = function (p1, p2) {
 	// this will calculate bearing
 	p1lon = this._toRadians(p1.lon);
 	p1lat = this._toRadians(p1.lat);
 	p2lon = this._toRadians(p2.lon);
 	p2lat = this._toRadians(p2.lat);
-	var y = Math.sin(p2lon-p1lon) * Math.cos(p2lat);
-	var x = Math.cos(p1lat)*Math.sin(p2lat) -
-        Math.sin(p1lat)*Math.cos(p2lat)*Math.cos(p2lon-p1lon);
+	var y = Math.sin(p2lon - p1lon) * Math.cos(p2lat);
+	var x = Math.cos(p1lat) * Math.sin(p2lat) -
+		Math.sin(p1lat) * Math.cos(p2lat) * Math.cos(p2lon - p1lon);
 	var brng = Math.atan2(y, x);
 	return (this._toDegree(brng) + 360) % 360;
 }
@@ -620,7 +621,7 @@ routeGenerator.prototype._getDistance = function (p0, p1) {
  * - d: distance in meter
  * - h: heading direction(bearing) in degree
  */
-routeGenerator.prototype._calcDestinationPoint = function(startPoint, distance, bearing) {
+routeGenerator.prototype._calcDestinationPoint = function (startPoint, distance, bearing) {
 	// Earths radius in meters via WGS 84 model.
 	let earth = 6378137;
 	// Angular distance: sigma = distance / (earth_radius)
@@ -628,16 +629,16 @@ routeGenerator.prototype._calcDestinationPoint = function(startPoint, distance, 
 	let s_lat_rad = this._toRadians(startPoint.lat);
 	let s_lon_rad = this._toRadians(startPoint.lon);
 	let bearing_rad = this._toRadians(bearing)
-	let dest_lat_rad = Math.asin( Math.sin(s_lat_rad)*Math.cos(sigma) +
-							Math.cos(s_lat_rad)*Math.sin(sigma)*Math.cos(bearing_rad) );
-	let dest_lon_rad = s_lon_rad + Math.atan2(Math.sin(bearing_rad)*Math.sin(sigma)*Math.cos(s_lat_rad),
-									Math.cos(sigma)-Math.sin(s_lat_rad)*Math.sin(dest_lat_rad));
+	let dest_lat_rad = Math.asin(Math.sin(s_lat_rad) * Math.cos(sigma) +
+		Math.cos(s_lat_rad) * Math.sin(sigma) * Math.cos(bearing_rad));
+	let dest_lon_rad = s_lon_rad + Math.atan2(Math.sin(bearing_rad) * Math.sin(sigma) * Math.cos(s_lat_rad),
+		Math.cos(sigma) - Math.sin(s_lat_rad) * Math.sin(dest_lat_rad));
 	let dest_lat_deg = this._toDegree(dest_lat_rad)
 	let dest_lon_deg = this._toDegree(dest_lon_rad)
-	return {lat: dest_lat_deg, lon: dest_lon_deg};
+	return { lat: dest_lat_deg, lon: dest_lon_deg };
 };
 
-routeGenerator.prototype._calcSpeed = function(speed, prevLocSpeed, acceleration) {
+routeGenerator.prototype._calcSpeed = function (speed, prevLocSpeed, acceleration) {
 	const MAX_SPEED_CAP = 161; 	// maximum speed cap is 161 km/h (about 100 MPH)
 	const MIN_SPEED_CAP = 8; 	// minimum speed cap is 8 km/h (about 5 MPH)
 	var accel_speed;
@@ -645,24 +646,24 @@ routeGenerator.prototype._calcSpeed = function(speed, prevLocSpeed, acceleration
 	let stopAtLoc = false;
 	let prev_loc = this.prevLoc;
 	let cur_loc = this.tripRoute[this.tripRouteIndex];
-	let heading = this._calcHeading(prev_loc, cur_loc); 
+	let heading = this._calcHeading(prev_loc, cur_loc);
 
-	if(acceleration !== 0){
+	if (acceleration !== 0) {
 		// acceleration is set from simulation UI
 		accel_speed = prevLocSpeed + acceleration;
-		if(accel_speed > MAX_SPEED_CAP){
+		if (accel_speed > MAX_SPEED_CAP) {
 			accel_speed = MAX_SPEED_CAP;
 		}
-		if(accel_speed < MIN_SPEED_CAP){
+		if (accel_speed < MIN_SPEED_CAP) {
 			accel_speed = MIN_SPEED_CAP;
 		}
 		let can_speed = speed;
 		speed = accel_speed;
 		let sum_speed = 0;
-		while(can_speed < accel_speed && prev_loc){
+		while (can_speed < accel_speed && prev_loc) {
 			sum_speed += can_speed;
 			let nextIndex = this.tripRouteIndex + 1;
-			if(this.tripRouteIndex >= this.tripRoute.length-1){
+			if (this.tripRouteIndex >= this.tripRoute.length - 1) {
 				if (this.options && this.options.route_loop) {
 					nextIndex = 0;
 				} else {
@@ -672,18 +673,18 @@ routeGenerator.prototype._calcSpeed = function(speed, prevLocSpeed, acceleration
 					break;
 				}
 			}
-		
+
 			let next_loc = this.tripRoute[nextIndex];
 			let cur_heading = this._calcHeading(cur_loc, next_loc);
 			let diff_heading = Math.abs(cur_heading - heading);
-			if (diff_heading > 2){
+			if (diff_heading > 2) {
 				accel_speed = can_speed;
 				speed = sum_speed;
 				stopAtLoc = true;
 				break;
 			}
 			accel_speed -= can_speed;
-			can_speed = this._getDistance(next_loc, cur_loc)*0.001*3600;
+			can_speed = this._getDistance(next_loc, cur_loc) * 0.001 * 3600;
 			this.tripRouteIndex = nextIndex;
 
 			prev_loc = cur_loc;
@@ -693,35 +694,35 @@ routeGenerator.prototype._calcSpeed = function(speed, prevLocSpeed, acceleration
 	} else {
 		// acceleration is set to 0, use random value instead
 		let referenceSpeed = this._getReferenceSpeed(this.tripRouteIndex, speed);
-		if(referenceSpeed === 0){
+		if (referenceSpeed === 0) {
 			console.log("Reference speed is zero!");
 		}
 		let rand_acceleration = Math.floor(Math.random() * 10 + 10);
 		stopAtLoc = true;
-		while(speed>referenceSpeed || (speed - prevLocSpeed) > rand_acceleration){
+		while (speed > referenceSpeed || (speed - prevLocSpeed) > rand_acceleration) {
 			// too harsh acceleration, then insert intermediate point
 			speed = speed / 2.0;
 			stopAtLoc = false;
 		}
 		accel_speed = speed;
 	}
-	return {accel_speed: accel_speed, speed: speed, heading: heading, prev_loc: prev_loc, stopAtLoc: stopAtLoc};
+	return { accel_speed: accel_speed, speed: speed, heading: heading, prev_loc: prev_loc, stopAtLoc: stopAtLoc };
 };
 
-routeGenerator.prototype._toRadians = function(n) {
-    return n * (Math.PI / 180);
+routeGenerator.prototype._toRadians = function (n) {
+	return n * (Math.PI / 180);
 };
 
 routeGenerator.prototype._toDegree = function (n) {
 	return n * (180 / Math.PI);
 };
 
-routeGenerator.prototype._toKilometerPerHour = function(n) {
-	return n*(0.001*3600);
+routeGenerator.prototype._toKilometerPerHour = function (n) {
+	return n * (0.001 * 3600);
 };
 
-routeGenerator.prototype._toMeterPerSec = function(n) {
-	return n/(0.001*3600);
+routeGenerator.prototype._toMeterPerSec = function (n) {
+	return n / (0.001 * 3600);
 };
 
 module.exports = routeGenerator;

@@ -1,9 +1,9 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -58,7 +58,7 @@ export abstract class MapItemHelper<T extends Item> {
   * Start monitoring change of view
   */
   public startMonitoring() {
-  	this.stopMonitoring();
+    this.stopMonitoring();
     this.monitors.push(this.map.getView().on("change:center", this.viewChanged.bind(this)));
     this.monitors.push(this.map.getView().on("change:resolution", this.viewChanged.bind(this)));
     setTimeout(this.updateView.bind(this), 100);
@@ -68,9 +68,9 @@ export abstract class MapItemHelper<T extends Item> {
   * Stop monitoring change of view
   */
   public stopMonitoring() {
-  	_.each(this.monitors, function(monitor) {
-  		this.map.getView().unByKey(monitor);
-  	}.bind(this));
+    _.each(this.monitors, function (monitor) {
+      this.map.getView().unByKey(monitor);
+    }.bind(this));
     this.monitors = [];
   }
 
@@ -111,17 +111,17 @@ export abstract class MapItemHelper<T extends Item> {
   }
 
   normalizeLocation(loc: number[]) {
-      let lng = loc[0] % 360;
-      if (lng < -180) lng += 360;
-      else if (lng > 180) lng -= 360;
+    let lng = loc[0] % 360;
+    if (lng < -180) lng += 360;
+    else if (lng > 180) lng -= 360;
 
-      let lat = loc[1] % 180;
-      if (lat < -90) lat += 180;
-      else if (lat > 90) lat -= 180;
+    let lat = loc[1] % 180;
+    if (lat < -90) lat += 180;
+    else if (lat > 90) lat -= 180;
 
-      loc[0] = lng;
-      loc[1] = lat;
-      return loc;
+    loc[0] = lng;
+    loc[1] = lat;
+    return loc;
   }
 
   /*
@@ -151,7 +151,7 @@ export abstract class MapItemHelper<T extends Item> {
     }
 
     // compare new items with existing ones and find items to be added and items to be removed
-    _.each(items, function(item: T) {
+    _.each(items, function (item: T) {
       let id = item.getId();
 
       if (!this.itemMap[id]) {
@@ -190,7 +190,7 @@ export abstract class MapItemHelper<T extends Item> {
     }
     let features = this.createTentativeFeatures(loc);
     if (features) {
-      this.preCreatingItemMap[index] = {features: features};
+      this.preCreatingItemMap[index] = { features: features };
       this.itemLayer.getSource().addFeatures(features);
     }
     return index;
@@ -219,7 +219,7 @@ export abstract class MapItemHelper<T extends Item> {
     let features = this.preCreatingItemMap[id] && this.preCreatingItemMap[id].features;
     if (features) {
       let self = this;
-      _.each(features, function(feature: ol.Feature) {
+      _.each(features, function (feature: ol.Feature) {
         self.itemLayer.getSource().removeFeature(feature);
       });
       return id;
@@ -233,9 +233,9 @@ export abstract class MapItemHelper<T extends Item> {
   monitorTentativeItems(monitoringIds) {
     let promises = [];
     if (!monitoringIds) {
-      monitoringIds = _.map(<any>this.tentativeItemMap, function(value, key) { return key; });
+      monitoringIds = _.map(<any>this.tentativeItemMap, function (value, key) { return key; });
     }
-    _.each(monitoringIds, function(id) {
+    _.each(monitoringIds, function (id) {
       promises.push(new Promise((resolve, reject) => {
         this.getItem(id).subscribe(data => {
           if (data.getId()) {
@@ -251,9 +251,9 @@ export abstract class MapItemHelper<T extends Item> {
       }));
     }.bind(this));
 
-    Promise.all(promises).then(function() {
+    Promise.all(promises).then(function () {
       if (Object.keys(this.tentativeItemMap).length > 0) {
-        setTimeout(function() {
+        setTimeout(function () {
           this.monitorTentativeItems();
         }.bind(this), 1000);
       }
@@ -265,13 +265,13 @@ export abstract class MapItemHelper<T extends Item> {
   */
   addItemsToView(items: T[]) {
     let self = this;
-    _.each(items, function(item) {
+    _.each(items, function (item) {
       let id = item.getId();
       if (self.tentativeItemMap[id]) {
         let features = self.tentativeItemMap[id].features;
         delete self.tentativeItemMap[id];
         if (features) {
-          _.each(features, function(feature: ol.Feature) {
+          _.each(features, function (feature: ol.Feature) {
             self.itemLayer.getSource().removeFeature(feature);
           });
         }
@@ -283,7 +283,7 @@ export abstract class MapItemHelper<T extends Item> {
             self.featureExtension.decorate(item, features);
           }
           self.itemLayer.getSource().addFeatures(features);
-          self.itemMap[id] = {item: item, features: features};
+          self.itemMap[id] = { item: item, features: features };
         }
       }
     });
@@ -294,11 +294,11 @@ export abstract class MapItemHelper<T extends Item> {
   */
   removeItemsFromView(items: T[]) {
     let self = this;
-    _.each(items, function(item) {
+    _.each(items, function (item) {
       let id = item.getId();
       if (self.itemMap[id]) {
         let features = self.itemMap[id].features;
-        _.each(features || [], function(feature: ol.Feature) {
+        _.each(features || [], function (feature: ol.Feature) {
           if (feature)
             self.itemLayer.getSource().removeFeature(feature);
         });
@@ -309,14 +309,14 @@ export abstract class MapItemHelper<T extends Item> {
 
   clearAllItems() {
     let self = this;
-    _.each(<any>this.itemMap, function(value:any, key) {
-        let features = value.features;
-        _.each(features || [], function(feature: ol.Feature) {
-          if (feature)
-            self.itemLayer.getSource().removeFeature(feature);
-        });
-     });
-     this.itemMap = {};
+    _.each(<any>this.itemMap, function (value: any, key) {
+      let features = value.features;
+      _.each(features || [], function (feature: ol.Feature) {
+        if (feature)
+          self.itemLayer.getSource().removeFeature(feature);
+      });
+    });
+    this.itemMap = {};
   }
 
   public abstract createItem(param: any): T;
@@ -332,7 +332,7 @@ export abstract class MapItemHelper<T extends Item> {
   }
 
   public updateAffectedItems(ids: string[]) {
-    _.each(<any>this.itemMap, function(value, key) {
+    _.each(<any>this.itemMap, function (value, key) {
       let item = value.item;
       let feature = value.features[0];
       let affected = _.contains(ids, item.getId());

@@ -1,9 +1,9 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -47,20 +47,20 @@ export class MapPageComponent implements OnInit, AfterViewInit {
   ) {
     this.webApiBaseUrl = window.location.protocol + '//' + appConfig.webApiHost;
     this.locationService = locationService;
-    this.areas = locationService.getAreas().map(x=>x);
-    this.regions = locationService.getRegions().map(x=>x);
+    this.areas = locationService.getAreas().map(x => x);
+    this.regions = locationService.getRegions().map(x => x);
   }
 
-  onMapExtentChanged(event){
+  onMapExtentChanged(event) {
     let extent = event.extent;
     this.locationService.setMapRegionExtent(extent);
     this.mapLastSelectedArea = _.extend({}, this.locationService.getMapRegion()); // fire extent change
   }
 
-  htmlClientInitialLocation(){
+  htmlClientInitialLocation() {
     let mapRegion = this.locationService.getMapRegion();
     let e = mapRegion && mapRegion.extent;
-    if(e){
+    if (e) {
       var lng = (e[0] + e[2]) / 2, lat = (e[1] + e[3]) / 2;
       return '' + lat + ',' + lng;
     }
@@ -70,23 +70,23 @@ export class MapPageComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     this.checkGuidance();
 
-   // get param from router
+    // get param from router
     this.route.params.forEach((params: Params) => {
       let id = params['vehicleId'];
-      if(id) this.initialVehicleId = id;
+      if (id) this.initialVehicleId = id;
     });
 
     // move location
     this.selectedArea = this.areas[this.areas.length - 1];
-    if(this.locationService.getMapRegion()){
-      if(this.locationService.getCurrentAreaRawSync()){
+    if (this.locationService.getMapRegion()) {
+      if (this.locationService.getCurrentAreaRawSync()) {
         this.areas.push(this.locationService.getCurrentAreaRawSync());
       }
       this.areas.push(this.locationService.getMapRegion());
       this.selectedArea = this.areas[this.areas.length - 1];
     } else {
       this.locationService.getCurrentArea().then(area => {
-        if(this.locationService.getCurrentAreaRawSync()){
+        if (this.locationService.getCurrentAreaRawSync()) {
           this.areas.push(this.locationService.getCurrentAreaRawSync());
         }
         this.selectedArea = area;
@@ -96,8 +96,8 @@ export class MapPageComponent implements OnInit, AfterViewInit {
     }
   }
   ngAfterViewInit() {
-     this.initialized = true;
-     if(this.initialVehicleId){
+    this.initialized = true;
+    if (this.initialVehicleId) {
       this.realtimeMap.selectDevice(this.initialVehicleId);
     }
   }
@@ -112,8 +112,8 @@ export class MapPageComponent implements OnInit, AfterViewInit {
       let hide_guide_key = "iota-fleetmanagement-hide-guide";
       if (document.cookie) {
         let cookies = document.cookie.split("; ");
-        found = _.contains(_.map(cookies, function(cookie) {
-		      return cookie.split("=")[0];
+        found = _.contains(_.map(cookies, function (cookie) {
+          return cookie.split("=")[0];
         }), hide_guide_key);
         this.showGuide = !found;
       }
@@ -123,4 +123,4 @@ export class MapPageComponent implements OnInit, AfterViewInit {
     }
   }
 }
- 
+

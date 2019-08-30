@@ -1,9 +1,9 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -154,16 +154,16 @@ _.extend(driverInsightsAlert, {
 						console.error("Error: Reading an alert rule(" + file + ") is failed. " + err);
 					}
 					let alert_rule_type = ALERT_RULE_ID_RANGE_MIN + alert_rule_id_offset;
-					
+
 					data = data.replace(/\{alert_rule_type\}/g, alert_rule_type);
 					let total_alert_rule_id = data.match(/\{alert_rule_id\}/g).length;
 					let i;
-					for(i=0;i < total_alert_rule_id; i++){
-							let alert_rule_id = ALERT_RULE_ID_RANGE_MIN + alert_rule_id_offset++;
-							if (alert_rule_id > ALERT_RULE_ID_RANGE_MAX) {
-									console.error("Alert rule id cannot be assigned.");
-							}
-							data = data.replace(/\{alert_rule_id\}/, alert_rule_id);
+					for (i = 0; i < total_alert_rule_id; i++) {
+						let alert_rule_id = ALERT_RULE_ID_RANGE_MIN + alert_rule_id_offset++;
+						if (alert_rule_id > ALERT_RULE_ID_RANGE_MAX) {
+							console.error("Alert rule id cannot be assigned.");
+						}
+						data = data.replace(/\{alert_rule_id\}/, alert_rule_id);
 					}
 					let rule = { description: ALERT_RULE_DESCRIPTION + alert_rule_type, type: "Action", status: "active" };
 					asset.addRule(rule, data);

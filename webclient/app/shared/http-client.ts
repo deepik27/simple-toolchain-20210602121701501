@@ -1,9 +1,9 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -16,25 +16,25 @@ export class HttpClient {
   }
 
   public get(url: string, options: RequestOptions = undefined) {
-      // to prevent caching issue on IE
-      options = options || new RequestOptions();
-      if (options.headers) {
-        options.headers.append("If-Modified-Since", (new Date(0)).toUTCString());
-      } else {
-        options.headers = new Headers({"If-Modified-Since": (new Date(0)).toUTCString()});
-      }
-      return this.http.get(url, options);
+    // to prevent caching issue on IE
+    options = options || new RequestOptions();
+    if (options.headers) {
+      options.headers.append("If-Modified-Since", (new Date(0)).toUTCString());
+    } else {
+      options.headers = new Headers({ "If-Modified-Since": (new Date(0)).toUTCString() });
+    }
+    return this.http.get(url, options);
   }
 
   public post(url: string, body: any, options: RequestOptions = undefined) {
-      return this.http.post(url, body, options);
+    return this.http.post(url, body, options);
   }
 
   public put(url: string, body: any, options: RequestOptions = undefined) {
-      return this.http.put(url, body, options);
+    return this.http.put(url, body, options);
   }
 
   public delete(url: string, options: RequestOptions = undefined) {
-      return this.http.delete(url, options);
+    return this.http.delete(url, options);
   }
 }

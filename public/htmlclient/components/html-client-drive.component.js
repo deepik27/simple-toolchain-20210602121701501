@@ -3,7 +3,7 @@
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -70,7 +70,7 @@
 					if (traveltime > 3600) {
 						timeText = Math.ceil(traveltime / 3600 * 100) / 100 + " hours";
 					} else if (traveltime > 60) {
-						timeText = Math.ceil(traveltime / 60 * 100) /100  + " minutes";
+						timeText = Math.ceil(traveltime / 60 * 100) / 100 + " minutes";
 					} else {
 						timeText = traveltime + " seconds";
 					}
@@ -136,14 +136,14 @@
 							$scope.currentRouteMode = tripRoute[0].mode;
 						}
 						let selectedRoute = null;
-						tripRoute.forEach(function(route) {
+						tripRoute.forEach(function (route) {
 							if ($scope.currentRouteMode && route.mode === $scope.currentRouteMode) {
 								selectedRoute = route;
 							} else {
 								_plotTripRoute(route.route, tripStyle);
 							}
 							if (route.mode && $scope.routemodes[route.mode]) {
-								$scope.availableRouteModes.push({label: $scope.routemodes[route.mode], value: route.mode});
+								$scope.availableRouteModes.push({ label: $scope.routemodes[route.mode], value: route.mode });
 							} else {
 								showTripDetails(route);
 							}
@@ -188,7 +188,7 @@
 				}
 
 				//////////////////////////////////////////////////////////////////
-				// Start/Stop Driving Handler (In-Frame) 
+				// Start/Stop Driving Handler (In-Frame)
 				//////////////////////////////////////////////////////////////////
 				$scope.drivingButtonLabel = simulatedVehicle.isDriving() ? "Stop Driving" : "Start Driving";
 				// start driving
@@ -196,7 +196,7 @@
 					// show only driving route
 					$scope.routeFixed = true;
 					tripLayer.getSource().clear();
-					tripRouteCache && tripRouteCache.forEach(function(route) {
+					tripRouteCache && tripRouteCache.forEach(function (route) {
 						if (route.mode == $scope.currentRouteMode) {
 							_plotTripRoute(route.route, drivingTripStyle);
 						}
@@ -265,7 +265,7 @@
 				//////////////////////////////////////////////////////////////////
 				// rules
 				// should be synced with rules defined in /driverinsights/fleetalert.js
-				const _upateVehicleProperties = function() {
+				const _upateVehicleProperties = function () {
 					if ($scope.vehicleDataName) {
 						let value = $scope.vehicleDataValue;
 						if (value) {
@@ -278,7 +278,7 @@
 						}
 					}
 				};
-				const _updateVehicleAcceleration = function() {
+				const _updateVehicleAcceleration = function () {
 					console.log("accel changed");
 					if ($scope.vehicleDataName) {
 						let value = $scope.vehicleDataValue;
@@ -294,9 +294,9 @@
 					}
 				};
 				$scope.rules = [
-					{ propName: "engineTemp", label: "Engine Temperature (Critical if larger than 248)", method: _upateVehicleProperties},
-					{ propName: "fuel", label: "Fuel", method: _upateVehicleProperties},
-					{ propName: "accel", label: "Acceleration [m/s^2] (1 m/s^2 = 2.2 mph/s) (Alert if larger than 4 m/s^2)", method: _updateVehicleAcceleration}
+					{ propName: "engineTemp", label: "Engine Temperature (Critical if larger than 248)", method: _upateVehicleProperties },
+					{ propName: "fuel", label: "Fuel", method: _upateVehicleProperties },
+					{ propName: "accel", label: "Acceleration [m/s^2] (1 m/s^2 = 2.2 mph/s) (Alert if larger than 4 m/s^2)", method: _updateVehicleAcceleration }
 				];
 
 				// vehicle data control panel
@@ -315,7 +315,7 @@
 				$scope.updateVehicleDataValue = function () {
 					for (let i = 0; i < $scope.rules.length; i++) {
 						if ($scope.rules[i].propName === $scope.vehicleDataName) {
-							if ( _.isFunction($scope.rules[i].method)) {
+							if (_.isFunction($scope.rules[i].method)) {
 								$scope.rules[i].method();
 							}
 						}
@@ -325,7 +325,7 @@
 				//////////////////////////////////////////////////////////////////
 				// Route Planner
 				//////////////////////////////////////////////////////////////////
-				$scope.routemodes = {time: "Shortest time", distance: "Shortest distance", pattern: "Trajectory pattern", unknown: "Unknown"};
+				$scope.routemodes = { time: "Shortest time", distance: "Shortest distance", pattern: "Trajectory pattern", unknown: "Unknown" };
 				$scope.availableRouteModes = [];
 				$scope.routeFixed = false;
 				$scope.currentRouteMode = "time";
@@ -340,7 +340,7 @@
 				$scope.opt_route_loop = simulatedVehicle.getOption("route_loop");
 				$scope.assignedPOIs = [];
 
-				$scope.onChangeMouseMode = function(mode) {
+				$scope.onChangeMouseMode = function (mode) {
 					if ($scope.mouseStartPositionMode && $scope.mouseDestinationMode) {
 						if (mode == "start")
 							$scope.mouseDestinationMode = false;
@@ -353,14 +353,14 @@
 					$scope.requestSending = true;
 					$scope.routeSearching = true;
 					postStatusMessage();
-					method().then(function(result) {
+					method().then(function (result) {
 						if (_.isFunction(callback)) {
 							callback(data);
 						}
 						$scope.requestSending = false;
 						$scope.routeSearching = false;
 						postStatusMessage();
-				}, function(error) {
+					}, function (error) {
 						$scope.requestSending = false;
 						$scope.routeSearching = false;
 						postStatusMessage();
@@ -368,7 +368,7 @@
 				}
 
 				function _setWaypoints(pois) {
-					let waypoints = pois.map(function(poi) { return {latitude: poi.latitude, longitude: poi.longitude, poi_id: poi.id};});
+					let waypoints = pois.map(function (poi) { return { latitude: poi.latitude, longitude: poi.longitude, poi_id: poi.id }; });
 					_requestNewRoute(() => simulatedVehicle.setWaypoints(waypoints));
 				}
 
@@ -396,7 +396,7 @@
 				$scope.onChangeRouteMode = function () {
 					tripLayer.getSource().clear();
 					let selectedRoute = null;
-					tripRouteCache && tripRouteCache.forEach(function(route) {
+					tripRouteCache && tripRouteCache.forEach(function (route) {
 						if ($scope.currentRouteMode && route.mode === $scope.currentRouteMode) {
 							selectedRoute = route;
 						} else {
@@ -413,20 +413,20 @@
 				}
 
 				// POI table handler
-				$scope.onLoadPOI = function() {
+				$scope.onLoadPOI = function () {
 					$scope.assignedPOIs = [];
 					poiHelper.searchArea = null;
 					poiLayer.getSource().clear();
 					poiHelper.poiMap = {};
 					poiHelper.updatePOIs();
 				};
-				$scope.onMoveUpPOI = function() {
-					if (!$scope.assignedPOIs || $scope.assignedPOIs.length == 0 || 
+				$scope.onMoveUpPOI = function () {
+					if (!$scope.assignedPOIs || $scope.assignedPOIs.length == 0 ||
 						!$scope.selectedPOIID || $scope.assignedPOIs[0].id == $scope.selectedPOIID) {
 						return;
 					}
 					let pois = [];
-					$scope.assignedPOIs.forEach(function(poi) {
+					$scope.assignedPOIs.forEach(function (poi) {
 						if ($scope.selectedPOIID === poi.id) {
 							let lastPoi = pois.pop();
 							pois.push(poi);
@@ -438,14 +438,14 @@
 					$scope.assignedPOIs = pois;
 					_setWaypoints(pois);
 				};
-				$scope.onMoveDownPOI = function() {
-					if (!$scope.assignedPOIs || $scope.assignedPOIs.length == 0 || 
-						!$scope.selectedPOIID || $scope.assignedPOIs[$scope.assignedPOIs.length-1].id == $scope.selectedPOIID) {
+				$scope.onMoveDownPOI = function () {
+					if (!$scope.assignedPOIs || $scope.assignedPOIs.length == 0 ||
+						!$scope.selectedPOIID || $scope.assignedPOIs[$scope.assignedPOIs.length - 1].id == $scope.selectedPOIID) {
 						return;
 					}
 					let pois = [];
 					let targetPOI = null;
-					$scope.assignedPOIs.forEach(function(poi) {
+					$scope.assignedPOIs.forEach(function (poi) {
 						if ($scope.selectedPOIID === poi.id) {
 							targetPOI = poi;
 						} else if (targetPOI) {
@@ -459,7 +459,7 @@
 					$scope.assignedPOIs = pois;
 					_setWaypoints(pois);
 				};
-				$scope.onPOISelected = function(index) {
+				$scope.onPOISelected = function (index) {
 					if ($scope.selectedPOIID) {
 						let poi = null;
 						for (let i = 0; i < $scope.assignedPOIs.length; i++) {
@@ -474,7 +474,7 @@
 						var ext = map.getView().calculateExtent(size);
 						var extent = ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326');
 						if (extent[0] <= poi.longitude && poi.longitude < extent[2] &&
-								extent[1] <= poi.latitude && poi.latitude < extent[3]) {
+							extent[1] <= poi.latitude && poi.latitude < extent[3]) {
 							return;
 						}
 						map.getView().setCenter(ol.proj.transform([poi.longitude, poi.latitude], 'EPSG:4326', 'EPSG:3857'));
@@ -523,19 +523,19 @@
 					$scope.traceCurrentLocation = false;
 
 					let tripRouteExtent = tripLayer.getSource().getExtent();
-					if(tripRouteExtent){
+					if (tripRouteExtent) {
 						let extent = ol.proj.transformExtent(tripRouteExtent, 'EPSG:3857', 'EPSG:4326');
-						mapHelper.moveMap({extent: extent});
+						mapHelper.moveMap({ extent: extent });
 					}
 				};
- 
+
 				// Event handlers
 				function onMouseDown(e) {
 					console.log("mouse down");
 					let feature = e.map.forEachFeatureAtPixel(e.pixel,
-							function(feature, layer) {
-								return feature;
-							});
+						function (feature, layer) {
+							return feature;
+						});
 
 					if (feature && feature.get("type") == "poi") {
 						let poi = feature.get("item");;
@@ -607,7 +607,7 @@
 					destFeature.getGeometry().setCoordinates(location);
 				}
 
-				// Start handling move event 
+				// Start handling move event
 				function enableMoveListener() {
 					map.on('pointerdrag', function () {
 						// if map is moved by user, disable traceCurrentLocation flag so as not to show car location automatically
@@ -669,7 +669,7 @@
 					};
 					ol.inherits(interaction, ol.interaction.Pointer);
 
-					
+
 					// Setup current car position
 					carFeature = new ol.Feature({ geometry: new ol.geom.Point(centerPosition) });
 					var carStyle = new ol.style.Style({
@@ -767,7 +767,7 @@
 
 					eventHelper = new EventHelper(map, eventLayer, $q, eventService);
 					geofenceHelper = new GeofenceHelper(map, geofenceLayer, $q, geofenceService);
-					poiHelper = new POIHelper(map, poiLayer, $q, poiService, {mo_id: simulatedVehicle.getMoId()});
+					poiHelper = new POIHelper(map, poiLayer, $q, poiService, { mo_id: simulatedVehicle.getMoId() });
 
 					enableMoveListener();
 
@@ -876,9 +876,9 @@
 						return null;
 					};
 
-					poiHelper.addPOIChangedListener(function(pois) {
-						$scope.assignedPOIs = pois.sort((p1, p2) => { 
-							return p1.id.localeCompare(p2.id); 
+					poiHelper.addPOIChangedListener(function (pois) {
+						$scope.assignedPOIs = pois.sort((p1, p2) => {
+							return p1.id.localeCompare(p2.id);
 						});
 						_setWaypoints(pois);
 

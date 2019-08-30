@@ -1,9 +1,9 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -42,7 +42,7 @@ export class CarStatusComponent implements OnInit {
     private carStatusDataService: CarStatusDataService,
     private realtimeDataProviderService: RealtimeDeviceDataProviderService,
     private driverBehaviorService: DriverBehaviorService
-  ){
+  ) {
   }
 
   ngOnInit() {
@@ -53,70 +53,70 @@ export class CarStatusComponent implements OnInit {
       }
     });
     this.proveDataSubscription = this.moIdSubject.switchMap(mo_id => {
-        // Start watching car probe of the vehicle. This method will monitor the car probe of the vehicle from whole world. 
-        // It may result slow performance of querying car probe as the searching area is too large.
-        this.realtimeDataProviderService.startTracking(mo_id);
-        return mo_id ? this.carStatusDataService.getProbe(mo_id) : Observable.of([]);
-      }).subscribe(probe => {
-        // update data
-        this.device = probe && this.realtimeDataProviderService.getProvider().getDevice(probe.mo_id);
-        this.probeData = probe;
+      // Start watching car probe of the vehicle. This method will monitor the car probe of the vehicle from whole world.
+      // It may result slow performance of querying car probe as the searching area is too large.
+      this.realtimeDataProviderService.startTracking(mo_id);
+      return mo_id ? this.carStatusDataService.getProbe(mo_id) : Observable.of([]);
+    }).subscribe(probe => {
+      // update data
+      this.device = probe && this.realtimeDataProviderService.getProvider().getDevice(probe.mo_id);
+      this.probeData = probe;
 
-        // update overlay
-        var cardOverlay = document.getElementById('cardOverlay');
-        if (cardOverlay) {
-          if (probe == null && cardOverlay.style.opacity != '1') {
-              cardOverlay.style.opacity = '1';
-              cardOverlay.style.display = 'block';
-          } else if (probe != null && cardOverlay.style.opacity != '0') {
-              cardOverlay.style.opacity = '0';
-              cardOverlay.style.display = 'none';
-          }
+      // update overlay
+      var cardOverlay = document.getElementById('cardOverlay');
+      if (cardOverlay) {
+        if (probe == null && cardOverlay.style.opacity != '1') {
+          cardOverlay.style.opacity = '1';
+          cardOverlay.style.display = 'block';
+        } else if (probe != null && cardOverlay.style.opacity != '0') {
+          cardOverlay.style.opacity = '0';
+          cardOverlay.style.display = 'none';
         }
-      });
+      }
+    });
 
     var mo_id: any;
     this.route.params.forEach((params: Params) => {
-        mo_id = mo_id || params['mo_id'];
-     });
+      mo_id = mo_id || params['mo_id'];
+    });
     this.mo_id = <string>mo_id;
     this.moIdSubject.next(mo_id);
 
     var modalCallsArray = Array.prototype.slice.call(document.querySelectorAll('.numCounter'), 0);
 
-    modalCallsArray.forEach(function(el) {
-            console.log(el.innerHTML);
+    modalCallsArray.forEach(function (el) {
+      console.log(el.innerHTML);
 
-            var number = parseInt(el.innerHTML);
-            var delay = number;
+      var number = parseInt(el.innerHTML);
+      var delay = number;
 
-            // 1500 is animation duration in milliseconds (1.5s)
-            var delayAccum = 1500 / el.innerHTML;
-            var accum = 1;
+      // 1500 is animation duration in milliseconds (1.5s)
+      var delayAccum = 1500 / el.innerHTML;
+      var accum = 1;
 
-            for (var i=0; i < number; ++i) {
-                    doSetTimeout(delay, el, accum);
+      for (var i = 0; i < number; ++i) {
+        doSetTimeout(delay, el, accum);
 
-                    accum += 1;
-                    delay = delay + delayAccum;
-            }
+        accum += 1;
+        delay = delay + delayAccum;
+      }
     });
 
     function doSetTimeout(delay, el, accum) {
-      setTimeout(function() {
-          el.innerHTML = accum;
+      setTimeout(function () {
+        el.innerHTML = accum;
       }, delay);
     }
   }
 
-  ngOnDestroy(){
-    if(this.proveDataSubscription){
+  ngOnDestroy() {
+    if (this.proveDataSubscription) {
       this.proveDataSubscription.unsubscribe();
       this.proveDataSubscription = null;
     }
   }
 
-  setRealtimeMode(mode:boolean) {
+  setRealtimeMode(mode: boolean) {
     this.realtimeMode = mode;
   }
 }

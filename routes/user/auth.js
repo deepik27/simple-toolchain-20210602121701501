@@ -1,9 +1,9 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -43,25 +43,15 @@ var authenticate = function (req, res, next) {
 	}
 };
 
-var eula = function (req, res, next) {
-	if (req.cookies.eulaStatus === 'Accepted')
-		return next();
-	if (!req.accepts('html') || req.xhr)
-		return next();
-	fs.readFile(path.join(__dirname, '../../LICENSE'), 'ascii', function (err, license) {
-		if (err) return res.status(500).send(err);
-		license = '<p>' + _.escape('' + license).split('\n').join('</p>\n<p>') + '</p>';
-		res.render('eula', { license: license });
-	});
-}
-
 /**
  * Get the QR Code image for mobile app to connect to platform
  * Generated QR Code contains plain username and password of this starter server application
  * because this api is for demo purpose for convenience to switch application servers by mobile application
  */
 router.get('/qr/getPlatformCredentials', /*authenticate,*/ function (req, res) {
-	const route = appEnv.url;
+	// const route = appEnv.url;
+	const route = "http://169.54.229.7:17427";
+	// const route = "http://localhost:6001";
 
 	const user = APP_USER == "none" ? "" : APP_USER;
 	const pass = APP_PASSWORD == "none" ? "" : APP_PASSWORD;
@@ -73,5 +63,3 @@ router.get('/qr/getPlatformCredentials', /*authenticate,*/ function (req, res) {
 });
 
 module.exports.authenticate = authenticate; // export the authentication router
-module.exports.eula = eula; // export the eula middleware
-

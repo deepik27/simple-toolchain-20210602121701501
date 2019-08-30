@@ -3,7 +3,7 @@
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -27,7 +27,7 @@ const VEHICLE_STATE_DRIVE = 'driving';
 
 /**
  * Constructor
- * 
+ *
  * @param vehicle vehicle object for this simulated vehicle
  * @param driver driver assigned to this vehicle
  * @param callback callback method to get information (e.g. probe, route) from this simulated vehicle
@@ -38,7 +38,7 @@ function simulatedVehicle(vehicle, driver) {
 	this._waitingForRoute = [];
 
 	let mo_id = vehicle.mo_id;
-	if(vehicle.siteid){
+	if (vehicle.siteid) {
 		mo_id = vehicle.siteid + ":" + mo_id;
 	}
 	let driver_id = driver ? driver.driver_id : null;
@@ -49,40 +49,40 @@ function simulatedVehicle(vehicle, driver) {
 	this.setupCallback();
 }
 
-simulatedVehicle.prototype.listen = function() {
+simulatedVehicle.prototype.listen = function () {
 	return this.eventEmitter;
 };
 /**
  * Start running
  */
-simulatedVehicle.prototype.start = function(parameters) {
+simulatedVehicle.prototype.start = function (parameters) {
 	if (this.route.driving) {
 		if (parameters.succesWhenAlready) {
-			return Q({tripId: this.trip_id, state: this._getState()});
+			return Q({ tripId: this.trip_id, state: this._getState() });
 		}
 		console.warn("vehicle is already running. mo_id=" + this.vehicle.mo_id);
 		return this.trip_id;
 	}
-	this.trip_id = new Chance().hash({length: 20});
+	this.trip_id = new Chance().hash({ length: 20 });
 	this.route.start(parameters);
 	console.log("vehicle is started. mo_id=" + this.vehicle.mo_id);
-	return Q({tripId: this.trip_id, state: this._getState()});
+	return Q({ tripId: this.trip_id, state: this._getState() });
 };
 
 /**
  * Check if the vehicle is running or not
  */
-simulatedVehicle.prototype.isRunning = function() {
+simulatedVehicle.prototype.isRunning = function () {
 	return this.route.driving;
 };
 
 /**
  * Stop running
  */
-simulatedVehicle.prototype.stop = function(parameters) {
+simulatedVehicle.prototype.stop = function (parameters) {
 	if (!this.route.driving) {
 		if (parameters.succesWhenAlready) {
-			return Q({tripId: this.trip_id, state: this._getState()});
+			return Q({ tripId: this.trip_id, state: this._getState() });
 		}
 		return Q.reject("vehicle is not running. mo_id=" + this.vehicle.mo_id);
 	}
@@ -90,16 +90,16 @@ simulatedVehicle.prototype.stop = function(parameters) {
 	this.route.stop();
 	delete this.trip_id;
 	console.log("vehicle is stopped. mo_id=" + this.vehicle.mo_id);
-	return Q({tripId: trip_id, state: this._getState()});
+	return Q({ tripId: trip_id, state: this._getState() });
 };
 
 /**
  * Set up callback to give information to client
  */
-simulatedVehicle.prototype.setupCallback = function() {
+simulatedVehicle.prototype.setupCallback = function () {
 	let vehicleId = this.vehicle.mo_id;
 	let mo_id = this.vehicle.mo_id;
-	if(this.vehicle.siteid){
+	if (this.vehicle.siteid) {
 		mo_id = this.vehicle.siteid + ":" + mo_id;
 	}
 	let driver_id = this.driver ? this.driver.driver_id : null;
@@ -107,17 +107,17 @@ simulatedVehicle.prototype.setupCallback = function() {
 	this.route.listen().on('position', (data, error) => {
 		let ts = Date.now();
 		let probe = {
-				ts: ts,
-				timestamp: moment(ts).format('YYYY-MM-DDTHH:mm:ss.SSSZ'), // ISO8601
-				trip_id: this.trip_id,
-				speed: data.speed || 0,
-				mo_id: mo_id,
-				driver_id: driver_id,
-				longitude: data.longitude,
-				latitude: data.latitude,
-				heading: data.heading || 0
+			ts: ts,
+			timestamp: moment(ts).format('YYYY-MM-DDTHH:mm:ss.SSSZ'), // ISO8601
+			trip_id: this.trip_id,
+			speed: data.speed || 0,
+			mo_id: mo_id,
+			driver_id: driver_id,
+			longitude: data.longitude,
+			latitude: data.latitude,
+			heading: data.heading || 0
 		};
-		if(this.prevProps) {
+		if (this.prevProps) {
 			let props = _.clone(this.prevProps);
 			_.each(props, (value, key) => {
 				if (this.fixedProps[key] === undefined) {
@@ -136,7 +136,7 @@ simulatedVehicle.prototype.setupCallback = function() {
 	this.route.listen().on('route', (data, error) => {
 		let list = this._waitingForRoute;
 		this._waitingForRoute = [];
-		
+
 		_.each(list, (obj) => {
 			obj.func.call(this, data.route, error, obj.param);
 		});
@@ -151,7 +151,7 @@ simulatedVehicle.prototype.setupCallback = function() {
 /**
  * Load property handlers of this vehicle from props folder. One java script file corresponds to one property.
  */
-simulatedVehicle.prototype.loadProperties = function() {
+simulatedVehicle.prototype.loadProperties = function () {
 	this.fixedProps = {};
 	this.prevProps = {};
 	this.propProviders = {};
@@ -159,25 +159,25 @@ simulatedVehicle.prototype.loadProperties = function() {
 	// load properties
 	let folder = __dirname + '/props';
 	fs.readdir(folder, (err, files) => {
-	    if (err) {
-	    	return;
-	    }
-	    _.each(_.filter(files, (file) => {
-	    	let filepath = folder + '/' + file;
-	    	if (fs.statSync(filepath).isFile() && /.*\.js$/.test(file)) {
-	    		let prop = require(filepath);
-	    		let p = new prop();
-	    		let name = _.isFunction(p.getName) ? p.getName() : file.substring(0, file.lastIndexOf('.js'));
-	    		this.propProviders[name] = p;
-	    		this.prevProps[name] = p.getValue();
-	    	}
-	    }));
+		if (err) {
+			return;
+		}
+		_.each(_.filter(files, (file) => {
+			let filepath = folder + '/' + file;
+			if (fs.statSync(filepath).isFile() && /.*\.js$/.test(file)) {
+				let prop = require(filepath);
+				let p = new prop();
+				let name = _.isFunction(p.getName) ? p.getName() : file.substring(0, file.lastIndexOf('.js'));
+				this.propProviders[name] = p;
+				this.prevProps[name] = p.getValue();
+			}
+		}));
 	});
 };
 
 /**
  * Get information on this vehicle. The properties are one or more of the following values:
- * 
+ *
  * vehicleId: vehicle id
  * vehicle: vehicle object to contains details
  * position: current vehicle position (longitude, latitude, heading, speed)
@@ -185,7 +185,7 @@ simulatedVehicle.prototype.loadProperties = function() {
  * state: state of this vehicle
  * properties: properties to be added to car probe
  */
-simulatedVehicle.prototype.getVehicleInformation = function(properties) {
+simulatedVehicle.prototype.getVehicleInformation = function (properties) {
 	let info = {};
 	if (!properties || properties.length === 0 || _.contains(properties, "vehicleId")) {
 		info.vehicleId = this.vehicle.mo_id;
@@ -242,23 +242,25 @@ simulatedVehicle.prototype.getVehicleInformation = function(properties) {
 /**
  * Update route according to route search options
  */
-simulatedVehicle.prototype.updateRoute = function(keepAnchors) {
+simulatedVehicle.prototype.updateRoute = function (keepAnchors) {
 	return this.route._resetRoute(keepAnchors);
 };
 
 /**
  * Update route according to route search options
  */
-simulatedVehicle.prototype.getRouteData = function() {
+simulatedVehicle.prototype.getRouteData = function () {
 	let deferred = Q.defer();
 	if (this._getState() === VEHICLE_STATE_SEARCH) {
 		// Return later if route being searched
-		this._waitingForRoute.push({param: deferred, func: (data, error, deferred) => {
-			if (error)
-				deferred.reject(error);
-			else
-				deferred.resolve(data);
-		}});
+		this._waitingForRoute.push({
+			param: deferred, func: (data, error, deferred) => {
+				if (error)
+					deferred.reject(error);
+				else
+					deferred.resolve(data);
+			}
+		});
 	} else {
 		deferred.resolve(this.route.allRoutes);
 	}
@@ -268,21 +270,21 @@ simulatedVehicle.prototype.getRouteData = function() {
 /**
  * Set current vehicle position
  */
-simulatedVehicle.prototype.setCurrentPosition = function(longitude, latitude, heading, donotResetRoute) {
-	return this.route.setCurrentPosition({latitude: latitude, longitude: longitude, heading: heading}, donotResetRoute);
+simulatedVehicle.prototype.setCurrentPosition = function (longitude, latitude, heading, donotResetRoute) {
+	return this.route.setCurrentPosition({ latitude: latitude, longitude: longitude, heading: heading }, donotResetRoute);
 };
-	
+
 /**
  * Set destination of this vehicle
  */
-simulatedVehicle.prototype.setDestination = function(longitude, latitude, heading, donotResetRoute) {
-	return this.route.setDestination({latitude: latitude, longitude: longitude, heading: heading}, donotResetRoute);
+simulatedVehicle.prototype.setDestination = function (longitude, latitude, heading, donotResetRoute) {
+	return this.route.setDestination({ latitude: latitude, longitude: longitude, heading: heading }, donotResetRoute);
 };
-	
+
 /**
  * Set options for route search (e.g. avoid_events, route_loop)
  */
-simulatedVehicle.prototype.setRouteOptions = function(options, donotResetRoute) {
+simulatedVehicle.prototype.setRouteOptions = function (options, donotResetRoute) {
 	_.each(options, (value, key) => {
 		this.route.setOption(key, value);
 	});
@@ -292,15 +294,15 @@ simulatedVehicle.prototype.setRouteOptions = function(options, donotResetRoute) 
 /**
  * Get options for route search
  */
-simulatedVehicle.prototype.getetRouteOptions = function() {
+simulatedVehicle.prototype.getetRouteOptions = function () {
 	return this.route.options;
 };
 
 /**
- * Set property values to be added to probes. Values specified here are set to subsequent probes of 
+ * Set property values to be added to probes. Values specified here are set to subsequent probes of
  * this vehicle as fixed values.
  */
-simulatedVehicle.prototype.setProperties = function(properties) {
+simulatedVehicle.prototype.setProperties = function (properties) {
 	_.each(properties, (value, key) => {
 		if (value === undefined) {
 			delete this.fixedProps[key];
@@ -314,10 +316,10 @@ simulatedVehicle.prototype.setProperties = function(properties) {
 };
 
 /**
- * Unset property values to be added to probes. If properties values are unset, 
+ * Unset property values to be added to probes. If properties values are unset,
  * these values are calculated automaticaly by corresponding prop simulators
  */
-simulatedVehicle.prototype.unsetProperties = function(properties) {
+simulatedVehicle.prototype.unsetProperties = function (properties) {
 	_.each(properties, (key) => {
 		delete this.fixedProps[key];
 	});
@@ -333,7 +335,7 @@ simulatedVehicle.prototype.setWaypoints = function (waypoints) {
 /**
  * Set acceleration
  */
-simulatedVehicle.prototype.setAcceleration = function(acceleration) {
+simulatedVehicle.prototype.setAcceleration = function (acceleration) {
 	this.route.setAcceleration(acceleration);
 };
 
@@ -341,7 +343,7 @@ simulatedVehicle.prototype.setAcceleration = function(acceleration) {
 /**
  * Get current vehicle state
  */
-simulatedVehicle.prototype._getState = function() {
+simulatedVehicle.prototype._getState = function () {
 	if (this.route.driving) {
 		return VEHICLE_STATE_DRIVE;
 	} else if (this.route.routing) {

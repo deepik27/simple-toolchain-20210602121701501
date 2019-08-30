@@ -3,7 +3,7 @@
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -35,9 +35,9 @@ declare var $; // jQuery from <script> tag in the index.html
  *   <script src="https://cdnjs.cloudflare.com/ajax/libs/rxjs-dom/7.0.3/rx.dom.js"></script>
  */
 
-	/**
-	 * The default zoom value when the map `region` is set by `center`
-	 */
+/**
+ * The default zoom value when the map `region` is set by `center`
+ */
 let DEFAULT_ZOOM = 15;
 
 
@@ -51,7 +51,7 @@ export class ItemMapComponent implements OnInit {
   @Input() region: any;
   @Output() extentChanged = new EventEmitter<any>();
   @ViewChild(ItemToolComponent) itemTool: ItemToolComponent;
-	// Mapping
+  // Mapping
   map: ol.Map;
   handleStyle: ol.style.Style;
   mapEventsLayer: ol.layer.Vector;
@@ -92,7 +92,7 @@ export class ItemMapComponent implements OnInit {
     };
     (<any>ol).inherits(interaction, ol.interaction.Pointer);
 
-		// create layyers
+    // create layyers
     this.mapEventsLayer = new ol.layer.Vector({
       source: new ol.source.Vector(),
       renderOrder: undefined
@@ -108,7 +108,7 @@ export class ItemMapComponent implements OnInit {
 
     // create a map
     let mouseInteration = new interaction();
-    this.map =  new ol.Map({
+    this.map = new ol.Map({
       interactions: ol.interaction.defaults(undefined).extend([mouseInteration]),
       target: document.getElementById(this.mapElementId),
       layers: [
@@ -126,14 +126,14 @@ export class ItemMapComponent implements OnInit {
       }),
     });
 
-    this.map.on("click", function(e) {
+    this.map.on("click", function (e) {
       let coordinate = this.mapHelper.normalizeLocation(ol.proj.toLonLat(e.coordinate, undefined));
-      let loc = {longitude: coordinate[0], latitude: coordinate[1]};
+      let loc = { longitude: coordinate[0], latitude: coordinate[1] };
       this.commandExecutor.locationClicked(loc);
     }.bind(this));
 
     // add helpers
-    this.mapHelper = new MapHelper(this.map, function(coordinate, feature, layer) {
+    this.mapHelper = new MapHelper(this.map, function (coordinate, feature, layer) {
       let item = feature.get("item");
       if (item) {
         let helper = this.mapItemHelpers[item.getItemType()];
@@ -144,13 +144,13 @@ export class ItemMapComponent implements OnInit {
       return true;
     }.bind(this));
     this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
-    this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, {itemLabel: "Boundary", editable: true});
+    this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, { itemLabel: "Boundary", editable: true });
     this.mapItemHelpers["poi"] = new MapPOIHelper(this.map, this.mapPOILayer, this.poiService);
 
-		// setup view change event handler
+    // setup view change event handler
     this.mapHelper.postChangeViewHandlers.push(extent => {
-			// fire event
-      this.extentChanged.emit({extent: extent});
+      // fire event
+      this.extentChanged.emit({ extent: extent });
     });
   }
 
@@ -162,65 +162,65 @@ export class ItemMapComponent implements OnInit {
       pin: true,
       updateInterval: 1000,
     },
-    function showPopOver(elem, feature, pinned, closeCallback) {
-      if (!feature) return;
-      let content = <any>getPopOverContent(feature);
-      if (content) {
-        let title = '<div>' + (content.title ? _.escape(content.title) : '') + '</div>';
-        let item = feature.get("item");
-        if (pinned) {
-          if (executor && item && content.removeable) {
-            title += "<span class='btn btn-default icon-delete remove' style='margin-right:4px'></span>";
+      function showPopOver(elem, feature, pinned, closeCallback) {
+        if (!feature) return;
+        let content = <any>getPopOverContent(feature);
+        if (content) {
+          let title = '<div>' + (content.title ? _.escape(content.title) : '') + '</div>';
+          let item = feature.get("item");
+          if (pinned) {
+            if (executor && item && content.removeable) {
+              title += "<span class='btn btn-default icon-delete remove' style='margin-right:4px'></span>";
+            }
+            title += '<div><span class="btn btn-default close">&times;</span></div>';
           }
-          title += '<div><span class="btn btn-default close">&times;</span></div>';
-        }
-        let pop = $(elem).popover({
-          html: true,
-          title: title,
-          content: content.content
-        });
-        if (pinned) {
-          pop.on('shown.bs.popover', function(){
-            let c = $(elem).parent().find('.popover .close');
-            c && c.on('click', function(){
-              closeCallback && closeCallback();
-            });
-            let r = $(elem).parent().find('.popover .remove');
-            r && r.on('click', function(e) {
-              let helper = helpers[item.getItemType()];
-              if (helper) {
-                helper.removeItemsFromView([item]);
-              }
-              executor && executor.deleteItem(item);
-              closeCallback && closeCallback();
-            });
+          let pop = $(elem).popover({
+            html: true,
+            title: title,
+            content: content.content
           });
-        }
-        $(elem).popover('show');
-      }
-    },
-    function destroyPopOver(elem, feature, pinned) {
-      if (!feature) return;
-      $(elem).popover('destroy');
-    },
-    function updatePopOver(elem, feature, pinned) {
-      if (!feature) return;
-      let content = getPopOverContent(feature);
-      if (content) {
-        let popover = $(elem).data('bs.popover');
-        if (popover.options.content !== content.content) {
-          popover.options.content = content.content;
+          if (pinned) {
+            pop.on('shown.bs.popover', function () {
+              let c = $(elem).parent().find('.popover .close');
+              c && c.on('click', function () {
+                closeCallback && closeCallback();
+              });
+              let r = $(elem).parent().find('.popover .remove');
+              r && r.on('click', function (e) {
+                let helper = helpers[item.getItemType()];
+                if (helper) {
+                  helper.removeItemsFromView([item]);
+                }
+                executor && executor.deleteItem(item);
+                closeCallback && closeCallback();
+              });
+            });
+          }
           $(elem).popover('show');
         }
-      }
-    });
+      },
+      function destroyPopOver(elem, feature, pinned) {
+        if (!feature) return;
+        $(elem).popover('destroy');
+      },
+      function updatePopOver(elem, feature, pinned) {
+        if (!feature) return;
+        let content = getPopOverContent(feature);
+        if (content) {
+          let popover = $(elem).data('bs.popover');
+          if (popover.options.content !== content.content) {
+            popover.options.content = content.content;
+            $(elem).popover('show');
+          }
+        }
+      });
 
-  	// popover - generate popover content from ol.Feature
+    // popover - generate popover content from ol.Feature
     let getPopOverContent = (feature) => {
       let hoverContent = null;
       let content = <string>feature.get('popoverContent');
       if (content) {
-        hoverContent = {content: '<span style="white-space: nowrap;">' + _.escape(content) + '</span>' };
+        hoverContent = { content: '<span style="white-space: nowrap;">' + _.escape(content) + '</span>' };
       } else {
         let item = feature.get("item");
         if (item) {
@@ -230,12 +230,12 @@ export class ItemMapComponent implements OnInit {
             if (props && props.length > 0) {
               let title = helper.getItemLabel() + " (" + item.getId() + ")";
               let details: string = "<table><tbody>";
-              props.forEach(function(prop) {
+              props.forEach(function (prop) {
                 details += "<tr><th style='white-space: nowrap;text-align:right;'><span style='margin-right:10px;'>" + _.escape(prop.key.toUpperCase()) +
-                                    ":</span></th><td>" + _.escape(prop.value) + "</td></tr>";
+                  ":</span></th><td>" + _.escape(prop.value) + "</td></tr>";
               });
               details += "</tbody><table>";
-              hoverContent = {title: title, content: details, removeable: true};
+              hoverContent = { title: title, content: details, removeable: true };
             }
           }
         }
@@ -253,7 +253,7 @@ export class ItemMapComponent implements OnInit {
     this.updateTool();
   }
 
-  ngOnChanges(changes: {[propertyName: string]: SimpleChange}) {
+  ngOnChanges(changes: { [propertyName: string]: SimpleChange }) {
     if ("region" in changes) {
       let region = changes["region"].currentValue;
       console.log("MoveMap", region);
@@ -277,7 +277,7 @@ export class ItemMapComponent implements OnInit {
       return;
     }
 
-    let extent:number[] = ol.proj.transformExtent(this.map.getView().calculateExtent(size), "EPSG:3857", "EPSG:4326");
+    let extent: number[] = ol.proj.transformExtent(this.map.getView().calculateExtent(size), "EPSG:3857", "EPSG:4326");
     extent = this.mapHelper.normalizeExtent(extent);
     return {
       min_longitude: extent[0],
@@ -290,22 +290,22 @@ export class ItemMapComponent implements OnInit {
   updateMapItems(type: string, added: any[], removed: any[]) {
     let helper = this.mapItemHelpers[type];
     if (helper) {
-        let updated = false;
-        if (added && added.length > 0) {
-          helper.addItemsToView(added.map(function(item) {
-            return helper.createItem(item);
-          }));
-          updated = true;
-        }
-        if (removed && removed.length > 0) {
-          helper.removeItemsToView(added.map(function(item) {
-            return helper.createItem(item);
-          }));
-          updated = true;
-        }
-        if (!updated) {
-          helper.viewChanged();
-        }
+      let updated = false;
+      if (added && added.length > 0) {
+        helper.addItemsToView(added.map(function (item) {
+          return helper.createItem(item);
+        }));
+        updated = true;
+      }
+      if (removed && removed.length > 0) {
+        helper.removeItemsToView(added.map(function (item) {
+          return helper.createItem(item);
+        }));
+        updated = true;
+      }
+      if (!updated) {
+        helper.viewChanged();
+      }
     }
   }
 
@@ -316,9 +316,9 @@ export class ItemMapComponent implements OnInit {
       return false;
     }
     let feature = e.map.forEachFeatureAtPixel(e.pixel,
-        function(feature, layer) {
-          return feature;
-        });
+      function (feature, layer) {
+        return feature;
+      });
 
     if (feature) {
       let decorates = feature.get("decorates");
@@ -429,7 +429,7 @@ export class ItemMapComponent implements OnInit {
     let decorators = feature.get("decorators");
     if (decorators) {
       let self = this;
-      _.each(<ol.Feature[]>decorators, function(d) {
+      _.each(<ol.Feature[]>decorators, function (d) {
         self._moveFeature(d, deltaX, deltaY);
       });
     }

@@ -1,9 +1,9 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -81,9 +81,9 @@ export class MapHelper {
   _postChangeViewLastExtent: any;
   _postChangeViewTimer: any;
   // show popover
-  showPinnedPopover: ((feature: any)=> any);
+  showPinnedPopover: ((feature: any) => any);
 
-  constructor(public map:ol.Map, public hittest: Function = null) {
+  constructor(public map: ol.Map, public hittest: Function = null) {
     // animation event handler
     this._onPreComposeFunc = this._onPreCompose.bind(this);
     this._onPostComposeFunc = this._onPostCompose.bind(this);
@@ -94,8 +94,8 @@ export class MapHelper {
     this.installMapSizeWorkaround();
   }
 
-  startAnimation(){
-    if(this.animating)
+  startAnimation() {
+    if (this.animating)
       this.stopAnimation(false);
 
     console.log('Starting animation.')
@@ -104,12 +104,12 @@ export class MapHelper {
     this.map.on('postcompose', this._onPostComposeFunc);
     this.map.render();
     // workaround for stopping animation unexpectedly
-    if(!this._workaroundAnimationMonitorTimer){
+    if (!this._workaroundAnimationMonitorTimer) {
       // - intialize values
       this._workaroundAnimationMonitorTimerLastRendered = Date.now();
       // - in case the rendering is not happen for more than INV_MAX_FPS*5, call render() to restart
       this._workaroundAnimationMonitorTimer = setInterval(() => {
-        if(Date.now() - this._workaroundAnimationMonitorTimerLastRendered > Math.min(INV_MAX_FPS * 5, 500)){
+        if (Date.now() - this._workaroundAnimationMonitorTimerLastRendered > Math.min(INV_MAX_FPS * 5, 500)) {
           console.log('WORKAROUND: Map animation looks to be stopped. Restarting...');
           this.map.render();
         }
@@ -120,11 +120,11 @@ export class MapHelper {
   /**
    * Stop animation
    */
-  stopAnimation(doStop?: boolean){
+  stopAnimation(doStop?: boolean) {
     this.animating = false;
     this.nextRenderFrameTime = 0;
     // workaround for stopping animation unexpectedly
-    if(this._workaroundAnimationMonitorTimer){
+    if (this._workaroundAnimationMonitorTimer) {
       let timer = this._workaroundAnimationMonitorTimer;
       this._workaroundAnimationMonitorTimer = null;
       clearInterval(timer);
@@ -139,26 +139,26 @@ export class MapHelper {
    * Note that we want to get estimated server time as follow:
    *   estimated server time ~== Date.now() - this.serverTimeDelay
    */
-    setTimeFromServerRightNow(serverTime, now?){
+  setTimeFromServerRightNow(serverTime, now?) {
     this.serverTimeDelay = (now || Date.now()) - serverTime;
     console.log('Set server time delay to %d.', this.serverTimeDelay);
   }
   // get the estimated server time
-  getServerTime(now){
+  getServerTime(now) {
     return (now || Date.now()) - this.serverTimeDelay;
   }
   // handle precompose event and delegate it to handlers
-  private _onPreCompose(event){
-    try{
-      if (this.animating){
+  private _onPreCompose(event) {
+    try {
+      if (this.animating) {
         //var vectorContext = event.vectorContext;
         var frameState = event.frameState;
         var frameTime = this.getServerTime(frameState.time) - this.animationDelay;
-        if(this.nextRenderFrameTime < frameTime){
-          this.preComposeHandlers.forEach(function(handler){
-            try{
+        if (this.nextRenderFrameTime < frameTime) {
+          this.preComposeHandlers.forEach(function (handler) {
+            try {
               handler(event, frameTime);
-            }catch(e){
+            } catch (e) {
               console.error(e);
             }
           });
@@ -166,37 +166,37 @@ export class MapHelper {
           //console.log('Updated fatures.');
         }
       }
-    }catch(e){
+    } catch (e) {
       console.error(e);
     }
   }
   // handle postcompose event and delegate it to handlers, schedule next render
-  private _onPostCompose(event){
-    try{
-      if (this.animating){
+  private _onPostCompose(event) {
+    try {
+      if (this.animating) {
         //var vectorContext = event.vectorContext;
         var frameState = event.frameState;
         var frameTime = this.getServerTime(frameState.time) - this.animationDelay;
         var nextRender = -1;
-        this.postComposeHandlers.forEach(function(handler){
-          try{
+        this.postComposeHandlers.forEach(function (handler) {
+          try {
             var nextRenderDuration = handler(event, frameTime);
             nextRenderDuration = parseInt(nextRenderDuration);
-            if(nextRenderDuration >= 0 && nextRender < nextRenderDuration)
+            if (nextRenderDuration >= 0 && nextRender < nextRenderDuration)
               nextRender = nextRenderDuration;
-          }catch(e){
+          } catch (e) {
             console.error(e);
           }
         });
         // set next render time when not scheduled
-        if(!this.nextRenderFrameTime){
+        if (!this.nextRenderFrameTime) {
           this.nextRenderFrameTime = frameTime + (nextRender > 0 ? nextRender : 0);
-          if(nextRender <= 10){
-            if(this.animating)
+          if (nextRender <= 10) {
+            if (this.animating)
               this.map.render();
-          }else{
-            setTimeout((function(){
-              if(this.animating)
+          } else {
+            setTimeout((function () {
+              if (this.animating)
                 this.map.render();
             }).bind(this), nextRender);
           }
@@ -204,7 +204,7 @@ export class MapHelper {
         // workaround for stopping animation unexpectedly
         this._workaroundAnimationMonitorTimerLastRendered = Date.now();
       }
-    }catch(e){
+    } catch (e) {
       console.error(e);
     }
   }
@@ -215,75 +215,75 @@ export class MapHelper {
    *   case 1: { extent: [lng0, lat0, lng1, lat1] }
    *   case 2: { center: [lng0, lat0], (zoom: 15) } // zoom is optional
    */
-  moveMap(region){
-    if(region.extent){
+  moveMap(region) {
+    if (region.extent) {
       var mapExt = ol.proj.transformExtent(region.extent, 'EPSG:4326', 'EPSG:3857'); // back to coordinate
       var view = this.map.getView();
-      if (view.fit){
+      if (view.fit) {
         view.fit(mapExt, this.map.getSize());
-      } else if ((<any>view).fitExtent){
-        view.setCenter([(mapExt[0]+mapExt[2])/2, (mapExt[1]+mapExt[3])/2]);
+      } else if ((<any>view).fitExtent) {
+        view.setCenter([(mapExt[0] + mapExt[2]) / 2, (mapExt[1] + mapExt[3]) / 2]);
         (<any>view).fitExtent(mapExt, this.map.getSize());
       } else {
-        view.setCenter([(mapExt[0]+mapExt[2])/2, (mapExt[1]+mapExt[3])/2]);
+        view.setCenter([(mapExt[0] + mapExt[2]) / 2, (mapExt[1] + mapExt[3]) / 2]);
         view.setZoom(15);
       }
       this._firePendingPostChangeViewEvents(10);
-    }else if(region.center){
+    } else if (region.center) {
       var mapCenter = ol.proj.fromLonLat(region.center, undefined);
       var view = this.map.getView();
       view.setCenter(mapCenter);
       view.setZoom(region.zoom || DEFAULT_ZOOM);
       this._firePendingPostChangeViewEvents(10);
-    }else{
+    } else {
       console.error('  Failed to start tracking an unknown region: ', region);
     }
   }
   // schedule deferrable postChangeView event
- private _onMapViewChange(){
+  private _onMapViewChange() {
     // schedule deferrable event
-    if(this._postChangeViewTimer){
+    if (this._postChangeViewTimer) {
       clearTimeout(this._postChangeViewTimer);
     }
-    this._postChangeViewTimer = setTimeout(function(){
+    this._postChangeViewTimer = setTimeout(function () {
       this._firePendingPostChangeViewEvents(); // fire now
     }.bind(this), this.moveRefreshDelay);
   };
   // schedule indeferrable postChangeView event
-  private _firePendingPostChangeViewEvents(delay){
+  private _firePendingPostChangeViewEvents(delay) {
     // cancel schedule as firing event shortly!
-    if(this._postChangeViewTimer){
+    if (this._postChangeViewTimer) {
       clearTimeout(this._postChangeViewTimer);
       this._postChangeViewTimer = null;
     }
-    if(delay){
-      if(delay < this.moveRefreshDelay){
+    if (delay) {
+      if (delay < this.moveRefreshDelay) {
         // schedule non-deferrable event
-        setTimeout(function(){ // this is non-deferrable
+        setTimeout(function () { // this is non-deferrable
           this._firePendingPostChangeViewEvents(); // fire now
         }.bind(this), delay);
-      }else{
+      } else {
         this._onMapViewChange(); // delegate to normal one
       }
-    }else{
+    } else {
       // finally fire event!
       var size = this.map.getSize();
-      if(!size){
+      if (!size) {
         console.warn('failed to get size from map. skipping post change view event.');
         return;
       }
       // wait for map's handling layous, and then send extent event
-      setTimeout((function(){
+      setTimeout((function () {
         var ext = this.map.getView().calculateExtent(size);
         var extent = this.normalizeExtent(ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326'));
-        if(this._postChangeViewLastExtent != extent){
+        if (this._postChangeViewLastExtent != extent) {
           console.log('Invoking map extent change event', extent);
-          this.postChangeViewHandlers.forEach(function(handler){
+          this.postChangeViewHandlers.forEach(function (handler) {
             handler(extent);
           });
           this._postChangeViewLastExtent = extent;
         }
-      }).bind(this),100);
+      }).bind(this), 100);
     }
   }
 
@@ -298,17 +298,17 @@ export class MapHelper {
   }
 
   normalizeLocation(loc: number[]) {
-      let lng = loc[0] % 360;
-      if (lng < -180) lng += 360;
-      else if (lng > 180) lng -= 360;
+    let lng = loc[0] % 360;
+    if (lng < -180) lng += 360;
+    else if (lng > 180) lng -= 360;
 
-      let lat = loc[1] % 180;
-      if (lat < -90) lat += 180;
-      else if (lat > 90) lat -= 180;
+    let lat = loc[1] % 180;
+    if (lat < -90) lat += 180;
+    else if (lat > 90) lat -= 180;
 
-      loc[0] = lng;
-      loc[1] = lat;
-      return loc;
+    loc[0] = lng;
+    loc[1] = lat;
+    return loc;
   }
 
   /**
@@ -324,13 +324,13 @@ export class MapHelper {
    *         @feature is ol.Feature, @pinned is boolean showing the "pin" state (true is pinned)
    * @updatePopOver a function called on updating popover content: function(elm, feature, pinned)
    */
-  addPopOver(options, showPopOver, destroyPopOver, updatePopOver){
+  addPopOver(options, showPopOver, destroyPopOver, updatePopOver) {
     // check and normalize arguments
     var elm = options.elm;
-    if(!options.elm){
+    if (!options.elm) {
       console.error('Missing popup target element. Skipped to setup popover.');
     }
-    var nop = function(){};
+    var nop = function () { };
     showPopOver = showPopOver || nop;
     destroyPopOver = destroyPopOver || nop;
 
@@ -342,7 +342,7 @@ export class MapHelper {
     // create popover objects
     var overlay = new ol.Overlay({
       element: elm,
-      offset: [2,-3],
+      offset: [2, -3],
       positioning: 'center-right',
       stopEvent: true
     });
@@ -351,10 +351,10 @@ export class MapHelper {
     //
     // Implement mouse hover popover
     //
-    this.map.on('pointermove', (function(event){
+    this.map.on('pointermove', (function (event) {
       // handle dragging
-      if(event.dragging){
-        if(currentPinned)
+      if (event.dragging) {
+        if (currentPinned)
           return; // don't follow pointer when pinned
 
         stopUpdateTimer();
@@ -363,7 +363,7 @@ export class MapHelper {
         return;
       }
 
-      var feature = this.map.forEachFeatureAtPixel(event.pixel, function(feature, layer){
+      var feature = this.map.forEachFeatureAtPixel(event.pixel, function (feature, layer) {
         if (this.hittest && !this.hittest(event.coordinate, feature, layer)) {
           return;
         }
@@ -372,13 +372,13 @@ export class MapHelper {
       this.map.getTargetElement().style.cursor = (feature ? 'pointer' : ''); // cursor
 
       // guard by pin state
-      if(currentPinned)
+      if (currentPinned)
         return; // don't follow pointer when pinned
 
-      if(feature)
+      if (feature)
         overlay.setPosition(event.coordinate);
 
-      if(currentPopoverFeature !== feature){
+      if (currentPopoverFeature !== feature) {
         stopUpdateTimer();
         destroyPopOver(elm, currentPopoverFeature);
         currentPopoverFeature = feature;
@@ -391,50 +391,50 @@ export class MapHelper {
     //
     // Implement "pin" capability on the popover
     //
-    if(options.pin){
-      var trackGeometryListener = function(){
+    if (options.pin) {
+      var trackGeometryListener = function () {
         var coord = currentPopoverFeature.getGeometry().getCoordinates();
         overlay.setPosition(coord);
       };
-      var closePinnedPopover = (function closeFunc(){
+      var closePinnedPopover = (function closeFunc() {
         stopUpdateTimer();
         destroyPopOver(elm, currentPopoverFeature, currentPinned);
-        if(currentPopoverFeature)
+        if (currentPopoverFeature)
           currentPopoverFeature.un('change:geometry', trackGeometryListener);
         currentPinned = false;
       }).bind(this);
-      var showPinnedPopover = (function showFunc(){
+      var showPinnedPopover = (function showFunc() {
         currentPinned = true;
         showPopOver(elm, currentPopoverFeature, currentPinned, closePinnedPopover);
         startUpdateTimer();
-        if(currentPopoverFeature)
+        if (currentPopoverFeature)
           currentPopoverFeature.on('change:geometry', trackGeometryListener);
       }).bind(this);
 
-      this.map.on('singleclick', (function(event){
-        var feature = this.map.forEachFeatureAtPixel(event.pixel, function(feature, layer){
+      this.map.on('singleclick', (function (event) {
+        var feature = this.map.forEachFeatureAtPixel(event.pixel, function (feature, layer) {
           if (this.hittest && !this.hittest(event.coordinate, feature, layer)) {
             return;
           }
           return feature;
         }.bind(this));
-        if(!feature) return; // pin feature only works on clicking on a feature
+        if (!feature) return; // pin feature only works on clicking on a feature
         clickOnFeatureFunc(feature);
       }).bind(this));
 
-      var clickOnFeatureFunc = (function(feature, neverClose){
-        if(!currentPinned && feature === currentPopoverFeature){
+      var clickOnFeatureFunc = (function (feature, neverClose) {
+        if (!currentPinned && feature === currentPopoverFeature) {
           // Pin currently shown popover
           closePinnedPopover();
           showPinnedPopover();
-        }else if(!currentPinned && feature !== currentPopoverFeature){
+        } else if (!currentPinned && feature !== currentPopoverFeature) {
           // Show pinned popover
           var coord = feature.getGeometry().getCoordinates();
           overlay.setPosition(coord);
           // show popover
           currentPopoverFeature = feature;
           showPinnedPopover();
-        }else if(currentPinned && currentPopoverFeature !== feature){
+        } else if (currentPinned && currentPopoverFeature !== feature) {
           // Change pinned target feature
           closePinnedPopover();
           currentPopoverFeature = feature;
@@ -443,7 +443,7 @@ export class MapHelper {
           overlay.setPosition(coord);
           // show
           showPinnedPopover();
-        }else if(currentPinned && feature === currentPopoverFeature && !neverClose){
+        } else if (currentPinned && feature === currentPopoverFeature && !neverClose) {
           // Remove pin
           closePinnedPopover();
           //currentPopoverFeature = null;
@@ -460,25 +460,25 @@ export class MapHelper {
     //
     // Implement periodical content update option
     //
-    if(options.updateInterval && updatePopOver){
+    if (options.updateInterval && updatePopOver) {
       var timer = 0;
-      startUpdateTimer = function(){
+      startUpdateTimer = function () {
         stopUpdateTimer();
         timer = setTimeout(callUpdate, options.updateInterval);
       };
-      stopUpdateTimer = function(){
-        if(timer){
+      stopUpdateTimer = function () {
+        if (timer) {
           clearTimeout(timer);
           timer = 0;
         }
       };
-      var callUpdate = function(){
+      var callUpdate = function () {
         updatePopOver(elm, currentPopoverFeature, currentPinned);
         timer = setTimeout(callUpdate, options.updateInterval);
       };
-    }else {
-      startUpdateTimer = function(){}; // nop
-      stopUpdateTimer = function(){}; // nop
+    } else {
+      startUpdateTimer = function () { }; // nop
+      stopUpdateTimer = function () { }; // nop
     }
 
   }
@@ -502,10 +502,10 @@ export class MapHelper {
     getKey?: (model: any) => string,
     getLastUpdated?: (model: any) => number,
     getFeature: (model: any, map: ol.Map) => ol.Feature,
-    showPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => void,
-    destroyPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => (void|boolean),
-    updatePopover?: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => void,
-  }){
+    showPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model: any, closeFunc: () => void) => void,
+    destroyPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model: any, closeFunc: () => void) => (void | boolean),
+    updatePopover?: (elm: Element, feature: ol.Feature, pinned: boolean, model: any, closeFunc: () => void) => void,
+  }) {
     let getKey = options.getKey || ((model) => { return (<any>model).__model_key__ || ((<any>model).__model_key__ = NEXT_MODEL_KEY_ID++) });
     let getLastUpdated = options.getLastUpdated || ((model) => { return (<any>model).__model_key__ || ((<any>model).__model_key__ = NEXT_MODEL_KEY_ID++) });
 
@@ -514,7 +514,7 @@ export class MapHelper {
       subscription: undefined,
     };
     var activeControllers = context.activeControllers;
-    
+
     var syncModelAndController = (models) => {
       var syncedKeys = {};
 
@@ -522,25 +522,25 @@ export class MapHelper {
         let feature = options.getFeature(model, this.map);
         let key = getKey(model);
         syncedKeys[key] = true; // mark the key synced
-        
+
         let ctrl = activeControllers[key];
-        if(ctrl){
-          if(ctrl.isUpdated(model)){
-            if(ctrl.isDisposed()) {
+        if (ctrl) {
+          if (ctrl.isUpdated(model)) {
+            if (ctrl.isDisposed()) {
               ctrl = null; // give chance to create a new controller
             } else {
               ctrl.model = model; // update the model instance
             }
           } else {
-            if(ctrl.isDisposed()){
+            if (ctrl.isDisposed()) {
               return; // ctrl can be disposed due to timeout or so. The controller Will be removed from the list when the model is gone
             }
             ctrl.model = model; // update the model instance
           }
         }
-        
+
         // create popover
-        if(!ctrl){
+        if (!ctrl) {
           // create new controller
           ctrl = new ModelBasedPopoverCtrl(options, this.map, model, getLastUpdated);
           activeControllers[key] = ctrl;
@@ -550,14 +550,14 @@ export class MapHelper {
       });
       // dispose model-missing controllers
       Object.keys(activeControllers).forEach(key => {
-        if (!syncedKeys[key]){
+        if (!syncedKeys[key]) {
           var ctrl = activeControllers[key];
           ctrl.close();
-          delete activeControllers[key];        
+          delete activeControllers[key];
         }
       });
     };
-    
+
     // subscribe
     context.subscription = dataSource.subscribe((models) => {
       syncModelAndController(models);
@@ -580,23 +580,23 @@ export class MapHelper {
    * Ideally, we should directly track the size of the DIV, but not here yet
    */
   private _scheduleUpdateSize = null;
-  installMapSizeWorkaround(){
+  installMapSizeWorkaround() {
     // - capture resize event
-    if(!this._scheduleUpdateSize){
+    if (!this._scheduleUpdateSize) {
       var this_ = this;
       var scheduleUpdateSizeTimer = 0; // always refers to this scope form the function
-      this._scheduleUpdateSize = function(timeout) {
-        return function(){
-          if(scheduleUpdateSizeTimer){
+      this._scheduleUpdateSize = function (timeout) {
+        return function () {
+          if (scheduleUpdateSizeTimer) {
             clearTimeout(scheduleUpdateSizeTimer);
           }
-          scheduleUpdateSizeTimer = setTimeout(function(){
+          scheduleUpdateSizeTimer = setTimeout(function () {
             this_.map.updateSize();
             scheduleUpdateSizeTimer = 0;
           }, timeout);
         };
       };
-      if(window.addEventListener){
+      if (window.addEventListener) {
         window.addEventListener('resize', this._scheduleUpdateSize(200));
         window.addEventListener('orientationchange', this._scheduleUpdateSize(1000));
       }
@@ -613,7 +613,7 @@ export class MapHelper {
    * - With ration 0.5, expand each side of the region by half width/height of the region
    *   Thus, the result's width and height are twice as the given extent
    */
-  expandExtent(extent, ratio){
+  expandExtent(extent, ratio) {
     // draw real-time location of cars
     var min_lng0 = extent[0];
     var min_lat0 = extent[1];
@@ -634,20 +634,20 @@ export class MapHelper {
    * @map a map
    * @styles a list of ol.style.Style -- non-image styles will be gracefully ignored
    */
-  preloadStyles(map, styles){
-    if(!styles || styles.length == 0) return;
+  preloadStyles(map, styles) {
+    if (!styles || styles.length == 0) return;
     var center = new ol.geom.Point(map.getView().getCenter());
-    var features = styles.map(function(style){
-      if(style.image instanceof ol.style.Image){
+    var features = styles.map(function (style) {
+      if (style.image instanceof ol.style.Image) {
         var feat = new ol.Feature({ geometry: center });
         feat.setStyle(style);
         return feat;
       }
-    }).filter(function(feat){ return !!feat; });
+    }).filter(function (feat) { return !!feat; });
     // create a layer
     var workaroundLayer = map._imageWorkaroundLayer;
-    if(!workaroundLayer){
-      workaroundLayer = new ol.layer.Vector({ source: new ol.source.Vector({}), renderOrder: undefined});
+    if (!workaroundLayer) {
+      workaroundLayer = new ol.layer.Vector({ source: new ol.source.Vector({}), renderOrder: undefined });
       map._imageWorkaroundLayer = workaroundLayer;
       map.addLayer(workaroundLayer);
       workaroundLayer.setOpacity(0.5); //TODO workaround layer opacity
@@ -655,7 +655,7 @@ export class MapHelper {
     workaroundLayer.getSource().addFeatures(features);
     // try to render the images
     workaroundLayer.setVisible(true);
-    setTimeout(function(){
+    setTimeout(function () {
       workaroundLayer.setVisible(false);
     }, 100);
   }
@@ -682,11 +682,11 @@ class ModelBasedPopoverCtrl {
   private lastUpdated: number;
 
   private trackGeometryListener = () => {
-          var coord = (<any>this.targetFeature.getGeometry()).getCoordinates();
-          this.overlay.setPosition(coord);
-        };
+    var coord = (<any>this.targetFeature.getGeometry()).getCoordinates();
+    this.overlay.setPosition(coord);
+  };
   private closeFunc = (elementDisposed?: boolean) => {
-        this.dispose(); 
+    this.dispose();
   };
 
   /**
@@ -695,14 +695,14 @@ class ModelBasedPopoverCtrl {
   constructor(
     private options: {
       createOverlay: (model: any, map) => ol.Overlay,
-      showPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => void,
-      destroyPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => (boolean|void),
-      updatePopover?: (elm: Element, feature: ol.Feature, pinned: boolean, model:any, closeFunc: ()=>void) => void,
+      showPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model: any, closeFunc: () => void) => void,
+      destroyPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model: any, closeFunc: () => void) => (boolean | void),
+      updatePopover?: (elm: Element, feature: ol.Feature, pinned: boolean, model: any, closeFunc: () => void) => void,
     },
     private map: ol.Map,
     public model: any,
     private getLastUpdated: (model: any) => number
-  ){
+  ) {
     this.lastUpdated = getLastUpdated(this.model);
     this.overlay = options.createOverlay(this.model, this.map);
     this.element = this.overlay.getElement();
@@ -712,22 +712,22 @@ class ModelBasedPopoverCtrl {
    * Dispose this controller. Can call multiple times.
    */
   dispose() {
-    if(this.isDisposed())
+    if (this.isDisposed())
       return;
 
     this.disposed = true;
-    
+
     // cleanup feature
-    if(this.targetFeature){
+    if (this.targetFeature) {
       this.update(null);
     }
     // dispose overlay
-    if(this.overlay){
+    if (this.overlay) {
       this.map.removeOverlay(this.overlay);
       this.overlay = null;
     }
     // dispose element
-    if(this.element){
+    if (this.element) {
       this.element.parentElement && this.element.parentElement.removeChild(this.element);
       this.element = null;
     }
@@ -747,28 +747,28 @@ class ModelBasedPopoverCtrl {
   /**
    * Close
    */
-  close(){
+  close() {
     this.update(null);
-    if(!this.disposedLater)
+    if (!this.disposedLater)
       this.dispose();
   }
 
   /**
    * Update track target, and the popover content
    */
-  update(feature: ol.Feature){
+  update(feature: ol.Feature) {
     this.lastUpdated = this.getLastUpdated(this.model);
 
-    if(this.targetFeature === feature) {
+    if (this.targetFeature === feature) {
       this.options && this.options.updatePopover && this.options.updatePopover(this.element, feature, false, this.model, this.closeFunc);
       return;
     }
 
-    if(this.targetFeature){
+    if (this.targetFeature) {
       this.targetFeature.un('change:geometry', this.trackGeometryListener);
-      if(feature){
+      if (feature) {
         this.options && this.options.updatePopover && this.options.updatePopover(this.element, feature, false, this.model, this.closeFunc);
-      }else{
+      } else {
         this.disposedLater = this.options && this.options.destroyPopover && this.options.destroyPopover(this.element, feature, false, this.model, this.closeFunc);
       }
     }
@@ -776,9 +776,9 @@ class ModelBasedPopoverCtrl {
     let oldFeature = this.targetFeature;
     this.targetFeature = feature;
 
-    if(this.targetFeature){
+    if (this.targetFeature) {
       this.targetFeature.on('change:geometry', this.trackGeometryListener);
-      if(!oldFeature){
+      if (!oldFeature) {
         this.options && this.options.showPopover && this.options.showPopover(this.element, feature, false, this.model, this.closeFunc);
       }
     }
@@ -787,7 +787,7 @@ class ModelBasedPopoverCtrl {
   /**
    * See if the model is updated or not
    */
-  isUpdated(model: any){
+  isUpdated(model: any) {
     let lastUpdated = this.getLastUpdated(model);
     return this.lastUpdated < lastUpdated;
   }

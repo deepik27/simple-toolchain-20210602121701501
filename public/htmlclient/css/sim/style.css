@@ -1,9 +1,9 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -273,9 +273,9 @@ header a.em-Modal-Call {
     transition: all .2s ease-in;
 }
 
-@media only screen 
-and (min-device-width : 768px) 
-and (max-device-width : 1024px) 
+@media only screen
+and (min-device-width : 768px)
+and (max-device-width : 1024px)
 and (orientation : portrait) {
     header div.userImg {
         display: none;
@@ -445,7 +445,7 @@ input.vehicleDataValue {
 }
 
 [ui-view].ng-leave {
-  opacity: 1; 
+  opacity: 1;
   -webkit-transform:scale3d(0.75, 0.75, 0.75);
   -moz-transform:scale3d(0.75, 0.75, 0.75);
   transform:scale3d(0.75, 0.75, 0.75);
@@ -732,7 +732,7 @@ div.loadingModal div.loadingSpinner-inner {
         -o-transform: scale(1);
         transform: scale(1);
     }
-    
+
     50% {
         -webkit-transform: scale(1.7);
         -moz-transform: scale(1.7);
@@ -767,7 +767,7 @@ div.loadingModal div.loadingSpinner-outter {
         -o-transform: scale(1);
         transform: scale(1);
     }
-    
+
     65% {
         -webkit-transform: scale(4);
         -moz-transform: scale(4);
@@ -982,7 +982,7 @@ div.loadingModal div.loadingSpinner-outter {
         -webkit-flex-basis: 58.333333333%;
         flex-basis: 58.333333333%;
     }
-    
+
     .column-8-sm {
         max-width: 66.666666666%;
         -ms-flex-preferred-size: 66.666666666%;
@@ -1012,7 +1012,7 @@ div.loadingModal div.loadingSpinner-outter {
         -webkit-flex-basis: 100%;
         flex-basis: 100%;
     }
-    
+
     .noOffsetRow .column-2-med, .noOffsetRow .column-3-med, .noOffsetRow .column-4-med, .noOffsetRow .column-5-med,
     .noOffsetRow .column-6-med, .noOffsetRow .column-7-med, .noOffsetRow .column-9-med, .noOffsetRow .column-10-med {
         padding-right: 0;

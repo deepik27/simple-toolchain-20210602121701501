@@ -1,9 +1,9 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -14,13 +14,13 @@ import { Observable } from "rxjs/Observable";
 
 @Injectable()
 export class EventService {
-  constructor (private http: HttpClient) {
+  constructor(private http: HttpClient) {
   }
 
   public getEventTypes() {
     return this.http.get("/user/eventtype").map(data => {
-        let resJson = data.json();
-        return resJson.data;
+      let resJson = data.json();
+      return resJson.data;
     });
   }
 
@@ -28,14 +28,14 @@ export class EventService {
     let url = "/user/event/query";
     let prefix = "?";
     for (let key in params) {
-       url += (prefix + key + "=" + params[key]);
-       prefix = "&";
+      url += (prefix + key + "=" + params[key]);
+      prefix = "&";
     }
     console.log("query event: " + url);
 
     return this.http.get(url).map(data => {
-        let resJson = data.json();
-        return resJson;
+      let resJson = data.json();
+      return resJson;
     });
   }
 
@@ -44,27 +44,27 @@ export class EventService {
     console.log("get event: " + url);
 
     return this.http.get(url).map(data => {
-        let resJson = data.json();
-        return resJson;
+      let resJson = data.json();
+      return resJson;
     });
   }
 
   public createEvent(event) {
     let url = "/user/event";
     let body = JSON.stringify(event);
-    let headers = new Headers({"Content-Type": "application/JSON;charset=utf-8"});
-    let options = new RequestOptions({headers: headers});
+    let headers = new Headers({ "Content-Type": "application/JSON;charset=utf-8" });
+    let options = new RequestOptions({ headers: headers });
 
     return this.http.post(url, body, options).map(data => {
-        let resJson = data.json();
-        return resJson;
+      let resJson = data.json();
+      return resJson;
     });
   }
 
   public deleteEvent(event_id) {
     return this.http.delete("/user/event?event_id=" + event_id).map(data => {
-        let resJson = data.json();
-        return resJson;
+      let resJson = data.json();
+      return resJson;
     });
   }
 

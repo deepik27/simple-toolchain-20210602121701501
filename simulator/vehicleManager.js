@@ -1,13 +1,12 @@
 /**
- * Copyright 2017 IBM Corp. All Rights Reserved.
+ * Copyright 2017,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
-
 const simulatedVehicleManager = module.exports = {};
 
 const Q = require('q');
@@ -123,7 +122,7 @@ _.extend(simulatedVehicleManager, {
 			let vehicle = {
 				"vendor": vendor,
 				"serial_number": "s-" + chance.hash({ length: 6 }),
-				"status" : "active"
+				"status": "active"
 			};
 			let properties = this._getDeviceModelInfo();
 			vehicle.model = "Simulated Vehicle";

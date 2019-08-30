@@ -3,7 +3,7 @@
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -22,42 +22,42 @@ debug.log = console.log.bind(console);
 //
 // Driving Behavior Analysis APIs
 //
-router.get("/capability/analysis", authenticate, function(req, res) {
+router.get("/capability/analysis", authenticate, function (req, res) {
 	res.send({ available: driverInsightsAnalysis.isAvailable() });
 })
 
-router.get('/analysis/trip/:mo_id', authenticate, function(req, res) {
+router.get('/analysis/trip/:mo_id', authenticate, function (req, res) {
 	driverInsightsAnalysis.getTrips(req.params.mo_id, req.query.limit)
-	.then(function(result) {
-		return res.send(result);
-	}).catch(function(error) {
-		handleError(res, error);
-	})
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
 });
 
-router.get('/analysis/behaviors/:mo_id', authenticate, function(req, res) {
+router.get('/analysis/behaviors/:mo_id', authenticate, function (req, res) {
 	driverInsightsAnalysis.getTripBehavior(req.params.mo_id, req.query.trip_id, req.query.lastHours)
-	.then(function(result) {
-		return res.send(result);
-	}).catch(function(error) {
-		handleError(res, error);
-	})
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
 });
 
-router.get("/analysis/triproutes/:mo_id", function(req, res) {
+router.get("/analysis/triproutes/:mo_id", function (req, res) {
 	driverInsightsAnalysis.getTripRoute(req.params.mo_id, req.query.trip_id, req.query.offset, req.query.limit)
-	.then(function(result) {
-		return res.send(result);
-	}).catch(function(error) {
-		handleError(res, error);
-	})
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
 });
 
-router.get("/analysis/triplength/:mo_id", function(req, res) {
+router.get("/analysis/triplength/:mo_id", function (req, res) {
 	driverInsightsAnalysis.getTripRouteLength(req.params.mo_id, req.query.trip_id)
-	.then(function(result) {
-		return res.send(result);
-	}).catch(function(error) {
-		handleError(res, error);
-	})
+		.then(function (result) {
+			return res.send(result);
+		}).catch(function (error) {
+			handleError(res, error);
+		})
 });

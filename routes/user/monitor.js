@@ -3,7 +3,7 @@
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -126,7 +126,7 @@ router.get('/carProbe', authenticate, function (req, res) {
 	} else {
 		initWebSocketServer(req.app.server, wssUrl);
 	}
-	res.send({serverTime: Date.now(), wssPath: wssUrl + '?' + path});
+	res.send({ serverTime: Date.now(), wssPath: wssUrl + '?' + path });
 });
 
 /**
@@ -242,7 +242,7 @@ var initWebSocketServer = function (server, path) {
 
 				notifyMessage({
 					type: "probe",
-					region_id: regions ? regions.id : undefined, 
+					region_id: regions ? regions.id : undefined,
 					aggregated: aggregated,
 					count: (count),
 					devices: (devices),
@@ -256,12 +256,12 @@ var initWebSocketServer = function (server, path) {
 			let qs = getQs();
 
 			if (qs.min_longitude && qs.min_latitude && qs.max_longitude && qs.max_latitude) {
-				regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude,qs.max_latitude);
+				regions = probeAggregator.createRegions(qs.min_longitude, qs.min_latitude, qs.max_longitude, qs.max_latitude);
 				if (regions.type !== "single" && probeAggregator.equals(regions, client.calculatedRegions)) {
 					return Q();
 				}
 				client.calculatedRegions = regions;
-				notifyMessage({type: "region", region_id: regions.id, state: "start"});
+				notifyMessage({ type: "region", region_id: regions.id, state: "start" });
 
 				// Notify probes per region
 				const CELL_LAT = Math.min(regions.lat_d, 1);
@@ -275,7 +275,7 @@ var initWebSocketServer = function (server, path) {
 						subqs.max_longitude = (qs.max_longitude - lon > CELL_LON) ? (lon + CELL_LON) : qs.max_longitude;
 						requestQueue.push({
 							params: subqs,
-							run: function(params) {
+							run: function (params) {
 								return getCarProbe(params, true, regions, notifyCarProbe);
 							}
 						});
@@ -286,11 +286,11 @@ var initWebSocketServer = function (server, path) {
 				let deferred = Q.defer();
 				promises.push(deferred.promise);
 				requestQueue.push({
-					run: function() {
+					run: function () {
 						deferred.resolve();
 					},
-					canceled: function() {
-						regions && notifyMessage({type: "region", region_id: regions.id, state: "cancel"});
+					canceled: function () {
+						regions && notifyMessage({ type: "region", region_id: regions.id, state: "cancel" });
 						deferred.resolve();
 					}
 				});
@@ -298,7 +298,7 @@ var initWebSocketServer = function (server, path) {
 				promises.push(getCarProbe(qs, true, null, notifyCarProbe));
 			}
 			return Q.all(promises).then(result => {
-				return regions && notifyMessage({type: "region", region_id: regions.id, state: "end"});
+				return regions && notifyMessage({ type: "region", region_id: regions.id, state: "end" });
 			}).catch((err) => {
 				console.error('Failed to get car probe', err);
 			});
@@ -320,10 +320,10 @@ var initWebSocketServer = function (server, path) {
 			let isFromValidOrigin = ((typeof info.origin !== 'undefined') && (info.origin.toLowerCase() === appEnv.url.toLowerCase())) ? true : false;
 			var allow = isLocal || isFromValidOrigin;
 			if (!allow) {
-				if(typeof info.origin !== 'undefined'){
+				if (typeof info.origin !== 'undefined') {
 					console.error("rejected web socket connection from external origin " + info.origin + " only connection from internal origin " + appEnv.url + " are accepted");
 				} else {
-					console.error("rejected web socket connection from unknown origin. Only connection from internal origin " + appEnv.url + " are accepted");												
+					console.error("rejected web socket connection from unknown origin. Only connection from internal origin " + appEnv.url + " are accepted");
 				}
 			}
 			if (!callback) {
@@ -343,7 +343,7 @@ var initWebSocketServer = function (server, path) {
 			console.log("[Monitor] Error with client id=" + client.clientId);
 		});
 		client.on('message', (message) => {
-			console.log("[Monitor] Received message: "+message);
+			console.log("[Monitor] Received message: " + message);
 		});
 		// assign extent obtained from the web sock request URL, to this client
 		var url = client.upgradeReq.url;
@@ -390,8 +390,8 @@ function getCarProbe(qs, addAlerts, regions, callback) {
 
 	return Q.all(promises).then((result) => {
 		let probes = [];
-		result.forEach(p => { 
-			probes = probes.concat(p); 
+		result.forEach(p => {
+			probes = probes.concat(p);
 		});
 
 		// send normal response

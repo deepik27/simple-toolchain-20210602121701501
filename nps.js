@@ -1,9 +1,9 @@
 /**
- * Copyright 2017 IBM Corp. All Rights Reserved.
+ * Copyright 2017,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -14,23 +14,23 @@ const moment = require("moment");
 USER_PROVIDED_VCAP_SERVICES = JSON.parse(process.env.USER_PROVIDED_VCAP_SERVICES || '{}');
 const firstAccessDateCookie = "iota-fleetmanagement-first-access-date";
 
-const username = (function(){
+const username = (function () {
 	let username;
-	if(fs.existsSync("bmx_username.txt")){
+	if (fs.existsSync("bmx_username.txt")) {
 		return fs.readFileSync("bmx_username.txt", "utf8");
 	}
 })();
 
 router.get("/nps", function (req, res) {
 	let firstAccessDate = req.cookies[firstAccessDateCookie];
-	if(!firstAccessDate){
-		res.cookie(firstAccessDateCookie, moment().valueOf(), {maxAge: 1000*60*60*24*365});
+	if (!firstAccessDate) {
+		res.cookie(firstAccessDateCookie, moment().valueOf(), { maxAge: 1000 * 60 * 60 * 24 * 365 });
 	}
 	const npsVar = getNPSVariables(firstAccessDate);
 	res.send(npsVar);
 });
-router.get("/capability/nps", function(req, res){
-	res.send({available: process.env.NPS_ENABLED != "false" && username});
+router.get("/capability/nps", function (req, res) {
+	res.send({ available: process.env.NPS_ENABLED != "false" && username });
 });
 
 const getNPSVariables = function (firstAccessDate) {
@@ -51,7 +51,7 @@ const getNPSVariables = function (firstAccessDate) {
 	})();
 
 	let daysSinceFirstLogin = 0;
-	if(firstAccessDate){
+	if (firstAccessDate) {
 		const durationInMill = moment().valueOf() - firstAccessDate;
 		daysSinceFirstLogin = Math.floor(moment.duration(durationInMill).asDays());
 	}

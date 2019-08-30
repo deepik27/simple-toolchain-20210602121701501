@@ -1,9 +1,9 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
@@ -64,15 +64,15 @@ export class MapItemPageComponent implements OnInit {
   ngOnInit() {
     // move location
     this.selectedArea = this.areas[this.areas.length - 1];
-    if(this.locationService.getMapRegion()) {
-      if(this.locationService.getCurrentAreaRawSync()) {
+    if (this.locationService.getMapRegion()) {
+      if (this.locationService.getCurrentAreaRawSync()) {
         this.areas.push(this.locationService.getCurrentAreaRawSync());
       }
       this.areas.push(this.locationService.getMapRegion());
       this.selectedArea = this.areas[this.areas.length - 1];
     } else {
       this.locationService.getCurrentArea().then(area => {
-        if(this.locationService.getCurrentAreaRawSync()) {
+        if (this.locationService.getCurrentAreaRawSync()) {
           this.areas.push(this.locationService.getCurrentAreaRawSync());
         }
         this.selectedArea = area;

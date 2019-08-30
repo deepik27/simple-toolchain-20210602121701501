@@ -1,13 +1,12 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
- * http://www14.software.ibm.com/cgi-bin/weblap/lap.pl?li_formnum=L-DDIN-AHKPKY&popup=n&title=IBM%20IoT%20for%20Automotive%20Sample%20Starter%20Apps%20%28Android-Mobile%20and%20Server-all%29
+ * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
  *
  * You may not use this file except in compliance with the license.
  */
-
 // Check if VCAP_SERVICES.json is present (used for running the server locally for development purposes)
 var fs = require('fs');
 var VCAP_SERVICES_PATH = './VCAP_SERVICES.json';
@@ -69,8 +68,6 @@ app.use(function (req, res, next) {
 
 //basic authentication to all routes
 app.use(auth.authenticate);
-//mandate eula acceptance
-app.use(auth.eula);
 
 //access to server contents
 app.use(express.static(path.join(__dirname, 'public')));
