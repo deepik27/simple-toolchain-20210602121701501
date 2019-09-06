@@ -10,13 +10,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 
-import { Observable } from 'rxjs/Observable';
-import { Subject } from 'rxjs/Subject';
+import { Subject, of } from 'rxjs'
+import { switchMap } from 'rxjs/operators';
 
 import { RealtimeDeviceData } from '../shared/realtime-device';
 import { RealtimeDeviceDataProviderService } from '../shared/realtime-device-manager.service';
 import { CarStatusDataService } from './summary/car-status-data.service';
-import { DriverBehaviorComponent } from './behaviors/driver-behavior.component';
 import { DriverBehaviorService } from '../shared/iota-driver-behavior.service';
 
 import * as _ from 'underscore';
@@ -52,12 +51,12 @@ export class CarStatusComponent implements OnInit {
         this.isAnalysisAvailable = true;
       }
     });
-    this.proveDataSubscription = this.moIdSubject.switchMap(mo_id => {
+    this.proveDataSubscription = this.moIdSubject.pipe(switchMap(mo_id => {
       // Start watching car probe of the vehicle. This method will monitor the car probe of the vehicle from whole world.
       // It may result slow performance of querying car probe as the searching area is too large.
       this.realtimeDataProviderService.startTracking(mo_id);
-      return mo_id ? this.carStatusDataService.getProbe(mo_id) : Observable.of([]);
-    }).subscribe(probe => {
+        return mo_id ? this.carStatusDataService.getProbe(mo_id) : of([]);
+      })).subscribe(probe => {
       // update data
       this.device = probe && this.realtimeDataProviderService.getProvider().getDevice(probe.mo_id);
       this.probeData = probe;

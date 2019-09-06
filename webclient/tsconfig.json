@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2017",
     "module": "commonjs",
     "moduleResolution": "node",
     "sourceMap": true,
@@ -9,8 +9,8 @@
     "removeComments": false,
     "noImplicitAny": false
   },
-  "compileOnSave" : true,
-  "filesGlob" : [
+  "compileOnSave": true,
+  "filesGlob": [
     "**/*.ts",
     "**/*.tsx",
     "!node_modules/**",

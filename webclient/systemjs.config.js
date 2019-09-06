@@ -11,7 +11,7 @@
  * System configuration for Angular 2
  * Adjust as necessary for your application needs.
  */
-(function(global) {
+(function (global) {
   var bundles = {
     'c3': ['d3'],
     // 'bootstrap': ['jquery'],
@@ -47,15 +47,17 @@
   // packages tells the System loader how to load when no filename and/or no extension
   var packages = {
     'app':                        { main: 'main.js',  defaultExtension: 'js' },
-    'rxjs':                       { defaultExtension: 'js' },
-    //'angular2-in-memory-web-api': { main: 'index.js', defaultExtension: 'js' },
+    'rxjs':                       { main: 'index.js',  defaultExtension: 'js' },
+    'rxjs/operators':             { main: 'index.js',  defaultExtension: 'js' },
+    'rxjs/websocket':             { main: 'index.js',  defaultExtension: 'js' },
   };
   // define metadata for Subresource Integrity
   var meta = {
     'https://cdnjs.cloudflare.com/ajax/libs/ol3/3.5.0/ol.js': {
       scriptLoad: true,
       integrity: 'sha256-ybQnvDcVTLFnbUmkq5oSsJ62Pij7mhFrdeUtnyYJnTk=',
-      crossOrigin: 'anonymous'
+      crossOrigin: 'anonymous',
+      exports: "ol"
     },
     'https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.7/d3.js': {
       scriptLoad: true,
@@ -75,7 +77,8 @@
     'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.2/underscore-min.js': {
       scriptLoad: true,
       integrity: 'sha256-LeGeo7heAyOd2cvjDZVFobWnzi8GYv6urz0tCIF56lw=',
-      crossOrigin: 'anonymous'
+      crossOrigin: 'anonymous',
+      exports: "_"
     },
     // 'https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js': {
     //   scriptLoad: true,

@@ -10,7 +10,8 @@
 import { Injectable, Inject } from '@angular/core';
 import { HttpClient } from './http-client';
 import { Request, Response, URLSearchParams } from '@angular/http';
-import { Observable } from 'rxjs/Observable';
+import { retry } from 'rxjs/operators';
+import { webSocket } from 'rxjs/websocket';
 
 import { RealtimeDeviceDataProvider } from './realtime-device';
 import { APP_CONFIG, AppConfig } from '../app-config';
@@ -38,7 +39,6 @@ export class RealtimeDeviceDataProviderService {
 	activeWsClient = null;
 	activeWsSubscribe = null; // WebSocket client
 	carStatusIntervalTimer: any;
-	wsRetryCount: number = 0;
 
 	constructor(
 		private $http: HttpClient,
@@ -131,39 +131,19 @@ export class RealtimeDeviceDataProviderService {
 			}
 
 			// start websock server for real-time tracking
-			this.wsRetryCount = 0;
 			this.stopWsClient();
 			if (data.wssPath) {
 				var startWssClient = () => {
 					var wsProtocol = (location.protocol == "https:") ? "wss" : "ws";
 					var wssUrl = wsProtocol + '://' + this.webApiHost + data.wssPath;
 					// websock client to keep the device locations latest
-					var ws = this.activeWsClient = Observable.webSocket(wssUrl);
-					this.activeWsSubscribe = ws.subscribe((data: any) => {
+					var ws = this.activeWsClient = webSocket(wssUrl);
+					this.activeWsSubscribe = ws.pipe(retry(10)).subscribe((data: any) => {
 						if (data.type === "region") {
 							this.provider.setRegionState(data.region_id, data.state);
 						} else if (data.type === "probe") {
 							this.provider.addDeviceSamples(data.region_id, data.devices, false);
 						}
-						this.wsRetryCount = 0; // connected
-					}, (e) => {
-						if (e.type === 'close' || this.wsRetryCount++ < 3) {
-							this.activeWsSubscribe = null;
-							ws.socket.close(); //closeObserver(); observer.dispose();
-							// handle close event
-							if (ws === this.activeWsClient) { // reconnect only when this ws is active ws
-								if (e.type === 'close') {
-									console.log('DEBUG-MAP: got wss socket close event. reopening...');
-								} else {
-									console.log('DEBUG-MAP: got unexpected connection error. reopening... (' + this.wsRetryCount + ')');
-								}
-								this.activeWsClient = null;
-								startWssClient(); // restart!
-								return;
-							}
-						}
-						// error
-						console.error('DEBUG-MAP: Unrecoverable event from WebSock: ', e);
 					});
 				};
 				startWssClient(); // start wss

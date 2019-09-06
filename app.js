@@ -97,7 +97,7 @@ app.get('/webclient/settings*', function (req, res) { res.status(200).sendFile(w
 // development only
 if ('development' === app.get('env')) {
 	app.use(function (req, res, next) {
-		var err = new Error('Not Found');
+		var err = new Error(`Not Found (${req.url})`);
 		err.status = 404;
 		next(err);
 	});

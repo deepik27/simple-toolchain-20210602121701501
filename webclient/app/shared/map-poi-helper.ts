@@ -9,7 +9,8 @@
  */
 import * as ol from "openlayers";
 import { Injectable } from "@angular/core";
-import { Observable } from 'rxjs/Observable';
+import { of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { POIService } from "./iota-poi.service";
 import{ MapItemHelper } from "./map-item-helper";
 import{ Item } from "./map-item-helper";
@@ -76,7 +77,7 @@ export class MapPOIHelper extends MapItemHelper<POI> {
   // query items within given area
   public queryItems(min_longitude: number, min_latitude: number, max_longitude: number, max_latitude: number) {
     if (!this.isAvailable) {
-      return Observable.of([]);
+      return of([]);
     }
     let center_latitude = (max_latitude + min_latitude) / 2;
     let center_longitude = (max_longitude + min_longitude) / 2;
@@ -86,11 +87,11 @@ export class MapPOIHelper extends MapItemHelper<POI> {
         longitude: center_longitude,
         radius: radius,
         properties: this.queryProperties
-    }).map(data => {
+    }).pipe(map(data => {
       return data.map(function(poi) {
         return new POI(poi);
       });
-    });
+    }));
   }
 
   /*
@@ -120,9 +121,9 @@ export class MapPOIHelper extends MapItemHelper<POI> {
 
   // query items within given area
   public getItem(id: string) {
-    return this.poiService.getPOI(id).map(data => {
+    return this.poiService.getPOI(id).pipe(map(data => {
       return new POI(data);
-    });
+    }));
   }
 
   public createItemFeatures(poi: POI) {

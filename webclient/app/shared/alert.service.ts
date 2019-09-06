@@ -9,8 +9,8 @@
  */
 import { Injectable } from "@angular/core";
 import { HttpClient } from "./http-client";
-import { Response, Headers, RequestOptions } from "@angular/http";
-import { Observable } from "rxjs/Observable";
+import { Observable } from "rxjs/index.js";
+import { map } from 'rxjs/operators';
 
 @Injectable()
 export class AlertService {
@@ -22,9 +22,9 @@ export class AlertService {
     let url = "/user/alert?" + condition;
     console.log("get alert: " + url);
 
-    return this.http.get(url).map(data => {
+    return this.http.get(url).pipe(map(data => {
       let resJson = data.json();
       return resJson;
-    });
+    }));
   }
 }

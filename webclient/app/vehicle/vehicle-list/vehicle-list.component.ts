@@ -7,12 +7,12 @@
  *
  * You may not use this file except in compliance with the license.
  */
+import * as _ from 'underscore';
+
 import { Component, Input } from '@angular/core';
 import { HttpClient } from '../../shared/http-client';
 import { Response, Headers, RequestOptions } from '@angular/http';
-import { Observable } from 'rxjs/Observable';
-import { OrderByPipe } from '../../utils/order-by.pipe';
-import { MomentPipe } from '../../utils/moment.pipe';
+import { map } from 'rxjs/operators';
 
 @Component({
   moduleId: module.id,
@@ -223,12 +223,12 @@ export class VehicleListComponent {
   private _getVehicles(numRecInPage: number, pageNumber: number) {
     let url = "/user/vehicle?num_rec_in_page=" + numRecInPage + "&num_page=" + pageNumber;
     return this.http.get(url)
-      .map((response: any) => {
+      .pipe(map((response: any) => {
         let resJson = response.json();
         return resJson && resJson.data.map(v => {
           return new Vehicle(v, this.vendors);
         });
-      });
+      }));
   }
 
   // Create a vehicle with given data
@@ -311,12 +311,12 @@ export class VehicleListComponent {
   private _getVendors() {
     let url = "/user/vendor?num_rec_in_page=50&num_page=1";
     return this.http.get(url)
-      .map((response: Response) => {
+      .pipe(map((response: Response) => {
         let resJson = response.json();
         return resJson && resJson.data.map(v => {
           return new Vendor(v);
         });
-      });
+      }));
   }
 }
 

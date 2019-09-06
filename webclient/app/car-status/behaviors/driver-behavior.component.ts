@@ -8,12 +8,11 @@
  * You may not use this file except in compliance with the license.
  */
 import * as ol from 'openlayers';
+import * as _ from 'underscore';
 
 import { ActivatedRoute, Params } from '@angular/router';
 import { Component, Input, Output, OnInit, OnChanges, OnDestroy, SimpleChange, ViewChild } from '@angular/core';
 import { HttpClient } from '../../shared/http-client';
-import { Response, Headers, RequestOptions } from '@angular/http';
-import { Observable } from 'rxjs/Observable';
 import { MapHelper } from '../../shared/map-helper';
 import { MapEventHelper } from '../../shared/map-event-helper';
 import { EventService } from '../../shared/iota-event.service';
@@ -24,8 +23,6 @@ import { POIService } from '../../shared/iota-poi.service';
 import { DriverBehaviorService } from '../../shared/iota-driver-behavior.service';
 import { LocationService, MapArea } from '../../shared/location.service';
 import { AlertService } from '../../shared/alert.service';
-import { _resolveDefaultAnimationDriver } from '@angular/platform-browser/src/browser';
-import { resolve6 } from 'dns';
 
 declare var $; // jQuery from <script> tag in the index.html
 // as bootstrap type definitoin doesn't extend jQuery $'s type definition
@@ -143,7 +140,7 @@ export class DriverBehaviorComponent implements OnInit {
 			target: document.getElementById(this.mapElementId),
 			layers: [
 				new ol.layer.Tile({
-					source: new ol.source.OSM(<ol.Object>{}),
+					source: new ol.source.OSM(<ol.olx.source.OSMOptions>{}),
 					preload: 4,
 				}),
 				this.mapGeofenceLayer,

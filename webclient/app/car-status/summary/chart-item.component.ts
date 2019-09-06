@@ -9,10 +9,12 @@
  */
 import { Component, EventEmitter, AfterContentInit, Input, Output, ViewChild, ContentChild } from '@angular/core';
 
-import { RealtimeDeviceData, RealtimeDeviceDataProvider } from '../../shared/realtime-device';
 import { CarStatusDataService } from './car-status-data.service';
+import { distinctUntilChanged } from 'rxjs/operators';
 
 import * as c3 from 'c3';
+import * as d3 from 'd3';
+import * as _ from 'underscore';
 
 @Component({
   moduleId: module.id,
@@ -41,14 +43,14 @@ export class ChartItemComponent implements AfterContentInit {
   }
 
   ngAfterContentInit() {
-//    var e = this.chartDiv.nativeElement
+    //    var e = this.chartDiv.nativeElement
     var opts = {
       bindto: this.chartSelector,
       data: {
         columns: [],
         type: this.chartType,
         order: null,
-        selection: {enabled: false},
+        selection: { enabled: false },
         // onselected: (d => {
         //   // console.log(d)
         //   // var allSelected = <any>this.chart.selected();          console.log(allSelected);
@@ -60,17 +62,17 @@ export class ChartItemComponent implements AfterContentInit {
         //   this.selectionChange.emit({key: this.aggrKey, value: null});
         // }),
         onclick: (d => {
-          this.selectionChange.emit({key: this.aggrKey, value: d.id});
+          this.selectionChange.emit({ key: this.aggrKey, value: d.id });
         }),
       },
       color: {
-        pattern: ['#f05153','#f67734','#58a946', '#3774ba', '#01b39e']
+        pattern: ['#f05153', '#f67734', '#58a946', '#3774ba', '#01b39e']
       },
       axis: {
         rotated: (this.chartRotated === 'true'),
       },
     };
-    if (this.chartType === 'donut'){
+    if (this.chartType === 'donut') {
       (<any>opts).donut = {
         title: this.title,
       };
@@ -79,31 +81,32 @@ export class ChartItemComponent implements AfterContentInit {
       this.chart = c3.generate(opts);
       // keep sending data
       this.dataSubscription = this.carStatusData.getColumns(this.aggrKey)
-        .distinctUntilChanged((x, y) => _.isEqual(x, y))
+        .pipe(distinctUntilChanged((x, y) => _.isEqual(x, y)))
         .subscribe(data => {
-          this.chart.load({columns: data});
+          const array = data as Array<[string, ...c3.PrimitiveArray]>;
+          this.chart.load({ columns: array });
         });
     }, 100);
 
   }
 
   ngOnDestroy() {
-    if(this.dataSubscription){
+    if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
       this.dataSubscription = null;
     }
   }
 
-  private refresh(data){
+  private refresh(data) {
     // update chart if the chart library is loaded
-    if(this.chart && this.chart.load){
+    if (this.chart && this.chart.load) {
       this.chart.load({
         columns: data.columns,
       });
     }
 
     // update title
-    if (this.chartType === 'donut'){
+    if (this.chartType === 'donut') {
       let sel = d3.select(this.chartSelector + ' .c3-chart-arcs-title');
       (<any>sel.node()).innerHTML = 'Avg: ' + parseFloat(data.average).toFixed(1);
       sel.attr('fill', '#3a6284');

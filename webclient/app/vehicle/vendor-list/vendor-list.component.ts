@@ -10,7 +10,7 @@
 import { Component, Input } from '@angular/core';
 import { HttpClient } from '../../shared/http-client';
 import { Response, Headers, RequestOptions } from '@angular/http';
-import { Observable }     from 'rxjs/Observable';
+import { map } from 'rxjs/operators';
 
 @Component({
   moduleId: module.id,
@@ -122,12 +122,12 @@ export class VendorListComponent {
     this.errorMessage = null;
     let url = "/user/vendor?num_rec_in_page=50&num_page=1";
     return this.http.get(url)
-    .map((response: Response) => {
+    .pipe(map((response: Response) => {
       let resJson = response.json();
       return resJson && resJson.data.map(function(v) {
           return new Vendor(v);
       });
-    });
+    }));
   }
 
   // Create a vendor with given data

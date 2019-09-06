@@ -12,7 +12,9 @@ import { Router } from '@angular/router';
 
 import * as ol from 'openlayers';
 import * as _ from 'underscore';
-import { Observable } from 'rxjs/Observable';
+import * as moment from 'moment';
+import { interval } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { MapHelper } from '../../shared/map-helper';
 import { MapEventHelper } from '../../shared/map-event-helper';
@@ -52,13 +54,13 @@ var NEXT_MAP_ELEMENT_ID = 1;
 
 
 @Component({
-  moduleId: module.id,
-  selector: 'fmdash-realtime-map',
-  templateUrl: 'realtime-map.component.html',
+	moduleId: module.id,
+	selector: 'fmdash-realtime-map',
+	templateUrl: 'realtime-map.component.html',
 })
 export class RealtimeMapComponent implements OnInit {
-  @Input() region: any;
-  @Output() extentChanged = new EventEmitter<any>();
+	@Input() region: any;
+	@Output() extentChanged = new EventEmitter<any>();
 
 	// DEBUG flag
 	DEBUG = false;
@@ -87,7 +89,7 @@ export class RealtimeMapComponent implements OnInit {
 	animatedDeviceManager: RealtimeDeviceDataProvider;
 	animatedDeviceManagerService: RealtimeDeviceDataProviderService;
 
-  constructor(
+	constructor(
 		private router: Router,
 		animatedDeviceManagerService: RealtimeDeviceDataProviderService,
 		private eventService: EventService,
@@ -158,7 +160,7 @@ export class RealtimeMapComponent implements OnInit {
 			layers: [
 				new ol.layer.Tile({
 					//source: new ol.source.MapQuest({layer: 'sat'}),
-					source: new ol.source.OSM(<ol.Object>{
+					source: new ol.source.OSM(<ol.olx.source.OSMOptions>{
 						//wrapX: false,
 						//url: 'url: //{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png', // default
 					}),
@@ -175,25 +177,25 @@ export class RealtimeMapComponent implements OnInit {
 				zoom: ((this.region && this.region.zoom) || DEFAULT_ZOOM)
 			}),
 		});
-    // add helpers
-    this.mapHelper = new MapHelper(this.map, function (coordinate, feature, layer) {
-      let item = feature.get("item");
-      if (item) {
-        let helper = this.mapItemHelpers[item.getItemType()];
-        if (helper && helper.hitTest) {
-          return helper.hitTest(item, feature, ol.proj.toLonLat(coordinate, undefined));
-        }
-      }
-      return true;
-    }.bind(this));
+		// add helpers
+		this.mapHelper = new MapHelper(this.map, function (coordinate, feature, layer) {
+			let item = feature.get("item");
+			if (item) {
+				let helper = this.mapItemHelpers[item.getItemType()];
+				if (helper && helper.hitTest) {
+					return helper.hitTest(item, feature, ol.proj.toLonLat(coordinate, undefined));
+				}
+			}
+			return true;
+		}.bind(this));
 		this.mapItemHelpers["event"] = new MapEventHelper(this.map, this.mapEventsLayer, this.eventService);
-    this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, { itemLabel: "Boundary" });
+		this.mapItemHelpers["geofence"] = new MapGeofenceHelper(this.map, this.mapGeofenceLayer, this.geofenceService, { itemLabel: "Boundary" });
 		this.mapItemHelpers["poi"] = new MapPOIHelper(this.map, this.mapPOILayer, this.poiService);
 
 		/*
 		* Monitor devices to update affected events. If there are affected events, highlight the events
 		*/
-		let eventMonitor = Observable.interval(2000).map(() => {
+		let eventMonitor = interval(2000).pipe(map(() => {
 			// get all the alerts here
 			return _.union(_.flatten(this.animatedDeviceManager.getDevices()
 				.filter(device => (device.latestSample.info &&
@@ -206,7 +208,7 @@ export class RealtimeMapComponent implements OnInit {
 						.map(alert => { return alert.source.id; });
 					return _.uniq(ids);
 				})));
-		});
+		}));
 		eventMonitor.subscribe(data => {
 			let helper = this.mapItemHelpers["event"];
 			if (helper) {
@@ -393,7 +395,7 @@ export class RealtimeMapComponent implements OnInit {
 		let getSeverityColor = (sev: number) => ['green', 'blue', 'orange', 'red'][sev];
 
 		let severityToValue = { Critical: 3, High: 'red', Medium: 'orange', Low: 'orange', Info: 'blue' };
-		let alertsProvider = Observable.interval(2000).map(() => {
+		let alertsProvider = interval(2000).pipe(map(() => {
 			// get all the alerts here
 			let result = this.animatedDeviceManager.getDevices()
 				.filter(device => (device.latestSample.info &&
@@ -414,7 +416,7 @@ export class RealtimeMapComponent implements OnInit {
 							}</td></tr>`);
 						var content = `<table class="table table-hover table-striped"><tbody>\n` +
 							`<thead><tr><th>Messages</th><th>Severity</th></tr></thead>\n` +
-														rows.join('\n') +
+							rows.join('\n') +
 							`</tbody></table>`;
 						return content;
 					};
@@ -431,7 +433,7 @@ export class RealtimeMapComponent implements OnInit {
 					}
 				});
 			return result;
-		});
+		}));
 
 		// setup alert popover
 		// - 2. setup popover
@@ -595,7 +597,7 @@ export class RealtimeMapComponent implements OnInit {
 		}
 	}
 
-  selectDevice(deviceId: string) {
+	selectDevice(deviceId: string) {
 		// see if the device is loaded
 		var probe = new Promise((resolve, reject) => {
 			var dev = this.animatedDeviceManager.getDevice(deviceId);
@@ -619,7 +621,7 @@ export class RealtimeMapComponent implements OnInit {
 			}
 		}
 		setTimeout(showPopoverFunc, interval);
-  }
+	}
 }
 
 /***************************************************************
@@ -671,17 +673,17 @@ var getGroupStyle = function (device) {
 			text: countText,
 			font: "bold 16px monospace"
 		})
-		});
+	});
 };
 var CAR_STYLES = [];
 var CAR_STYLE_MAP = {};
 var GROUP_IMAGE_MAP = {};
 (function () {
 	var data = [['normal', 'img/car-blue.png'],
-		['available', 'img/car-green.png'],
-		['troubled', 'img/car-orange.png'],
-		['critical', 'img/car-red.png'],
-		['unknown', 'img/car-gray.png']];
+	['available', 'img/car-green.png'],
+	['troubled', 'img/car-orange.png'],
+	['critical', 'img/car-red.png'],
+	['unknown', 'img/car-gray.png']];
 	data.forEach(function (item) {
 		var status = item[0], icon = item[1];
 		var style = new ol.style.Style({
@@ -700,12 +702,12 @@ var GROUP_IMAGE_MAP = {};
 	});
 
 	var groupStatus = [{ status: "normal", fillColor: "rgba(149,207,96,0.9)", borderColor: "rgba(149,207,96,0.5)" },
-		{ status: "troubled", fillColor: "rgba(231,187,57,0.9)", borderColor: "rgba(231,187,57,0.5)" },
-		{ status: "critical", fillColor: "rgba(241,141,73,0.9)", borderColor: "rgba(241,141,73,0.5)" }];
+	{ status: "troubled", fillColor: "rgba(231,187,57,0.9)", borderColor: "rgba(231,187,57,0.5)" },
+	{ status: "critical", fillColor: "rgba(241,141,73,0.9)", borderColor: "rgba(241,141,73,0.5)" }];
 	var group = [{ id: 'small', radius: 15, border: 8 },
-		{ id: 'medium', radius: 30, border: 12 },
-		{ id: 'large', radius: 40, border: 14 },
-		{ id: 'x-large', radius: 60, border: 18 }];
+	{ id: 'medium', radius: 30, border: 12 },
+	{ id: 'large', radius: 40, border: 14 },
+	{ id: 'x-large', radius: 60, border: 18 }];
 	groupStatus.forEach(function (status) {
 		var statusImages = {};
 		group.forEach(function (item) {

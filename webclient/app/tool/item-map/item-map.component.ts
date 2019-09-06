@@ -11,6 +11,7 @@ import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChange
 import { Router } from '@angular/router';
 
 import * as ol from 'openlayers';
+import * as _ from 'underscore';
 
 import { MapHelper } from '../../shared/map-helper';
 import { MapEventHelper } from '../../shared/map-event-helper';
@@ -113,7 +114,7 @@ export class ItemMapComponent implements OnInit {
       target: document.getElementById(this.mapElementId),
       layers: [
         new ol.layer.Tile({
-          source: new ol.source.OSM(<ol.Object>{}),
+          source: new ol.source.OSM(<ol.olx.source.OSMOptions>{}),
           preload: 4,
         }),
         this.mapGeofenceLayer,

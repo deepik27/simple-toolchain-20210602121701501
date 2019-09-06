@@ -10,9 +10,6 @@
 import { Component } from '@angular/core';
 
 import { CarStatusDataService } from './summary/car-status-data.service';
-import { LocationService, MapArea } from '../shared/location.service';
-
-import { RealtimeDeviceDataProviderService } from '../shared/realtime-device-manager.service';
 
 @Component({
   moduleId: module.id,

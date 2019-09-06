@@ -9,8 +9,9 @@
  */
 import { Injectable } from "@angular/core";
 import { HttpClient } from "./http-client";
-import { Response, Headers, RequestOptions } from "@angular/http";
-import { Observable } from "rxjs/Observable";
+import { Headers, RequestOptions } from "@angular/http";
+import { Observable } from "rxjs/index.js";
+import { map } from 'rxjs/operators';
 
 @Injectable()
 export class AssetService {
@@ -93,10 +94,10 @@ export class AssetService {
 
     console.log("query: type=" + asset + "url=" + url);
 
-    return this.http.get(url).map(data => {
+    return this.http.get(url).pipe(map(data => {
         let resJson = data.json();
         return resJson.data;
-    });
+    }));
   }
 
   public getAsset(asset: string, id: string) {
@@ -104,10 +105,10 @@ export class AssetService {
 
     console.log("get: type=" + asset + "url=" + url);
 
-    return this.http.get(url).map(data => {
+    return this.http.get(url).pipe(map(data => {
         let resJson = data.json();
         return resJson;
-    });
+    }));
   }
 
   public cerateAsset(asset: string, params) {
@@ -118,10 +119,10 @@ export class AssetService {
 
     console.log("create: type=" + asset + "url=" + url);
 
-    return this.http.post(url, body, options).map(data => {
+    return this.http.post(url, body, options).pipe(map(data => {
         let resJson = data.json();
         return resJson;
-    });
+    }));
   }
 
   public updateAsset(asset: string, id: string, params) {
@@ -132,10 +133,10 @@ export class AssetService {
 
     console.log("update: type=" + asset + "url=" + url);
 
-    return this.http.put(url, body, options).map(data => {
+    return this.http.put(url, body, options).pipe(map(data => {
         let resJson = data.json();
         return resJson;
-    });
+    }));
   }
 
   public deleteAsset(asset: string, id) {
@@ -143,9 +144,9 @@ export class AssetService {
 
     console.log("delete: type=" + asset + "url=" + url);
 
-    return this.http.delete(url).map(data => {
+    return this.http.delete(url).pipe(map(data => {
         let resJson = data.json();
         return resJson;
-    });
+    }));
   }
 }

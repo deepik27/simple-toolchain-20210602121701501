@@ -8,10 +8,11 @@
  * You may not use this file except in compliance with the license.
  */
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable, interval } from 'rxjs';
+import { map, startWith, tap } from 'rxjs/operators';
 
 import { Counts } from './counts';
-import { RealtimeDeviceData, RealtimeDeviceDataProvider } from '../../shared/realtime-device';
+import { RealtimeDeviceDataProvider } from '../../shared/realtime-device';
 import { RealtimeDeviceDataProviderService } from '../../shared/realtime-device-manager.service';
 
 import * as _ from 'underscore';
@@ -25,10 +26,10 @@ export class NumberOfCarsService {
     this.animatedDeviceManager = animatedDeviceManagerService.getProvider();
   }
 
-  getNumberOfCars(region: any, interval = 3): Observable<Counts> {
+  getNumberOfCars(region: any, nInterval: number = 3): Observable<Counts> {
     var debugKey = Math.floor(Math.random() * 100);
-    return Observable.interval(interval * 1000)
-      .map(x => {
+    return interval(nInterval * 1000)
+      .pipe(map(x => {
         let devices = this.animatedDeviceManager.getDevices();
         let all = -1;
         let all_anbiguous = false;
@@ -49,9 +50,9 @@ export class NumberOfCarsService {
           critical = devices.filter(device => (device.latestSample && device.latestSample.alertLevel === 'critical')).length;
         }
         return <Counts>{ _region: region, all: all, all_anbiguous: all_anbiguous, troubled: troubled, critical: critical };
-      })
-      .startWith(loadingData)
-      .do(counts => this.log('getNumberOfCars(%s) item: %s', debugKey, counts.all));
+      }),
+      startWith(loadingData), 
+      tap(counts => this.log('getNumberOfCars(%s) item: %s', debugKey, counts.all)));
   }
 
   private log(...vargs) {

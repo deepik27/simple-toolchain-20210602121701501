@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016 IBM Corp. All Rights Reserved.
  *
  * Licensed under the IBM License, a copy of which may be obtained at:
  *
@@ -40,7 +40,7 @@ export class AreaSelectComponent {
 		if (this.extent) {
 			var area = this._matchPredefinedArea();
 			if (!area) {
-				area = this.areas.find(ares => area.id === "maplication");
+				area = this.areas.find(area => area.id === "maplication");
 				if (!area) {
 					area = { id: "maplocation", name: "Location selected in the Map Page", extent: this.extent };
 					this.areas.push(area);

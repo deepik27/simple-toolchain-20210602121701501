@@ -8,7 +8,7 @@
  * You may not use this file except in compliance with the license.
  */
 import * as ol from 'openlayers';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 
 /**
  * The default zoom value when the map `region` is set by `center`
@@ -220,7 +220,7 @@ export class MapHelper {
       var mapExt = ol.proj.transformExtent(region.extent, 'EPSG:4326', 'EPSG:3857'); // back to coordinate
       var view = this.map.getView();
       if (view.fit) {
-        view.fit(mapExt, this.map.getSize());
+        view.fit(mapExt, { size: this.map.getSize() });
       } else if ((<any>view).fitExtent) {
         view.setCenter([(mapExt[0] + mapExt[2]) / 2, (mapExt[1] + mapExt[3]) / 2]);
         (<any>view).fitExtent(mapExt, this.map.getSize());
@@ -464,7 +464,7 @@ export class MapHelper {
       var timer = 0;
       startUpdateTimer = function () {
         stopUpdateTimer();
-        timer = setTimeout(callUpdate, options.updateInterval);
+        timer = <any>setTimeout(callUpdate, options.updateInterval);
       };
       stopUpdateTimer = function () {
         if (timer) {
@@ -474,7 +474,7 @@ export class MapHelper {
       };
       var callUpdate = function () {
         updatePopOver(elm, currentPopoverFeature, currentPinned);
-        timer = setTimeout(callUpdate, options.updateInterval);
+        timer = <any>setTimeout(callUpdate, options.updateInterval);
       };
     } else {
       startUpdateTimer = function () { }; // nop
@@ -590,7 +590,7 @@ export class MapHelper {
           if (scheduleUpdateSizeTimer) {
             clearTimeout(scheduleUpdateSizeTimer);
           }
-          scheduleUpdateSizeTimer = setTimeout(function () {
+          scheduleUpdateSizeTimer = <any>setTimeout(function () {
             this_.map.updateSize();
             scheduleUpdateSizeTimer = 0;
           }, timeout);

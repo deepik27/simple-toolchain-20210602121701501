@@ -197,7 +197,7 @@ var initWebSocketServer = function (server, path) {
 		//
 		// This is invoked every TIMEOUT milliseconds to send the latest car probes to server
 		//
-		Q.allSettled(router.wsServer.clients.map(function (client) {
+		Q.allSettled(router.wsServer.clients.map && router.wsServer.clients.map(function (client) {
 			// Method to get request parameter to search car probes
 			function getQs() {
 				if (client.mo_id) {

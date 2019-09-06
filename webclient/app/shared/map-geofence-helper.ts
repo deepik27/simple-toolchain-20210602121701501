@@ -8,8 +8,11 @@
  * You may not use this file except in compliance with the license.
  */
 import * as ol from "openlayers";
+import * as _ from 'underscore';
+
 import { Injectable } from "@angular/core";
-import { Observable } from 'rxjs/Observable';
+import { of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { GeofenceService } from "./iota-geofence.service";
 import { MapItemHelper } from "./map-item-helper";
 import { Item } from "./map-item-helper";
@@ -243,28 +246,28 @@ export class MapGeofenceHelper extends MapItemHelper<Geofence> {
   // query items within given area
   public queryItems(min_longitude: number, min_latitude: number, max_longitude: number, max_latitude: number) {
     if (!this.isAvailable) {
-      return Observable.of([]);
+      return of([]);
     }
     return this.geofenceService.queryGeofences({
       min_latitude: min_latitude,
       min_longitude: min_longitude,
       max_latitude: max_latitude,
       max_longitude: max_longitude
-    }).map(data => {
+    }).pipe(map(data => {
       return data.map(function (geofence) {
         return new Geofence(geofence);
       });
-    });
+    }));
   }
 
   // get item with id
   public getItem(id: string) {
     if (!this.isAvailable) {
-      return Observable.of(null);
+      return of(null);
     }
-    return this.geofenceService.getGeofence(id).map(data => {
+    return this.geofenceService.getGeofence(id).pipe(map(data => {
       return new Geofence(data);
-    });
+    }));
   }
 
   public createItemFeatures(geofence: Geofence) {
