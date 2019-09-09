@@ -260,6 +260,7 @@ _.extend(driverInsightsAlert, {
 		var timer = this._alertTimer[mo_id];
 		clearTimeout(timer);
 		this._alertTimer[mo_id] = setTimeout(function () {
+			probe.ts = probe.ts + ALERT_LIFE_SPAN;
 			self.closeAlertFromEvents(probe);
 		}, ALERT_LIFE_SPAN);
 	},

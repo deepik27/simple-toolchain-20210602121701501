@@ -24,7 +24,7 @@ if (userVcapSvc.cloudantNoSQLDB) {
 	cloudantCreds = userVcapSvc.cloudantNoSQLDB[0].credentials;
 }
 
-var Cloudant = require('cloudant');
+var Cloudant = require('@cloudant/cloudant');
 
 /*
  * Cloudant library initialization option

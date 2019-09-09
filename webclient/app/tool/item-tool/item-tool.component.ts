@@ -31,12 +31,12 @@ export class ItemToolComponent implements OnInit {
   supportedItems = ["event"];
   eventTypes = [];
   selectedEventType = null;
-  eventDirections = [{label: "North", value: 0}, {label: "North East", value: 45}, {label: "East", value: 90}, {label: "South East", value: 135},
-                      {label: "South", value: 180}, {label: "South West", value: 225}, {label: "West", value: 270}, {label: "North West", value: 315}];
+  eventDirections = [{ label: "North", value: 0 }, { label: "North East", value: 45 }, { label: "East", value: 90 }, { label: "South East", value: 135 },
+  { label: "South", value: 180 }, { label: "South West", value: 225 }, { label: "West", value: 270 }, { label: "North West", value: 315 }];
   eventDirection: number = 0;
-  geofenceTypes = [{label: "Rectangle", value: "rectangle"}, {label: "Circle", value: "circle"}];
+  geofenceTypes = [{ label: "Rectangle", value: "rectangle" }, { label: "Circle", value: "circle" }];
   geofenceType: string = "rectangle";
-  geofenceDirections =  [{label: "OUT", value: "out"}, {label: "IN", value: "in"}];
+  geofenceDirections = [{ label: "OUT", value: "out" }, { label: "IN", value: "in" }];
   geofenceDirection: string = "out";
   geofenceUseTargetArea: boolean = false;
   dummyVehicle: Vehicle = new Vehicle({});
@@ -59,12 +59,12 @@ export class ItemToolComponent implements OnInit {
     private geofenceService: GeofenceService,
     private poiService: POIService,
     private assetService: AssetService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.eventService.getEventTypes().subscribe(data => {
       if (data.length > 0) {
-        data.sort(function(a, b) {
+        data.sort(function (a, b) {
           return a.description && b.description && a.description.localeCompare(b.description);
         });
         this.eventTypes = data;
@@ -127,27 +127,27 @@ export class ItemToolComponent implements OnInit {
 
     this.inputPOIFile = null;
     this.poiService.uploadPOIFile(event.target.files[0], mo_id, serialnumber)
-    .subscribe((result: any) => {
-      if (result.created > 0) {
-        let helper = this.itemMap.mapItemHelpers["poi"];
-        helper.updateView();
+      .subscribe((result: any) => {
+        if (result.created > 0) {
+          let helper = this.itemMap.mapItemHelpers["poi"];
+          helper.updateView();
 
-        alert("POIs " + (targetname?(" for " + targetname + " "):"") + "were created.");
-      } else {
-        alert("No POI was included.");
-      }
-    }, (error: any) => {
-      alert("Failed to crate POIs.")
-    });
+          alert("POIs " + (targetname ? (" for " + targetname + " ") : "") + "were created.");
+        } else {
+          alert("No POI was included.");
+        }
+      }, (error: any) => {
+        alert("Failed to crate POIs.")
+      });
   }
 
   private _updateVehicleList(pageNumber: number) {
     let isRequestRoot = !this.requestSending;
     this.requestSending = true;
     this.assetService.getVehicles(pageNumber, this.numRecInPage)
-    .subscribe((vehicles: any) => {
+      .subscribe((vehicles: any) => {
         this.targetVehicles = vehicles.map(v => {
-            return new Vehicle(v);
+          return new Vehicle(v);
         });
         if (pageNumber == 1) {
           this.targetVehicles.splice(0, 0, this.dummyVehicle);
@@ -157,7 +157,7 @@ export class ItemToolComponent implements OnInit {
         if (isRequestRoot) {
           this.requestSending = false;
         }
-    }, (error: any) => {
+      }, (error: any) => {
         if (error.status === 400) {
           alert("Thre are no more vehicles.");
         } else if (pageNumber === 1 && error.status === 404) {
@@ -167,7 +167,7 @@ export class ItemToolComponent implements OnInit {
         if (isRequestRoot) {
           this.requestSending = false;
         }
-    });
+      });
   }
 
   onDeletePOI(event) {
@@ -180,20 +180,20 @@ export class ItemToolComponent implements OnInit {
     }
     let targetname = serialnumber || mo_id;
 
-		let size = this.itemMap.map.getSize();
-		if (!size || isNaN(size[0]) || isNaN(size[1])) {
-			return;
-		}
-		let ext = this.itemMap.map.getView().calculateExtent(size);
-		let extent = ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326');
+    let size = this.itemMap.map.getSize();
+    if (!size || isNaN(size[0]) || isNaN(size[1])) {
+      return;
+    }
+    let ext = this.itemMap.map.getView().calculateExtent(size);
+    let extent = ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326');
 
-		let center_latitude = (extent[1] + extent[3]) / 2;
+    let center_latitude = (extent[1] + extent[3]) / 2;
     let center_longitude = (extent[0] + extent[2]) / 2;
-		let radius = Math.ceil(this.poiService.calcDistance([center_longitude, center_latitude], [extent[2], extent[3]]) / 1000);
-		radius += 10; // search larger area
+    let radius = Math.ceil(this.poiService.calcDistance([center_longitude, center_latitude], [extent[2], extent[3]]) / 1000);
+    radius += 10; // search larger area
 
     let properties;
-    if (mo_id) properties = {mo_id: mo_id};
+    if (mo_id) properties = { mo_id: mo_id };
 
     return this.poiService.queryPOIs({
       latitude: center_latitude,
@@ -205,14 +205,14 @@ export class ItemToolComponent implements OnInit {
         alert("No POI was found.")
         return;
       }
-      let poi_ids = data.map(function(poi) {
+      let poi_ids = data.map(function (poi) {
         return poi.id;
       }).join(",");
       this.poiService.deletePOI(poi_ids).subscribe((data: any) => {
         let helper = this.itemMap.mapItemHelpers["poi"];
         helper.updateView();
 
-        alert("POIs " + (targetname?(" for " + targetname + " "):"") + "were deleted.");
+        alert("POIs " + (targetname ? (" for " + targetname + " ") : "") + "were deleted.");
       });
     }, (error: any) => {
       console.error(error);
@@ -227,7 +227,7 @@ export class ItemToolComponent implements OnInit {
 
     let helper = this.itemMap.mapItemHelpers[this.creationMode];
     let extent = this.itemMap.getMapExtent();
-    let loc = {longitude: Number(this.itemLongitude), latitude: Number(this.itemLatitude)};
+    let loc = { longitude: Number(this.itemLongitude), latitude: Number(this.itemLatitude) };
 
     let command = this.getLocationCommand(extent, loc);
     if (!helper || !command) {
@@ -238,10 +238,10 @@ export class ItemToolComponent implements OnInit {
     let commandId = helper.addTentativeItem(loc);
 
     return new Promise((resolve, reject) => {
-      return this.execute(command).then(function(result: any) {
+      return this.execute(command).then(function (result: any) {
         helper.setTentativeItemId(commandId, result.data.id, false);
         resolve(result);
-      }, function(error) {
+      }, function (error) {
         helper.removeTentativeItem(commandId);
         reject(error);
       });
@@ -261,7 +261,7 @@ export class ItemToolComponent implements OnInit {
       let r1 = helper.calcDistance([center_x, center_y], [center_x + offset_x, center_y]);
       let r2 = helper.calcDistance([center_x, center_y], [center_x, center_y + offset_y]);
       let radius = Math.min(r1, r2);
-      range = {longitude: center_x, latitude: center_y, radius: radius};
+      range = { longitude: center_x, latitude: center_y, radius: radius };
     } else if (this.geofenceType === "rectangle") {
       range = {
         min_latitude: extent.min_latitude + offset_y,
@@ -270,14 +270,14 @@ export class ItemToolComponent implements OnInit {
         max_longitude: extent.max_longitude - offset_x
       };
     }
-    let commandId = helper.addTentativeItem({geometry_type: this.geofenceType, geometry: range});
+    let commandId = helper.addTentativeItem({ geometry_type: this.geofenceType, geometry: range });
 
     return new Promise((resolve, reject) => {
-      let target = this.geofenceUseTargetArea ? {area: helper.createTargetArea(this.geofenceType, range, this.geofenceDirection)} : null;
-      return this.execute(new CreateGeofenceCommand(this.geofenceService, range, this.geofenceDirection, target)).then(function(result: any) {
+      let target = this.geofenceUseTargetArea ? { area: helper.createTargetArea(this.geofenceType, range, this.geofenceDirection) } : null;
+      return this.execute(new CreateGeofenceCommand(this.geofenceService, range, this.geofenceDirection, target)).then(function (result: any) {
         helper.setTentativeItemId(commandId, result.data.id, false);
         resolve(result);
-      }, function(error) {
+      }, function (error) {
         helper.removeTentativeItem(commandId);
         reject(error);
       });
@@ -296,10 +296,10 @@ export class ItemToolComponent implements OnInit {
     let helper = this.itemMap.mapItemHelpers[this.creationMode];
     let commandId = helper.addTentativeItem(loc);
     return new Promise((resolve, reject) => {
-      return this.execute(this.getLocationCommand(extent, loc)).then(function(result: any) {
+      return this.execute(this.getLocationCommand(extent, loc)).then(function (result: any) {
         helper.setTentativeItemId(commandId, result.data.id, true);
         resolve(result);
-      }, function(error) {
+      }, function (error) {
         helper.removeTentativeItem(commandId);
         reject(error);
       });
@@ -322,11 +322,11 @@ export class ItemToolComponent implements OnInit {
   execute(command) {
     return new Promise((resolve, reject) => {
       if (!command) {
-        return resolve({type: this.creationMode, data: null});
+        return resolve({ type: this.creationMode, data: null });
       }
       command.execute().subscribe(data => {
         this.itemMap.updateMapItems(command.getCommandTarget());
-        let result = {type: this.creationMode, data: data};
+        let result = { type: this.creationMode, data: data };
         resolve(result);
       }, error => {
         reject(error);
@@ -436,7 +436,7 @@ export class ToolCommand {
   public getCommandTarget() {
     return this.commandType;
   }
-  public execute() {};
+  public execute() { };
 }
 
 export class CreateEventCommand extends ToolCommand {
@@ -447,13 +447,13 @@ export class CreateEventCommand extends ToolCommand {
     let date = new Date();
     let currentTime = date.toISOString();
     let params: any = {
-        event_type: this.eventType.event_type,
-        s_latitude: this.loc.latitude,
-        s_longitude: this.loc.longitude,
-        event_time: currentTime,
-        start_time: currentTime,
-        heading: this.direction
-      };
+      event_type: this.eventType.event_type,
+      s_latitude: this.loc.latitude,
+      s_longitude: this.loc.longitude,
+      event_time: currentTime,
+      start_time: currentTime,
+      heading: this.direction
+    };
     if (this.eventType.description) {
       params.event_name = this.eventType.description;
     }
@@ -526,14 +526,14 @@ export class CreatePOICommand extends ToolCommand {
     let date = new Date();
     let currentTime = date.toISOString();
     let params: any = {
-        latitude: this.loc.latitude,
-        longitude: this.loc.longitude,
-        properties: {
-          mo_id: this.vehicle.__mo_id,
-          serialnumber: this.vehicle ? this.vehicle.serial_number : undefined,
-          name: this.name
-        }
-      };
+      latitude: this.loc.latitude,
+      longitude: this.loc.longitude,
+      properties: {
+        mo_id: this.vehicle.__mo_id,
+        serialnumber: this.vehicle ? this.vehicle.serial_number : undefined,
+        name: this.name
+      }
+    };
     return this.poiService.createPOI(params);
   }
 }
@@ -553,6 +553,7 @@ class Vehicle {
   __mo_id: string;
   mo_id: string; // The ID of the vehicle that is automatically generated by the system.
   siteid: string; // site id only for SaaS environment
+  iotcvaltmoid: string; // An alternative alias of the vehicle
   internal_mo_id: number; // The numerical ID of the vehicle that is automatically generated by the system.
   vendor: string = ""; // The vendor ID of the vehicle that is created from within the vendor's system.
   serial_number: string = ""; // The serial number of the vehicle.
@@ -566,7 +567,7 @@ class Vehicle {
     }
     this.__id = this.serial_number || this.mo_id;
     if (this.mo_id) {
-      this.__mo_id = this.siteid ? (this.siteid + ':' + this.mo_id) : this.mo_id;
+      this.__mo_id = this.iotcvaltmoid || (this.siteid ? (this.siteid + ':' + this.mo_id) : this.mo_id);
     }
   }
 }

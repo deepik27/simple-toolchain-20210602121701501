@@ -36,20 +36,20 @@
     //'angular2-in-memory-web-api': 'npm:angular2-in-memory-web-api',
 
     // additional external libraries
-    'openlayers':                 'https://cdnjs.cloudflare.com/ajax/libs/ol3/3.5.0/ol.js',
-    'd3':                         'https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.7/d3.js',
-    'c3':                         'https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.9/c3.js',
-    'moment':                     'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.min.js',
-    'underscore':                 'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.2/underscore-min.js',
+    'openlayers': 'https://cdnjs.cloudflare.com/ajax/libs/ol3/3.5.0/ol.js',
+    'd3': 'https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.7/d3.js',
+    'c3': 'https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.9/c3.js',
+    'moment': 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.min.js',
+    'underscore': 'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.2/underscore-min.js',
     // 'jquery':                     'https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js',
     // 'bootstrap':                  'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js',
   };
   // packages tells the System loader how to load when no filename and/or no extension
   var packages = {
-    'app':                        { main: 'main.js',  defaultExtension: 'js' },
-    'rxjs':                       { main: 'index.js',  defaultExtension: 'js' },
-    'rxjs/operators':             { main: 'index.js',  defaultExtension: 'js' },
-    'rxjs/websocket':             { main: 'index.js',  defaultExtension: 'js' },
+    'app': { main: 'main.js', defaultExtension: 'js' },
+    'rxjs': { main: 'index.js', defaultExtension: 'js' },
+    'rxjs/operators': { main: 'index.js', defaultExtension: 'js' },
+    'rxjs/websocket': { main: 'index.js', defaultExtension: 'js' },
   };
   // define metadata for Subresource Integrity
   var meta = {
@@ -57,7 +57,7 @@
       scriptLoad: true,
       integrity: 'sha256-ybQnvDcVTLFnbUmkq5oSsJ62Pij7mhFrdeUtnyYJnTk=',
       crossOrigin: 'anonymous',
-      exports: "ol"
+      exports: 'ol'
     },
     'https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.7/d3.js': {
       scriptLoad: true,
@@ -72,13 +72,14 @@
     'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.min.js': {
       scriptLoad: true,
       integrity: 'sha256-QTFbCMKzMsKmdagXusjKHMZIwzEJtpnGYJ/v/ArHklQ=',
-      crossOrigin: 'anonymous'
+      crossOrigin: 'anonymous',
+      exports: 'moment'
     },
     'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.2/underscore-min.js': {
       scriptLoad: true,
       integrity: 'sha256-LeGeo7heAyOd2cvjDZVFobWnzi8GYv6urz0tCIF56lw=',
       crossOrigin: 'anonymous',
-      exports: "_"
+      exports: '_'
     },
     // 'https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js': {
     //   scriptLoad: true,

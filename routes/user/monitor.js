@@ -153,7 +153,7 @@ router.get("/alert", function (req, res) {
 		conditions.push("ts:[" + (q.from || "0") + " TO " + (q.to || "Infinity") + "]");
 	}
 	var includeClosed = q.includeClosed === "true";
-	var limit = q.limit;
+	var limit = Number(q.limit) || null;
 
 	var extent = normalizeExtent(q);
 	var extentAsArray = [extent.max_lat, extent.max_lng, extent.min_lat, extent.min_lng];

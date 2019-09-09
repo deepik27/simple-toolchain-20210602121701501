@@ -144,7 +144,8 @@ export class AlertListComponent {
         self.http.get("/user/vehicle/" + fleetalert.mo_id)
           .subscribe((vehicleResponse: Response) => {
             var vehicle = vehicleResponse.json();
-            alerts = moid2alerts[vehicle.mo_id];
+            let mo_id = vehicle.iotcvaltmoid || (vehicle.siteid ? vehicle.siteid + ":" : "") + vehicle.mo_id;
+            alerts = moid2alerts[mo_id];
             if (vehicle.serial_number) {
               alerts.forEach((alert) => {
                 alert.serial_number = vehicle.serial_number;
@@ -169,7 +170,7 @@ export class AlertListComponent {
         var vehicleExist = false;
         this.alertValues = vehicles.map((vehicle) => {
           vehicleExist = vehicleExist || vehicle.mo_id === this.value;
-          let mo_id = (vehicle.siteid ? vehicle.siteid + ":" : "") + vehicle.mo_id;
+          let mo_id = vehicle.iotcvaltmoid || (vehicle.siteid ? vehicle.siteid + ":" : "") + vehicle.mo_id;
           return new PropValue(mo_id, vehicle.serial_number || mo_id);
         }).sort((a, b) => { return <any>(a.label > b.label) - <any>(b.label > a.label) });
         if (!vehicleExist && this.value !== "") {
