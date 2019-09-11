@@ -47,9 +47,9 @@
   // packages tells the System loader how to load when no filename and/or no extension
   var packages = {
     'app': { main: 'main.js', defaultExtension: 'js' },
-    'rxjs':                       { main: 'index.js',  defaultExtension: 'js' },
-    'rxjs/operators':             { main: 'index.js',  defaultExtension: 'js' },
-    'rxjs/websocket':             { main: 'index.js',  defaultExtension: 'js' },
+    'rxjs': { main: 'index.js', defaultExtension: 'js' },
+    'rxjs/operators': { main: 'index.js', defaultExtension: 'js' },
+    'rxjs/webSocket': { main: 'index.js', defaultExtension: 'js' },
   };
   var config = {
     paths: paths,

@@ -49,7 +49,7 @@
     'app': { main: 'main.js', defaultExtension: 'js' },
     'rxjs': { main: 'index.js', defaultExtension: 'js' },
     'rxjs/operators': { main: 'index.js', defaultExtension: 'js' },
-    'rxjs/websocket': { main: 'index.js', defaultExtension: 'js' },
+    'rxjs/webSocket': { main: 'index.js', defaultExtension: 'js' },
   };
   // define metadata for Subresource Integrity
   var meta = {
