@@ -11,7 +11,7 @@ import { Injectable, Inject } from '@angular/core';
 import { HttpClient } from './http-client';
 import { Request, Response, URLSearchParams } from '@angular/http';
 import { retry } from 'rxjs/operators';
-import { webSocket } from 'rxjs/websocket';
+import { webSocket } from 'rxjs/webSocket';
 
 import { RealtimeDeviceDataProvider } from './realtime-device';
 import { APP_CONFIG, AppConfig } from '../app-config';
