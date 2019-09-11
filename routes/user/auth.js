@@ -49,9 +49,7 @@ var authenticate = function (req, res, next) {
  * because this api is for demo purpose for convenience to switch application servers by mobile application
  */
 router.get('/qr/getPlatformCredentials', /*authenticate,*/ function (req, res) {
-	// const route = appEnv.url;
-	const route = "http://169.54.229.7:17427";
-	// const route = "http://localhost:6001";
+	const route = appEnv.url;
 
 	const user = APP_USER == "none" ? "" : APP_USER;
 	const pass = APP_PASSWORD == "none" ? "" : APP_PASSWORD;
