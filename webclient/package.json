@@ -35,7 +35,7 @@
 		"@types/core-js": "0.9.46",
 		"@types/jasmine": "2.8.7",
 		"@types/node": "12.7.0",
-		"@types/openlayers": "4.6.17",
+		"@types/openlayers": "3.18.41",
 		"@types/underscore": "1.8.2",
 		"concurrently": "^4.1.0",
 		"lite-server": "^2.5.4",

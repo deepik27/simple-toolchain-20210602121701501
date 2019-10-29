@@ -1,11 +1,17 @@
 /**
  * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
- * Licensed under the IBM License, a copy of which may be obtained at:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * You may not use this file except in compliance with the license.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChange, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
@@ -29,8 +35,8 @@ declare var $; // jQuery from <script> tag in the index.html
  * Additional styles, javascripts
  * my css: car-monitor.css
  * OpenLayers 3.5:
- *   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.5.0/ol.css" type="text/css">
- *   <script src="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.5.0/ol.js"></script>
+ *   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.18.2/ol.css" type="text/css">
+ *   <script src="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.18.2/ol.js"></script>
  * rx-lite 3.1.2, rxjs-dom 7.0.3:
  *   <script src="https://cdnjs.cloudflare.com/ajax/libs/rxjs/3.1.2/rx.lite.js"></script>
  *   <script src="https://cdnjs.cloudflare.com/ajax/libs/rxjs-dom/7.0.3/rx.dom.js"></script>
@@ -114,7 +120,7 @@ export class ItemMapComponent implements OnInit {
       target: document.getElementById(this.mapElementId),
       layers: [
         new ol.layer.Tile({
-          source: new ol.source.OSM(<ol.olx.source.OSMOptions>{}),
+          source: new ol.source.OSM(<olx.source.OSMOptions>{}),
           preload: 4,
         }),
         this.mapGeofenceLayer,

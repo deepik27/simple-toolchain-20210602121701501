@@ -1,11 +1,17 @@
 /**
  * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
- * Licensed under the IBM License, a copy of which may be obtained at:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * You may not use this file except in compliance with the license.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 /**
  * System configuration for Angular 2
@@ -36,7 +42,7 @@
     //'angular2-in-memory-web-api': 'npm:angular2-in-memory-web-api',
 
     // additional external libraries
-    'openlayers': 'https://cdnjs.cloudflare.com/ajax/libs/ol3/3.5.0/ol.js',
+    'openlayers': 'https://cdnjs.cloudflare.com/ajax/libs/ol3/3.18.2/ol.js',
     'd3': 'https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.7/d3.js',
     'c3': 'https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.9/c3.js',
     'moment': 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.min.js',
@@ -53,9 +59,9 @@
   };
   // define metadata for Subresource Integrity
   var meta = {
-    'https://cdnjs.cloudflare.com/ajax/libs/ol3/3.5.0/ol.js': {
+    'https://cdnjs.cloudflare.com/ajax/libs/ol3/3.18.2/ol.js': {
       scriptLoad: true,
-      integrity: 'sha256-ybQnvDcVTLFnbUmkq5oSsJ62Pij7mhFrdeUtnyYJnTk=',
+      integrity: 'sha256-35ctZ5IjfdsiXz703ODpJuj4EdJUiYL45o2kn1NKkaE=',
       crossOrigin: 'anonymous',
       exports: 'ol'
     },

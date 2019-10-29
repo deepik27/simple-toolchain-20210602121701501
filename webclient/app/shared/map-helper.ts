@@ -1,11 +1,17 @@
 /**
  * Copyright 2016,2019 IBM Corp. All Rights Reserved.
  *
- * Licensed under the IBM License, a copy of which may be obtained at:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/blob/master/LICENSE
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * You may not use this file except in compliance with the license.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 import * as ol from 'openlayers';
 import { Observable } from 'rxjs';
@@ -220,7 +226,7 @@ export class MapHelper {
       var mapExt = ol.proj.transformExtent(region.extent, 'EPSG:4326', 'EPSG:3857'); // back to coordinate
       var view = this.map.getView();
       if (view.fit) {
-        view.fit(mapExt, { size: this.map.getSize() });
+        view.fit(mapExt, this.map.getSize());
       } else if ((<any>view).fitExtent) {
         view.setCenter([(mapExt[0] + mapExt[2]) / 2, (mapExt[1] + mapExt[3]) / 2]);
         (<any>view).fitExtent(mapExt, this.map.getSize());
