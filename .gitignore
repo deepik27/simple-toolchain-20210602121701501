@@ -1,10 +1,12 @@
 # Ignore mac chache file
-.DS_Store
+/**/.DS_Store
 
 /.bin/
-/node_modules
+/**/node_modules
 /npm-debug.log*
-/_ghe_copy_repo.properties
 /public/stylesheets/minified
 /webclient/css/bundle
 VCAP_SERVICES.json
+
+/_ghe_copy_repo.properties
+/_ghe_tools/header-process-skipped-file-list.txt
