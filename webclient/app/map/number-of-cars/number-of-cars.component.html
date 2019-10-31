@@ -1,36 +1,52 @@
+<!------------------------------------------------------------------------------------------------
+   Copyright 2016,2017 IBM Corp. All Rights Reserved.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-------------------------------------------------------------------------------------------------->
 <div class="dashItem map-NumberOfCars primary" *ngIf="regionCounts$">
 
   <span *ngFor="let counts of regionCounts$ | async">
-  <div class="row">
-    <div class="column-6-med column-6-xs alignRight map-Number">
-      <i class="icon-car iconMarginRight"></i>{{(counts.all >= 0) ? (all_anbiguous ? (counts.all + '+') : counts.all) : '-'}}
-    </div>
-    <div class="column-6-med column-6-xs alignLeft map-Number-Side">
-      Cars in<br/>this area
-    </div>
-  </div>
-
-  <div class="divider-white"></div>
-
-  <div class="row noOffsetRow">
-    <div class="column-6-med column-6-xs alignCenter carStatsColumn">
-      <a [routerLink]="['/alert', {extent: region && region.extent || '', status: 'troubled'}]">
-        <i class="icon-car iconBlock orange"></i>
-        <strong>{{(counts.troubled >= 0) ? counts.troubled : '-'}}</strong>
-        <p>Troubled</p>
-      </a>
+    <div class="row">
+      <div class="column-6-med column-6-xs alignRight map-Number">
+        <i
+          class="icon-car iconMarginRight"></i>{{(counts.all >= 0) ? (all_anbiguous ? (counts.all + '+') : counts.all) : '-'}}
+      </div>
+      <div class="column-6-med column-6-xs alignLeft map-Number-Side">
+        Cars in<br />this area
+      </div>
     </div>
 
-    <div class="column-6-med column-6-xs alignCenter carStatsColumn">
-      <a [routerLink]="['/alert', {extent: region && region.extent || '', status: 'critical'}]">
-        <i class="icon-car iconBlock red"></i>
-        <strong>{{(counts.critical >= 0) ? counts.critical : '-'}}</strong>
-        <p>Critical</p>
-      </a>
-    </div>
+    <div class="divider-white"></div>
 
-  </div>
-</span>
+    <div class="row noOffsetRow">
+      <div class="column-6-med column-6-xs alignCenter carStatsColumn">
+        <a [routerLink]="['/alert', {extent: region && region.extent || '', status: 'troubled'}]">
+          <i class="icon-car iconBlock orange"></i>
+          <strong>{{(counts.troubled >= 0) ? counts.troubled : '-'}}</strong>
+          <p>Troubled</p>
+        </a>
+      </div>
+
+      <div class="column-6-med column-6-xs alignCenter carStatsColumn">
+        <a [routerLink]="['/alert', {extent: region && region.extent || '', status: 'critical'}]">
+          <i class="icon-car iconBlock red"></i>
+          <strong>{{(counts.critical >= 0) ? counts.critical : '-'}}</strong>
+          <p>Critical</p>
+        </a>
+      </div>
+
+    </div>
+  </span>
 </div><!-- end of Dash Item -->
 
 <div class="dashItem" *ngIf="regionsCounts$">

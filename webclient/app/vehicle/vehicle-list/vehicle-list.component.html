@@ -1,3 +1,18 @@
+<!------------------------------------------------------------------------------------------------
+   Copyright 2016,2019 IBM Corp. All Rights Reserved.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-------------------------------------------------------------------------------------------------->
 <div class="container-50 noTopPadding container-30-right">
 	<span class="loading" [hidden]="!requestSending"><img src="/images/loading.gif"></span>
 	<div class="error" [hidden]="!errorMessage">{{errorMessage}}</div>
@@ -26,19 +41,23 @@
 				<th class="firstRow">#</th>
 				<th>
 					<span class="sortable" (click)="onOrderBy(showMoId?'mo_id':'__id')">{{showMoId?'Vehicle ID':'Serial#'}}</span>
-					<span [ngClass]="orderByKey==='__id'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+					<span
+						[ngClass]="orderByKey==='__id'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 				</th>
 				<th>
 					<span class="sortable" (click)="onOrderBy('__vendorname')">Vendor</span>
-					<span [ngClass]="orderByKey==='__vendorname'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+					<span
+						[ngClass]="orderByKey==='__vendorname'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 				</th>
 				<th>
 					<span class="sortable" (click)="onOrderBy('model')">Model</span>
-					<span [ngClass]="orderByKey==='model'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+					<span
+						[ngClass]="orderByKey==='model'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 				</th>
 				<th>
 					<span class="sortable" (click)="onOrderBy('status')">Status</span>
-					<span [ngClass]="orderByKey==='status'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+					<span
+						[ngClass]="orderByKey==='status'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
 				</th>
 				<th></th>
 			</tr>
@@ -46,18 +65,25 @@
 		<tbody>
 			<tr *ngFor="let vehicle of (vehicles|orderBy:orderByKey:!ascendingOrder); let i = index">
 				<td class="firstRow dataTableCel">{{numRecInPage * (pageNumber - 1) + i + 1}}</td>
-				<td class="dataTableCel"><span title="{{showMoId?vehicle.__id:vehicle.__mo_id}}">{{(showMoId?vehicle.mo_id:vehicle.__id)||'-'}}</span></td>
+				<td class="dataTableCel"><span
+						title="{{showMoId?vehicle.__id:vehicle.__mo_id}}">{{(showMoId?vehicle.mo_id:vehicle.__id)||'-'}}</span></td>
 				<td class="dataTableCel">{{vehicle.__vendorname||'-'}}</td>
 				<td class="dataTableCel">{{vehicle.model||'-'}}</td>
 				<td class="dataTableCel">
 					<div class="radarCircles statusCel">
-						<span [attr.aria-label]="vehicle.status === 'active' ? 'active' : 'inactive'" class="statusCircle" [ngClass]="vehicle.status === 'active' ? 'greenStatus' : 'redStatus'" (click)="onToggleStatus(vehicle.mo_id)"></span>
-						<span [attr.aria-label]="vehicle.status === 'active' ? 'active' : 'inactive'" class="statusCircle" [ngClass]="vehicle.status === 'active' ? 'greenStatus greenStatusZoom' : ''" (click)="onToggleStatus(vehicle.mo_id)"></span>
+						<span [attr.aria-label]="vehicle.status === 'active' ? 'active' : 'inactive'" class="statusCircle"
+							[ngClass]="vehicle.status === 'active' ? 'greenStatus' : 'redStatus'"
+							(click)="onToggleStatus(vehicle.mo_id)"></span>
+						<span [attr.aria-label]="vehicle.status === 'active' ? 'active' : 'inactive'" class="statusCircle"
+							[ngClass]="vehicle.status === 'active' ? 'greenStatus greenStatusZoom' : ''"
+							(click)="onToggleStatus(vehicle.mo_id)"></span>
 					</div>
 				</td>
 				<td class="alignCenter actionTD dataTableCel">
-					<a class="icon-edit" (click)="selected_mo_id=null;onUpdate(vehicle.mo_id)" href="javascript:void(0)" title="Update"></a>
-					<a class="icon-delete" [ngClass]="vehicle.status != 'active' ? '' : 'hidden'" (click)="selected_mo_id=null;onDelete(vehicle.mo_id)" title="Delete"></a>
+					<a class="icon-edit" (click)="selected_mo_id=null;onUpdate(vehicle.mo_id)" href="javascript:void(0)"
+						title="Update"></a>
+					<a class="icon-delete" [ngClass]="vehicle.status != 'active' ? '' : 'hidden'"
+						(click)="selected_mo_id=null;onDelete(vehicle.mo_id)" title="Delete"></a>
 					<a class="icon-status" [routerLink]="['/carStatus', ''+vehicle.__mo_id]" title="Show Status"></a>
 				</td>
 			</tr>
@@ -72,7 +98,7 @@
 				<div class="row">
 					<label for="new_vendor" class="fieldLabel column-3-lg column-3-med column-3-sm">Vendor:</label>
 					<select id="new_vendor" class="column-7-lg column-7-med column-7-sm" [(ngModel)]="workingVehicle.vendor">
-							<option *ngFor="let vendor of vendors" value="{{vendor.vendor}}">{{vendor.name}}</option>
+						<option *ngFor="let vendor of vendors" value="{{vendor.vendor}}">{{vendor.name}}</option>
 					</select>
 				</div>
 				<div class="row">
@@ -81,13 +107,14 @@
 				</div>
 				<div class="row">
 					<label for="new_serial" class="fieldLabel column-3-lg column-3-med column-3-sm">Serial#:</label>
-					<input id="new_serial" class="column-7-lg column-7-med column-7-sm" [(ngModel)]="workingVehicle.serial_number">
+					<input id="new_serial" class="column-7-lg column-7-med column-7-sm"
+						[(ngModel)]="workingVehicle.serial_number">
 				</div>
 				<div class="row">
 					<label for="new_status" class="fieldLabel column-3-lg column-3-med column-3-sm">Status:</label>
 					<select id="new_status" class="column-7-lg column-7-med column-7-sm" [(ngModel)]="workingVehicle.status">
-							<option value="inactive">Inactive</option>
-							<option value="active">Active</option>
+						<option value="inactive">Inactive</option>
+						<option value="active">Active</option>
 					</select>
 				</div>
 			</div>

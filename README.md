@@ -1,3 +1,18 @@
+<!------------------------------------------------------------------------------------------------
+   Copyright 2016,2019 IBM Corp. All Rights Reserved.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-------------------------------------------------------------------------------------------------->
 # IBM IoT Connected Vehicle Insights - Fleet Management Starter Application
 
 The Fleet Management Starter Application for the IBM® IoT Connected Vehicle Insights SaaS offering demonstrates how quickly you can build an app on IBM Cloud to manage and monitor a fleet of vehicles in real time.
@@ -25,7 +40,7 @@ The Fleet Management Starter Application uses the following IBM Cloud services:
 To deploy and use the Fleet Management Starter Application, you need the following prerequisites.
 - An instance of IBM IoT Connected Vehicle Insights that is deployed and running on IBM SaaS.
 - An application Admin user is created. For more information about how to create an application Admin user, see the topic [Creating an application admin user](https://www.ibm.com/support/knowledgecenter/SSNQ4V_bas/iot-automotive/managing/assets/maximo_create_app_admin_user.html) in the IBM Knowledge Center.
-- You must have an IBM Cloud account. To sign up and get your account, go to https://www.ibm.com/cloud/ 
+- You must have an IBM Cloud account. To sign up and get your account, go to https://www.ibm.com/cloud/
 
 
 ## STEP-1. Create Application REST API User
@@ -36,9 +51,9 @@ To deploy and use the Fleet Management Starter Application, you need the followi
 3. Click the 'New Group' icon.
 4. Input a group name, for example `APPUSERGROUP`
 5. Open the Sites tab, select the check box for 'Authorize Group for All Sites'.
-6. Open the Storerooms tab, select the check box for 'Authorize Group for All Storerooms'. 
+6. Open the Storerooms tab, select the check box for 'Authorize Group for All Storerooms'.
 7. Open the GL Components tab, select the check box for 'Authorize Group for All GL Component Types'.
-8. Open the Applications tab, within the application table select the following applications individually. When you select an application, a set of application options display. For each application, select the related option in the following table, or select the check box for the listed options.  
+8. Open the Applications tab, within the application table select the following applications individually. When you select an application, a set of application options display. For each application, select the related option in the following table, or select the check box for the listed options.
 
    |  Application       |  Application option to select   |
    |----------------------------|-------------------------------|
@@ -48,14 +63,14 @@ To deploy and use the Fleet Management Starter Application, you need the followi
    |Rule Definitions (Automotive) |Grant Listed Options to this Application |
    |Companies (SP) |Grant Listed Options to this Application |
    |People (SP) |Grant Listed Options to this Application |
-9. Open the Object Structures tab, in the table select the following object structures individually. When you select an object structure, a set of object structure options display. For each object structure, select the related options in the following table.  
- 
+9. Open the Object Structures tab, in the table select the following object structures individually. When you select an object structure, a set of object structure options display. For each object structure, select the related options in the following table.
+
    |  Object Structure       |  Object Structure options to select   |
    |----------------------------|-------------------------------|
    |MXCLASSIFICATION |Read MXCLASSIFICATION  |
    |MXVENDOR |Delete MXVENDOR, Insert MXVENDOR, Read MXVENDOR, Save MXVENDOR |
    |MXORGANISATION |Read MXORGANISATION |
- 10. Save changes.  
+ 10. Save changes.
 
 ### Create an application user to access Maximo REST API
 1. Log in to Maximo as an application admin user.
@@ -67,7 +82,7 @@ To deploy and use the Fleet Management Starter Application, you need the followi
 - 'Password Should Expire After First Login?'
 6. Within User Settings, in the 'Default Insert Site' field, select DEFREG.
 7. Open the 'Groups' tab and click the 'Select Groups' button.
-8. Select the group that you created in the previous set of steps, for example `APPUSERGROUP`. 
+8. Select the group that you created in the previous set of steps, for example `APPUSERGROUP`.
 9. Click OK.
 10. Save changes.
 
@@ -78,12 +93,12 @@ To deploy and use the Fleet Management Starter Application, you need the followi
 1. Log in to Maximo as an application admin user.
 2. Select Go To > Administration > Classifications (SP)
 3. Click the 'New Classification' icon.
-4. In the 'Classification' field, enter a classification name, for example FLEET VEHICLE. 
-5. This classification ID will be used in an environment value for the starter app. 
+4. In the 'Classification' field, enter a classification name, for example FLEET VEHICLE.
+5. This classification ID will be used in an environment value for the starter app.
 6. In the 'Organisation' field, select an organisation. The default organisation is IOTFA.
 7. In the 'Region/Site' field, select a site. The default site is DEFREG.
-8. In the 'Use With' table, click 'New Row' and in the 'Use with Object' field select ASSET. 
-9. In the 'Attributes' table, click 'New Row' to add each attribute and related 'Data Type' value that is listed in the following table. Also, for each attribute deslect 'Use in Specifications'.  
+8. In the 'Use With' table, click 'New Row' and in the 'Use with Object' field select ASSET.
+9. In the 'Attributes' table, click 'New Row' to add each attribute and related 'Data Type' value that is listed in the following table. Also, for each attribute deslect 'Use in Specifications'.
 
    |  Attribute      |  Data Type   |
    |-----------------|--------------|
@@ -98,7 +113,7 @@ To deploy and use the Fleet Management Starter Application, you need the followi
 ### Get Organization ID
 1. Log in to Maximo as an application admin user.
 2. Select Go To > Administration > Organizations (Automotive)
-3. Find the oranization ID, for example IOTFA. The organization ID will be used in an environment value for the starter app. 
+3. Find the oranization ID, for example IOTFA. The organization ID will be used in an environment value for the starter app.
 
 
 ## <a id="deploying-the-app"></a> STEP-3. Deploying the app
@@ -109,7 +124,7 @@ Deploy the Fleet Management Starter Application on IBM Cloud either automaticall
 
 The automatic deployment option creates an instance of the app and the required IBM Cloud services, and also binds the services to the starter app automatically.
 To automatically deploy the Fleet Management Starter Application on IBM Cloud, click [![Deploy to IBM Cloud](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git) and complete step 1, you only complete step 2 if step 1 fails.
-1. Within the IBM Cloud landing page, enter details in each field, then select 'Deploy'. For more information about field details, see the following table. 
+1. Within the IBM Cloud landing page, enter details in each field, then select 'Deploy'. For more information about field details, see the following table.
 
    |  Field name      |  Sample details  |
    |-----------------|--------------|
@@ -128,8 +143,8 @@ To automatically deploy the Fleet Management Starter Application on IBM Cloud, c
     1. Within the DevOps navigation menu, select 'Toolchains'.
     1. Select 'Delivery Pipeline'.
     1. Select your `iota-starter-server-fm-saas-`.
-    1. In the Deploy Stage widget, select 'View logs and history'. 
-    1. If you see timing issues like `FleetCloudantDB is not ready...`, then select 'Run option again'.  
+    1. In the Deploy Stage widget, select 'View logs and history'.
+    1. If you see timing issues like `FleetCloudantDB is not ready...`, then select 'Run option again'.
 
 After the automated deployment, complete the following steps to configure the app to manually connect to your IBM IoT Connected Vehicle Insights SaaS service.
 
@@ -200,53 +215,49 @@ To manually deploy the Fleet Management Starter Application on IBM Cloud, comple
 **Result:** Your very own instance of the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application is now deployed on IBM Cloud.
 
 
-## STEP-4. Deploying custom plugins to your IBM IoT Connected Vehicle Insights instance
-To run the Fleet Management Starter Application with your IBM IoT Connected Vehicle Insights instance, the following two custom plugins must be deployed to your IBM IoT Connected Vehicle Insights instance. The source code of the plugins is contained in `plugins` folder under the Fleet Management Starter Application repository.
+## STEP-4. Deploying custom plug-ins to your IBM IoT Connected Vehicle Insights instance
+To run the Fleet Management Starter Application with your IBM IoT Connected Vehicle Insights instance, the following two custom plug-ins must be deployed to your IBM IoT Connected Vehicle Insights instance. The source code of the plug-ins is provided as sample plug-ins of IBM IoT Connected Vehicle Insights Plug-in Development Tool.
 
-|          Plugin        | Component              | Description                          |
+|          Plug-in        | Component              | Description                          |
 |------------------------|------------------------|--------------------------------------|
-| HttpActionNotifyClient | Vehicle Data Hub (VDH) | A VDH plugin that accepts sendCarProbe requests from simulated vehicles and POSTs affected events and notified messages to the Fleet Management Starter Application. |
-| FleetAlert             | Agent                  | A rule plugin that calculates fuel level from fuel tank capacity of a vehicle and remaining fuel in received probe. A fuel alert rule estimates the value to generate a fuel warning to be notified to the Fleet Management Starter Application. |
+| HttpActionNotifyClient | Vehicle Data Hub (VDH) | A VDH plug-in that accepts sendCarProbe requests from simulated vehicles and POSTs affected events and notified messages to the Fleet Management Starter Application. |
+| FleetAlert             | Agent                  | A rule plug-in that calculates moving average of each vechicle acceleration from recent car probes. A acceleration alert generate a quick acceleration or a harsh breaking warning to be notified to the Fleet Management Starter Application. |
 
-To build and deploy the plugins, complete the following steps:
+To build and deploy the plug-ins, complete the following steps:
 
 ### Prerequisites
-1. The IBM IoT Connected Vehicle Insights Plugin Deployment Tool must be installed on your IBM IoT Connected Vehicle Insights SaaS instance. Contact the system administrator for your IBM IoT Connected Vehicle Insights SaaS service to make a request to install it.
-1. The IBM IoT Connected Vehicle Insights Plugin Development Tool must be installed on your eclipse IDE, as outlined in the [IBM IoT Connected Vehicle Insights Knowledge Center](https://www.ibm.com/support/knowledgecenter/SSNQ4V_gbs/iot-automotive/customizing/plugin_dev_tool.html). To get access to the tool, contact your IBM IoT Connected Vehicle Insights system administrator.
-1. The Fleet Management Starter Application Git repository must be downloaded on your local environment. If you need to download the repository, you can clone it by using the following console command:
-    ```
-    git clone https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git
-    ```
+1. The IBM IoT Connected Vehicle Insights Plug-in Deployment Tool must be installed and enabled on your IBM IoT Connected Vehicle Insights SaaS instance. Contact the system administrator for your IBM IoT Connected Vehicle Insights SaaS service to make a request to enable it.
+1. The IBM IoT Connected Vehicle Insights Plug-in Development Tool must be installed on your eclipse IDE, as outlined in the [IBM IoT Connected Vehicle Insights Knowledge Center](https://www.ibm.com/support/knowledgecenter/SSNQ4V_gbs/iot-automotive/customizing/plugin_dev_tool.html). To get access to the tool, contact your IBM IoT Connected Vehicle Insights system administrator.
 
-### Install the IBM IoT Connected Vehicle Insights Plugin SDK on your eclipse IDE.
+### Install the IBM IoT Connected Vehicle Insights Plug-in Development Tool on your eclipse IDE.
 1. Install the Eclipse for Java EE developers
-1. Download the IoT4A Plug-in Development Tool ZIP file, see https://apps.na.collabserv.com/communities/service/html/communityview?communityUuid=8eba8e51-b567-4f19-82ac-e258fe4175e3#fullpageWidgetId=Wdef888a456c6_4fbc_a5b0_7fb5bd269680&folder=cf80a246-92dd-4493-85a1-c2d9ec9dc668. To get access to the tool, contact your IBM IoT Connected Vehicle Insights system administrator.
-1. Under <eclipse home>/dropins, create a folder named “IoT4ADevTool” 
-1. Expand the zip to <eclipse home>/dropins/IoT4ADevTool/. 
+1. Download the IBM IoT Connected Vehicle Insights Plug-in Development Tool ZIP file, see Plug-in SDK in the [IBM IoT Connected Vehicle Insights Knowledge Center: Developer resources](https://www.ibm.com/support/knowledgecenter/SSNQ4V_gbs/iot-automotive/iota_dev_kit/iota_dev_kit.html). To get access to the tool, contact your IBM IoT Connected Vehicle Insights system administrator.
+1. Under <eclipse home>/dropins, create a folder named “CVIDevTool”
+1. Expand the zip to <eclipse home>/dropins/CVIDevTool/.
    ```
-    <eclipse home>/dropins/IoT4ADevTool/ecipse/features/…  
-    <eclipse home>/dropins/IoT4ADevTool/ecipse/plugins/…
+    <eclipse home>/dropins/CVIDevTool/ecipse/features/…
+    <eclipse home>/dropins/CVIDevTool/ecipse/plugins/…
     ```
 1. Start Eclipse.
-       
-### Import plug-in projects for the starter app into eclipse workspace
-1. In Eclipse, select File > Import.
-1. Select General>Existing Projects into Workspace.
-1. Click Next.
-1. In 'Select root directory', enter <fleet management directory>/plugins 
-1. Select `FleetAlert` and `HttpActionNotifyClient`.
-1. Click **Finish**.
 
-### Export custom plugin jars
-1. In Elipse, within the package explorer view, right click FleetAlert project and select Expor.
-1. Select **Java > JAR file** 
+### Create sample plug-in projects for the starter app into eclipse workspace
+1. In Eclipse, select **File > New > Example...**.
+1. Select `IBM IoT Connected Vehicle Insights > IBM IoT Connected Vehicle Insights Plug-in Example`.
 1. Click **Next**.
-1. Ensure FleetAlert is checked. 
+1. Select `Vehicle Data Hub` for Project type
+1. Select `HTTP Action Notify Client` and click **Finish**
+1. In the same manner, create a `FleetAlert` project of `Rule` project type
+
+### Export custom plug-in jars
+1. In Elipse, within the package explorer view, right click the HttpActionNotifyClient project and select Export.
+1. Select **Java > JAR file**
+1. Click **Next**.
+1. Ensure `HttpActionNotifyClient` is checked.
 1. Input a file name in the **JAR file** field and click **Finish**.
-1. In the same manner, export the `HttpActionNotifyClient` project.
+1. In the same manner, export the `FleetAlert` project.
 
 ### Update a VDH configuration file (gatway.properties)
-1. Download a copy of the `gateway.properties` file that you deployed on the VDH server by using IBM IoT Connected Vehicle Insights Plugin Deploy Tool.
+1. Download a copy of the `gateway.properties` file that you deployed on the VDH server by using IBM IoT Connected Vehicle Insights Plug-in Deployment Tool.
 1. Open the `gateway.properties` file with a text editor.
 1. Increment `client.num` in the `gateway.properties` file.
 1. Insert the following two lines before the DefaultHTTPClient client definition.
@@ -272,11 +283,10 @@ To build and deploy the plugins, complete the following steps:
 
 A fragment of the gateway.properties file exists under `conf` folder of the `HttpActionNotifyClient` project. You can copy contents from the file.
 
-### Deploy custom plugins to IBM IoT Connected Vehicle Insights
-1. Deploy exported `HttpActionNotifyClient` jar and updated gateway.properties to a VDH server using IBM IoT Connected Vehicle Insights Plugin Deploy Tool.
-1. Deploy export the `FleetAlert` jar to an Agent server.
-1. Restart IBM IoT Connected Vehicle Insights components using IBM IoT Connected Vehicle Insights Plugin Deploy Tool as needed.
-
+### Deploy custom plug-ins to IBM IoT Connected Vehicle Insights
+1. Deploy exported `HttpActionNotifyClient` jar and updated gateway.properties to the VDH server using IBM IoT Connected Vehicle Insights Plug-in Deployment Tool.
+1. Deploy exported `FleetAlert` jar to the Agent server.
+1. Restart IBM IoT Connected Vehicle Insights components using IBM IoT Connected Vehicle Insights Plug-in Deployment Tool as needed.
 
 ## <a id="connect2cvi"></a> STEP-5. Connecting the app to your IBM IoT Connected Vehicle Insights service
 
@@ -293,15 +303,15 @@ To connect to your IBM IoT Connected Vehicle Insights service instance, the star
 
 To obtain the correct values, contact your system administrator.
 
-Key | Description of Value | Example 
+Key | Description of Value | Example
 ----- | ------------------------------------- | -----
 AUTOMOTTIVE_URL | A URL to call the REST API for IBM IoT Connected Vehicle Insights, which must end with a forward slash character (/) | [https://xxxx.automotive.](https://xxxx.automotive.internetofthings.ibmcloud.com/) <br> [internetofthings.ibmcloud.com/](https://xxxx.automotive.internetofthings.ibmcloud.com/)
-AUTOMOTIVE_USERNAME | User name for accessing the Vehicle Data Hub (VDH) and other IBM IoT Connected Vehicle Insights endpoints | iotcvusr 
-AUTOMOTIVE_PASSWORD | Password for accessing the VDH and other IBM IoT Connected Vehicle Insights endpoints | CVIPassword  
-AUTOMOTIVE_MAX_ORGID | IBM IoT Connected Vehicle Insights Organization specified in IBM Maximo Asset Management | IOTFA 
-AUTOMOTIVE_MAX_CLASSIFICATION_ID | Classification for vehicle data defined in Maximo Asset Management | FLEET VEHICLE 
-AUTOMOTIVE_MAX_USERNAME | User name for accessing the Maximo Asset Management API | starter 
-AUTOMOTIVE_MAX_PASSWORD | Password for accessing the Maximo Asset Management API | StarterPassword 
+AUTOMOTIVE_USERNAME | User name for accessing the Vehicle Data Hub (VDH) and other IBM IoT Connected Vehicle Insights endpoints | iotcvusr
+AUTOMOTIVE_PASSWORD | Password for accessing the VDH and other IBM IoT Connected Vehicle Insights endpoints | CVIPassword
+AUTOMOTIVE_MAX_ORGID | IBM IoT Connected Vehicle Insights Organization specified in IBM Maximo Asset Management | IOTFA
+AUTOMOTIVE_MAX_CLASSIFICATION_ID | Classification for vehicle data defined in Maximo Asset Management | FLEET VEHICLE
+AUTOMOTIVE_MAX_USERNAME | User name for accessing the Maximo Asset Management API | starter
+AUTOMOTIVE_MAX_PASSWORD | Password for accessing the Maximo Asset Management API | StarterPassword
 
 
 ## STEP-6. Configuring authentication
@@ -358,16 +368,16 @@ $ ibmcloud cf restage <app_name>
    f. Click 'Generate Key'.
    g. Copy API Key and Authentication Token.
 3. Enable MQTT Client on the CVI.
-   - Update the following VDH configuration files.  
-    
+   - Update the following VDH configuration files.
+
    | gateway.properties      |  pos_mapping_def.xml   |
    |----------------------------|-------------------------------|
    |Increment client.num |Append attributes for tenant_id, <br> engineTemp and fuel in SEND_CARPROBE command|
    |Add DefaultMQTTClient configuration |   |
-   
+
    - Deploy the VDH configuration files to VDH by using the plug-in deploy REST API.
    - Resart VDH by using the plug-in deploy REST API.
-   
+
 
 ### Bind the Watson IoT Platform service to the app
 

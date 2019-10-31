@@ -1,33 +1,50 @@
+<!------------------------------------------------------------------------------------------------
+   Copyright 2016,2019 IBM Corp. All Rights Reserved.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-------------------------------------------------------------------------------------------------->
 <div class="html-client-drive">
 	<h4>Define All Simulation Data: </h4>
 
-	<!-- 
-		Vehicle data simulation 
+	<!--
+		Vehicle data simulation
 	-->
 	<h5 class="categoryTitle">Vehicle Data</h5>
 	<div>
 		<span>
-			<select ng-model="vehicleDataName" ng-init="vehicleDataName = null"  ng-change="updateVehicleDataName()">
+			<select ng-model="vehicleDataName" ng-init="vehicleDataName = null" ng-change="updateVehicleDataName()">
 				<option ng-repeat="rule in rules" value="{{rule.propName}}">{{rule.label}}</option>
 			</select>
-			<input size=8 ng-disabled="!vehicleDataName" placeholder="Value" ng-model="vehicleDataValue" class="vehicleDataValue" ng-change="updateVehicleDataValue()" />
+			<input size=8 ng-disabled="!vehicleDataName" placeholder="Value" ng-model="vehicleDataValue"
+				class="vehicleDataValue" ng-change="updateVehicleDataValue()" />
 		</span>
 	</div>
 
-	<!-- 
-		Map for showing vehicle Location and route 
+	<!--
+		Map for showing vehicle Location and route
 	-->
 	<!-- Map -->
 	<div style="margin-top:15px;margin-bottom:15px;">
 		<div id="locationMap" class="locationMap">
 			<!-- Map Overlay -->
-			<button class="button mapCurrentLocation" ng-show="!traceCurrentLocation" ng-click="onCurrentLocation()">Current Location</button>
+			<button class="button mapCurrentLocation" ng-show="!traceCurrentLocation" ng-click="onCurrentLocation()">Current
+				Location</button>
 			<div class="mapProbe" ng-show="isDriving">
-							Location=({{drivingEvent.latitude||0}},{{drivingEvent.longitude||0}})<br> 
-							Speed={{(drivingEvent.speed/1.609344).toPrecision(3)}} MPH<br>
-							Heading={{(drivingEvent.heading).toPrecision(3)}}<br>
-							Fuel={{drivingEvent.props.fuel}}<br>
-							Engine Temperature={{(drivingEvent.props.engineTemp*9/5+32).toPrecision(3)}} F</div>
+				Location=({{drivingEvent.latitude||0}},{{drivingEvent.longitude||0}})<br>
+				Speed={{(drivingEvent.speed/1.609344).toPrecision(3)}} MPH<br>
+				Heading={{(drivingEvent.heading).toPrecision(3)}}<br>
+				Fuel={{drivingEvent.props.fuel}}<br>
+				Engine Temperature={{(drivingEvent.props.engineTemp*9/5+32).toPrecision(3)}} F</div>
 			<div class="mapMessage" ng-show="routeSearching">Searching route...</div>
 			<div class="ol-zoom ol-unselectable ol-control zoom2fit">
 				<button class="zoom-to-fit" ng-click="onZoomToFit()" title="Zoom To Fit">&#x2922;</button>
@@ -37,17 +54,19 @@
 		<div style="font-size: 11pt; font-weight: 400; margin-top:10px">
 			Route Selection:
 			<span ng-hide="!currentRouteMode">
-				<select class="routeMode" ng-disabled="isDriving || routeFixed" ng-model="currentRouteMode" ng-change="onChangeRouteMode()">
-					<option ng-repeat="mode in availableRouteModes" value="{{mode.value}}" ng-selected="currentRouteMode === mode.value">{{mode.label}}</option>
+				<select class="routeMode" ng-disabled="isDriving || routeFixed" ng-model="currentRouteMode"
+					ng-change="onChangeRouteMode()">
+					<option ng-repeat="mode in availableRouteModes" value="{{mode.value}}"
+						ng-selected="currentRouteMode === mode.value">{{mode.label}}</option>
 				</select>
 			</span>
 			{{routeDetails}}
 		</div>
 		<div id="console">{{console_message}}</div>
-  </div>
+	</div>
 
-	<!-- 
-		Route search options 
+	<!--
+		Route search options
 	-->
 	<h5 class="categoryTitle">Route Planner</h5>
 	<div>
@@ -56,31 +75,39 @@
 				<label>Set location on the map:</label>
 				<span style="white-space: nowrap;">
 					<span class="pointSelection">
-						<input type="checkbox" name="actionGroup" ng-change="onChangeMouseMode('start')" ng-disabled="isDriving" ng-model="mouseStartPositionMode" id="start">
+						<input type="checkbox" name="actionGroup" ng-change="onChangeMouseMode('start')" ng-disabled="isDriving"
+							ng-model="mouseStartPositionMode" id="start">
 						<label for="start">Origin</label>
-						<select ng-model="srcDirection" ng-options="dir.value as dir.label for dir in directions" ng-change="onChangeSrcDirection()" ng-disabled="isDriving"></select>
+						<select ng-model="srcDirection" ng-options="dir.value as dir.label for dir in directions"
+							ng-change="onChangeSrcDirection()" ng-disabled="isDriving"></select>
 					</span>
 				</span>
 				<span class="pointSelection">
-					<input type="checkbox" name="actionGroup" ng-change="onChangeMouseMode('destination')" ng-disabled="isDriving" ng-model="mouseDestinationMode" id="destination">
+					<input type="checkbox" name="actionGroup" ng-change="onChangeMouseMode('destination')" ng-disabled="isDriving"
+						ng-model="mouseDestinationMode" id="destination">
 					<label for="destination">Destination</label>
-					<select ng-model="dstDirection" ng-options="dir.value as dir.label for dir in directions" ng-change="onChangeDstDirection()" ng-disabled="isDriving">></select>
+					<select ng-model="dstDirection" ng-options="dir.value as dir.label for dir in directions"
+						ng-change="onChangeDstDirection()" ng-disabled="isDriving">></select>
 				</span>
 			</div>
 			<div class="routeOptions" style="white-space: nowrap;">
 				<select class="poiList" size="5" ng-model="selectedPOIID" ng-change="onPOISelected($index)">
-					<option ng-repeat="poi in assignedPOIs track by $index" value="{{poi.id}}" ng-selected="selectedPOIID === poi.id">{{$index+1}}. {{poi.properties.name}} @{{poi.latitude}},{{poi.longitude}}</option>
+					<option ng-repeat="poi in assignedPOIs track by $index" value="{{poi.id}}"
+						ng-selected="selectedPOIID === poi.id">{{$index+1}}. {{poi.properties.name}}
+						@{{poi.latitude}},{{poi.longitude}}</option>
 				</select>
 				<span class="poiListControl">
 					<div><button ng-disabled="isDriving" ng-click="onMoveUpPOI()">Up</button></div>
 					<div><button ng-disabled="isDriving" ng-click="onMoveDownPOI()">Down</button></div>
 					<div style="margin-top: 20px;"><button ng-disabled="isDriving" ng-click="onLoadPOI()">Reload</button></div>
 				</span>
-		 	</div>
+			</div>
 			<div class="routeOptions">
-				<input type="checkbox" ng-disabled="isDriving" ng-model="opt_avoid_events" ng-change="onAvoidEventChange()" id="avoid"><label for="avoid">Avoid events</label>
-				<input type="checkbox" ng-disabled="isDriving" ng-model="opt_route_loop" ng-change="onRouteLoop()" id="loop"><label for="loop">Loop the route</label>
-			</div> 
-</div>
+				<input type="checkbox" ng-disabled="isDriving" ng-model="opt_avoid_events" ng-change="onAvoidEventChange()"
+					id="avoid"><label for="avoid">Avoid events</label>
+				<input type="checkbox" ng-disabled="isDriving" ng-model="opt_route_loop" ng-change="onRouteLoop()"
+					id="loop"><label for="loop">Loop the route</label>
+			</div>
+		</div>
 	</div>
 </div>

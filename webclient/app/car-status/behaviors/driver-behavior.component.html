@@ -1,14 +1,31 @@
+<!------------------------------------------------------------------------------------------------
+   Copyright 2017,2019 IBM Corp. All Rights Reserved.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-------------------------------------------------------------------------------------------------->
 <div class="row">
 	<div class="column-12-med">
 		<div class="trip_label">
-		<span *ngIf="!trip || trip.length == 0" class="trip_datetime_label">Driving data <span *ngIf="!loading">(no trip)</span></span>
-		<span *ngIf="trip && trip.length >= 0" class="trip_datetime_label">Driving data: </span>
-		<select [(ngModel)]="selectedTrip" (change)="onTripChanged($event)" class="trip_datetime_label">
-			<optgroup label="The last {{maxTrips}} trips">
-				<option *ngFor="let t of tripList" [ngValue]="selectedTrip">From {{t.start_time|date:'short'}} to {{t.end_time|date:'short'}}</option>
-			</optgroup>
-		</select>
-		<span><button class="reload_button" (click)="loadDriverBehavior()">reload</button></span>
+			<span *ngIf="!trip || trip.length == 0" class="trip_datetime_label">Driving data <span *ngIf="!loading">(no
+					trip)</span></span>
+			<span *ngIf="trip && trip.length >= 0" class="trip_datetime_label">Driving data: </span>
+			<select [(ngModel)]="selectedTrip" (change)="onTripChanged($event)" class="trip_datetime_label">
+				<optgroup label="The last {{maxTrips}} trips">
+					<option *ngFor="let t of tripList" [ngValue]="selectedTrip">From {{t.start_time|date:'short'}} to
+						{{t.end_time|date:'short'}}</option>
+				</optgroup>
+			</select>
+			<span><button class="reload_button" (click)="loadDriverBehavior()">reload</button></span>
 		</div>
 	</div>
 	<div class="column-4-med">
@@ -19,11 +36,11 @@
 			<div *ngIf="!loading">
 				<div class="list-group">
 					<div class="list-group-item behavior-list-header">
-							<div>Driver Behavior</div>
+						<div>Driver Behavior</div>
 						<div>Occurrences</div>
-					</div>	
-					<a href="javascript:void(0)" class="list-group-item behavior-list-item"
-						*ngFor="let behavior of behaviors" (click)="setSelectedBehavior(behavior)" 
+					</div>
+					<a href="javascript:void(0)" class="list-group-item behavior-list-item" *ngFor="let behavior of behaviors"
+						(click)="setSelectedBehavior(behavior)"
 						[ngClass]="{active: behavior.name === (selectedBehavior && selectedBehavior.name)}">
 						<div>{{behavior.name}}</div>
 						<div>{{behavior.details.length}}</div>
@@ -39,9 +56,9 @@
 					<div class="list-group-item behavior-list-header">
 						<div>Alert</div>
 						<div>Type</div>
-					</div>	
-					<a href="javascript:void(0)" class="list-group-item behavior-list-item"
-						*ngFor="let alert of alerts" (click)="setSelectedBehavior(alert)" 
+					</div>
+					<a href="javascript:void(0)" class="list-group-item behavior-list-item" *ngFor="let alert of alerts"
+						(click)="setSelectedBehavior(alert)"
 						[ngClass]="{active: alert.name === (selectedBehavior && selectedBehavior.name)}">
 						<div>{{alert.name}}</div>
 						<div>{{alert.type}}</div>
@@ -63,19 +80,19 @@
 		</div>
 		<!-- driving behavior map -->
 		<div *ngIf="!loading" class="trip-details">
-				<table style="width:100%;">
-					<tbody>
+			<table style="width:100%;">
+				<tbody>
 					<tr class="list-group-item behavior-list-header">
 						<td style="width:50%">Driving profile</td>
 						<td style="width:35%;text-align:right;">Value</td>
 						<td style="width:15%"></td>
 					</tr>
-					<tr class="list-group-item behavior-list-item"
-					*ngFor="let feature of tripFeatures">
-					<td style="width:50%">{{feature.name}}</td>
-					<td style="width:35%;text-align:right;">{{ _isFiniteNumber(feature.value) ? (feature.value|number:'1.0-2') : (feature.value) }}</td>
-					<td style="width:15%;margin-left:10px;">{{feature.unit}}</td>
-				</tr>
+					<tr class="list-group-item behavior-list-item" *ngFor="let feature of tripFeatures">
+						<td style="width:50%">{{feature.name}}</td>
+						<td style="width:35%;text-align:right;">
+							{{ _isFiniteNumber(feature.value) ? (feature.value|number:'1.0-2') : (feature.value) }}</td>
+						<td style="width:15%;margin-left:10px;">{{feature.unit}}</td>
+					</tr>
 				</tbody>
 			</table>
 		</div>
