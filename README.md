@@ -123,7 +123,7 @@ Deploy the Fleet Management Starter Application on IBM Cloud either automaticall
 ### Automatically deploy the starter app on IBM Cloud
 
 The automatic deployment option creates an instance of the app and the required IBM Cloud services, and also binds the services to the starter app automatically.
-To automatically deploy the Fleet Management Starter Application on IBM Cloud, click [![Deploy to IBM Cloud](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git) and complete step 1, you only complete step 2 if step 1 fails.
+To automatically deploy the Fleet Management Starter Application on IBM Cloud, click [![Deploy to IBM Cloud](https://cloud.ibm.com/devops/setup/deploy/button.png)](https://cloud.ibm.com/devops/setup/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git) and complete step 1, you only complete step 2 if step 1 fails.
 1. Within the IBM Cloud landing page, enter details in each field, then select 'Deploy'. For more information about field details, see the following table.
 
    |  Field name      |  Sample details  |
@@ -156,7 +156,7 @@ Next: Go to [Connecting to IBM IoT Connected Vehicle Insights service](#connect2
 ### Manually deploy the starter app on IBM Cloud
 
 To manually deploy the Fleet Management Starter Application on IBM Cloud, complete all of the following steps:
-1. Log in to IBM Cloud. If you do not have an existing IBM Cloud account, click [Register][bluemix_signup_url] and follow the instructions to create an account.
+1. Log in to IBM Cloud. If you do not have an existing IBM Cloud account, click [Register][ibmcloud_signup_url] and follow the instructions to create an account.
 2. Download and install the [IBM Cloud CLI][cloud_foundry_url] tool.
 3. Clone the Fleet Management Starter Application to your local environment by using the following console command:
 
@@ -195,7 +195,7 @@ To manually deploy the Fleet Management Starter Application on IBM Cloud, comple
 8. By using the command line tool, connect to IBM Cloud and log in when prompted:
 
   ```
-  $ ibmcloud api https://api.ng.bluemix.net
+  $ ibmcloud api https://cloud.ibm.com
   $ ibmcloud login
   $ ibmcloud target --cf
   ```
@@ -295,7 +295,7 @@ After deploying the app on IBM Cloud, you must configure the app to connect to y
 ### Configuring IBM IoT Connected Vehicle Insights endpoints and credentials
 To connect to your IBM IoT Connected Vehicle Insights service instance, the starter app reads the REST API endpoints and credentials from an environment variable on IBM Cloud. Configure the environment variables as follows:
 
-1. Open the [IBM Cloud dashboard][bluemix_dashboard_url] in your browser.
+1. Open the [IBM Cloud dashboard][ibmcloud_dashboard_url] in your browser.
 1. Open your fleet management app deployed at [Deploying the app](#deploying-the-app) step.
 1. Select **Runtime** tab at the left navigation bar.
 1. Click **Environment variables**.
@@ -330,7 +330,7 @@ starter | Starter4Iot
 ## <a name="run"></a> STEP-7. Starting the app
 
 To start the Fleet Management Starter Application, complete one of the following steps.
-- Open the [IBM Cloud dashboard][bluemix_dashboard_url] and start the app.
+- Open the [IBM Cloud dashboard][ibmcloud_dashboard_url] and start the app.
 - Start the app from the terminal, use the following `ibmcloud`commands.
     1. Get starter application name, enter `$ ibmcloud cf apps`.
     2. Start application, enter `$ ibmcloud cf start $STARTER_APPLICATION_NAME`
@@ -381,7 +381,7 @@ $ ibmcloud cf restage <app_name>
 
 ### Bind the Watson IoT Platform service to the app
 
-1. Open the [IBM Cloud dashboard][bluemix_dashboard_url] in your browser.
+1. Open the [IBM Cloud dashboard][ibmcloud_dashboard_url] in your browser.
 1. Open the IBM IoT Connected Vehicle Insights service.
 1. Select **Connections** tab at the left navigation bar.
 1. Click **Connect New**.
@@ -455,6 +455,6 @@ For your questions, comments or suggestions to us, visit [IBM Community for IBM 
 - [IBM Watson IoT Platform Developers Community](https://developer.ibm.com/iotplatform)
 - [IBM Marketplace: IBM IoT Connected Vehicle Insights](https://www.ibm.com/us-en/marketplace/iot-for-automotive)
 
-[bluemix_dashboard_url]: https://cloud.ibm.com/resources
-[bluemix_signup_url]: https://cloud.ibm.com/registration
+[ibmcloud_dashboard_url]: https://cloud.ibm.com/resources
+[ibmcloud_signup_url]: https://cloud.ibm.com/registration
 [cloud_foundry_url]: https://cloud.ibm.com/docs/cli?topic=cloud-cli-install-ibmcloud-cli
