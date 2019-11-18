@@ -18,7 +18,7 @@ const simulatorManager = module.exports = {};
 const Q = require('q');
 const _ = require('underscore');
 const appEnv = require("cfenv").getAppEnv();
-const WebSocketServer = require('ws').Server;
+const wsConnection = require('../routes/user/wsConnection.js');
 const simulatorEngine = require('./simulatorEngine.js');
 
 const debug = require('debug')('simulatedVehicleManager');
@@ -27,12 +27,12 @@ debug.log = console.log.bind(console);
 const DEFAULT_CLIENT_ID = 'default_simulator';
 const DEFAULT_NUM_VEHICLES = (process.env.DEFAULT_SIMULATOR_VEHICLES && parseInt(process.env.DEFAULT_SIMULATOR_VEHICLES)) || 5;
 const DEFAULT_TIMEOUT = (process.env.DEFAULT_SIMULATOR_TIMEOUT && parseInt(process.env.DEFAULT_SIMULATOR_TIMEOUT)) || 10;
+const SIMULATOR_MONITOR_WSS_ID = "simulator_monitor";
 
 /*
  * Manage simulator engines per client
  */
 _.extend(simulatorManager, {
-	wsServer: null,
 	simulatorInfoMap: {},
 	messageQueue: {},
 
@@ -138,42 +138,21 @@ _.extend(simulatorManager, {
 	 * Create a websocket connection to monitor vehicle status
 	 */
 	watch: function (server, path) {
-		if (this.wsServer !== null) {
+		if (wsConnection.isCreated(SIMULATOR_MONITOR_WSS_ID)) {
 			return; // already created
 		}
 
 		//
 		// Create WebSocket server
 		//
-		this.wsServer = new WebSocketServer({
-			server: server,
-			path: path,
-			verifyClient: (info, callback) => { //only allow internal clients from the server origin
-				let isLocal = appEnv.url.toLowerCase().indexOf('://localhost') !== -1;
-				let isFromValidOrigin = ((typeof info.origin !== 'undefined') && (info.origin.toLowerCase() === appEnv.url.toLowerCase())) ? true : false;
-				let allow = isLocal || isFromValidOrigin;
-				if (!allow) {
-					if (typeof info.origin !== 'undefined') {
-						console.error("rejected web socket connection from external origin " + info.origin + " only connection from internal origin " + appEnv.url + " are accepted");
-					} else {
-						console.error("rejected web socket connection from unknown origin. Only connection from internal origin " + appEnv.url + " are accepted");
-					}
-				}
-				if (!callback) {
-					return allow;
-				}
-				let statusCode = (allow) ? 200 : 403;
-				callback(allow, statusCode);
-			}
-		});
-
 		const sendClosedMessageToClient = (clientId, message, json) => {
 			if (json) {
 				message = JSON.stringify(message);
 			}
 			try {
-				_.each(this.wsServer.clients, (client) => {
-					if (client.callbackOnClose && client.clientId === clientId) {
+				_.each(wsConnection.getClients(SIMULATOR_MONITOR_WSS_ID), (client) => {
+					const data = wsConnection.getAppData(client);
+					if (client.callbackOnClose && data.clientId === clientId) {
 						client.send(message);
 					}
 				});
@@ -184,7 +163,17 @@ _.extend(simulatorManager, {
 
 		const flushQueue = () => {
 			try {
-				let clientsById = _.groupBy(this.wsServer.clients, "clientId");
+				const clients = wsConnection.getClients(SIMULATOR_MONITOR_WSS_ID);
+				let clientsById = {};
+				_.each(Array.from(clients), (client) => {
+					const data = wsConnection.getAppData(client);
+					if (!clientsById[data.clientId]) {
+						clientsById[data.clientId] = [client];
+					} else {
+						clientsById[data.clientId].push(client);
+					}
+				});
+
 				_.each(clientsById, (clients, clientId) => {
 					let myMessageQueue = this.messageQueue[clientId];
 					if (!myMessageQueue || _.isEmpty(myMessageQueue)) {
@@ -192,7 +181,8 @@ _.extend(simulatorManager, {
 					}
 					this.messageQueue[clientId] = {};
 					_.each(clients, (client) => {
-						let vehicleMessage = myMessageQueue[client.vehicleId];
+						let data = wsConnection.getAppData(client);
+						let vehicleMessage = data && myMessageQueue[data.vehicleId];
 						if (!_.isEmpty(vehicleMessage)) {
 							client.send(JSON.stringify({ data: vehicleMessage }));
 						}
@@ -222,16 +212,16 @@ _.extend(simulatorManager, {
 			}
 		};
 
-		const watchMethod = (client, enable) => {
-			let clientId = client.clientId || DEFAULT_CLIENT_ID;
-			let vehicleId = client.vehicleId;
+		const watchMethod = (appdata, enable) => {
+			let clientId = appdata.clientId || DEFAULT_CLIENT_ID;
+			let vehicleId = appdata.vehicleId;
 			simulatorInfoMap = this.simulatorInfoMap;
 			let simulatorInfo = simulatorInfoMap[clientId];
 			if (simulatorInfo) {
-				if (client.callbackOnClose) {
+				if (appdata.callbackOnClose) {
 					simulatorInfo.simulator.setCallbackOnClose(enable ? callbackOnClose : undefined);
 				} else {
-					simulatorInfo.simulator.watch(vehicleId, client.properties, enable ? (data) => {
+					simulatorInfo.simulator.watch(vehicleId, appdata.properties, enable ? (data) => {
 						if (data.error) {
 							console.error("error: " + JSON.stringify(data.error));
 						}
@@ -243,61 +233,55 @@ _.extend(simulatorManager, {
 			}
 		};
 
-		//
-		// Assign clientId and vehicleId to the client for each connection
-		//
-		this.wsServer.on('connection', (client) => {
-			client.on('close', () => {
-				console.log("client is disconnected. id=" + client.clientId + ", vid=" + client.vehicleId);
-				watchMethod(client, false);
-			});
-			client.on('error', () => {
-				console.log("error with client id=" + client.clientId + ", vid=" + client.vehicleId);
-			});
-			client.on('message', (message) => {
-				try {
-					let messageObj = JSON.parse(message);
-					if (messageObj.type === 'heartbeat') {
-						simulatorInfoMap = this.simulatorInfoMap;
-						let simulatorInfo = simulatorInfoMap[messageObj.clientId];
-						if (simulatorInfo) {
-							simulatorInfo.simulator.updateTime(true);
-							//							console.log("recieved heartbeat message. clientId = " + messageObj.clientId);
-						} else {
-							sendClosedMessageToClient(clientId, { type: 'closed', reason: 'heartbeat' }, true);
-						}
-					}
-				} catch (e) {
-					console.error("websocket message parse error. message = " + message);
-				}
-			});
-
-			debug('got wss connectoin at: ' + client.upgradeReq.url);
-			let url = client.upgradeReq.url;
+		wsConnection.create(SIMULATOR_MONITOR_WSS_ID, server, path, (request) => {
+			let data = {};
+			let url = request.url;
 			let qsIndex = url.indexOf('?');
 			if (qsIndex >= 0) {
 				_.each(url.substring(qsIndex + 1).split('&'), (qs) => {
 					let params = qs.split('=');
 					if (params.length == 2) {
 						if (params[0] === 'clientId')
-							client.clientId = params[1];
+							data.clientId = params[1];
 						else if (params[0] === 'vehicleId')
-							client.vehicleId = params[1];
+							data.vehicleId = params[1];
 						else if (params[0] === 'properties')
-							client.properties = params[1].split(',');
+							data.properties = params[1].split(',');
 						else if (params[0] === 'close')
-							client.callbackOnClose = params[1] === 'true';
+							data.callbackOnClose = params[1] === 'true';
 					}
 				});
-				if (client.clientId && !this.messageQueue[client.clientId]) {
-					this.messageQueue[client.clientId] = {};
+				if (data.clientId && !this.messageQueue[data.clientId]) {
+					this.messageQueue[data.clientId] = {};
 				}
 			}
-			watchMethod(client, true);
+			watchMethod(data, true);
 
 			if (!this.intervalHandle) {
-				this.intervalHandle = setInterval(_.bind(flushQueue, this), 1000);
+				this.intervalHandle = setInterval(flushQueue, 1000);
 			}
+			return data;
+		}, (data) => {
+			console.log("client is disconnected. id=" + data.clientId + ", vid=" + data.vehicleId);
+			watchMethod(data, false);
+		}, (message, data) => {
+			try {
+				let messageObj = JSON.parse(message);
+				if (messageObj.type === 'heartbeat') {
+					simulatorInfoMap = this.simulatorInfoMap;
+					let simulatorInfo = simulatorInfoMap[messageObj.clientId];
+					if (simulatorInfo) {
+						simulatorInfo.simulator.updateTime(true);
+						// console.log("recieved heartbeat message. clientId = " + messageObj.clientId);
+					} else {
+						sendClosedMessageToClient(clientId, { type: 'closed', reason: 'heartbeat' }, true);
+					}
+				}
+			} catch (e) {
+				console.error("websocket message parse error. message = " + message);
+			}
+	 	}, (error, data) => {
+			console.log("error with client id=" + data.clientId + ", vid=" + data.vehicleId);
 		});
 	}
 });

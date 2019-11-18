@@ -27,7 +27,7 @@ applications:
       - FleetCloudantDB
 #      - FleetSecureGateway
 #      - FleetIoTPlatform
-    name: iota-starter-server-fleetmanagement-marudai-20191029
+    name: iota-starter-server-fleetmanagement
     memory: 512M
 #    host: iota-starter-server-fleetmanagement
 #    domain: stage1.mybluemix.net

@@ -18,7 +18,7 @@
  */
 const Q = require('q');
 const _ = require('underscore');
-const WebSocketServer = require('ws').Server;
+const wsConnection = require('./wsConnection.js');
 const appEnv = require("cfenv").getAppEnv();
 const Queue = app_module_require('utils/queue.js');
 const requestQueue = new Queue();
@@ -33,6 +33,7 @@ const handleError = require('./error.js').handleError;
 const debug = require('debug')('route:probe');
 debug.log = console.log.bind(console);
 
+const MONITOR_WSS_ID = "vehicle_monitor";
 /**
  * {
  * 	"mo_id1": {
@@ -125,7 +126,7 @@ router.get('/carProbe', authenticate, function (req, res) {
 	}
 
 	// initialize WSS server
-	var wssUrl = req.baseUrl + req.route.path;
+	const wssUrl = req.baseUrl + req.route.path;
 	if (!req.app.server) {
 		console.error('failed to create WebSocketServer due to missing app.server');
 		res.status(500).send('Filed to start wss server in the insights router.')
@@ -183,18 +184,13 @@ router.get("/alert", function (req, res) {
 });
 
 /*
- * Shared WebSocket server instance
- */
-router.wsServer = null;
-
-/*
  * Create WebSocket server
  */
 var initWebSocketServer = function (server, path) {
 	// Cancel existing requests
 	requestQueue.clear();
 
-	if (router.wsServer !== null) {
+	if (wsConnection.isCreated(MONITOR_WSS_ID)) {
 		return; // already created
 	}
 
@@ -203,13 +199,14 @@ var initWebSocketServer = function (server, path) {
 		//
 		// This is invoked every TIMEOUT milliseconds to send the latest car probes to server
 		//
-		Q.allSettled(router.wsServer.clients.map && router.wsServer.clients.map(function (client) {
+		Q.allSettled(_.map(wsConnection.getClients(MONITOR_WSS_ID), (client) => {
 			// Method to get request parameter to search car probes
 			function getQs() {
-				if (client.mo_id) {
-					return { "mo_id": client.mo_id };
+				var data = wsConnection.getAppData(client);
+				if (data.mo_id) {
+					return { "mo_id": data.mo_id };
 				}
-				var e = client.extent;
+				var e = data.extent;
 				if (e) {
 					return {
 						min_latitude: e.min_lat, min_longitude: e.min_lng,
@@ -318,57 +315,33 @@ var initWebSocketServer = function (server, path) {
 	//
 	// Create WebSocket server
 	//
-	var wss = router.wsServer = new WebSocketServer({
-		server: server,
-		path: path,
-		verifyClient: function (info, callback) { //only allow internal clients from the server origin
-			var isLocal = appEnv.url.toLowerCase().indexOf('://localhost') !== -1;
-			let isFromValidOrigin = ((typeof info.origin !== 'undefined') && (info.origin.toLowerCase() === appEnv.url.toLowerCase())) ? true : false;
-			var allow = isLocal || isFromValidOrigin;
-			if (!allow) {
-				if (typeof info.origin !== 'undefined') {
-					console.error("rejected web socket connection from external origin " + info.origin + " only connection from internal origin " + appEnv.url + " are accepted");
-				} else {
-					console.error("rejected web socket connection from unknown origin. Only connection from internal origin " + appEnv.url + " are accepted");
-				}
-			}
-			if (!callback) {
-				return allow;
-			}
-			var statusCode = (allow) ? 200 : 403;
-			callback(allow, statusCode);
-		}
-	});
-
-	//
-	// Assign "extent" to the client for each connection
-	//
-	wss.on('connection', function (client) {
-		debug('got wss connectoin at: ' + client.upgradeReq.url);
-		client.on('error', () => {
-			console.log("[Monitor] Error with client id=" + client.clientId);
-		});
-		client.on('message', (message) => {
-			console.log("[Monitor] Received message: " + message);
-		});
-		// assign extent obtained from the web sock request URL, to this client
-		var url = client.upgradeReq.url;
-		var qsIndex = url.lastIndexOf('?region=');
-		if (qsIndex >= 0) {
-			try {
-				var j = decodeURI(url.substr(qsIndex + 8)); // 8 is length of "?region="
-				var extent = JSON.parse(j);
-				client.extent = normalizeExtent(extent);
-			} catch (e) {
-				console.error('Error on parsing extent in wss URL', e);
-			}
-		} else {
-			qsIndex = url.lastIndexOf("?mo_id=");
-			if (qsIndex >= 0) {
-				const mo_id = decodeURI(url.substr(qsIndex + 7)); // 7 is length of "?mo_id="
-				client.mo_id = mo_id;
-			}
-		}
+	wsConnection.create(MONITOR_WSS_ID, server, path, (request) => {
+		 // assign extent obtained from the web sock request URL, to this client
+		var data = {};
+	 	var url = request.url;
+	 	var qsIndex = url.lastIndexOf('?region=');
+	 	if (qsIndex >= 0) {
+	 		try {
+	 			var j = decodeURI(url.substr(qsIndex + 8)); // 8 is length of "?region="
+	 			var extent = JSON.parse(j);
+	 			data.extent = normalizeExtent(extent);
+	 		} catch (e) {
+	 			console.error('Error on parsing extent in wss URL', e);
+	 		}
+	 	} else {
+	 		qsIndex = url.lastIndexOf("?mo_id=");
+	 		if (qsIndex >= 0) {
+	 			const mo_id = decodeURI(url.substr(qsIndex + 7)); // 7 is length of "?mo_id="
+	 			data.mo_id = mo_id;
+	 		}
+		 }
+		 return data;
+	}, (data) => {
+			console.log("[Monitor] Close client");
+	 }, (message, data) => {
+	 	console.log("[Monitor] Received message: " + message);
+	}, (error, data) => {
+ 		console.log("[Monitor] Error");
 	});
 }
 
