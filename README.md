@@ -177,7 +177,7 @@ To manually deploy the Fleet Management Starter Application on IBM Cloud, comple
         AUTOMOTIVE_URL: https://<prefix>.automotive.internetofthings.ibmcloud.com/
         AUTOMOTIVE_USERNAME: iotcvusr
         AUTOMOTIVE_PASSWORD: <iotcvusr_password>
-        AUTOMOTIVE_MAX_ORGID: IOTF
+        AUTOMOTIVE_MAX_ORGID: IOTFA
         AUTOMOTIVE_MAX_CLASSIFICATION_ID: FLEET VEHICLE
         AUTOMOTIVE_MAX_USERNAME: <maximo_starter_username>
         AUTOMOTIVE_MAX_PASSWORD: <maximo_starter_password>
