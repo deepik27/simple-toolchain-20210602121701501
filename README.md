@@ -164,7 +164,7 @@ To manually deploy the Fleet Management Starter Application on IBM Cloud, comple
   git clone https://github.com/ibm-watson-iot/cvi-starter-server-fm.git
   ```
 4. Change to the directory that you created.
-5. Edit the `manifest.yml` file and change the values of `<name>` and `<route>` to something unique. `<route>` must be same with `postUrl` in gateway.properties. Note that the `route` value is used to generate your application URL.
+5. Edit the `manifest.yml` file and change the values of `<name>` to something unique.
 
     ```
     applications:
@@ -181,8 +181,6 @@ To manually deploy the Fleet Management Starter Application on IBM Cloud, comple
         AUTOMOTIVE_MAX_CLASSIFICATION_ID: FLEET VEHICLE
         AUTOMOTIVE_MAX_USERNAME: <maximo_starter_username>
         AUTOMOTIVE_MAX_PASSWORD: <maximo_starter_password>
-     routes:
-        - route: cvi-starter-server-fleetmanagement.mybluemix.net
     ```
     Also, set appropriate values to environment variables under `<env>`. See the table in [this section](#connect2cvi) about the variables.  
 

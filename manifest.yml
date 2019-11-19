@@ -37,5 +37,5 @@ applications:
       AUTOMOTIVE_MAX_PASSWORD: <maximo_starter_password>
 #      AUTOMOTIVE_TENANTID: <tenant_id>
 #      SEND_PROBE_USER_AGENT: IBM IoT Connected Vehicle Insights Client
-    routes:
-      - route: cvi-starter-server-fleetmanagement.mybluemix.net
+#    routes:
+#      - route: cvi-starter-server-fleetmanagement.mybluemix.net
