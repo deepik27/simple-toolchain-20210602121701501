@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 declared-services:
-  CloudantLite:
+  FleetCloudantDB:
     label: cloudantNoSQLDB
     plan: Lite
 #  FleetIoTPlatform:
@@ -25,7 +25,7 @@ applications:
     memory: 512M
     instances: 1
     services:
-      - CloudantLite
+      - FleetCloudantDB
 #      - FleetIoTPlatform
     env:
       AUTOMOTIVE_URL: https://<prefix>.automotive.internetofthings.ibmcloud.com/
