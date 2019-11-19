@@ -123,7 +123,7 @@ Deploy the Fleet Management Starter Application on IBM Cloud either automaticall
 ### Automatically deploy the starter app on IBM Cloud
 
 The automatic deployment option creates an instance of the app and the required IBM Cloud services, and also binds the services to the starter app automatically.
-To automatically deploy the Fleet Management Starter Application on IBM Cloud, click [![Deploy to IBM Cloud](https://cloud.ibm.com/devops/setup/deploy/button.png)](https://cloud.ibm.com/devops/setup/deploy?repository=https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git) and complete step 1, you only complete step 2 if step 1 fails.
+To automatically deploy the Fleet Management Starter Application on IBM Cloud, click [![Deploy to IBM Cloud](https://cloud.ibm.com/devops/setup/deploy/button.png)](https://cloud.ibm.com/devops/setup/deploy?repository=https://github.com/ibm-watson-iot/cvi-starter-server-fm.git&branch=v2.x) and complete step 1, you only complete step 2 if step 1 fails.
 1. Within the IBM Cloud landing page, enter details in each field, then select 'Deploy'. For more information about field details, see the following table.
 
    |  Field name      |  Sample details  |
@@ -142,7 +142,7 @@ To automatically deploy the Fleet Management Starter Application on IBM Cloud, c
     1. In the navigation menu, select 'DevOps'.
     1. Within the DevOps navigation menu, select 'Toolchains'.
     1. Select 'Delivery Pipeline'.
-    1. Select your `iota-starter-server-fm-saas-`.
+    1. Select your `cvi-starter-server-fm-`.
     1. In the Deploy Stage widget, select 'View logs and history'.
     1. If you see timing issues like `FleetCloudantDB is not ready...`, then select 'Run option again'.
 
@@ -161,7 +161,7 @@ To manually deploy the Fleet Management Starter Application on IBM Cloud, comple
 3. Clone the Fleet Management Starter Application to your local environment by using the following console command:
 
   ```
-  git clone https://github.com/ibm-watson-iot/iota-starter-server-fm-saas.git
+  git clone https://github.com/ibm-watson-iot/cvi-starter-server-fm.git
   ```
 4. Change to the directory that you created.
 5. Edit the `manifest.yml` file and change the values of `<name>` and `<host>` to something unique. `<host>` must be same with `postUrl` in gateway.properties.
@@ -169,8 +169,8 @@ To manually deploy the Fleet Management Starter Application on IBM Cloud, comple
   ```
   applications:
          :
-    host: iota-starter-server-fleetmanagement
-    name: iota-starter-server-fleetmanagement
+    host: cvi-starter-server-fleetmanagement
+    name: cvi-starter-server-fleetmanagement
     memory: 512M
     path: .
     instances: 1
@@ -405,7 +405,7 @@ If you no longer need a device, go to **Vehicle** page in your Fleet Management 
 
 
 ## Reporting defects
-To report a defect with the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application, go to the [Issues section](https://github.com/ibm-watson-iot/iota-starter-server-fm-saas/issues) section.
+To report a defect with the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application, go to the [Issues section](https://github.com/ibm-watson-iot/cvi-starter-server-fm/issues) section.
 
 
 ## Troubleshooting

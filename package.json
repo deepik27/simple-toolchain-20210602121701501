@@ -1,5 +1,5 @@
 {
-  "name": "iota-starter-server-fleetmanagement",
+  "name": "cvi-starter-server-fleetmanagement",
   "description": "IBM IoT Connected Vehicle Insights - Fleet Management Starter Application",
   "version": "1.0.0",
   "scripts": {
@@ -38,7 +38,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ibm-watson-iot/iota-starter-server-fm.git"
+    "url": "https://github.com/ibm-watson-iot/cvi-starter-server-fm.git"
   },
   "engines": {
     "node": "8.11.4"

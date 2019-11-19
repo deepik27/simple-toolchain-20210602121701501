@@ -27,9 +27,9 @@ applications:
       - FleetCloudantDB
 #      - FleetSecureGateway
 #      - FleetIoTPlatform
-    name: iota-starter-server-fleetmanagement
+    name: cvi-starter-server-fleetmanagement
     memory: 512M
-#    host: iota-starter-server-fleetmanagement
-#    domain: stage1.mybluemix.net
+#    host: cvi-starter-server-fleetmanagement
+#    domain: mybluemix.net
     path: .
     instances: 1
