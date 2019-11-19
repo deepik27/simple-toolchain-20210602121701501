@@ -164,20 +164,27 @@ To manually deploy the Fleet Management Starter Application on IBM Cloud, comple
   git clone https://github.com/ibm-watson-iot/cvi-starter-server-fm.git
   ```
 4. Change to the directory that you created.
-5. Edit the `manifest.yml` file and change the values of `<name>` and `<host>` to something unique. `<host>` must be same with `postUrl` in gateway.properties.
+5. Edit the `manifest.yml` file and change the values of `<name>` and `<route>` to something unique. `<route>` must be same with `postUrl` in gateway.properties. Note that the `route` value is used to generate your application URL.
 
-  ```
-  applications:
-         :
-    host: cvi-starter-server-fleetmanagement
-    name: cvi-starter-server-fleetmanagement
-    memory: 512M
-    path: .
-    instances: 1
-         :
-   ```
-   Note: The host value is used to generate your application URL, which is in the following syntax:
-   `<host>.mybluemix.net`.
+    ```
+    applications:
+      - name: cvi-starter-server-fleetmanagement
+        path: .
+        memory: 512M
+        instances: 1
+             :
+      env:
+        AUTOMOTIVE_URL: https://<prefix>.automotive.internetofthings.ibmcloud.com/
+        AUTOMOTIVE_USERNAME: iotcvusr
+        AUTOMOTIVE_PASSWORD: <iotcvusr_password>
+        AUTOMOTIVE_MAX_ORGID: IOTF
+        AUTOMOTIVE_MAX_CLASSIFICATION_ID: FLEET VEHICLE
+        AUTOMOTIVE_MAX_USERNAME: <maximo_starter_username>
+        AUTOMOTIVE_MAX_PASSWORD: <maximo_starter_password>
+     routes:
+        - route: cvi-starter-server-fleetmanagement.mybluemix.net
+    ```
+    Also, set appropriate values to environment variables under `<env>`. See the table in [this section](#connect2cvi) about the variables.  
 
 6. Install the NPM package by using the following command. The installer observes the dependencies that are specified in your `package.json` file.
   ```
@@ -305,7 +312,7 @@ To obtain the correct values, contact your system administrator.
 
 Key | Description of Value | Example
 ----- | ------------------------------------- | -----
-AUTOMOTTIVE_URL | A URL to call the REST API for IBM IoT Connected Vehicle Insights, which must end with a forward slash character (/) | [https://xxxx.automotive.](https://xxxx.automotive.internetofthings.ibmcloud.com/) <br> [internetofthings.ibmcloud.com/](https://xxxx.automotive.internetofthings.ibmcloud.com/)
+AUTOMOTIVE_URL | A URL to call the REST API for IBM IoT Connected Vehicle Insights, which must end with a forward slash character (/) | [https://xxxx.automotive.](https://xxxx.automotive.internetofthings.ibmcloud.com/) <br> [internetofthings.ibmcloud.com/](https://xxxx.automotive.internetofthings.ibmcloud.com/)
 AUTOMOTIVE_USERNAME | User name for accessing the Vehicle Data Hub (VDH) and other IBM IoT Connected Vehicle Insights endpoints | iotcvusr
 AUTOMOTIVE_PASSWORD | Password for accessing the VDH and other IBM IoT Connected Vehicle Insights endpoints | CVIPassword
 AUTOMOTIVE_MAX_ORGID | IBM IoT Connected Vehicle Insights Organization specified in IBM Maximo Asset Management | IOTFA
