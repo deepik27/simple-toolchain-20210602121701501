@@ -19,6 +19,7 @@
 const router = module.exports = require('express').Router();
 const authenticate = require('./auth.js').authenticate;
 const simulatorManager = require('../../simulator/simulatorManager.js');
+const vehicleManager = require('../../simulator/vehicleManager.js');
 
 const handleError = require('./error.js').handleError;
 const debug = require('debug')('route:simulator');
@@ -38,13 +39,14 @@ debug.log = console.log.bind(console);
  */
 router.post("/simulator", authenticate, function (req, res) {
 	const clientId = req.body.clientId || req.query.clientId || req.get("iota-simulator-uuid");
-	const numVehicles = req.body.numVehicles;
+	const numVehicles = req.body.numVehicles || 0;
+	const vehicleIds = req.body.vehicleIds || [];
 	const latitude = req.body.latitude;
 	const longitude = req.body.longitude;
 	const distance = req.body.distance;
 	const timeoutInMinutes = req.body.timeoutInMinutes;
 	const noErrorOnExist = req.body.noErrorOnExist;
-	simulatorManager.create(clientId, numVehicles, longitude, latitude, distance, timeoutInMinutes, noErrorOnExist)
+	simulatorManager.create(clientId, numVehicles, vehicleIds, longitude, latitude, distance, timeoutInMinutes, noErrorOnExist)
 		.then(function (result) {
 			return res.send(result);
 		}).catch(function (error) {
@@ -86,7 +88,8 @@ router.get("/simulator", authenticate, function (req, res) {
  */
 router["delete"]("/simulator", authenticate, function (req, res) {
 	const clientId = req.query.clientId || req.get("iota-simulator-uuid");
-	simulatorManager.release(clientId)
+	const timeoutInMinutes = req.query.timeoutInMinutes ? parseInt(req.query.timeoutInMinutes) : 0;
+	simulatorManager.release(clientId, timeoutInMinutes)
 		.then(function (result) {
 			return res.send(result);
 		}).catch(function (error) {
@@ -124,6 +127,55 @@ router.get("/simulator/vehicleList", authenticate, function (req, res) {
 		}).catch(function (error) {
 			handleError(res, error);
 		});
+});
+
+/**
+ * Get used vehicle id list by other simulatoers. 
+ *
+ * request:
+ *
+ * response:
+ * {[{vehicleId, vehicle, driverId, driver, state, position, options, properties}]}
+ */
+router.get("/simulator/usedVehicles", authenticate, function (req, res) {
+	const clientId = req.query.clientId || req.get("iota-simulator-uuid");
+	try {
+		let promises = [];
+		simulatorManager.getSimulatorList().forEach(sim => {
+			if (clientId != sim.clientId) {
+				promises.push(simulatorManager.getSimulator(sim.clientId));
+			}
+		});
+		Promise.all(promises).then(results => {
+			let vehicleIds = [];
+			results.forEach(simulator => {
+				simulator.getVehicleList().forEach(vehicle => vehicleIds.push(vehicle.vehicleId));
+			});
+			res.send(vehicleIds);
+		});
+	} catch(error) {
+		handleError(res, error);
+	}
+});
+
+/**
+ * Get vehicles that can be used. Specify properties to get with properties parameter in body.
+ *
+ * request:
+ * {numInPage, pageIndex}
+ *
+ * response:
+ * {[{vehicleId, vehicle, driverId, driver, state, position, options, properties}]}
+ */
+router.get("/simulator/aveilableVehicles", authenticate, function (req, res) {
+	const q = req.query;
+	const numInPages = req.query.numInPages ? parseInt(req.query.numInPages) : 15;
+	const pageIndex = req.query.pageIndex ? parseInt(req.query.pageIndex) : 0;
+	vehicleManager.getAvailableVehicleList(numInPages, pageIndex).then((result) => {
+		res.send(result);
+	}).catch((error) => {
+		handleError(res, error);
+	});
 });
 
 /**
@@ -268,7 +320,7 @@ router.get("/simulator/watch", authenticate, function (req, res) {
 	}
 
 	try {
-		simulatorManager.watch(server, wssUrl);
+		simulatorManager.watchStatus(server, wssUrl);
 		res.send({ result: "soccess" });
 	} catch (error) {
 		handleError(res, error);

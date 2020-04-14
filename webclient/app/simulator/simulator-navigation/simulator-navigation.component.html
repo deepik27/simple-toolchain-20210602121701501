@@ -1,0 +1,110 @@
+<!------------------------------------------------------------------------------------------------
+   Copyright 2020 IBM Corp. All Rights Reserved.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-------------------------------------------------------------------------------------------------->
+<div class="vehicleData">
+	<label for="vehicleValue">Vehicle Data</label>
+	<select [(ngModel)]="vehicleDataName" (ngModelChange)="onUpdateVehicleDataName()">
+		<option *ngFor="let rule of rules" [ngValue]="rule.propName">{{rule.label}}</option>
+	</select>
+	<input id="vehicleValue" size=6 [disabled]="!vehicleDataName" placeholder="Value" [(ngModel)]="vehicleDataValue" (change)="onUpdateVehicleDataValue()" />
+</div>
+
+<!--
+	Map for showing vehicle Location and route
+-->
+<!-- Map -->
+<div class="navigationRouteView">
+	<div class="mapArea">
+		<select [disabled]="simulatorVehicle?.isDriving()" [(ngModel)]="selectedArea" name="selectedArea" (ngModelChange)="onChangeArea()">
+			<option *ngFor="let area of areas" [ngValue]="area">{{area.name}}</option>
+		</select>
+	</div>
+	<div id="simulatorMap" class="simulatorMap">
+		<div id="carmonitorpop"></div>
+		<!-- Map Overlay -->
+		<button class="button mapCurrentLocation" [hidden]="traceCurrentLocation" (click)="onCurrentLocation()">Vehicle
+			Location</button>
+		<div class="mapProbe" [hidden]="!simulatorVehicle?.isDriving()">
+			Location=({{drivingVehicleData?.latitude||0}},{{drivingVehicleData?.longitude||0}})<br>
+			Speed={{(drivingVehicleData?.speed/1.609344).toPrecision(3)}} MPH<br>
+			Heading={{(drivingVehicleData?.heading).toPrecision(3)}}<br>
+			Fuel={{drivingVehicleData?.props?.fuel}}<br>
+			Engine Temperature={{(drivingVehicleData?.props?.engineTemp*9/5+32).toPrecision(3)}} F</div>
+		<div class="mapMessage" [hidden]="!simulatorVehicle?.isSearchingRoute">Searching route...</div>
+		<div class="ol-zoom ol-unselectable ol-control zoom2fit">
+			<button class="zoom-to-fit" (click)="onZoomToFit()" title="Zoom To Fit">&#x2922;</button>
+		</div>
+		<div id="infopopup"></div>
+	</div>
+	<div class="routeSelection">
+		<label for="routeMode">Route Selection</label>
+		<span [hidden]="!currentRouteMode">
+			<select id="routeMode" class="routeMode" [disabled]="simulatorVehicle?.isDriving()||routeFixed"
+				[(ngModel)]="currentRouteMode" (ngModelChange)="showRouteCandidates()">
+				<option *ngFor="let mode of availableRouteModes" [ngValue]="mode.value">{{mode.label}}</option>
+			</select>
+		</span>
+		<span [hidden]="!simulatorVehicle?.routeData">{{routeDetails}}</span>
+	</div>
+</div>
+
+<!--
+	Route search options
+-->
+<div>
+	<div class=routeSettingPanel>
+		<div class="routeOptions">
+			<label>Set location on the map:</label>
+			<span style="white-space: nowrap;">
+				<span class="pointSelection">
+					<input type="checkbox" name="actionGroup" (change)="onChangeMouseMode('start')"
+						[disabled]="simulatorVehicle?.isDriving()" [(ngModel)]="mouseStartPositionMode" id="start">
+					<label for="start">Origin</label>
+					<select [(ngModel)]="srcDirection" (ngModelChange)="onChangeSrcDirection()"
+						[disabled]="simulatorVehicle?.isDriving()">
+						<option *ngFor="let dir of directions" [ngValue]="dir">{{dir.label}}</option>
+					</select>
+				</span>
+			</span>
+			<span class="pointSelection">
+				<input type="checkbox" name="actionGroup" (change)="onChangeMouseMode('destination')"
+					[disabled]="simulatorVehicle?.isDriving()" [(ngModel)]="mouseDestinationMode" id="destination">
+				<label for="destination">Destination</label>
+				<select [(ngModel)]="dstDirection" (ngModelChange)="onChangeDstDirection()"
+					[disabled]="simulatorVehicle?.isDriving()">
+					<option *ngFor="let dir of directions" [ngValue]="dir">{{dir.label}}</option>
+				</select>
+			</span>
+		</div>
+		<div class="routeOptions" style="white-space: nowrap;">
+			<select class="poiList" size="5" [(ngModel)]="selectedPOI" (ngModelChange)="onPOISelected()">
+				<option *ngFor="let poi of assignedPOIs; index as i" [ngValue]="poi">{{i+1}}. {{poi.properties.name}}
+					@{{poi.latitude}},{{poi.longitude}}</option>
+			</select>
+			<span class="poiListControl">
+				<div><button [disabled]="simulatorVehicle?.isDriving()" (click)="onMoveUpPOI()">Up</button></div>
+				<div><button [disabled]="simulatorVehicle?.isDriving()" (click)="onMoveDownPOI()">Down</button></div>
+				<div style="margin-top: 15px;"><button [disabled]="simulatorVehicle?.isDriving()"
+						(click)="onLoadPOI()">Reload</button></div>
+			</span>
+		</div>
+		<div class="routeOptions">
+			<input type="checkbox" [disabled]="simulatorVehicle?.isDriving()" [(ngModel)]="opt_avoid_events"
+				(change)="onAvoidEventChange()" id="avoid"><label for="avoid">Avoid events</label>
+			<input type="checkbox" [disabled]="simulatorVehicle?.isDriving()" [(ngModel)]="opt_route_loop"
+				(change)="onRouteLoop()" id="loop"><label for="loop">Loop the route</label>
+		</div>
+	</div>
+</div>

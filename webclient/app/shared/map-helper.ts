@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as ol from 'openlayers';
 import { Observable } from 'rxjs';
+
+import { Map, Feature, Overlay } from 'ol';
+import { Point } from 'ol/geom';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import * as olProj from 'ol/proj';
 
 /**
  * The default zoom value when the map `region` is set by `center`
@@ -89,7 +94,7 @@ export class MapHelper {
   // show popover
   showPinnedPopover: ((feature: any) => any);
 
-  constructor(public map: ol.Map, public hittest: Function = null) {
+  constructor(public map: Map, public hittest: Function = null) {
     // animation event handler
     this._onPreComposeFunc = this._onPreCompose.bind(this);
     this._onPostComposeFunc = this._onPostCompose.bind(this);
@@ -223,7 +228,7 @@ export class MapHelper {
    */
   moveMap(region) {
     if (region.extent) {
-      var mapExt = ol.proj.transformExtent(region.extent, 'EPSG:4326', 'EPSG:3857'); // back to coordinate
+      var mapExt = olProj.transformExtent(region.extent, 'EPSG:4326', 'EPSG:3857'); // back to coordinate
       var view = this.map.getView();
       if (view.fit) {
         view.fit(mapExt, this.map.getSize());
@@ -236,7 +241,7 @@ export class MapHelper {
       }
       this._firePendingPostChangeViewEvents(10);
     } else if (region.center) {
-      var mapCenter = ol.proj.fromLonLat(region.center, undefined);
+      var mapCenter = olProj.fromLonLat(region.center, undefined);
       var view = this.map.getView();
       view.setCenter(mapCenter);
       view.setZoom(region.zoom || DEFAULT_ZOOM);
@@ -281,9 +286,9 @@ export class MapHelper {
       // wait for map's handling layous, and then send extent event
       setTimeout((function () {
         var ext = this.map.getView().calculateExtent(size);
-        var extent = this.normalizeExtent(ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326'));
+        var extent = this.normalizeExtent(olProj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326'));
         if (this._postChangeViewLastExtent != extent) {
-          console.log('Invoking map extent change event', extent);
+//          console.log('Invoking map extent change event', extent);
           this.postChangeViewHandlers.forEach(function (handler) {
             handler(extent);
           });
@@ -327,7 +332,7 @@ export class MapHelper {
    * @showPopOver a function called on showing popover: function(elm, feature, pinned)
    * @destroyPopOver a function called on dismissing the popover: function(elm, feature, pinned)
    *   where @elm is the `elm` given as the first parameter to this method,
-   *         @feature is ol.Feature, @pinned is boolean showing the "pin" state (true is pinned)
+   *         @feature is Feature, @pinned is boolean showing the "pin" state (true is pinned)
    * @updatePopOver a function called on updating popover content: function(elm, feature, pinned)
    */
   addPopOver(options, showPopOver, destroyPopOver, updatePopOver) {
@@ -346,7 +351,7 @@ export class MapHelper {
     var startUpdateTimer, stopUpdateTimer; // implemented in section below
 
     // create popover objects
-    var overlay = new ol.Overlay({
+    var overlay = new Overlay({
       element: elm,
       offset: [2, -3],
       positioning: 'center-right',
@@ -498,19 +503,19 @@ export class MapHelper {
    *    optoins.createOverlay: A parent element instance of all the popover DIV element
    *    options.getKey: take a key and returns the identity function(model), otherwise the instance identity
    *                    is used as the identity.
-   *    options.getFeature: get ol.Feature for the model object function(model)
+   *    options.getFeature: get Feature for the model object function(model)
    * @showPopOver: show popover function(element, feature, pin=false, model, closeFunc)
    * @destroyPopOver:
    * @updatePopOver:
    */
   addModelBasedPopover(dataSource: Observable<any>, options: {
-    createOverlay: (model: any, map) => ol.Overlay,
+    createOverlay: (model: any, map) => Overlay,
     getKey?: (model: any) => string,
     getLastUpdated?: (model: any) => number,
-    getFeature: (model: any, map: ol.Map) => ol.Feature,
-    showPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model: any, closeFunc: () => void) => void,
-    destroyPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model: any, closeFunc: () => void) => (void | boolean),
-    updatePopover?: (elm: Element, feature: ol.Feature, pinned: boolean, model: any, closeFunc: () => void) => void,
+    getFeature: (model: any, map: Map) => Feature,
+    showPopover: (elm: Element, feature: Feature, pinned: boolean, model: any, closeFunc: () => void) => void,
+    destroyPopover: (elm: Element, feature: Feature, pinned: boolean, model: any, closeFunc: () => void) => (void | boolean),
+    updatePopover?: (elm: Element, feature: Feature, pinned: boolean, model: any, closeFunc: () => void) => void,
   }) {
     let getKey = options.getKey || ((model) => { return (<any>model).__model_key__ || ((<any>model).__model_key__ = NEXT_MODEL_KEY_ID++) });
     let getLastUpdated = options.getLastUpdated || ((model) => { return (<any>model).__model_key__ || ((<any>model).__model_key__ = NEXT_MODEL_KEY_ID++) });
@@ -524,7 +529,7 @@ export class MapHelper {
     var syncModelAndController = (models) => {
       var syncedKeys = {};
 
-      models.forEach(model => {
+      models && models.forEach(model => {
         let feature = options.getFeature(model, this.map);
         let key = getKey(model);
         syncedKeys[key] = true; // mark the key synced
@@ -642,10 +647,10 @@ export class MapHelper {
    */
   preloadStyles(map, styles) {
     if (!styles || styles.length == 0) return;
-    var center = new ol.geom.Point(map.getView().getCenter());
+    var center = new Point(map.getView().getCenter());
     var features = styles.map(function (style) {
-      if (style.image instanceof ol.style.Image) {
-        var feat = new ol.Feature({ geometry: center });
+      if (style.image instanceof Image) {
+        var feat = new Feature({ geometry: center });
         feat.setStyle(style);
         return feat;
       }
@@ -653,7 +658,7 @@ export class MapHelper {
     // create a layer
     var workaroundLayer = map._imageWorkaroundLayer;
     if (!workaroundLayer) {
-      workaroundLayer = new ol.layer.Vector({ source: new ol.source.Vector({}), renderOrder: undefined });
+      workaroundLayer = new VectorLayer({ source: new VectorSource({}), renderOrder: undefined });
       map._imageWorkaroundLayer = workaroundLayer;
       map.addLayer(workaroundLayer);
       workaroundLayer.setOpacity(0.5); //TODO workaround layer opacity
@@ -676,14 +681,14 @@ export class MapHelper {
  * This take care of the lifecycle of the popover for a model object
  * - Creation (constructor), update, and destruction of the view
  * - Handle user's close request (`closeFunc` method)
- * - Track the model's ol.Feature, and update the popover location
+ * - Track the model's Feature, and update the popover location
  */
 class ModelBasedPopoverCtrl {
   private disposed = false;
   private disposedLater: any;
   private targetFeature: any;
 
-  private overlay: ol.Overlay; // the overlay
+  private overlay: Overlay; // the overlay
   private element: Element; // DOM element
   private lastUpdated: number;
 
@@ -700,12 +705,12 @@ class ModelBasedPopoverCtrl {
    */
   constructor(
     private options: {
-      createOverlay: (model: any, map) => ol.Overlay,
-      showPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model: any, closeFunc: () => void) => void,
-      destroyPopover: (elm: Element, feature: ol.Feature, pinned: boolean, model: any, closeFunc: () => void) => (boolean | void),
-      updatePopover?: (elm: Element, feature: ol.Feature, pinned: boolean, model: any, closeFunc: () => void) => void,
+      createOverlay: (model: any, map) => Overlay,
+      showPopover: (elm: Element, feature: Feature, pinned: boolean, model: any, closeFunc: () => void) => void,
+      destroyPopover: (elm: Element, feature: Feature, pinned: boolean, model: any, closeFunc: () => void) => (boolean | void),
+      updatePopover?: (elm: Element, feature: Feature, pinned: boolean, model: any, closeFunc: () => void) => void,
     },
-    private map: ol.Map,
+    private map: Map,
     public model: any,
     private getLastUpdated: (model: any) => number
   ) {
@@ -762,7 +767,7 @@ class ModelBasedPopoverCtrl {
   /**
    * Update track target, and the popover content
    */
-  update(feature: ol.Feature) {
+  update(feature: Feature) {
     this.lastUpdated = this.getLastUpdated(this.model);
 
     if (this.targetFeature === feature) {

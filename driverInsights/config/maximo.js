@@ -54,7 +54,7 @@ const readLine = (message, isPassword) => {
 
 	let password = "";
 	return new Promise((resolve, reject) => {
-		process.stdout.write(message);
+		console.log(message);
 		const ondata = ch => {
 			ch = ch + "";
 			if (ch.charCodeAt(0) === 8) {
@@ -71,7 +71,7 @@ const readLine = (message, isPassword) => {
 						return reject();
 					default:
 						password += ch;
-						process.stdout.write(isPassword ? "*" : ch);
+						process.stdout.write(encodeURIComponent(isPassword ? "*" : ch));
 						break;
 				}
 			}

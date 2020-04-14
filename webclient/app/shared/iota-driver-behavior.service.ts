@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,18 @@
 import * as _ from 'underscore';
 
 import { Injectable } from "@angular/core";
-import { HttpClient } from "./http-client";
+import { AppHttpClient } from "./http-client";
 import { Observable } from "rxjs/index.js";
 import { map } from 'rxjs/operators';
 
 @Injectable()
 export class DriverBehaviorService {
-  constructor(private http: HttpClient) {
+  constructor(private http: AppHttpClient) {
   }
 
   public isAvailable() {
-    return this.http.get("/user/capability/analysis").pipe(map(data => {
-      let resJson = data.json();
-      return resJson.available;
+    return this.http.get("/user/capability/analysis").pipe(map((data: any) => {
+      return data.available;
     }));
   }
 
@@ -38,12 +37,11 @@ export class DriverBehaviorService {
       url += ('?limit=' + limit);
     }
     console.log("get trip: " + url);
-    return this.http.get(url).pipe(map(data => {
-      if (data && (<any>data).status === 204) {
+    return this.http.get(url).pipe(map((data: any) => {
+      if (!data) {
         return [];
       }
-      let resJson = data.json();
-      return _.map(resJson, trip => {
+      return _.map(data, trip => {
         (<any>trip).trip_id = (<any>trip).trip_id || (<any>trip).tirp_id;
         return trip;
       });
@@ -53,12 +51,8 @@ export class DriverBehaviorService {
   public getDrivingBehavior(vehicleId, tripId) {
     let url = "/user/analysis/behaviors/" + vehicleId + "?trip_id=" + tripId;
     console.log("get driving behavior: " + url);
-    return this.http.get(url).pipe(map(data => {
-      if (data && (<any>data).status === 204) {
-        return {};
-      }
-      let resJson = data.json();
-      return resJson;
+    return this.http.get(url).pipe(map((data: any) => {
+      return data || {};
     }));
   }
 
@@ -68,19 +62,13 @@ export class DriverBehaviorService {
     if (!isNaN(limit)) url += "&limit=" + limit;
     console.log("get car probe history: " + url);
 
-    return this.http.get(url).pipe(map(data => {
-      let resJson = data.json();
-      return resJson;
-    }));
+    return this.http.get(url);
   }
 
   public getCarProbeHistoryCount(vehicleId, tripId): Observable<any> {
     let url = "/user/analysis/triplength/" + vehicleId + "?trip_id=" + tripId;
     console.log("get car probe history: " + url);
 
-    return this.http.get(url).pipe(map(data => {
-      let resJson = data.json();
-      return resJson;
-    }));
+    return this.http.get(url);
   }
 }

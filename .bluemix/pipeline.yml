@@ -25,27 +25,22 @@ stages:
     build_type: shell
     script: |-
       #!/bin/bash
-      # The default Node.js version is 0.10.40
-      # To use Node.js 0.12.7, uncomment the following line:
-      #export PATH=/opt/IBM/node-v0.12/bin:$PATH
       # To use Node.js 4.2.2, uncomment the following line:
-      export PATH=/opt/IBM/node-v4.2/bin:$PATH
+      # export PATH=/opt/IBM/node-v4.2/bin:$PATH
 
-      # Build web client
-      if [ -d ./webclient ]; then
-        pushd .
-        cd ./webclient
-        echo "-- Installing dependencies..."
-        npm install || echo npm-debug.log
-        echo "-- Compiling typescript..."
-        npm run tsc
-        npm run gulp
-        # Cleaning up node_modules
-        rm -Rf ./node_modules
-        popd
-      fi
-      # if necessary
-      #npm install
+      export NODE_VERSION=10.13.0
+      export NPM_VERSION=6.11.3
+      export PREFIX=./
+      npm install -g n
+      
+      export N_PREFIX=$PWD/node
+      $HOME/.npm-global/bin/n $NODE_VERSION
+      export PATH=$N_PREFIX/n/versions/node/$NODE_VERSION/bin:$PATH
+      npm install -g npm@$NPM_VERSION
+
+      # build
+      npm install
+      ng build
 - name: Deploy Stage
   inputs:
   - type: job

@@ -21,7 +21,7 @@
 			<select [value]="prop" (change)="onPropChanged($event)">
 				<option *ngFor="let alertProp of alertProps" value="{{alertProp.getId()}}">{{alertProp.getLabel()}}</option>
 			</select>
-			<select #valueSelect [value]="value" (change)="onValueChanged($event)">
+			<select [(ngModel)]="value" (change)="onValueChanged($event)">
 				<option *ngFor="let alertValue of alertValues" value="{{alertValue.getId()}}">{{alertValue.getLabel()}}</option>
 			</select>
 			<label>
@@ -31,7 +31,7 @@
 		</div>
 	</div>
 
-	<span class="col-xs-12 loading" [hidden]="!requestSending"><img src="/images/loading.gif"></span>
+	<span class="col-xs-12" [hidden]="!requestSending" [ngClass]="requestSending?'loading':''"></span>
 
 	<table class="table table-hover table-striped table-condensed table-responsive marginTop">
 		<thead>
@@ -70,14 +70,14 @@
 			</tr>
 		</thead>
 		<tbody>
-			<tr *ngFor="let alert of (fleetalerts|orderBy:orderByKey:ascendingOrder);let i=index">
+			<tr *ngFor="let alert of fleetalerts;let i=index">
 				<td class="firstRow">{{i+1}}</td>
 				<td>{{alert.ts|moment:"MMM DD/YY, HH:mm:ss"}}</td>
 				<td *ngIf="includeClosed">{{alert.closed_ts>0?(alert.closed_ts|moment:"MMM DD/YY, HH:mm:ss"):"-"}}</td>
 				<td [ngClass]="alert.severity === 'Info' ? 'blue' : alert.severity === 'Medium' ? 'green' : 'red'">
 					{{alert.severity}}</td>
-				<td><a href="javascript:void(0)"
-						(click)="onMoIdClicked($event, alert.mo_id)">{{alert.serial_number || alert.mo_id}}</a></td>
+				<td><span class="clickablelink"
+						(click)="onMoIdClicked($event, alert.mo_id)">{{alert.serial_number || alert.mo_id}}</span></td>
 				<td>{{alert.description}}</td>
 				<td>{{alert.simulated ? "Yes" : "No"}}</td>
 				<td class="alignCenter actionTD">

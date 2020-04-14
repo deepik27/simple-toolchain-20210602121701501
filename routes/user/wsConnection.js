@@ -56,22 +56,22 @@ _.extend(wsConnection, {
 
 		wss.on('connection', (client, request, ...args) => {
 			client.on('close', () => {
-				const onClose = client.appdata.callback.onClose;
+				const onClose = client.appdata.callback && client.appdata.callback.onClose;
 				onClose && onClose(client.appdata.data);
 			});
 
 			client.on('message', (message) => {
-				const onMessage = client.appdata.callback.onMessage;
+				const onMessage = client.appdata.callback &&client.appdata.callback.onMessage;
 				onMessage && onMessage(message, client.appdata.data);
 			});
 
 			client.on('error', (error) => {
-				const onError = client.appdata.callback.onError;
+				const onError = client.appdata.callback && client.appdata.callback.onError;
 				onError && onError(error, client.appdata.data);
 			});
 
 			debug('got wss connectoin at: ' + request.url);
-			client.appdata = {path: request.path};
+			client.appdata = {path: request.url};
 			_.each(this.callbacks, (callback, id) => {
 				if (request.url.startsWith(callback.path)) {
 					client.appdata.callback = callback;

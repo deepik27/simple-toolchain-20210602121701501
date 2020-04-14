@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var iotfAppClient = require("ibmiotf").IotfApplication;
+let wiotpsdk = require("@wiotp/sdk");
+
 var util = require('util');
 var EventEmitter = require('events');
 var _ = require('underscore');
@@ -34,11 +35,10 @@ function iotfClient(options) {
 		console.log("IoT Platform service is not available");
 		return;
 	}
-	this.iotfAppClient = new iotfAppClient(iotfConfig);
+	this.iotfAppClient = new wiotpsdk.ApplicationClient(iotfConfig);
 	if (process.env.STAGE1) {
 		this.iotfAppClient.staging = true;
 	};
-	this.iotfAppClient.log.setLevel('debug');
 	this.devicesConfigs = [];
 	if (options.configFile) {
 		this.devicesConfigs = getDevicesConfigs(options.configFile);
@@ -100,10 +100,10 @@ iotfClient.prototype.subscribeToDevices = function () {
 		}
 		_.each(config.Ids, function (deviceID) {
 			_.each(config.events, function (event) {
-				this.iotfAppClient.subscribeToDeviceEvents(config.deviceType, deviceID, event, "json");
+				this.iotfAppClient.subscribeToEvents(config.deviceType, deviceID, event, "json");
 			}, this);
 			_.each(config.commands, function (command) {
-				this.iotfAppClient.subscribeToDeviceCommands(config.deviceType, deviceID, command, "json");
+				this.iotfAppClient.subscribeToCommands(config.deviceType, deviceID, command, "json");
 			}, this);
 		}, this);
 	}, this);
@@ -145,13 +145,19 @@ getCredentials = function () {
 		}
 	}
 	var iotFcreds = iotfservices[0].credentials;
-	var config = {
-		"org": iotFcreds.org,
-		"id": BM_APPLICATION_ID,
-		"auth-key": iotFcreds.apiKey,
-		"auth-token": iotFcreds.apiToken
-	};
-	return config;
+	return new wiotpsdk.ApplicationConfig(
+		{ "appId": BM_APPLICATION_ID },
+		{
+			"key": iotFcreds.apiKey,
+			"token": iotFcreds.apiToken
+		},
+		{
+			"logLevel": "debug",
+			"mqtt": {
+				"instanceId": iotFcreds.org
+			}
+		}
+	);
 };
 
 getDevicesConfigs = function getDevicesConfigs(file) {

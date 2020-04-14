@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 IBM Corp. All Rights Reserved.
+ * Copyright 2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 import { Injectable } from "@angular/core";
-import { HttpClient } from "./http-client";
-import { Headers, RequestOptions } from "@angular/http";
+import { AppHttpClient } from "./http-client";
+import { HttpHeaders } from "@angular/common/http";
 import { Observable } from "rxjs/index.js";
 import { map } from 'rxjs/operators';
 
 @Injectable()
 export class AssetService {
-  constructor (private http: HttpClient) {
+  constructor (private http: AppHttpClient) {
   }
 
   // vehicles
@@ -100,9 +100,8 @@ export class AssetService {
 
     console.log("query: type=" + asset + "url=" + url);
 
-    return this.http.get(url).pipe(map(data => {
-        let resJson = data.json();
-        return resJson.data;
+    return this.http.get(url).pipe(map((data: any) => {
+        return data.data;
     }));
   }
 
@@ -111,38 +110,29 @@ export class AssetService {
 
     console.log("get: type=" + asset + "url=" + url);
 
-    return this.http.get(url).pipe(map(data => {
-        let resJson = data.json();
-        return resJson;
-    }));
+    return this.http.get(url);
   }
 
   public cerateAsset(asset: string, params) {
     let url = "/user/" + asset;
     let body = JSON.stringify(params);
-    let headers = new Headers({"Content-Type": "application/JSON;charset=utf-8"});
-    let options = new RequestOptions({headers: headers});
+    let headers = new HttpHeaders({"Content-Type": "application/JSON;charset=utf-8"});
+    let options = {headers: headers};
 
     console.log("create: type=" + asset + "url=" + url);
 
-    return this.http.post(url, body, options).pipe(map(data => {
-        let resJson = data.json();
-        return resJson;
-    }));
+    return this.http.post(url, body, options);
   }
 
   public updateAsset(asset: string, id: string, params) {
     let url = "/user/" + asset + "/" + id;
     let body = JSON.stringify(params);
-    let headers = new Headers({"Content-Type": "application/JSON;charset=utf-8"});
-    let options = new RequestOptions({headers: headers});
+    let headers = new HttpHeaders({"Content-Type": "application/JSON;charset=utf-8"});
+    let options = {headers: headers};
 
     console.log("update: type=" + asset + "url=" + url);
 
-    return this.http.put(url, body, options).pipe(map(data => {
-        let resJson = data.json();
-        return resJson;
-    }));
+    return this.http.put(url, body, options);
   }
 
   public deleteAsset(asset: string, id) {
@@ -150,9 +140,6 @@ export class AssetService {
 
     console.log("delete: type=" + asset + "url=" + url);
 
-    return this.http.delete(url).pipe(map(data => {
-        let resJson = data.json();
-        return resJson;
-    }));
+    return this.http.delete(url);
   }
 }

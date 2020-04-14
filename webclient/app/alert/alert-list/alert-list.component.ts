@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, Input, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { HttpClient } from '../../shared/http-client';
-import { Request, Response } from '@angular/http';
+import { Component, Input } from '@angular/core';
+import { AppHttpClient } from '../../shared/http-client';
 
 @Component({
-  moduleId: module.id,
   selector: 'alert-list',
   templateUrl: 'alert-list.component.html',
   styles: [`
@@ -44,9 +42,8 @@ export class AlertListComponent {
   fleetalerts: Alert[];
   requestSending = false;
   selected_row_index: string;
-  @ViewChild("valueSelect") valueSelect: ElementRef;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: AppHttpClient) { }
 
   ngOnInit() {
     if (!this.prop) {
@@ -79,11 +76,6 @@ export class AlertListComponent {
       this.getVehiclesForPropValue();
     } else {
       this.value = "";
-      setImmediate(() => {
-        if (this.valueSelect) {
-          this.valueSelect.nativeElement.selectedIndex = -1;
-        }
-      });
     }
   }
   onValueChanged(event) {
@@ -107,6 +99,16 @@ export class AlertListComponent {
   onOrderBy(key) {
     this.ascendingOrder = (key === this.orderByKey) ? !this.ascendingOrder : true;
     this.orderByKey = key;
+
+    this.fleetalerts = this.fleetalerts ? this.fleetalerts.sort((a:any, b:any) => {
+      if (typeof a[key] === 'string' || a[key] instanceof String)
+        return b[key].localeCompare(a[key]);
+      else
+        return b[key] - a[key];
+    }) : [];
+    if (!this.ascendingOrder) {
+      this.fleetalerts.reverse();
+    }
   }
   onMoIdClicked(event, mo_id) {
     event.stopPropagation();
@@ -126,13 +128,10 @@ export class AlertListComponent {
     }
     this.requestSending = true;
     this.http.get(url)
-      .subscribe((response: Response) => {
+      .subscribe((data: any) => {
         this.requestSending = false;
-        if (response.status == 200) {
-          var fleetalerts = response.json();
-          this.fleetalerts = fleetalerts && fleetalerts.alerts;
-          this.updateVehicleInfo();
-        }
+        this.fleetalerts = data && data.alerts;
+        this.updateVehicleInfo();
       }, (error: any) => {
         this.requestSending = false;
       });
@@ -148,8 +147,8 @@ export class AlertListComponent {
         moid2alerts[fleetalert.mo_id] = alerts = Array<Alert>();
         alerts.push(fleetalert);
         self.http.get("/user/vehicle/" + fleetalert.mo_id)
-          .subscribe((vehicleResponse: Response) => {
-            var vehicle = vehicleResponse.json();
+          .subscribe((data: any) => {
+            var vehicle = data;
             let mo_id = vehicle.iotcvaltmoid || (vehicle.siteid ? vehicle.siteid + ":" : "") + vehicle.mo_id;
             alerts = moid2alerts[mo_id];
             if (vehicle.serial_number) {
@@ -170,9 +169,8 @@ export class AlertListComponent {
   }
   private getVehiclesForPropValue() {
     this.http.get("/user/vehicle")
-      .subscribe((response: Response) => {
-        var json = response.json();
-        var vehicles = (json && json.data) || [];
+      .subscribe((data: any) => {
+        var vehicles = (data && data.data) || [];
         var vehicleExist = false;
         this.alertValues = vehicles.map((vehicle) => {
           vehicleExist = vehicleExist || vehicle.mo_id === this.value;
@@ -182,11 +180,6 @@ export class AlertListComponent {
         if (!vehicleExist && this.value !== "") {
           this.alertValues.unshift(new PropValue(this.value, this.value));
         }
-        setImmediate(() => {
-          if (this.valueSelect) {
-            this.valueSelect.nativeElement.value = this.value;
-          }
-        })
       }, (error: any) => {
         console.error(error);
       })

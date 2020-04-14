@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 import { Injectable } from "@angular/core";
-import { HttpClient } from "./http-client";
+import { AppHttpClient } from "./http-client";
 import { Observable } from "rxjs/index.js";
-import { map } from 'rxjs/operators';
 
 @Injectable()
 export class AlertService {
-  constructor(private http: HttpClient) {
+  constructor(private http: AppHttpClient) {
   }
 
   public getAlert(conditions): Observable<any> {
@@ -28,9 +27,6 @@ export class AlertService {
     let url = "/user/alert?" + condition;
     console.log("get alert: " + url);
 
-    return this.http.get(url).pipe(map(data => {
-      let resJson = data.json();
-      return resJson;
-    }));
+    return this.http.get(url);
   }
 }

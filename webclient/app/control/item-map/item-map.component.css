@@ -1,0 +1,189 @@
+/**
+ * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* === 15. Real-Time Map Styles === */
+
+.carMonitorMap
+{
+    position: relative;
+
+    width: 100%;
+    height: 500px;
+}
+
+@media screen and (max-width: 767px)
+{
+    .carMonitorMap
+    {
+        height: 300px;
+    }
+}
+
+.carMonitorMap .mapLocationBar
+{
+    font-weight: 500;
+
+    position: absolute;
+    z-index: 10;
+    top: 30px;
+    left: 30px;
+
+    padding: 10px 20px;
+
+    background: #fff;
+    box-shadow: 0 0 5px rgba(0, 0, 0, .3);
+}
+
+#canvas .olControlAttribution
+{
+    font-size: 13px;
+
+    bottom: 3px;
+}
+
+.carMonitorMap .ol-zoom
+{
+    top: auto;
+    right: 30px;
+    bottom: 70px;
+    left: auto;
+}
+
+.carMonitorMap .ol-attribution
+{
+    right: 30px;
+    bottom: 30px;
+}
+
+.carMonitorMap .ol-attribution.ol-uncollapsible
+{
+    height: 1.5em;
+}
+
+.carMonitorMap .popover
+{
+    max-width: 414px;
+}
+
+.carMonitorMap .popover .popover-title
+{
+    display: table;
+
+    width: 100%;
+
+    white-space: nowrap;
+}
+
+.carMonitorMap .popover .popover-title div:first-child
+{
+    display: table-cell;
+
+    width: 100%;
+
+    text-aligh: left;
+}
+
+.carMonitorMap .popover .popover-title div:last-child
+{
+    display: table-cell;
+
+    vertical-align: text-top;
+
+    text-aligh: right;
+}
+
+.carMonitorMap .popover .popover-title .close
+{
+    font-size: 12px;
+    line-height: 1.2;
+
+    display: inline-block;
+
+    margin-top: -3px;
+    margin-right: -10px;
+    margin-bottom: 0;
+    margin-left: 4px;
+    padding: 0 4px;
+
+    border-radius: 3px;
+}
+
+.carMonitorMap .popover .popover-title .remove
+{
+    font-size: 16px;
+    line-height: 1.2;
+
+    display: inline-block;
+
+    margin-top: -3px;
+    margin-right: -10px;
+    margin-bottom: 0;
+    margin-left: 4px;
+    padding: 0 2px;
+
+    border-radius: 3px;
+}
+
+.carMonitorMap .popover .popover-content
+{
+    font-weight: lighter;
+}
+
+
+.carMonitorMap .itemTool {
+    cursor: pointer;
+    position: absolute;
+    top: 90px;
+    left: 30px;
+    z-index: 10;
+    padding: 10px 20px;
+    background: #fff;
+    font-weight: 500;
+    font-size: 100%;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+.carMonitorMap .itemToolContent {
+    position: absolute;
+    top: 130px;
+    left: 30px;
+    min-width: 320px;
+    z-index: 10;
+    padding: 10px 10px;
+    background: #fff;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.toolCollapsed {
+  margin-right: 8px;
+  position: relative;
+  bottom: 5px;
+  font-size:0;
+  border-right: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 10px solid #b0b0b0;
+}
+
+.toolExpanded {
+  margin-right: 8px;
+  position: relative;
+  top: 0px;
+  font-size:0;
+  border-bottom: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 10px solid #b0b0b0;
+}

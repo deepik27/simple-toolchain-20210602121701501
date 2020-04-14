@@ -17,7 +17,6 @@ import { Component, Input, Output, EventEmitter, OnInit, OnChanges } from '@angu
 import { LocationService, MapArea } from '../shared/location.service';
 
 @Component({
-	moduleId: module.id,
 	selector: 'area-select',
 	templateUrl: 'area-select.component.html',
 	providers: [],

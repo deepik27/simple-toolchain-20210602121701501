@@ -23,7 +23,6 @@ import { NumberOfCarsService } from './number-of-cars.service';
 
 
 @Component({
-  moduleId: module.id,
   selector: 'fmdash-number-of-cars',
   templateUrl: 'number-of-cars.component.html',
   styles: [`

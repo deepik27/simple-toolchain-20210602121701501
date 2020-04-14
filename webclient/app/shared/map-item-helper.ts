@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from "@angular/core";
-import * as ol from "openlayers";
+import { EventEmitter, Output } from "@angular/core";
 import * as _ from "underscore";
+
+import { Map, Feature, Object } from 'ol';
+import VectorLayer from 'ol/layer/Vector';
+import * as olProj from 'ol/proj';
 
 /*
  * Abstract helper class to handle items shown on a map
 */
-@Injectable()
 export abstract class MapItemHelper<T extends Item> {
+  @Output() private emitter = new EventEmitter();
   loadingHandle = null;
   itemMap = {};
   tentativeItemMap = {};
@@ -30,7 +33,7 @@ export abstract class MapItemHelper<T extends Item> {
   featureExtension: any = null;
   monitors = [];
 
-  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector) {
+  constructor(public map: Map, public itemLayer: VectorLayer) {
     this.startMonitoring();
   }
 
@@ -39,6 +42,10 @@ export abstract class MapItemHelper<T extends Item> {
   */
   public getItemType() {
     return "unknown";
+  }
+
+  getEmitter() {
+    return this.emitter;
   }
 
   /*
@@ -100,7 +107,7 @@ export abstract class MapItemHelper<T extends Item> {
       return;
     }
     let ext = this.map.getView().calculateExtent(size);
-    let extent = this.normalizeExtent(ol.proj.transformExtent(ext, "EPSG:3857", "EPSG:4326"));
+    let extent = this.normalizeExtent(olProj.transformExtent(ext, "EPSG:3857", "EPSG:4326"));
     this.queryItems(extent[0], extent[1], extent[2], extent[3]).subscribe(data => {
       this.updateItems(data);
     });
@@ -181,8 +188,12 @@ export abstract class MapItemHelper<T extends Item> {
     if (itemsToRemove.length > 0) {
       this.removeItemsFromView(itemsToRemove);
     }
+    
+    if (itemsToAdd.length > 0 || itemsToRemove.length > 0) {
+      this.emitter.emit({type: 'items', items: items});
+    }
   }
-
+    
   /*
   * Create and show a tentative feature on a map until item is created by service
   */
@@ -225,7 +236,7 @@ export abstract class MapItemHelper<T extends Item> {
     let features = this.preCreatingItemMap[id] && this.preCreatingItemMap[id].features;
     if (features) {
       let self = this;
-      _.each(features, function (feature: ol.Feature) {
+      _.each(features, function (feature: Feature) {
         self.itemLayer.getSource().removeFeature(feature);
       });
       return id;
@@ -277,7 +288,7 @@ export abstract class MapItemHelper<T extends Item> {
         let features = self.tentativeItemMap[id].features;
         delete self.tentativeItemMap[id];
         if (features) {
-          _.each(features, function (feature: ol.Feature) {
+          _.each(features, function (feature: Feature) {
             self.itemLayer.getSource().removeFeature(feature);
           });
         }
@@ -304,7 +315,7 @@ export abstract class MapItemHelper<T extends Item> {
       let id = item.getId();
       if (self.itemMap[id]) {
         let features = self.itemMap[id].features;
-        _.each(features || [], function (feature: ol.Feature) {
+        _.each(features || [], function (feature: Feature) {
           if (feature)
             self.itemLayer.getSource().removeFeature(feature);
         });
@@ -317,7 +328,7 @@ export abstract class MapItemHelper<T extends Item> {
     let self = this;
     _.each(<any>this.itemMap, function (value: any, key) {
       let features = value.features;
-      _.each(features || [], function (feature: ol.Feature) {
+      _.each(features || [], function (feature: Feature) {
         if (feature)
           self.itemLayer.getSource().removeFeature(feature);
       });
@@ -333,7 +344,7 @@ export abstract class MapItemHelper<T extends Item> {
     return null;
   }
 
-  public getFeatureStyle(feature: ol.Feature) {
+  public getFeatureStyle(feature: Feature) {
     return this.itemLayer.getStyle();
   }
 
@@ -354,7 +365,6 @@ export abstract class MapItemHelper<T extends Item> {
   }
 }
 
-@Injectable()
 export abstract class Item {
   constructor(params) {
     for (let key in params) {

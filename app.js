@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 // Check if VCAP_SERVICES.json is present (used for running the server locally for development purposes)
+var constants = require('constants')
 var fs = require('fs');
 var VCAP_SERVICES_PATH = './VCAP_SERVICES.json';
 
@@ -53,7 +54,6 @@ var app = express();
 // all environments
 app.set('port', appEnv.port || 3000);
 app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
 app.enable('trust proxy');
 app.use(logger('dev'));
 app.use(bodyParser.json());
@@ -61,7 +61,15 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(methodOverride());
 app.use(helmet());
-app.use(cors());
+app.use(helmet.noCache());
+app.use(cors({ origin: appEnv.url }));
+app.use(helmet.contentSecurityPolicy({
+	directives: {
+		scriptSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://nebula-cdn.kampyle.com"],
+		objectSrc: ["'none'"],
+		frameAncestors: ["'none'"]
+	}
+}));
 
 //force https for all requests
 app.use(function (req, res, next) {
@@ -76,29 +84,24 @@ app.use(function (req, res, next) {
 app.use(auth.authenticate);
 
 //access to server contents
-app.use(express.static(path.join(__dirname, 'public')));
+var webClientModulePath = '/webclient/dist/fleetmgmt';
+app.use(express.static(path.join(__dirname, webClientModulePath)));
 app.use('/user', user);
 app.use('/admin', nps)
 
-var webClientModulePath = 'webclient';
 var webClientTop = path.join(__dirname, webClientModulePath + '/index.html');
-if ('development' === app.get('env')) {
-	console.log('Settig up the webclient for DEVELOPMENT mode..., which uses all the resources under webclient');
-	// add the base path
-	app.use('/webclient', express.static(path.join(__dirname, 'webclient')));
-} else {
-	console.log('Settig up the webclient for NON-DEVELOPMENT mode...');
-	webClientTop = path.join(__dirname, webClientModulePath + '/dist/index.html');
-	app.use('/webclient', express.static(path.join(__dirname, webClientModulePath + '/dist')));
-	app.use('/webclient', express.static(path.join(__dirname, webClientModulePath)));
-}
-app.get('/webclient/map*', function (req, res) { res.status(200).sendFile(webClientTop); });
-app.get('/webclient/carStatus*', function (req, res) { res.status(200).sendFile(webClientTop); });
-app.get('/webclient/alert*', function (req, res) { res.status(200).sendFile(webClientTop); });
-app.get('/webclient/users*', function (req, res) { res.status(200).sendFile(webClientTop); });
-app.get('/webclient/vehicle*', function (req, res) { res.status(200).sendFile(webClientTop); });
-app.get('/webclient/tool*', function (req, res) { res.status(200).sendFile(webClientTop); });
-app.get('/webclient/settings*', function (req, res) { res.status(200).sendFile(webClientTop); });
+//app.use('/', express.static(path.join(__dirname, webClientModulePath)));
+app.use('/webclient', express.static(path.join(__dirname, webClientModulePath)));
+app.use('/webclient', express.static(path.join(__dirname, '/webclient')));
+
+app.get('/webclient/map', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/carStatus', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/carStatus/*:*', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/alert', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/vehicle', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/control', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/settings', function (req, res) { res.status(200).sendFile(webClientTop); });
+app.get('/webclient/simulator', function (req, res) { res.status(200).sendFile(webClientTop); });
 
 // development only
 if ('development' === app.get('env')) {
@@ -109,7 +112,10 @@ if ('development' === app.get('env')) {
 	});
 }
 
-app.server = http.createServer(app);
+const options = {
+	secureOptions: constants.SSL_OP_NO_SSLv2 | constants.SSL_OP_NO_SSLv3 | constants.SSL_OP_NO_TLSv1
+}
+app.server = http.createServer(options, app);
 app.server.listen(app.get('port'), function () {
 	console.log('Express server listening on port ' + app.get('port'));
 });

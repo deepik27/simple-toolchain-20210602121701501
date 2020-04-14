@@ -75,6 +75,9 @@ router.get("/vehicle", authenticate, function (req, res) {
 	const q = req.query;
 	const params = (q.num_rec_in_page || q.num_page) ?
 		{ num_rec_in_page: q.num_rec_in_page || 50, num_page: q.num_page || 1 } : null;
+	if (q.status) {
+		params.status = q.status;
+	}
 	asset.getVehicleList(params)
 		.then(function (result) {
 			return res.send(result);

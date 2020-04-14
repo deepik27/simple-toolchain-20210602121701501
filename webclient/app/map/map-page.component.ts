@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 import { Component, OnInit, AfterViewInit, Input, Inject, ViewChild } from '@angular/core';
-import { ActivatedRoute, Params } from '@angular/router';
+import { Router, ActivatedRoute, Params } from '@angular/router';
 
 import { RealtimeMapComponent } from './realtime-map/realtime-map.component';
-import { NumberOfCarsComponent } from './number-of-cars/number-of-cars.component';
 import { LocationService, MapArea } from '../shared/location.service';
 import { APP_CONFIG, AppConfig } from '../app-config';
 
 import * as _ from 'underscore';
 
 @Component({
-  moduleId: module.id,
   selector: 'fmdash-map-page',
   templateUrl: 'map-page.component.html',
   styleUrls: ['map-page.component.css'],
@@ -39,7 +37,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
   initialized: boolean = false;
 
   private initialVehicleId: string;
-  @ViewChild(RealtimeMapComponent) realtimeMap: RealtimeMapComponent;
+  @ViewChild(RealtimeMapComponent, {static: false}) realtimeMap: RealtimeMapComponent;
 
   //
   // Web API host
@@ -47,6 +45,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
   webApiBaseUrl: string;
 
   constructor(
+		private router: Router,
     private route: ActivatedRoute,
     private locationService: LocationService,
     @Inject(APP_CONFIG) appConfig: AppConfig
@@ -109,8 +108,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
   }
   openSimulator() {
     this.showGuide = false;
-    let simulatorUrl = this.webApiBaseUrl + "/htmlclient/fleet.html?loc=" + this.htmlClientInitialLocation();
-    window.open(simulatorUrl, 'htmlclient');
+    this.router.navigate(['/simulator']);
   }
   checkGuidance() {
     if (window.navigator.cookieEnabled) {
@@ -124,7 +122,7 @@ export class MapPageComponent implements OnInit, AfterViewInit {
         this.showGuide = !found;
       }
       if (!found) {
-        document.cookie = hide_guide_key + "=true";
+        document.cookie = hide_guide_key + "=" + encodeURIComponent("true");
       }
     }
   }

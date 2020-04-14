@@ -25,7 +25,8 @@ const debug = require('debug')('simulatedVehicleManager');
 debug.log = console.log.bind(console);
 
 const DEFAULT_CLIENT_ID = 'default_simulator';
-const DEFAULT_NUM_VEHICLES = (process.env.DEFAULT_SIMULATOR_VEHICLES && parseInt(process.env.DEFAULT_SIMULATOR_VEHICLES)) || 5;
+const DEFAULT_MAX_VEHICLES = (process.env.MAX_SIMULATOR_VEHICLES && parseInt(process.env.MAX_SIMULATOR_VEHICLES)) || 50;
+const DEFAULT_NUM_VEHICLES = Math.min((process.env.DEFAULT_SIMULATOR_VEHICLES && parseInt(process.env.DEFAULT_SIMULATOR_VEHICLES)) || 5, DEFAULT_MAX_VEHICLES);
 const DEFAULT_TIMEOUT = (process.env.DEFAULT_SIMULATOR_TIMEOUT && parseInt(process.env.DEFAULT_SIMULATOR_TIMEOUT)) || 10;
 const SIMULATOR_MONITOR_WSS_ID = "simulator_monitor";
 
@@ -40,33 +41,27 @@ _.extend(simulatorManager, {
 	 * Create a simulator engine for given client. Default client is created if the clientId is not specified.
 	 * Created simulator engine enables specified number of vehicles within area of (longitude, latitude, distance(m)).
 	 */
-	create: function (clientId, numVehilces, longitude, latitude, distance, timeoutInMinutes, noErrorOnExist) {
+	create: function (clientId, numVehicles, preferred, longitude, latitude, distance, timeoutInMinutes, noErrorOnExist) {
 
 		if (isNaN(longitude) || isNaN(latitude)) {
 			return Q.reject({ statusCode: 400, message: 'Invalid longitude or latitude parameter' });
 		}
+		if (numVehicles > DEFAULT_MAX_VEHICLES || (preferred && preferred.length > DEFAULT_MAX_VEHICLES)) {
+			return Q.reject({ statusCode: 400, message: "Too many simulated vehicles are requested. maximum number of vehicles is " + DEFAULT_MAX_VEHICLES + "." });
+		}
 
 		// check if the simulator already exists or not
 		timeoutInMinutes = timeoutInMinutes !== undefined ? timeoutInMinutes : DEFAULT_TIMEOUT;
-		numVehicles = numVehilces || DEFAULT_NUM_VEHICLES;
-		if (numVehicles < 1) numVehicles = 5;
 		simulatorInfoMap = this.simulatorInfoMap;
 		clientId = clientId || DEFAULT_CLIENT_ID;
-		let simulatorInfo = simulatorInfoMap[clientId];
-		if (simulatorInfo && simulatorInfo.simulator && simulatorInfo.simulator.isValid()) {
-			if (noErrorOnExist) {
-				simulatorInfo.simulator.setTimeout(timeoutInMinutes);
-				simulatorInfo.simulator.updateBaseLocation(longitude, latitude, distance);
-				return Q(simulatorInfo.simulator.getInformation());
-			}
-			return Q.reject({ statusCode: 400, message: "simulator already exist." });
-		}
 
 		let excludes = [];
 		let invalidSimulatorKeys = [];
 		_.each(simulatorInfoMap, (value, key) => {
-			if (value.simulator.isValid()) {
-				excludes = _.union(excludes, _.pluck(value.simulator.getVehicleList(-1, 0, ['vehicleId']), 'vehicleId'));
+			if (value.simulator && value.simulator.isValid()) {
+				if (value.simulator.clientId != clientId) {
+					excludes = _.union(excludes, _.pluck(value.simulator.getVehicleList(-1, 0, ['vehicleId']), 'vehicleId'));
+				}
 			}
 			else {
 				// probably automatically closed
@@ -76,24 +71,39 @@ _.extend(simulatorManager, {
 		_.each(invalidSimulatorKeys, (key) => {
 			delete simulatorInfoMap[key];
 		});
+		perferrd = _.difference(preferred, excludes);
 
-		// create a simulator if not exist
-		let deferred = Q.defer();
-		simulator = new simulatorEngine(clientId, timeoutInMinutes);
-		simulatorInfoMap[clientId] = { clientId: clientId, simulator: simulator };
-		Q.when(simulator.open(numVehicles, excludes, longitude, latitude, distance), (result) => {
-			deferred.resolve(result);
-		}).catch((err) => {
-			delete simulatorInfoMap[clientId];
-			deferred.reject(err);
-		});
-		return deferred.promise;
+		let simulator = simulatorInfoMap[clientId] && simulatorInfoMap[clientId].simulator;
+		if (simulator) {
+			if (noErrorOnExist) {
+				let current = _.pluck(simulator.getVehicleList(-1, 0, ['vehicleId']), 'vehicleId');
+				if ((perferrd.length == 0 && numVehicles == 0) || (perferrd.length == current.length && !_.difference(preferred, current))) {
+					simulator.setTimeout(timeoutInMinutes);
+					simulator.updateTime();
+//					simulator.updateBaseLocation(longitude, latitude, distance);
+					return Q(simulator.getInformation());
+				} else {
+					return simulator.updateVehicles(preferred, excludes, longitude, latitude, distance, timeoutInMinutes);
+				}
+			} else {
+				return Q.reject({ statusCode: 400, message: "simulator already exist." });
+			}
+		} else {
+			numVehicles = numVehicles || DEFAULT_NUM_VEHICLES;
+			if (numVehicles < 1) numVehicles = 5;
+			if (numVehicles > DEFAULT_MAX_VEHICLES) {
+				return Q.reject({ statusCode: 400, message: "Too many simulated vehicles are requested. maximum number of vehicles is " + DEFAULT_MAX_VEHICLES + "." });
+			}
+			simulator = new simulatorEngine(clientId, timeoutInMinutes);
+			simulatorInfoMap[clientId] = { clientId: clientId, simulator: simulator };
+			return simulator.open(numVehicles, preferred, excludes, longitude, latitude, distance);
+		}
 	},
 
 	/**
 	 * Terminate a simulator and release all resources. All vehicles are stopped if they are running.
 	 */
-	release: function (clientId) {
+	release: function (clientId, timeoutInMinutes) {
 		clientId = clientId || DEFAULT_CLIENT_ID;
 
 		simulatorInfoMap = this.simulatorInfoMap;
@@ -101,16 +111,23 @@ _.extend(simulatorManager, {
 		if (!simulatorInfo) {
 			return Q.reject({ statusCode: 404, message: "simulator does not exist." });
 		}
-		delete simulatorInfoMap[clientId];
-		delete this.messageQueue[clientId];
-		if (_.isEmpty(this.messageQueue) && this.intervalHandle) {
-			clearInterval(this.intervalHandle);
-			delete this.intervalHandle;
+
+		if (!timeoutInMinutes || timeoutInMinutes == 0) {
+			delete simulatorInfoMap[clientId];
+			delete this.messageQueue[clientId];
+			if (_.isEmpty(this.messageQueue) && this.intervalHandle) {
+				clearInterval(this.intervalHandle);
+				delete this.intervalHandle;
+			}
+	
+			return Q.when(simulatorInfo.simulator.close());
+		} else {
+			simulatorInfo.simulator.setTimeout(timeoutInMinutes);
+			simulatorInfo.simulator.updateTime();
+			return Q.when(simulatorInfo.simulator.getInformation());
 		}
-
-		return Q.when(simulatorInfo.simulator.close());
 	},
-
+	
 	/**
 	 * Get list of simulator information
 	 */
@@ -137,7 +154,7 @@ _.extend(simulatorManager, {
 	/**
 	 * Create a websocket connection to monitor vehicle status
 	 */
-	watch: function (server, path) {
+	watchStatus: function (server, path) {
 		if (wsConnection.isCreated(SIMULATOR_MONITOR_WSS_ID)) {
 			return; // already created
 		}
@@ -221,7 +238,7 @@ _.extend(simulatorManager, {
 				if (appdata.callbackOnClose) {
 					simulatorInfo.simulator.setCallbackOnClose(enable ? callbackOnClose : undefined);
 				} else {
-					simulatorInfo.simulator.watch(vehicleId, appdata.properties, enable ? (data) => {
+					simulatorInfo.simulator.watchStatus(vehicleId, appdata.properties, enable ? (data) => {
 						if (data.error) {
 							console.error("error: " + JSON.stringify(data.error));
 						}

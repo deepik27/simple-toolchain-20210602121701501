@@ -22,16 +22,15 @@ import { LocationService, MapArea } from '../../shared/location.service';
 import { RealtimeDeviceDataProviderService } from '../../shared/realtime-device-manager.service';
 
 @Component({
-  moduleId: module.id,
   selector: 'fmdash-car-status-summary',
   templateUrl: 'car-status-summary.component.html',
   providers: [CarStatusDataService],
 })
 export class CarStatusSummaryComponent implements OnInit {
-  private selectedGroupingProp: string;
-  private selectedGroupingLabel: string;
-  private regions: MapArea[];
-  private selectedRegion: MapArea;
+  selectedGroupingProp: string;
+  selectedGroupingLabel: string;
+  regions: MapArea[];
+  selectedRegion: MapArea;
 
   constructor(
     private locationService: LocationService,

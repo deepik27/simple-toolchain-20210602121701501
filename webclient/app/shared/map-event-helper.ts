@@ -13,70 +13,74 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as ol from "openlayers";
-import { Injectable } from "@angular/core";
 import { EventService } from "./iota-event.service";
 import { MapItemHelper } from "./map-item-helper";
 import { Item } from "./map-item-helper";
 import { map } from 'rxjs/operators';
 
-@Injectable()
+import { Map, Feature, Coordinate } from 'ol';
+import { Style, Text, Fill, Circle, Stroke } from 'ol/style';
+import { Point } from 'ol/geom';
+import VectorLayer from 'ol/layer/Vector';
+import * as olProj from 'ol/proj';
+
+
 export class MapEventHelper extends MapItemHelper<Event> {
   dirs: string[];
   eventTypes = [];
   eventIcon = null;
-  styles: ol.style.Style[];
-  affectedStyles: ol.style.Style[];
-  defaultStyle: ol.style.Style;
+  styles: Style[];
+  affectedStyles: Style[];
+  defaultStyle: Style;
 
-  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public eventService: EventService, options: any = {}) {
+  constructor(public map: Map, public itemLayer: VectorLayer, public eventService: EventService, options: any = {}) {
     super(map, itemLayer);
 
     options = options || {};
     this.setItemLabel(options.itemLabel || "Event");
 
     let self = this;
-    let getFeatureStyle = function getFeatureStyle(feature: ol.Feature) {
-      let eventIcon = new ol.style.Circle({
+    let getFeatureStyle = function getFeatureStyle(feature: Feature) {
+      let eventIcon = new Circle({
         radius: 10,
-        stroke: new ol.style.Stroke({
+        stroke: new Stroke({
           color: "#ffc000",
           width: 1
         }),
-        fill: new ol.style.Fill({
+        fill: new Fill({
           color: "yellow"
         })
       });
-      let affectedEventIcon = new ol.style.Circle({
+      let affectedEventIcon = new Circle({
         radius: 10,
-        stroke: new ol.style.Stroke({
+        stroke: new Stroke({
           color: "yellow",
           width: 3
         }),
-        fill: new ol.style.Fill({
+        fill: new Fill({
           color: "#ffc000"
         })
       });
-      let tentativeIcon = new ol.style.Circle({
+      let tentativeIcon = new Circle({
         radius: 10,
-        stroke: new ol.style.Stroke({
+        stroke: new Stroke({
           color: "#ffc000",
           width: 1,
           lineDash: [3, 3]
         }),
-        fill: new ol.style.Fill({
+        fill: new Fill({
           color: "rgba(240,240,0,0.7)"
         })
       });
-      self.defaultStyle = new ol.style.Style({ image: tentativeIcon });
+      self.defaultStyle = new Style({ image: tentativeIcon });
 
       let arrowTexts = ["\u2191", "\u2197", "\u2192", "\u2198", "\u2193", "\u2199", "\u2190", "\u2196"];
       self.styles = arrowTexts.map(function (text) {
         let rotation = 0; // 3.14 * rotation / 180;
-        return new ol.style.Style({
+        return new Style({
           image: eventIcon,
-          text: new ol.style.Text({
-            fill: new ol.style.Fill({ color: "#606060" }),
+          text: new Text({
+            fill: new Fill({ color: "#606060" }),
             scale: 1.0,
             textAlign: "center",
             textBaseline: "middle",
@@ -88,10 +92,10 @@ export class MapEventHelper extends MapItemHelper<Event> {
       });
       self.affectedStyles = arrowTexts.map(function (text) {
         let rotation = 0; // 3.14 * rotation / 180;
-        return new ol.style.Style({
+        return new Style({
           image: affectedEventIcon,
-          text: new ol.style.Text({
-            fill: new ol.style.Fill({ color: "#404040" }),
+          text: new Text({
+            fill: new Fill({ color: "#404040" }),
             scale: 1.0,
             textAlign: "center",
             textBaseline: "middle",
@@ -112,7 +116,7 @@ export class MapEventHelper extends MapItemHelper<Event> {
     this.eventService.getEventTypes().subscribe(data => { this.eventTypes = data; });
   }
 
-  getFeatureStyle(feature: ol.Feature) {
+  getFeatureStyle(feature: Feature) {
     let event = feature.get("item");
     if (!event) {
       return this.defaultStyle;
@@ -128,6 +132,21 @@ export class MapEventHelper extends MapItemHelper<Event> {
     return affected ? this.affectedStyles[textIndex] : this.styles[textIndex];
   };
 
+  updateAffectedEvents(events) {
+    var updatedFeatures = [];
+    var ids = (events || []).map((e) => { return e.event_id; });
+    for (var key in this.itemMap) {
+      var event = this.itemMap[key].item;
+      var feature = this.itemMap[key].features[0];
+      var affected = ids.indexOf(event.event_id) >= 0;
+      if (feature.get('affected') != affected) {
+        feature.set('affected', affected);
+        feature.setStyle(this.getFeatureStyle(feature));
+        updatedFeatures.push(feature);
+      }
+    }
+  };
+  
   public getItemType() {
     return "event";
   }
@@ -155,17 +174,17 @@ export class MapEventHelper extends MapItemHelper<Event> {
 
   public createItemFeatures(event: Event) {
     // Setup current event position
-    let coordinates: ol.Coordinate = [event.s_longitude || 0, event.s_latitude || 0];
-    let position = ol.proj.fromLonLat(coordinates, undefined);
-    let feature = new ol.Feature({ geometry: new ol.geom.Point(position), item: event });
+    let coordinates: Coordinate = [event.s_longitude || 0, event.s_latitude || 0];
+    let position = olProj.fromLonLat(coordinates, undefined);
+    let feature = new Feature({ geometry: new Point(position), item: event });
     //    console.log("created an event feature : " + event.event_id);
     return [feature];
   }
 
   public createTentativeFeatures(loc: any) {
     // Setup current event position
-    let position = ol.proj.fromLonLat([loc.longitude, loc.latitude], undefined);
-    let feature = new ol.Feature({ geometry: new ol.geom.Point(position) });
+    let position = olProj.fromLonLat([loc.longitude, loc.latitude], undefined);
+    let feature = new Feature({ geometry: new Point(position) });
     return [feature];
   }
 

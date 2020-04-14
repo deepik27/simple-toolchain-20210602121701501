@@ -16,7 +16,7 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChange, Inject } from '@angular/core';
 import { Router } from '@angular/router';
 
-import * as ol from 'openlayers';
+//import * as ol from 'openlayers';
 import * as _ from 'underscore';
 import * as moment from 'moment';
 import { interval } from 'rxjs';
@@ -33,19 +33,18 @@ import { RealtimeDeviceData, RealtimeDeviceDataProvider } from '../../shared/rea
 import { RealtimeDeviceDataProviderService } from '../../shared/realtime-device-manager.service';
 import { AppConfig, APP_CONFIG } from '../../app-config';
 
+import { Map, View, Feature, Coordinate, Overlay } from 'ol';
+import { Tile } from 'ol/layer';
+import { Style, Text, Fill, Icon, Circle, Stroke, RegularShape } from 'ol/style';
+import { Point } from 'ol/geom';
+import { OSM } from 'ol/source';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import * as olProj from 'ol/proj';
+import * as olControl from 'ol/control';
+
 declare var $; // jQuery from <script> tag in the index.html
 // as bootstrap type definitoin doesn't extend jQuery $'s type definition
-
-/*
- * Additional styles, javascripts
- * my css: car-monitor.css
- * OpenLayers 3.5:
- *   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.18.2/ol.css" type="text/css">
- *   <script src="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.18.2/ol.js"></script>
- * rx-lite 3.1.2, rxjs-dom 7.0.3:
- *   <script src="https://cdnjs.cloudflare.com/ajax/libs/rxjs/3.1.2/rx.lite.js"></script>
- *   <script src="https://cdnjs.cloudflare.com/ajax/libs/rxjs-dom/7.0.3/rx.dom.js"></script>
- */
 
 /**
  * The default zoom value when the map `region` is set by `center`
@@ -60,7 +59,6 @@ var NEXT_MAP_ELEMENT_ID = 1;
 
 
 @Component({
-	moduleId: module.id,
 	selector: 'fmdash-realtime-map',
 	templateUrl: 'realtime-map.component.html',
 })
@@ -73,12 +71,12 @@ export class RealtimeMapComponent implements OnInit {
 	debugData = '[none]';
 
 	// Mapping
-	map: ol.Map;
-	mapEventsLayer: ol.layer.Vector;
-	mapGeofenceLayer: ol.layer.Vector;
-	mapPOILayer: ol.layer.Vector;
-	eventsLayer: ol.layer.Vector;
-	carsLayer: ol.layer.Vector;
+	map: Map;
+	mapEventsLayer: VectorLayer;
+	mapGeofenceLayer: VectorLayer;
+	mapPOILayer: VectorLayer;
+	eventsLayer: VectorLayer;
+	carsLayer: VectorLayer;
 	mapHelper: MapHelper;
 	mapItemHelpers = {};
 	aggregationMode: boolean = false;
@@ -87,7 +85,7 @@ export class RealtimeMapComponent implements OnInit {
 	popoverElemetId = 'carmonitorpop';
 
 	// device features map
-	private deviceFeatures: { [deviceID: string]: ol.Feature } = {};
+	private deviceFeatures: { [deviceID: string]: Feature } = {};
 
 	//
 	// Devices management
@@ -113,22 +111,22 @@ export class RealtimeMapComponent implements OnInit {
 	}
 	debugOut() {
 		let ext = this.map.getView().calculateExtent(this.map.getSize());
-		let extent = this.mapHelper.normalizeExtent(ol.proj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326'));
-		let center = this.mapHelper.normalizeLocation(ol.proj.toLonLat(this.map.getView().getCenter(), 'EPSG:3857'));
+		let extent = this.mapHelper.normalizeExtent(olProj.transformExtent(ext, 'EPSG:3857', 'EPSG:4326'));
+		let center = this.mapHelper.normalizeLocation(olProj.toLonLat(this.map.getView().getCenter(), 'EPSG:3857'));
 		this.debugData = "" + JSON.stringify(extent) + ", Center:" + JSON.stringify(center);
 	}
 	initMap() {
 		// create layers
-		this.eventsLayer = new ol.layer.Vector({
-			source: new ol.source.Vector(),
+		this.eventsLayer = new VectorLayer({
+			source: new VectorSource(),
 			style: function (feature) {
 				return getDrivingEventStyle(feature.get('drivingEvent'));
 			},
 			renderOrder: undefined
 		});
 		// car layer with rendering style
-		this.carsLayer = new ol.layer.Vector({
-			source: new ol.source.Vector(),
+		this.carsLayer = new VectorLayer({
+			source: new VectorSource(),
 			style: function (feature) {
 				var device = feature.get('device');
 				if (device.aggregated) {
@@ -139,37 +137,33 @@ export class RealtimeMapComponent implements OnInit {
 			},
 			renderOrder: undefined
 		});
-		this.mapEventsLayer = new ol.layer.Vector({
-			source: new ol.source.Vector(),
+		this.mapEventsLayer = new VectorLayer({
+			source: new VectorSource(),
 			renderOrder: undefined
 		});
-		this.mapGeofenceLayer = new ol.layer.Vector({
-			source: new ol.source.Vector(),
+		this.mapGeofenceLayer = new VectorLayer({
+			source: new VectorSource(),
 			renderOrder: undefined
 		});
-		this.mapPOILayer = new ol.layer.Vector({
-			source: new ol.source.Vector(),
+		this.mapPOILayer = new VectorLayer({
+			source: new VectorSource(),
 			renderOrder: undefined
 		});
 
 		// create a map
-		var opt = new ol.Object();
 		var mapTargetElement = document.getElementById(this.mapElementId);
 
-		this.map = new ol.Map({
-			controls: ol.control.defaults({
+		this.map = new Map({
+			controls: olControl.defaults({
 				attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
 					collapsible: false
 				})
 			}),
 			target: mapTargetElement,
 			layers: [
-				new ol.layer.Tile({
+				new Tile({
 					//source: new ol.source.MapQuest({layer: 'sat'}),
-					source: new ol.source.OSM(<olx.source.OSMOptions>{
-						//wrapX: false,
-						//url: 'url: //{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png', // default
-					}),
+					source: new OSM(),
 					preload: 4,
 				}),
 				this.eventsLayer,
@@ -178,8 +172,8 @@ export class RealtimeMapComponent implements OnInit {
 				this.mapPOILayer,
 				this.carsLayer
 			],
-			view: new ol.View({
-				center: ol.proj.fromLonLat((this.region && this.region.center) || [0, 0], undefined),
+			view: new View({
+				center: olProj.fromLonLat((this.region && this.region.center) || [0, 0], undefined),
 				zoom: ((this.region && this.region.zoom) || DEFAULT_ZOOM)
 			}),
 		});
@@ -189,7 +183,7 @@ export class RealtimeMapComponent implements OnInit {
 			if (item) {
 				let helper = this.mapItemHelpers[item.getItemType()];
 				if (helper && helper.hitTest) {
-					return helper.hitTest(item, feature, ol.proj.toLonLat(coordinate, undefined));
+					return helper.hitTest(item, feature, olProj.toLonLat(coordinate, undefined));
 				}
 			}
 			return true;
@@ -228,8 +222,8 @@ export class RealtimeMapComponent implements OnInit {
 			this.animatedDeviceManagerService.startTracking(extent, this.mapHelper, events => {
 				// create markers
 				var markers = events.map((event) => {
-					var result = new ol.Feature({
-						geometry: new ol.geom.Point(ol.proj.fromLonLat(<ol.Coordinate>[event.s_longitude, event.s_latitude], undefined)),
+					var result = new Feature({
+						geometry: new Point(olProj.fromLonLat(<Coordinate>[event.s_longitude, event.s_latitude], undefined)),
 						popoverContent: event.event_name,
 					});
 					result.setStyle(getDrivingEventStyle(event)); //WORKAROUND not sure why layer style not work
@@ -248,10 +242,10 @@ export class RealtimeMapComponent implements OnInit {
 		// Setup popover
 		//
 		this.mapHelper.addPopOver({
-			elm: document.getElementById(this.popoverElemetId),
-			pin: true,
-			updateInterval: 1000,
-		},
+				elm: document.getElementById(this.popoverElemetId),
+				pin: true,
+				updateInterval: 1000,
+			},
 			function showPopOver(elem, feature, pinned, closeCallback) {
 				if (!feature) return;
 				var content = <any>getPopOverContent(feature);
@@ -273,7 +267,15 @@ export class RealtimeMapComponent implements OnInit {
 						});
 					}
 					$(elem).popover('show');
-				}
+
+					const c = $(elem).parent().find('.clickablelink');
+					c && c.on('click', (data) => {
+						if (!data || !data.target || !data.target.lastElementChild && !data.target.lastElementChild.textContent) {
+							return;
+						}
+						onShowVehicleAnalysis(data.target.lastElementChild.textContent);
+					});
+		}
 			},
 			function destroyPopOver(elem, feature, pinned) {
 				if (!feature) return;
@@ -287,12 +289,25 @@ export class RealtimeMapComponent implements OnInit {
 					if (popover.options.content != content.content) {
 						popover.options.content = content.content;
 						$(elem).popover('show');
+
+						const c = $(elem).parent().find('.clickablelink');
+						c && c.on('click', (data) => {
+							if (!data || !data.target || !data.target.lastElementChild && !data.target.lastElementChild.textContent) {
+								return;
+							}
+							onShowVehicleAnalysis(data.target.lastElementChild.textContent);
+						});
 					}
 				}
 			});
 
-		// popover - generate popover content from ol.Feature
-		var getPopOverContent = (feature): { title?: string, content: string } => {
+		const onShowVehicleAnalysis = (vehicleId) => {
+			console.log('Car ID link is clicked on the popover');
+			this.router.navigate(['/carStatus', vehicleId]);
+		}
+
+		// popover - generate popover content from Feature
+		const getPopOverContent = (feature): { title?: string, content: string } => {
 			var content = <string>feature.get('popoverContent');
 			if (content)
 				return { content: '<span style="white-space: nowrap;">' + _.escape(content) + '</span>' };
@@ -311,10 +326,9 @@ export class RealtimeMapComponent implements OnInit {
 				}
 
 				result.content = ('<span style="white-space: nowrap;">ID: '
-					+ '<a onclick="document[\'' + ("_handleClick" + this.popoverElemetId) + '\'](\'' + _.escape(device.deviceID) + '\'); return 0;"'
-					+ ' href="javascript:void(0)">'
+					+ '<span class="clickablelink">'
 					+ _.escape((device.vehicle && device.vehicle.serial_number) || device.deviceID)
-					+ '</a></span>');
+					+ '<span class="vehicleId" style="display:none">' + _.escape(device.deviceID) + '</span></span></span>');
 				this.animatedDeviceManagerService.scheduleVehicleDataLoading(device.deviceID);
 				var info = device.latestInfo;
 				if (sample && this.DEBUG) {
@@ -400,7 +414,6 @@ export class RealtimeMapComponent implements OnInit {
 		}
 		let getSeverityColor = (sev: number) => ['green', 'blue', 'orange', 'red'][sev];
 
-		let severityToValue = { Critical: 3, High: 'red', Medium: 'orange', Low: 'orange', Info: 'blue' };
 		let alertsProvider = interval(2000).pipe(map(() => {
 			// get all the alerts here
 			let result = this.animatedDeviceManager.getDevices()
@@ -415,15 +428,34 @@ export class RealtimeMapComponent implements OnInit {
 						return getSeverityColor(col);
 					};
 					let getContent = () => {
-						var rows = alerts.map(alert => `<tr><td>${
-							_.escape(alert.description)
-							}</td><td class="${_.escape(getSeverityColor(getSeverityVal(alert)))}">${
-							_.escape(alert.severity)
-							}</td></tr>`);
-						var content = `<table class="table table-hover table-striped"><tbody>\n` +
-							`<thead><tr><th>Messages</th><th>Severity</th></tr></thead>\n` +
-							rows.join('\n') +
-							`</tbody></table>`;
+						// Alert frame
+						let content = document.createElement('table');
+						content.classList.add('table', 'table-hover', 'table-striped');
+						// Alert head
+						let thead = document.createElement('thead');
+						let tr = document.createElement('tr');
+						thead.appendChild(tr);		
+						let th = document.createElement('th');
+						th.appendChild(document.createTextNode('Message'));
+						tr.appendChild(th);
+						th = document.createElement('th');
+						th.appendChild(document.createTextNode('Severity'));
+						tr.appendChild(th);
+						// Alert contents
+						let tbody = document.createElement('tbody');
+						alerts.forEach(alert => {
+							let tr = document.createElement('tr');
+							let td = document.createElement('td');
+							td.appendChild(document.createTextNode(_.escape(alert.description)));
+							tr.appendChild(td);
+							td = document.createElement('td');
+							td.classList.add(_.escape(getSeverityColor(getSeverityVal(alert))));
+							td.appendChild(document.createTextNode(_.escape(alert.description)));
+							tr.appendChild(td);
+							tbody.appendChild(tr);
+						});
+						content.appendChild(thead);
+						content.appendChild(tbody);
 						return content;
 					};
 					let getLastUpdated = () => {
@@ -454,10 +486,31 @@ export class RealtimeMapComponent implements OnInit {
 				model.colorClass && elem.classList.add(model.colorClass);
 				// prepare the content
 				let alertPopoverContent = model.contentHTML;
-				elem.innerHTML = `<div class="title"><div style="text-align: right"><a class="close" href="javascript: void(0);">&times;</a></div></div><div class="content">${alertPopoverContent}</div>`;
+
+				// create alert message box
+				let title = document.createElement('div');
+				title.classList.add('title');
+				let child = document.createElement('div');
+				child.style.textAlign = "right";
+				let a = document.createElement("a");
+				a.classList.add('close');
+				a.innerText = _.escape('x');
+				child.appendChild(a);
+				title.appendChild(child);
+
+				let content = document.createElement('div');
+				content.appendChild(alertPopoverContent);
+				content.classList.add('content');
+
+				while (elem.firstChild) {
+					elem.removeChild(elem.lastChild);
+				}
+				elem.appendChild(title);
+				elem.appendChild(content);
+
 				mapTargetElement.appendChild(elem);
 
-				let r = new ol.Overlay({
+				let r = new Overlay({
 					element: elem,
 					offset: [-10, -3],
 					positioning: 'bottom-right',
@@ -483,7 +536,10 @@ export class RealtimeMapComponent implements OnInit {
 				// update content
 				var c = $(elem).find('.content');
 				c && c.get().forEach((e: Element) => {
-					e.innerHTML = model.contentHTML;
+					while (e.firstChild) {
+						e.removeChild(e.lastChild);
+					}
+					e.appendChild(model.contentHTML);
 				})
 			},
 			destroyPopover: function destroyInfoPopover(elem, feature, pin, model, closeFunc) {
@@ -511,14 +567,14 @@ export class RealtimeMapComponent implements OnInit {
 					prevAggregationMode = cur.aggregated;
 					this.changeAggreagationMode(cur.aggregated);
 				}
-				var curPoint = (cur.lng && cur.lat) ? new ol.geom.Point(ol.proj.fromLonLat([cur.lng, cur.lat], undefined)) : null;
+				var curPoint = (cur.lng && cur.lat) ? new Point(olProj.fromLonLat([cur.lng, cur.lat], undefined)) : null;
 				var curStatus = cur.alertLevel || 'normal';
 				//console.log('syncCarFeatures - Putting icon at ', [cur.lng, cur.lat])
 
 				var feature: any = this.deviceFeatures[device.deviceID];
 				if (curPoint && !feature) {
 					// create a feature for me
-					feature = new ol.Feature({
+					feature = new Feature({
 						geometry: curPoint,
 						carStatus: curStatus,
 						//style: getCarStyle(curStatus),  //WORKAROUND: not sure why layer style not work
@@ -587,12 +643,6 @@ export class RealtimeMapComponent implements OnInit {
 	ngOnInit() {
 		this.initMap();
 		this.region && this.mapHelper.moveMap(this.region);
-
-		// register popover link event handler to document
-		document['_handleClick' + this.popoverElemetId] = (vehicleId) => {
-			console.log('Car ID link is clicked on the popover');
-			this.router.navigate(['/carStatus', vehicleId]);
-		};
 	}
 
 	ngOnChanges(changes: { [propertyName: string]: SimpleChange }) {
@@ -636,7 +686,7 @@ export class RealtimeMapComponent implements OnInit {
 
 /**
  * Get car style for the given status
- * @return ol.style.Style
+ * @return Style
  */
 var getCarStyle = function (status) {
 	return CAR_STYLE_MAP[status] || CAR_STYLE_MAP['unknown'];
@@ -670,10 +720,10 @@ var getGroupStyle = function (device) {
 		}
 	}
 	var countText = '' + (count >= 0 ? count : '...');
-	return new ol.style.Style({
+	return new Style({
 		image: GROUP_IMAGE_MAP[status][size],
-		text: new ol.style.Text({
-			fill: new ol.style.Fill({ color: "#606060" }),
+		text: new Text({
+			fill: new Fill({ color: "#606060" }),
 			textAlign: "center",
 			textBaseline: "middle",
 			text: countText,
@@ -692,8 +742,8 @@ var GROUP_IMAGE_MAP = {};
 	['unknown', 'img/car-gray.png']];
 	data.forEach(function (item) {
 		var status = item[0], icon = item[1];
-		var style = new ol.style.Style({
-			image: new ol.style.Icon({
+		var style = new Style({
+			image: new Icon({
 				anchor: [16, 16],
 				anchorXUnits: 'pixels',
 				anchorYUnits: 'pixels',
@@ -717,13 +767,13 @@ var GROUP_IMAGE_MAP = {};
 	groupStatus.forEach(function (status) {
 		var statusImages = {};
 		group.forEach(function (item) {
-			var circle = new ol.style.Circle({
+			var circle = new Circle({
 				radius: item.radius,
-				stroke: new ol.style.Stroke({
+				stroke: new Stroke({
 					color: status.borderColor,
 					width: item.border
 				}),
-				fill: new ol.style.Fill({
+				fill: new Fill({
 					color: status.fillColor
 				})
 			});
@@ -737,20 +787,20 @@ var GROUP_IMAGE_MAP = {};
  * Get driver events' style on the map
  */
 var getDrivingEventStyle = (function () {
-	var _cache: ol.style.Style;
+	var _cache: Style;
 
 	return function (event) {
 		if (_cache)
 			return _cache;
 
-		_cache = new ol.style.Style({
-			image: new (<any>ol.style.RegularShape)({ // unwrap class as the class defition is poor
+		_cache = new Style({
+			image: new (<any>RegularShape)({ // unwrap class as the class defition is poor
 				points: 3,
 				radius: 9,
 				rotation: 0,
 				snapToPixel: false,
-				fill: new ol.style.Fill({ color: 'yellow' }),
-				stroke: new ol.style.Stroke({
+				fill: new Fill({ color: 'yellow' }),
+				stroke: new Stroke({
 					color: 'black', width: 1
 				}),
 			}),

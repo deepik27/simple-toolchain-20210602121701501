@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,36 +14,34 @@
  * limitations under the License.
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Http, Request, Response } from '@angular/http';
+import { HttpClient } from '@angular/common/http';
 
 import { VehicleListComponent } from './vehicle-list/vehicle-list.component';
 import { VendorListComponent } from './vendor-list/vendor-list.component';
 
 @Component({
-  moduleId: module.id,
   selector: 'fmdash-vehicle-page',
   templateUrl: 'vehicle-page.component.html',
 })
 export class VehiclePageComponent implements OnInit {
 
-  @ViewChild(VehicleListComponent)
-  private vehicleList: VehicleListComponent;
+  @ViewChild(VehicleListComponent, {static: true})
+  vehicleList: VehicleListComponent;
 
-  @ViewChild(VendorListComponent)
+  @ViewChild(VendorListComponent, {static: true})
   private vendorList: VendorListComponent;
 
   isWorkingWithVendor: boolean;
   isIoTPAvailable: boolean = false;
 
-  constructor(public http: Http) {
+  constructor(public http: HttpClient) {
 
   }
 
   ngOnInit() {
     this.http.get("/user/capability/device")
       .subscribe((response: any) => {
-        let res = response.json();
-        this.isIoTPAvailable = res.available;
+        this.isIoTPAvailable = response.available;
       });
   }
 

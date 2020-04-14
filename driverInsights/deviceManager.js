@@ -20,6 +20,8 @@ debug.log = console.log.bind(console);
 
 const cviAsset = app_module_require("cvi-node-lib").asset;
 const iotfAppClient = app_module_require('iotfclient').iotfAppClient;
+const iotfRegistry = iotfAppClient && iotfAppClient.registry;
+const iotfApi = iotfAppClient && iotfAppClient._apiClient;
 
 const SEND_PROBE_USER_AGENT = process.env.SEND_PROBE_USER_AGENT || "IBM IoT Connected Vehicle Insights Client";
 const VENDOR_NAME = process.env.SIMULATOR_VENDOR || "IBM";
@@ -78,9 +80,9 @@ class DeviceManager {
 		}
 
 		if (this.isIoTPlatformAvailable()) {
-			let deviceType = await iotfAppClient.getDeviceType(DEVICE_TYPE).catch(async error => {
+			let deviceType = await iotfRegistry.getDeviceType(DEVICE_TYPE).catch(async error => {
 				if (error.status === 404) {
-					return await iotfAppClient.registerDeviceType(DEVICE_TYPE);
+					return await iotfRegistry.registerDeviceType(DEVICE_TYPE);
 				}
 				return Promise.reject(error);
 			});
@@ -90,7 +92,7 @@ class DeviceManager {
 		}
 	}
 	isIoTPlatformAvailable() {
-		return !!iotfAppClient;
+		return !!iotfRegistry;
 	}
 	/**
 	 * Remove IoTP devices which is not in CVI asset
@@ -121,21 +123,23 @@ class DeviceManager {
 		}
 
 		const deleteDevices = [];
-		const devices = await iotfAppClient.getAllDevices({ "typeId": DEVICE_TYPE });
-		devices.results.forEach(device => {
-			if (!vehiclearray.includes(device.deviceId.toUpperCase())) {
-				deleteDevices.push({ "typeId": DEVICE_TYPE, "deviceId": device.deviceId });
-			}
-		});
-		if (deleteDevices.length > 0) {
-			const response = await iotfAppClient.deleteMultipleDevices(deleteDevices).catch(error => {
-				// Workaround of defect of iotf client
-				if (error.message.indexOf("Expected HTTP 201 from server but got HTTP 202.") > 0) {
-					return deleteDevices.map(d => { d.success = true; return d; });
+		if (this.isIoTPlatformAvailable()) {
+			const devices = await iotfApi.getAllDevices({ "typeId": DEVICE_TYPE });
+			devices.results.forEach(device => {
+				if (!vehiclearray.includes(device.deviceId.toUpperCase())) {
+					deleteDevices.push({ "typeId": DEVICE_TYPE, "deviceId": device.deviceId });
 				}
-				return Promise.reject(error);
 			});
-			debug(JSON.stringify(response));
+			if (deleteDevices.length > 0) {
+				const response = await iotfRegistry.deleteMultipleDevices(deleteDevices).catch(error => {
+					// Workaround of defect of iotf client
+					if (error.message.indexOf("Expected HTTP 201 from server but got HTTP 202.") > 0) {
+						return deleteDevices.map(d => { d.success = true; return d; });
+					}
+					return Promise.reject(error);
+				});
+				debug(JSON.stringify(response));
+			}
 		}
 		return `${deleteDevices.length} of devices are deleted.`;
 	}
@@ -173,7 +177,7 @@ class DeviceManager {
 			if (!this.isIoTPlatformAvailable()) {
 				return { "statusCode": 400, "message": "IoT Platform is not available. Use HTTP to send car probe." };
 			}
-			device = await iotfAppClient.getDevice(DEVICE_TYPE, vehicle.mo_id).catch(error => {
+			device = await iotfRegistry.getDevice(DEVICE_TYPE, vehicle.mo_id).catch(error => {
 				if (error && error.status === 404) {
 					return null;
 				}
@@ -182,7 +186,7 @@ class DeviceManager {
 				if (ERROR_ON_VEHICLE_INCONSISTENT) {
 					return Promise.reject({ "statusCode": 409, "message": `Device with id=${vehicle.mo_id} has already been existing.` });
 				} else {
-					await iotfAppClient.unregisterDevice(DEVICE_TYPE, vehicle.mo_id);
+					await iotfRegistry.unregisterDevice(DEVICE_TYPE, vehicle.mo_id);
 				}
 			}
 
@@ -190,7 +194,7 @@ class DeviceManager {
 			if (vehicle.serial_number) {
 				deviceInfo.serialNumber = vehicle.serial_number;
 			}
-			device = await iotfAppClient.registerDevice(DEVICE_TYPE, vehicle.mo_id, null, deviceInfo);
+			device = await iotfRegistry.registerDevice(DEVICE_TYPE, vehicle.mo_id, null, deviceInfo);
 		}
 
 		return this._extractAccessInfo(Object.assign(device, response));
@@ -214,7 +218,7 @@ class DeviceManager {
 			const mo_id = vehicle.mo_id;
 			let device;
 			if (protocol === "mqtt" && this.isIoTPlatformAvailable()) {
-				device = await iotfAppClient.getDevice(DEVICE_TYPE, mo_id).catch(async error => {
+				device = await iotfRegistry.getDevice(DEVICE_TYPE, mo_id).catch(async error => {
 					if (error && error.status === 404) {
 						if (ERROR_ON_VEHICLE_INCONSISTENT) {
 							return Promise.reject({ "statusCode": 404, "message": "CVI Vehicle and IoTP Device are inconcistent." });
@@ -224,10 +228,10 @@ class DeviceManager {
 					return Promise.reject(error);
 				});
 				if (device) {
-					await iotfAppClient.unregisterDevice(DEVICE_TYPE, vehicle.mo_id);
+					await iotfRegistry.unregisterDevice(DEVICE_TYPE, vehicle.mo_id);
 				}
 				const deviceInfo = vehicle.serial_number ? { "serialNumber": vehicle.serial_number } : {};
-				device = await iotfAppClient.registerDevice(DEVICE_TYPE, vehicle.mo_id, null, deviceInfo);
+				device = await iotfRegistry.registerDevice(DEVICE_TYPE, vehicle.mo_id, null, deviceInfo);
 			}
 			return this._extractAccessInfo(Object.assign(device || {}, vehicle));
 		}
@@ -243,7 +247,7 @@ class DeviceManager {
 			let vehicle = vehicles.data[0];
 			vehicle = await cviAsset.deleteVehicle(vehicle.mo_id);
 			if (this.isIoTPlatformAvailable()) {
-				await iotfAppClient.unregisterDevice(DEVICE_TYPE, vehicle.mo_id);
+				await iotfRegistry.unregisterDevice(DEVICE_TYPE, vehicle.mo_id);
 			}
 			return vehicle;
 		} else {
@@ -253,7 +257,7 @@ class DeviceManager {
 	async deleteVehicle(mo_id) {
 		const vehicle = await cviAsset.deleteVehicle(mo_id);
 		if (this.isIoTPlatformAvailable()) {
-			await iotfAppClient.unregisterDevice(DEVICE_TYPE, mo_id).catch(error => {
+			await iotfRegistry.unregisterDevice(DEVICE_TYPE, mo_id).catch(error => {
 				if (error.statusCode === 404) {
 					// The vehicle is not associated with IoTP
 					return null;

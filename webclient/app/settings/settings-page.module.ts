@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,31 +14,17 @@
  * limitations under the License.
  */
 import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
-import { HttpModule } from '@angular/http';
+import { CommonModule } from '@angular/common';
 
-import { UtilsModule } from '../utils/utils.module';
-
+import { SettingsPageRoutingModule } from '../settings/settings-page-routing.module';
 import { SettingsPageComponent } from './settings-page.component';
-import { routing } from './settings-page.routing';
+
 
 @NgModule({
+  declarations: [SettingsPageComponent],
   imports: [
-    BrowserModule,
-    FormsModule,
-    HttpModule,
-    RouterModule,
-    UtilsModule,
-    routing
-  ],
-  declarations: [
-    SettingsPageComponent
-  ],
-  exports: [
-    SettingsPageComponent
-  ],
-  providers: []
+    CommonModule,
+    SettingsPageRoutingModule
+  ]
 })
 export class SettingsPageModule { }

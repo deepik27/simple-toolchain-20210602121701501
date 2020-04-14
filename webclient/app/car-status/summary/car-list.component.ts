@@ -22,7 +22,6 @@ import { CarStatusDataService } from './car-status-data.service';
 import * as _ from 'underscore';
 
 @Component({
-  moduleId: module.id,
   selector: 'fmdash-car-list',
   templateUrl: 'car-list.component.html',
 })

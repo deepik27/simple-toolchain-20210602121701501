@@ -14,7 +14,7 @@
    limitations under the License.
 -------------------------------------------------------------------------------------------------->
 <div class="container-50 noTopPadding container-30-right">
-	<span class="loading" [hidden]="!requestSending"><img src="/images/loading.gif"></span>
+	<div [ngClass]="requestSending?'loading':''"></div>
 	<div class="error" [hidden]="!errorMessage">{{errorMessage}}</div>
 	<div class="floatRight controlPanel">
 		<span id="numRecInPage">
@@ -63,7 +63,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			<tr *ngFor="let vehicle of (vehicles|orderBy:orderByKey:!ascendingOrder); let i = index">
+			<tr *ngFor="let vehicle of vehicles; let i = index">
 				<td class="firstRow dataTableCel">{{numRecInPage * (pageNumber - 1) + i + 1}}</td>
 				<td class="dataTableCel"><span
 						title="{{showMoId?vehicle.__id:vehicle.__mo_id}}">{{(showMoId?vehicle.mo_id:vehicle.__id)||'-'}}</span></td>
@@ -80,8 +80,8 @@
 					</div>
 				</td>
 				<td class="alignCenter actionTD dataTableCel">
-					<a class="icon-edit" (click)="selected_mo_id=null;onUpdate(vehicle.mo_id)" href="javascript:void(0)"
-						title="Update"></a>
+					<span class="icon-edit clickablelink" (click)="selected_mo_id=null;onUpdate(vehicle.mo_id)"
+						title="Update"></span>
 					<a class="icon-delete" [ngClass]="vehicle.status != 'active' ? '' : 'hidden'"
 						(click)="selected_mo_id=null;onDelete(vehicle.mo_id)" title="Delete"></a>
 					<a class="icon-status" [routerLink]="['/carStatus', ''+vehicle.__mo_id]" title="Show Status"></a>

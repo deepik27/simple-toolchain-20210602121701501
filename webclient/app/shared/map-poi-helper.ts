@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 IBM Corp. All Rights Reserved.
+ * Copyright 2019,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,39 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as ol from "openlayers";
-import { Injectable } from "@angular/core";
+import * as _ from "underscore";
 import { of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { POIService } from "./iota-poi.service";
 import{ MapItemHelper } from "./map-item-helper";
 import{ Item } from "./map-item-helper";
 
-@Injectable()
+import { Map, Feature, Coordinate } from 'ol';
+import { Style, Icon } from 'ol/style';
+import { Point } from 'ol/geom';
+import VectorLayer from 'ol/layer/Vector';
+import * as olProj from 'ol/proj';
+
+
 export class MapPOIHelper extends MapItemHelper<POI> {
   isAvailable: boolean = false;
   dirs: string[];
   poiIcon = null;
-  poiStyle: ol.style.Style;
-  defaultStyle: ol.style.Style;
+  poiStyle: Style;
+  defaultStyle: Style;
+  selectedPoiStyle: Style;
+  selectedPOI: POI = null;
   queryProperties: any;
 
-  constructor(public map: ol.Map, public itemLayer: ol.layer.Vector, public poiService: POIService, options: any = {}) {
+  constructor(public map: Map, public itemLayer: VectorLayer, public poiService: POIService, options: any = {}) {
     super(map, itemLayer);
 
     options = options || {};
     this.setItemLabel(options.itemLabel || "POI");
 
-    this.poiService.getCapability().subscribe(data => {
+    this.poiService.getCapability().subscribe((data: any) => {
       if (data) {
         this.isAvailable = data.available;
       }
     });
 
     let self = this;
-    let getFeatureStyle = function getFeatureStyle(feature: ol.Feature) {
-      self.defaultStyle = self.getIconStyle('/images/MarkerGray.png', [79,158], 0.1);
-      self.poiStyle = self.getIconStyle('/images/MarkerBlue.png', [79,158], 0.1);
+    let getFeatureStyle = function getFeatureStyle(feature: Feature) {
+      self.defaultStyle = self.getIconStyle('/webclient/img/MarkerGray.png', [79,158], 0.1);
+      self.poiStyle = self.getIconStyle('/webclient/img/MarkerBlue.png', [79,158], 0.1);
+      self.selectedPoiStyle = self.getIconStyle('/webclient/img/MarkerRed.png', [79,158], 0.1);
 
       return function(feature, resolution) {
         let style = self.getFeatureStyle(feature);
@@ -56,16 +64,18 @@ export class MapPOIHelper extends MapItemHelper<POI> {
     this.itemLayer.setStyle(getFeatureStyle);
   }
 
-  getFeatureStyle(feature: ol.Feature) {
+  getFeatureStyle(feature: Feature) {
     let poi = feature.get("item");
     if (!poi) {
       return this.defaultStyle;
+    } else if (this.selectedPOI && poi.id == this.selectedPOI.id) {
+      return this.selectedPoiStyle;
     }
     return this.poiStyle;
   };
 
 	getIconStyle(src, anchor, scale){
-		let style = new ol.style.Style({image: new ol.style.Icon({
+		let style = new Style({image: new Icon({
 			anchor: anchor || [0,0],
 			anchorXUnits: 'pixels',
 			anchorYUnits: 'pixels',
@@ -85,6 +95,13 @@ export class MapPOIHelper extends MapItemHelper<POI> {
     if (!this.isAvailable) {
       return of([]);
     }
+    min_longitude -= 0.01;
+    min_latitude -= 0.01;
+    max_longitude += 0.01;
+    max_latitude += 0.01;
+
+    const selectedId = this.selectedPOI ? this.selectedPOI.id : null;
+    this.selectedPOI = null;
     let center_latitude = (max_latitude + min_latitude) / 2;
     let center_longitude = (max_longitude + min_longitude) / 2;
     let radius = Math.ceil(this._calcDistance([center_longitude, center_latitude], [max_longitude, max_latitude]) / 1000);
@@ -94,10 +111,24 @@ export class MapPOIHelper extends MapItemHelper<POI> {
         radius: radius,
         properties: this.queryProperties
     }).pipe(map(data => {
-      return data.map(function(poi) {
-        return new POI(poi);
+      return data.map((poi) => {
+        const newPOI = new POI(poi);
+        if (selectedId == newPOI.id) {
+          this.selectedPOI = newPOI
+        }
+        return newPOI;
       });
     }));
+  }
+
+  public updateSelection(poi: POI) {
+    if (this.selectedPOI) {
+      _.each(this.itemMap[this.selectedPOI.id].features, (feature:Feature) => feature.setStyle(this.poiStyle));
+    }
+    this.selectedPOI = poi;
+    if (this.selectedPOI) {
+      _.each(this.itemMap[this.selectedPOI.id].features, (feature:Feature) => feature.setStyle(this.selectedPoiStyle));
+    }
   }
 
   /*
@@ -134,17 +165,17 @@ export class MapPOIHelper extends MapItemHelper<POI> {
 
   public createItemFeatures(poi: POI) {
     // Setup current poi position
-    let coordinates: ol.Coordinate = [poi.longitude || 0, poi.latitude || 0];
-    let position = ol.proj.fromLonLat(coordinates, undefined);
-    let feature = new ol.Feature({geometry: new ol.geom.Point(position), item: poi});
+    let coordinates: Coordinate = [poi.longitude || 0, poi.latitude || 0];
+    let position = olProj.fromLonLat(coordinates, undefined);
+    let feature = new Feature({geometry: new Point(position), item: poi});
 //    console.log("created a poi feature : " + poi.poi_id);
     return [feature];
   }
 
   public createTentativeFeatures(loc: any) {
     // Setup current poi position
-    let position = ol.proj.fromLonLat([loc.longitude, loc.latitude], undefined);
-    let feature = new ol.Feature({geometry: new ol.geom.Point(position)});
+    let position = olProj.fromLonLat([loc.longitude, loc.latitude], undefined);
+    let feature = new Feature({geometry: new Point(position)});
     return [feature];
   }
 

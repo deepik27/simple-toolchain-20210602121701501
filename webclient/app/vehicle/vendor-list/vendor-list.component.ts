@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, Input } from '@angular/core';
-import { HttpClient } from '../../shared/http-client';
-import { Response, Headers, RequestOptions } from '@angular/http';
+import { Component } from '@angular/core';
+import { AppHttpClient } from '../../shared/http-client';
+import { HttpHeaders } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 
 @Component({
-  moduleId: module.id,
   selector: 'vendor-list',
   templateUrl: 'vendor-list.component.html',
   styleUrls: ['vendor-list.component.css']
@@ -32,7 +31,7 @@ export class VendorListComponent {
   formVendor: Vendor;
   errorMessage: string;
 
-  constructor(private http: HttpClient) {
+  constructor(private http: AppHttpClient) {
 //    this.selectedVendor = new Vendor({});
     this.formVendor = new Vendor({});
     this.errorMessage = "";
@@ -128,9 +127,8 @@ export class VendorListComponent {
     this.errorMessage = null;
     let url = "/user/vendor?num_rec_in_page=50&num_page=1";
     return this.http.get(url)
-    .pipe(map((response: Response) => {
-      let resJson = response.json();
-      return resJson && resJson.data.map(function(v) {
+    .pipe(map((response: any) => {
+      return response && response.data.map(function(v) {
           return new Vendor(v);
       });
     }));
@@ -141,14 +139,14 @@ export class VendorListComponent {
     // remove internally used property
     let url = "/user/vendor";
     let body = JSON.stringify({vendor: vendor.getData()});
-    let headers = new Headers({"Content-Type": "application/json"});
-    let options = new RequestOptions({headers: headers});
+    let headers = new HttpHeaders({"Content-Type": "application/json"});
+    let options = {headers: headers};
 
     let isRequestOwner = !this.requestSending;
     this.requestSending = true;
     this.errorMessage = null;
     this.http.post(url, body, options)
-    .subscribe((response: Response) => {
+    .subscribe((response: any) => {
       // Update vehicle list when succeeded
       this._updateVendorList();
       if (isRequestOwner) {
@@ -166,14 +164,14 @@ export class VendorListComponent {
   private _updateVendor(id: string, vendor: Vendor) {
     let url = "/user/vendor/" + id;
     let body = JSON.stringify(vendor.getData());
-    let headers = new Headers({"Content-Type": "application/json"});
-    let options = new RequestOptions({headers: headers});
+    let headers = new HttpHeaders({"Content-Type": "application/json"});
+    let options = {headers: headers};
 
     let isRequestOwner = !this.requestSending;
     this.requestSending = true;
     this.errorMessage = null;
     this.http.put(url, body, options)
-    .subscribe((response: Response) => {
+    .subscribe((response: any) => {
       // Update vendor list when succeeded
       this._updateVendorList();
       if (isRequestOwner) {
@@ -193,7 +191,7 @@ export class VendorListComponent {
     this.requestSending = true;
     this.errorMessage = null;
     this.http.delete("/user/vendor/" + id)
-    .subscribe((response: Response) => {
+    .subscribe((response: any) => {
       // Update vehicle list when succeeded
       this._updateVendorList();
       if (isRequestOwner) {

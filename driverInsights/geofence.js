@@ -83,11 +83,7 @@ _.extend(driverInsightsGeofence, {
 	queryGeofence: function (min_latitude, min_longitude, max_latitude, max_longitude) {
 		var deferred = Q.defer();
 		Q.when(this._queryGeofenceDoc(min_longitude, min_latitude, max_longitude, max_latitude), function (response) {
-			var result = response.map(function (doc) {
-				doc.geofence.id = doc.id;
-				return doc.geofence;
-			});
-			deferred.resolve(result);
+			deferred.resolve(response);
 		})["catch"](function (err) {
 			deferred.reject(err);
 		}).done();
@@ -320,27 +316,7 @@ _.extend(driverInsightsGeofence, {
 
 	_queryGeofenceDoc: function (min_latitude, min_longitude, max_latitude, max_longitude) {
 		var deferred = Q.defer();
-		if (isNaN(min_longitude) || isNaN(min_latitude) || isNaN(max_longitude) || isNaN(max_latitude)) {
-			Q.when(this.db, function (db) {
-				db.view(DB_NAME, "allGeofenceLocation", {}, function (err, body) {
-					if (err) {
-						console.error(err);
-						return deferred.reject(err);
-					} else {
-						var result = _.map(body.rows, function (value) {
-							var doc = value.value;
-							if (doc) {
-								doc.id = value.id;
-								delete doc._id;
-								delete doc._rev;
-							}
-							return doc;
-						});
-						deferred.resolve(result);
-					}
-				});
-			});
-		} else if (!isNaN(min_longitude) && !isNaN(min_latitude) && !isNaN(max_longitude) && !isNaN(max_latitude)) {
+		if (!isNaN(min_longitude) && !isNaN(min_latitude) && !isNaN(max_longitude) && !isNaN(max_latitude)) {
 			Q.when(this.db, function (db) {
 				var bbox = min_latitude + "," + min_longitude + "," + max_latitude + "," + max_longitude;
 				db.geo(DB_NAME, "geoindex", { bbox: bbox, include_docs: true }, function (err, body) {
@@ -350,19 +326,19 @@ _.extend(driverInsightsGeofence, {
 					} else {
 						var result = _.map(body.rows, function (value) {
 							var doc = value.doc;
-							if (doc) {
-								doc.id = value.id;
-								delete doc._id;
-								delete doc._rev;
+							if (doc && doc.geofence) {
+								doc.geofence.id = value.id;
 							}
-							return doc;
+							return doc.geofence;
 						});
 						deferred.resolve(result);
 					}
 				});
 			});
+		} else if (isNaN(min_longitude) || isNaN(min_latitude) || isNaN(max_longitude) || isNaN(max_latitude)) {
+			deferred.reject({ statusCode: 400, message: "Invalid min_latitude, min_longitude, max_latitude and max_longitude are specified." });
 		} else {
-			deferred.reject({ statusCode: 400, message: "missing parameter: min_latitude, min_longitude, max_latitude and max_longitude are specified." });
+			deferred.reject({ statusCode: 400, message: "Missing parameter: min_latitude, min_longitude, max_latitude and max_longitude are specified." });
 		}
 		return deferred.promise;
 	},

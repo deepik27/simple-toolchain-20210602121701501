@@ -23,7 +23,8 @@ const asset = app_module_require("cvi-node-lib").asset;
 const Queue = app_module_require('utils/queue.js');
 const vehicleDataHub = app_module_require('cvi-node-lib').vehicleDataHub;
 const driverBehavior = app_module_require('cvi-node-lib').driverBehavior;
-var version = app_module_require('utils/version.js');
+const driverInsightsAlert = require('../driverInsights/fleetalert.js');
+const version = app_module_require('utils/version.js');
 
 const debug = require('debug')('simulatorEngine');
 debug.log = console.log.bind(console);
@@ -33,7 +34,7 @@ const SIMLATOR_STATUS_OPENING = 'opening';
 const SIMLATOR_STATUS_CLOSING = 'closing';
 const SIMLATOR_STATUS_CLOSE = 'close';
 
-const DATETIME_FORMAT = "YYYY-MM-DDTHH:mm:SS.SSSZ";
+const DATETIME_FORMAT = "YYYY-MM-DDTHH:mm:SS.SSS";
 const MODEL_MONTH = 6;
 
 /**
@@ -55,9 +56,9 @@ function simulatorEngine(clientId, timeoutInMinutes/*minutes*/) {
 /**
  * Prepare simulated vehicles and a driver for this simulator
  */
-simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, latitude, distance) {
+simulatorEngine.prototype.open = function (numVehicles, perferrd, excludes, longitude, latitude, distance) {
 	if (this.state !== SIMLATOR_STATUS_CLOSE) {
-		return Q.reject({ statusCode: 400, message: "The simulator status is already started. current status = " + this.status });
+		return Q.reject({ statusCode: 400, message: "The simulator status is already started. current status = " + this.state });
 	}
 	this.state = SIMLATOR_STATUS_OPENING;
 	this.watchMap = {};
@@ -66,7 +67,7 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 	this.distance = distance;
 
 	// message handler
-	const messageHandler = {
+	this.messageHandler = {
 		queueMap: {},
 		probe: function (vehicleId, data, callback) {
 			let queue = this.queueMap[vehicleId];
@@ -95,7 +96,35 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 						affected_events: affected_events || [],
 						notified_messages: notified_messages || []
 					};
-					callback({ vehicleId: vehicleId, data: probe, type: 'probe' });
+
+					// Add alerts to probes
+					var mo_ids = [probe.mo_id];
+					driverInsightsAlert.getAlertsForVehicles(mo_ids, /*includeClosed*/false, 10).then((result) => {
+						if (result.alerts) { // list of alerts
+							var alertCounts = _.countBy(result.alerts, (alert) => {
+								return alert.severity;
+							});
+							alertCounts.items = result.alerts; // details if needed
+
+							// calculate summary
+							var alertsByType = _.groupBy(result.alerts, (alert) => { return alert.type; });
+							// severity: High: 100, Medium: 10, Low: 1, None: 0 for now
+							var severityByType = _.mapObject(alertsByType, (alerts, type) => {
+								if (alerts && alerts.length === 0) return undefined;
+								return _.max(alerts, (alert) => {
+									var s = alerts.severity && alerts.severity.toLowerCase();
+									return s === 'high' ? 100 : (s === 'medium' ? 10 : (s === 'low' ? 1 : 0));
+								}).severity;
+							});
+							alertCounts.byType = severityByType;
+							//
+							probe.info = _.extend(probe.info || {}, { alerts: alertCounts }); // inject alert counts
+						}
+					}).catch((error) => {
+						console.error(error);
+					}).done(() => {
+						callback({ vehicleId: vehicleId, data: probe, type: 'probe' });
+					});
 				},
 				error: function (err) {
 					if (callback)
@@ -137,15 +166,15 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 	};
 
 	// Set up callback method for events from each vehicle
-	const callback = (type, vehicleId, data) => {
+	this.callback = (type, vehicleId, data) => {
 		let watchObject = this.watchMap[vehicleId];
 		let watchMethod = null;
 		if (watchObject && (!watchObject.properties || _.contains(watchObject.properties, type))) {
 			watchMethod = watchObject.callback;
 		}
-		let handler = messageHandler[type];
+		let handler = this.messageHandler[type];
 		if (_.isFunction(handler)) {
-			if (handler.call(messageHandler, vehicleId, data, watchMethod)) {
+			if (handler.call(this.messageHandler, vehicleId, data, watchMethod)) {
 				return;
 			}
 		}
@@ -156,53 +185,19 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 
 	// Prepare vehicles and a driver to run
 	let promises = [];
-	promises.push(Q.when(vehicleManager.getSimulatedVehicles(this.clientId, numVehicles, excludes)));
+	promises.push(Q.when(vehicleManager.getSimulatedVehicles(this.clientId, numVehicles, perferrd, excludes)));
 	promises.push(Q.when(vehicleManager.getSimulatorDriver()));
 
 	// Create simulated vehicles
 	this.simulatedVehicles = {};
 	let deferred = Q.defer();
 	Q.all(promises).then((result) => {
-		let totime = moment().format(DATETIME_FORMAT);
-		let fromtime = moment().subtract(MODEL_MONTH, "months").format(DATETIME_FORMAT);
-		let vehicles = {};
-		let vehicleIdArray = [];
-
-		let models = _.map(result[0].data, (vehicle) => {
-			let v = vehicles[vehicle.mo_id] = new simulatedVehicle(vehicle, result[1]);
-			vehicleIdArray.push(vehicle.mo_id);
-
-			// start listening events from the vehicle
-			v.listen().on('probe', (vid, probe, destination) => {
-				callback('probe', vid, { probe: probe, destination: destination });
-			});
-			v.listen().on('route', (vid, route) => {
-				callback('route', vid, route);
-			});
-			v.listen().on('state', (vid, state) => {
-				callback('state', vid, state);
-			});
-
-			// Calculate location and heading randomly and set them to each vehicle
-			let loc = this._calcPosition([longitude, latitude], distance * Math.random(), 360 * Math.random());
-			console.log("simulated vehicle=" + vehicle.mo_id + ", lon=" + loc[0] + ", lat=" + loc[1]);
-			v.setCurrentPosition(loc[0], loc[1], 360 * Math.random());
-
-			if (!version.laterOrEqual("3.0")) {
-				return Q();
-			}
-			// Generate MPP/DP model for trajectory pattern-based route search
-			return Q(driverBehavior.deletePredictionCache()).done(() => {
-				return driverBehavior.generateMPPDPModel({ mo_id: v.mo_id, from: fromtime, to: totime });
-			});
-		});
-
-		return Q.all(models).catch(error => {
+		Q.when(this.addVehicles(result[0].data, result[1], longitude, latitude, distance)).catch(error => {
 			// Error occurs when no trip for specified vehicle was found
-			//			console.error(JSON.stringify(error));
-		}).done((result) => {
+			// console.error(JSON.stringify(error));
+		}).done((vehicles) => {
 			this.simulatedVehicles = vehicles;
-			this.simulatedVehicleIdArray = vehicleIdArray;
+			this.simulatedVehicleIdArray = _.keys(this.simulatedVehicles);
 			this.state = SIMLATOR_STATUS_OPEN;
 			this.updateTime();
 			deferred.resolve(this.getInformation());
@@ -211,6 +206,41 @@ simulatorEngine.prototype.open = function (numVehicles, excludes, longitude, lat
 		deferred.reject(error);
 	});
 	return deferred.promise;
+};
+
+simulatorEngine.prototype.addVehicles = function (data, driver, longitude, latitude, distance) {
+	let vehicles = {};
+	let totime = moment().utc().format(DATETIME_FORMAT) + 'Z';
+	let fromtime = moment().utc().subtract(MODEL_MONTH, "months").format(DATETIME_FORMAT) + 'Z';
+	
+	let promises = _.map(data, (vehicle) => {
+		let v = vehicles[vehicle.mo_id] = new simulatedVehicle(vehicle, driver);
+
+		// start listening events from the vehicle
+		v.listen().on('probe', (vid, probe, destination) => {
+			this.callback('probe', vid, { probe: probe, destination: destination });
+		});
+		v.listen().on('route', (vid, route) => {
+			this.callback('route', vid, route);
+		});
+		v.listen().on('state', (vid, state) => {
+			this.callback('state', vid, state);
+		});
+
+		// Calculate location and heading randomly and set them to each vehicle
+		let loc = this._calcPosition([longitude, latitude], distance * Math.random(), 360 * Math.random());
+		console.log("simulated vehicle=" + vehicle.mo_id + ", lon=" + loc[0] + ", lat=" + loc[1]);
+		v.setCurrentPosition(loc[0], loc[1], 360 * Math.random());
+
+		if (!version.laterOrEqual("3.0")) {
+			return Q(vehicles);
+		}
+		// Generate MPP/DP model for trajectory pattern-based route search
+		return Q(driverBehavior.deletePredictionCache()).done(() => {
+			driverBehavior.generateMPPDPModel({ mo_id: vehicle.siteid + ':' + vehicle.mo_id, from: fromtime, to: totime, time_zone: 'Z' });
+		});
+	});
+	return Q.all(promises).then(() => vehicles);
 };
 
 /**
@@ -239,6 +269,60 @@ simulatorEngine.prototype.close = function (timeout) {
 
 simulatorEngine.prototype.isValid = function () {
 	return this.state !== SIMLATOR_STATUS_CLOSING && this.state !== SIMLATOR_STATUS_CLOSE;
+};
+
+/**
+ * Update base location and relocate all vehicles
+ */
+simulatorEngine.prototype.updateVehicles = function (preferred, excludes, longitude, latitude, distance, timeoutInMinutes) {
+	this.longitude = longitude;
+	this.latitude = latitude;
+	this.distance = distance;
+
+	let current = _.keys(this.simulatedVehicles);
+
+	// Remove unused
+	let toRemove = _.difference(current, preferred);
+	let removedVehicles = _.filter(this.simulatedVehicles, (vehicle, id) => _.contains(toRemove, id));
+	_.each(removedVehicles, (vehicle) => {
+		vehicle.stop({succesWhenAlready: true});
+		delete this.simulatedVehicles[vehicle.vehicle.mo_id];
+		this.simulatedVehicleIdArray = _.filter(this.simulatedVehicleIdArray, (id) => id != vehicle.vehicle.mo_id);
+	});
+
+	let deferred = Q.defer();
+
+	// Add preferred
+	let toAdd = _.difference(preferred, current);
+	if (toAdd.length == 0) {
+		this.setTimeout(timeoutInMinutes);
+		this.updateTime();
+		deferred.resolve(this.getInformation());
+	} else {
+		excludes = _.union(toRemove, excludes);
+
+		// Prepare vehicles and a driver to run
+		let promises = [];
+		promises.push(Q.when(vehicleManager.getSimulatedVehicles(this.clientId, toAdd.length, toAdd, excludes)));
+		promises.push(Q.when(vehicleManager.getSimulatorDriver()));
+	
+		// Create simulated vehicles
+		Q.all(promises).then((result) => {
+			Q.when(this.addVehicles(result[0].data, result[1], longitude, latitude, distance)).catch(error => {
+				// Error occurs when no trip for specified vehicle was found
+				// console.error(JSON.stringify(error));
+			}).done((vehicles) => {
+				this.simulatedVehicles = Object.assign(this.simulatedVehicles, vehicles);
+				this.simulatedVehicleIdArray = _.keys(this.simulatedVehicles);
+				this.setTimeout(timeoutInMinutes);
+				this.updateTime();
+				deferred.resolve(this.getInformation());
+			});
+		}).catch((error) => {
+			deferred.reject(error);
+		});
+	}
+	return deferred.promise;
 };
 
 /**
@@ -299,7 +383,9 @@ simulatorEngine.prototype.getVehicleList = function (numInPages, pageIndex, prop
 	for (let i = startIndex; i < endIndex; i++) {
 		let vehicleId = this.simulatedVehicleIdArray[i];
 		let simulatedVehicle = this.simulatedVehicles[vehicleId];
-		vehicleList.push(simulatedVehicle.getVehicleInformation(properties));
+		if (simulatedVehicle) {
+			vehicleList.push(simulatedVehicle.getVehicleInformation(properties));
+		}
 	}
 	return vehicleList;
 };
@@ -447,7 +533,7 @@ simulatorEngine.prototype.control = function (vehicleId, method, allowedWhenRunn
 	});
 };
 
-simulatorEngine.prototype.watch = function (vehicleId, properties, callback) {
+simulatorEngine.prototype.watchStatus = function (vehicleId, properties, callback) {
 	if (vehicleId) {
 		if (_.isFunction(callback)) {
 			this.watchMap[vehicleId] = { properties: properties, callback: callback };

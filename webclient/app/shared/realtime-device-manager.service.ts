@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 import { Injectable, Inject } from '@angular/core';
-import { HttpClient } from './http-client';
-import { Request, Response, URLSearchParams } from '@angular/http';
+import { AppHttpClient } from './http-client';
 import { retry } from 'rxjs/operators';
 import { webSocket } from 'rxjs/webSocket';
 
@@ -47,7 +46,7 @@ export class RealtimeDeviceDataProviderService {
 	carStatusIntervalTimer: any;
 
 	constructor(
-		private $http: HttpClient,
+		private $http: AppHttpClient,
 		@Inject(APP_CONFIG) appConfig: AppConfig
 	) {
 		this.webApiHost = appConfig.webApiHost;
@@ -81,9 +80,8 @@ export class RealtimeDeviceDataProviderService {
 	getVehicle(vehicleId: string) {
 		return new Promise((resolve, reject) => {
 			this.$http.get(VEHICLE_URL + '/' + vehicleId)
-				.subscribe((resp: Response) => {
-					var vehicle = resp.json();
-					resolve(vehicle);
+				.subscribe((data: any) => {
+					resolve(data);
 				}, (error: any) => {
 					reject(error);
 				});
@@ -179,8 +177,7 @@ export class RealtimeDeviceDataProviderService {
 	};
 	// Add/update cars with DB info
 	refreshCarStatus(qs) {
-		return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise().then((resp) => {
-			let data = resp.json();
+		return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise().then((data: any) => {
 			if (data.devices) {
 				this.provider.addDeviceSamples(data.region_id, data.devices, true);
 			}
@@ -189,8 +186,7 @@ export class RealtimeDeviceDataProviderService {
 	};
 	// Add driver events on the map
 	refreshDriverEvents(qs, updateEvents: ((events: any[]) => void)) {
-		return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise().then((resp) => {
-			let data = resp.json();
+		return this.$http.get(CAR_PROBE_URL + '?' + qs).toPromise().then((data: any) => {
 			var events = data.devices;
 			if (events) {
 				updateEvents && updateEvents(events);

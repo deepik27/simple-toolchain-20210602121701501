@@ -16,10 +16,10 @@
 <div *ngIf="isAnalysisAvailable">
   <ul class="marginTop tabs">
 
-    <li [class.selected]="realtimeMode"><a href="javascript:void(0)" (click)="setRealtimeMode(true)">Realtime Car
-        Status</a>
-    <li [class.selected]="!realtimeMode"><a href="javascript:void(0)" (click)="setRealtimeMode(false)">Driving
-        Analysis</a>
+    <li [class.selected]="realtimeMode"><span class="clickablelink" (click)="setRealtimeMode(true)">Realtime Car
+        Status</span>
+    <li [class.selected]="!realtimeMode"><span class="clickablelink" (click)="setRealtimeMode(false)">Driving
+        Analysis</span>
   </ul>
 </div>
 <div class="card primary">

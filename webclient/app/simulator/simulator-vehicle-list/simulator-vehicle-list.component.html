@@ -1,0 +1,81 @@
+<!------------------------------------------------------------------------------------------------
+   Copyright 2020 IBM Corp. All Rights Reserved.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-------------------------------------------------------------------------------------------------->
+<!-- Vehicle List -->
+<div class="column-12-med" *ngIf="!selectionMode">
+	<div class="vehicleListHeader"><label>Vehicle List</label><span class="floatRight clickablelink" (click)="onChangeListMode()">Change List</span></div>
+	<div class="column-12-med">
+		<select class="vehicleList" size="6" [(ngModel)]="simulatorVehicle" (ngModelChange)="onVehicleSelected()">
+			<option [ngClass]="vehicle?.isDriving()?'driving':''" *ngFor="let vehicle of simulatorVehicles" [ngValue]="vehicle">{{(showMoId?vehicle.mo_id:vehicle.id)||'-'}}</option>
+		</select>
+	</div>
+</div>
+<div class="noTopPadding" *ngIf="selectionMode">
+	<div [ngClass]="requestSending?'loading':''"></div>
+	<div class="error" [hidden]="!errorMessage">{{errorMessage}}</div>
+	<div class="floatRight controlPanel">
+		<span id="numRecInPage">
+			<select [ngModel]="numRecInPage" (change)="onNumPageChanged($event.target.value)">
+				<option value=5>5</option>
+				<option value=10>10</option>
+				<option value=15>15</option>
+				<option value=20>20</option>
+				<option value=25>25</option>
+				<option value=50>50</option>
+			</select>
+			<span> vehicles per page</span>
+		</span>
+		<span class="showID"><input type="checkbox" [(ngModel)]="showMoId">Show vehicle ID</span>
+		<span id="controlButtons">
+			<button (click)="onShowPrev()" [disabled]="requestSending||pageNumber<2">&lt;Prev</button>
+			<button (click)="onShowNext()" [disabled]="requestSending||!hasNext">Next&gt;</button>
+			<button (click)="onReload()" [disabled]="requestSending">Reload</button>
+		</span>
+	</div>
+	<table class="table table-hover table-striped table-condensed table-responsive">
+		<thead>
+			<tr>
+				<th class="firstRow">#</th>
+				<th>
+					<span class="sortable" (click)="onOrderBy(showMoId?'mo_id':'__id')">{{showMoId?'Vehicle ID':'Serial#'}}</span>
+					<span
+						[ngClass]="orderByKey==='__id'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+				</th>
+				<th>
+					<span class="sortable" (click)="onOrderBy('__vendorname')">Vendor</span>
+					<span
+						[ngClass]="orderByKey==='__vendorname'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+				</th>
+				<th>
+					<span class="sortable" (click)="onOrderBy('model')">Model</span>
+					<span [ngClass]="orderByKey==='model'?(ascendingOrder?'ascending_order':'descending_order'):'none_order'"></span>
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr *ngFor="let vehicle of vehicles; let i = index" [ngClass]="vehicle.unavailable?'unavailable':''">
+				<td class="firstRow dataTableCel">
+					<span *ngIf="!vehicle.unavailable">
+						<input [disabled]="vehicle.unavailable" type="checkbox" [(ngModel)]="vehicle.selected" (ngModelChange)="onSelectionChanged(vehicle)">
+					</span>
+					<span *ngIf="vehicle.unavailable" class="dataTableCel">(Unavailable)</span>
+				</td>
+				<td class="dataTableCel"><span title="{{showMoId?vehicle.__id:vehicle.__mo_id}}">{{(showMoId?vehicle.mo_id:vehicle.__id)||'-'}}</span></td>
+				<td class="dataTableCel">{{vehicle.__vendorname||'-'}}</td>
+				<td class="dataTableCel">{{vehicle.model||'-'}}</td>
+			</tr>
+		</tbody>
+	</table>
+</div>

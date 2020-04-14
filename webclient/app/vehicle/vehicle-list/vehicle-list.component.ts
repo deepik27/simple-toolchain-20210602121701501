@@ -15,13 +15,12 @@
  */
 import * as _ from 'underscore';
 
-import { Component, Input } from '@angular/core';
-import { HttpClient } from '../../shared/http-client';
-import { Response, Headers, RequestOptions } from '@angular/http';
+import { Component } from '@angular/core';
+import { AppHttpClient } from '../../shared/http-client';
+import { HttpHeaders } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 
 @Component({
-  moduleId: module.id,
   selector: 'vehicle-list',
   templateUrl: 'vehicle-list.component.html',
   styleUrls: ['vehicle-list.component.css'],
@@ -40,8 +39,9 @@ export class VehicleListComponent {
   errorMessage: string;
   vendors: Vendor[];
   selected_mo_id: string;
+  showMoId: boolean = false;
 
-  constructor(private http: HttpClient) {
+  constructor(private http: AppHttpClient) {
     this.numRecInPage = 15;
     this.pageNumber = 1;
     this.hasNext = false;
@@ -67,10 +67,15 @@ export class VehicleListComponent {
   onOrderBy(key) {
     this.ascendingOrder = (key === this.orderByKey) ? !this.ascendingOrder : true;
     this.orderByKey = key;
+
+    this.vehicles = _.sortBy(this.vehicles, (vehicle) => vehicle[key]);
+    if (!this.ascendingOrder) {
+      this.vehicles.reverse();
+    }
   }
 
   // refresh table
-  onReload(event) {
+  onReload() {
     this._getVendors()
       .subscribe((vendors: Array<Vendor>) => {
         vendors.unshift(new Vendor({}));
@@ -87,13 +92,13 @@ export class VehicleListComponent {
     this._updateVehicleList(1);
   }
 
-  onShowPrev(event) {
+  onShowPrev() {
     if (this.pageNumber > 1) {
       this._updateVehicleList(this.pageNumber - 1);
     }
   }
 
-  onShowNext(event) {
+  onShowNext() {
     if (this.hasNext) {
       this._updateVehicleList(this.pageNumber + 1);
     }
@@ -174,7 +179,7 @@ export class VehicleListComponent {
     this.requestSending = true;
     this.errorMessage = null;
     this.http.post("/user/device/sync", null, null)
-      .subscribe((response: Response) => {
+      .subscribe((response: any) => {
         // Update vehicle list when succeeded
         this._updateVehicleList(1);
         if (isRequestOwner) {
@@ -229,9 +234,8 @@ export class VehicleListComponent {
   private _getVehicles(numRecInPage: number, pageNumber: number) {
     let url = "/user/vehicle?num_rec_in_page=" + numRecInPage + "&num_page=" + pageNumber;
     return this.http.get(url)
-      .pipe(map((response: any) => {
-        let resJson = response.json();
-        return resJson && resJson.data.map(v => {
+      .pipe(map((data: any) => {
+        return data && data.data.map(v => {
           return new Vehicle(v, this.vendors);
         });
       }));
@@ -242,14 +246,14 @@ export class VehicleListComponent {
     // remove internally used property
     let url = "/user/vehicle";
     let body = JSON.stringify({ vehicle: vehicle.getData() });
-    let headers = new Headers({ "Content-Type": "application/json" });
-    let options = new RequestOptions({ headers: headers });
+    let headers = new HttpHeaders({ "Content-Type": "application/json" });
+    let options = { headers: headers };
 
     let isRequestOwner = !this.requestSending;
     this.requestSending = true;
     this.errorMessage = null;
     this.http.post(url, body, options)
-      .subscribe((response: Response) => {
+      .subscribe((response: any) => {
         // Update vehicle list when succeeded
         this._updateVehicleList(1);
         if (isRequestOwner) {
@@ -268,14 +272,14 @@ export class VehicleListComponent {
     vehicle.mo_id = mo_id;
     let url = "/user/vehicle/" + mo_id;
     let body = JSON.stringify(vehicle.getData());
-    let headers = new Headers({ "Content-Type": "application/json" });
-    let options = new RequestOptions({ headers: headers });
+    let headers = new HttpHeaders({ "Content-Type": "application/json" });
+    let options = { headers: headers };
 
     let isRequestOwner = !this.requestSending;
     this.requestSending = true;
     this.errorMessage = null;
     this.http.put(url, body, options)
-      .subscribe((response: Response) => {
+      .subscribe((response: any) => {
         // Update vehicle list when succeeded
         this._updateVehicleList(this.pageNumber);
         if (isRequestOwner) {
@@ -295,7 +299,7 @@ export class VehicleListComponent {
     this.requestSending = true;
     this.errorMessage = null;
     this.http.delete("/user/vehicle/" + mo_id)
-      .subscribe((response: Response) => {
+      .subscribe((response: any) => {
         // Update vehicle list when succeeded
         if (this.vehicles.length === 1 && this.pageNumber > 1) {
           this._updateVehicleList(this.pageNumber - 1);
@@ -317,9 +321,8 @@ export class VehicleListComponent {
   private _getVendors() {
     let url = "/user/vendor?num_rec_in_page=50&num_page=1";
     return this.http.get(url)
-      .pipe(map((response: Response) => {
-        let resJson = response.json();
-        return resJson && resJson.data.map(v => {
+      .pipe(map((response: any) => {
+        return response && response.data.map(v => {
           return new Vendor(v);
         });
       }));

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,35 +14,33 @@
  * limitations under the License.
  */
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-import { HttpModule } from '@angular/http';
+import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 
 import { UtilsModule } from '../utils/utils.module';
 
-import { NumberOfCarsComponent } from './number-of-cars/number-of-cars.component';
+import { MapPageRoutingModule } from './map-page-routing.module';
 import { RealtimeMapComponent } from './realtime-map/realtime-map.component';
+import { NumberOfCarsComponent } from './number-of-cars/number-of-cars.component';
 import { MapPageComponent } from './map-page.component';
 
-import { routing } from './map-page.routing';
 
 @NgModule({
+  declarations: [RealtimeMapComponent, NumberOfCarsComponent, MapPageComponent],
   imports: [
+    CommonModule,
     BrowserModule,
     FormsModule,
+    HttpClientModule,
     RouterModule,
-    HttpModule,
     UtilsModule,
-    routing,
-  ],
-  declarations: [
-    NumberOfCarsComponent,
-    RealtimeMapComponent,
-    MapPageComponent
+    MapPageRoutingModule
   ],
   exports: [
-    MapPageComponent,
-  ],
+    MapPageComponent
+  ]
 })
 export class MapPageModule { }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,35 +14,27 @@
  * limitations under the License.
  */
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { HttpModule } from '@angular/http';
-import { UtilsModule } from '../utils/utils.module';
+import { HttpClientModule } from '@angular/common/http';
 
-import { VendorListComponent } from './vendor-list/vendor-list.component';
+import { VehiclePageRoutingModule } from './vehicle-page-routing.module';
 import { VehicleListComponent } from './vehicle-list/vehicle-list.component';
+import { VendorListComponent } from './vendor-list/vendor-list.component';
 import { VehiclePageComponent } from './vehicle-page.component';
 
-import { routing } from './vehicle-page.routing';
 
 @NgModule({
+  declarations: [VehicleListComponent, VendorListComponent, VehiclePageComponent],
   imports: [
+    CommonModule,
     BrowserModule,
     FormsModule,
     RouterModule,
-    HttpModule,
-    UtilsModule,
-    routing,
-  ],
-  declarations: [
-    VendorListComponent,
-    VehicleListComponent,
-    VehiclePageComponent
-  ],
-  exports: [
-    VehiclePageComponent,
-  ],
-  providers: []
+    HttpClientModule,
+    VehiclePageRoutingModule
+  ]
 })
 export class VehiclePageModule { }

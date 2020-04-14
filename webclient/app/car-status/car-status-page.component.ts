@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ import { Component } from '@angular/core';
 import { CarStatusDataService } from './summary/car-status-data.service';
 
 @Component({
-  moduleId: module.id,
   selector: 'fmdash-car-status-page',
   templateUrl: 'car-status-page.component.html',
   providers: [CarStatusDataService],

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as ol from 'openlayers';
 import * as _ from 'underscore';
 
 import { ActivatedRoute, Params } from '@angular/router';
-import { Component, Input, Output, OnInit, OnChanges, OnDestroy, SimpleChange, ViewChild } from '@angular/core';
-import { HttpClient } from '../../shared/http-client';
+import { Component, OnInit } from '@angular/core';
+import { AppHttpClient } from '../../shared/http-client';
 import { MapHelper } from '../../shared/map-helper';
 import { MapEventHelper } from '../../shared/map-event-helper';
 import { EventService } from '../../shared/iota-event.service';
@@ -27,8 +26,17 @@ import { GeofenceService } from '../../shared/iota-geofence.service';
 import { MapPOIHelper } from '../../shared/map-poi-helper';
 import { POIService } from '../../shared/iota-poi.service';
 import { DriverBehaviorService } from '../../shared/iota-driver-behavior.service';
-import { LocationService, MapArea } from '../../shared/location.service';
+import { LocationService } from '../../shared/location.service';
 import { AlertService } from '../../shared/alert.service';
+
+import { Map, View, Feature } from 'ol';
+import { Tile } from 'ol/layer';
+import { Style, Icon, Stroke } from 'ol/style';
+import { Point, LineString } from 'ol/geom';
+import { OSM } from 'ol/source';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import * as olProj from 'ol/proj';
 
 declare var $; // jQuery from <script> tag in the index.html
 // as bootstrap type definitoin doesn't extend jQuery $'s type definition
@@ -42,27 +50,26 @@ var PROJ_MAP = 'EPSG:3857';
 var PROJ_LONLAT = 'EPSG:4326'; // WSG84
 
 @Component({
-	moduleId: module.id,
 	selector: 'driver-behavior',
 	templateUrl: 'driver-behavior.component.html',
 	styleUrls: ['driver-behavior.component.css'],
 })
 export class DriverBehaviorComponent implements OnInit {
 	private mo_id: string;
-	map: ol.Map;
+	map: Map;
 	mapHelper: MapHelper;
-	routeLayer: ol.layer.Vector;
-	mapEventsLayer: ol.layer.Vector;
-	mapGeofenceLayer: ol.layer.Vector;
-	mapPOILayer: ol.layer.Vector;
-	behaviorLayer: ol.layer.Vector;
+	routeLayer: VectorLayer;
+	mapEventsLayer: VectorLayer;
+	mapGeofenceLayer: VectorLayer;
+	mapPOILayer: VectorLayer;
+	behaviorLayer: VectorLayer;
 	mapItemHelpers = {};
 	mapElementId: string = 'carmonitor';// + (NEXT_MAP_ELEMENT_ID ++);
 	popoverElementId: string = 'carmonitorpop';// + (NEXT_MAP_ELEMENT_ID ++);
-	START_PIN_STYLE: ol.style.Style;
-	END_PIN_STYLE: ol.style.Style;
-	TRIP_ROUTE_STYLE: ol.style.Style;
-	BEHAVIOR_DETAIL_STYLE: ol.style.Style;
+	START_PIN_STYLE: Style;
+	END_PIN_STYLE: Style;
+	TRIP_ROUTE_STYLE: Style;
+	BEHAVIOR_DETAIL_STYLE: Style;
 	behaviors = [];
 	tripFeatures = [];
 	alerts = [];
@@ -77,7 +84,7 @@ export class DriverBehaviorComponent implements OnInit {
 	popoverElemetId = 'carmonitorpop';
 	internationalUnit: boolean = false;
 
-	constructor(private http: HttpClient,
+	constructor(private http: AppHttpClient,
 		private route: ActivatedRoute,
 		private locationService: LocationService,
 		private eventService: EventService,
@@ -85,15 +92,15 @@ export class DriverBehaviorComponent implements OnInit {
 		private poiService: POIService,
 		private driverBehaviorService: DriverBehaviorService,
 		private alertService: AlertService) {
-		this.START_PIN_STYLE = this.getIconStyle('/images/MarkerGreen.png', [79, 158], 0.1);
-		this.END_PIN_STYLE = this.getIconStyle('/images/MarkerRed.png', [79, 158], 0.1);
+		this.START_PIN_STYLE = this.getIconStyle('/webclient/img/MarkerGreen.png', [79, 158], 0.1);
+		this.END_PIN_STYLE = this.getIconStyle('/webclient/img/MarkerRed.png', [79, 158], 0.1);
 		this.TRIP_ROUTE_STYLE = this.getLineStyle('blue', 3);
 		this.BEHAVIOR_DETAIL_STYLE = this.getLineStyle('red', 4 /*, [4]*/);
 	}
 
 	getIconStyle(src, anchor, scale) {
-		let style = new ol.style.Style({
-			image: new ol.style.Icon({
+		let style = new Style({
+			image: new Icon({
 				anchor: anchor || [0, 0],
 				anchorXUnits: 'pixels',
 				anchorYUnits: 'pixels',
@@ -106,8 +113,8 @@ export class DriverBehaviorComponent implements OnInit {
 	}
 
 	getLineStyle(color, width, dash = undefined) {
-		let style = new ol.style.Style({
-			stroke: new ol.style.Stroke({
+		let style = new Style({
+			stroke: new Stroke({
 				color: color,
 				lineDash: dash,
 				width: width
@@ -119,34 +126,34 @@ export class DriverBehaviorComponent implements OnInit {
 	initMap() {
 		let self = this;
 		// create layers
-		this.mapEventsLayer = new ol.layer.Vector({
-			source: new ol.source.Vector(),
+		this.mapEventsLayer = new VectorLayer({
+			source: new VectorSource(),
 			renderOrder: undefined
 		});
-		this.mapGeofenceLayer = new ol.layer.Vector({
-			source: new ol.source.Vector(),
+		this.mapGeofenceLayer = new VectorLayer({
+			source: new VectorSource(),
 			renderOrder: undefined
 		});
-		this.mapPOILayer = new ol.layer.Vector({
-			source: new ol.source.Vector(),
+		this.mapPOILayer = new VectorLayer({
+			source: new VectorSource(),
 			renderOrder: undefined
 		});
-		this.routeLayer = new ol.layer.Vector({
-			source: new ol.source.Vector(),
+		this.routeLayer = new VectorLayer({
+			source: new VectorSource(),
 			renderOrder: undefined
 		});
-		this.behaviorLayer = new ol.layer.Vector({
-			source: new ol.source.Vector(),
+		this.behaviorLayer = new VectorLayer({
+			source: new VectorSource(),
 			renderOrder: undefined
 		});
 
 		let area: any = this.locationService.getCurrentAreaRawSync();
 		// create a map
-		this.map = new ol.Map({
+		this.map = new Map({
 			target: document.getElementById(this.mapElementId),
 			layers: [
-				new ol.layer.Tile({
-					source: new ol.source.OSM(<olx.source.OSMOptions>{}),
+				new Tile({
+					source: new OSM(),
 					preload: 4,
 				}),
 				this.mapGeofenceLayer,
@@ -155,8 +162,8 @@ export class DriverBehaviorComponent implements OnInit {
 				this.routeLayer,
 				this.behaviorLayer,
 			],
-			view: new ol.View({
-				center: ol.proj.fromLonLat((area && area.center) || [0, 0], undefined),
+			view: new View({
+				center: olProj.fromLonLat((area && area.center) || [0, 0], undefined),
 				zoom: ((area && area.zoom) || DEFAULT_ZOOM)
 			}),
 		});
@@ -170,7 +177,7 @@ export class DriverBehaviorComponent implements OnInit {
 			if (item) {
 				let helper = this.mapItemHelpers[item.getItemType()];
 				if (helper && helper.hitTest) {
-					return helper.hitTest(item, feature, ol.proj.toLonLat(coordinate, undefined));
+					return helper.hitTest(item, feature, olProj.toLonLat(coordinate, undefined));
 				}
 			}
 			return true;
@@ -500,6 +507,10 @@ export class DriverBehaviorComponent implements OnInit {
 				this.setSelectedBehavior(this.selectedBehavior);
 			}
 
+			if (!this.trip || this.trip.length == 0) {
+				return;
+			}
+			
 			// Set alerts on the table
 			let from = this.trip[0].timestamp;
 			let to = this.trip[this.trip.length - 1].timestamp;
@@ -564,11 +575,11 @@ export class DriverBehaviorComponent implements OnInit {
 	}
 
 	// update behaviors
-	createRouteLine(start, end, style): ol.Feature {
-		let geom = new ol.geom.LineString([[start.matched_longitude || start.longitude, start.matched_latitude || start.latitude],
+	createRouteLine(start, end, style): Feature {
+		let geom = new LineString([[start.matched_longitude || start.longitude, start.matched_latitude || start.latitude],
 		[end.matched_longitude || end.longitude, end.matched_latitude || end.latitude]]);
 		geom.transform(PROJ_LONLAT, PROJ_MAP);
-		let feature = new ol.Feature({
+		let feature = new Feature({
 			geometry: geom,
 		});
 		feature.setStyle(style);
@@ -593,8 +604,8 @@ export class DriverBehaviorComponent implements OnInit {
 		let routeLayer = this.routeLayer;
 		function addFeature(geo, style) {
 			if (isNaN(parseFloat(geo[0])) || isNaN(parseFloat(geo[1]))) return; // skip
-			let feature = new ol.Feature({
-				geometry: new ol.geom.Point(ol.proj.fromLonLat([geo[0], geo[1]], undefined)),
+			let feature = new Feature({
+				geometry: new Point(olProj.fromLonLat([geo[0], geo[1]], undefined)),
 			});
 			feature.setStyle(style);
 			routeLayer.getSource().addFeature(feature);
@@ -622,7 +633,7 @@ export class DriverBehaviorComponent implements OnInit {
 		// update map extent
 		let tripRouteExtent = this.routeLayer.getSource().getExtent();
 		if (tripRouteExtent) {
-			let extent = ol.proj.transformExtent(tripRouteExtent, PROJ_MAP, PROJ_LONLAT);
+			let extent = olProj.transformExtent(tripRouteExtent, PROJ_MAP, PROJ_LONLAT);
 			extent = this.expandExtent(extent, 0); // expand if necessary
 			this.mapHelper.moveMap({ extent: extent });
 		}

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 import { Injectable } from "@angular/core";
-import { HttpClient } from "./http-client";
-import { Headers, RequestOptions } from "@angular/http";
+import { AppHttpClient } from "./http-client";
+import { HttpHeaders } from "@angular/common/http";
 import { Observable } from 'rxjs'
-import { map } from 'rxjs/operators';
 
 @Injectable()
 export class GeofenceService {
-  constructor(private http: HttpClient) {
+  constructor(private http: AppHttpClient) {
   }
 
 	/*
@@ -50,10 +49,7 @@ export class GeofenceService {
 	 */
 
   public getCapability() {
-    return this.http.get("/user/capability/geofence").pipe(map(data => {
-      let resJson = data.json();
-      return resJson;
-    }));
+    return this.http.get("/user/capability/geofence");
   }
 
   public queryGeofences(params): Observable<any> {
@@ -65,50 +61,35 @@ export class GeofenceService {
     }
     console.log("query event: " + url);
 
-     return this.http.get(url).pipe(map(data => {
-      let resJson = data.json();
-      return resJson;
-     }));
+     return this.http.get(url);
   }
 
   public getGeofence(geofence_id: string) {
     let url = "/user/geofence/" + geofence_id;
     console.log("get geofence: " + url);
 
-     return this.http.get(url).pipe(map(data => {
-      let resJson = data.json();
-      return resJson;
-      }));
+     return this.http.get(url);
   }
 
   public createGeofence(geofence) {
     let url = "/user/geofence";
     let body = JSON.stringify(geofence);
-    let headers = new Headers({ "Content-Type": "application/JSON;charset=utf-8" });
-    let options = new RequestOptions({ headers: headers });
+    let headers = new HttpHeaders({ "Content-Type": "application/JSON;charset=utf-8" });
+    let options = { headers: headers };
 
-     return this.http.post(url, body, options).pipe(map(data => {
-      let resJson = data.json();
-      return resJson;
-      }));
+     return this.http.post(url, body, options);
   }
 
   public updateGeofence(geofence_id, geofence) {
     let url = "/user/geofence/" + geofence_id;
     let body = JSON.stringify(geofence);
-    let headers = new Headers({ "Content-Type": "application/JSON;charset=utf-8" });
-    let options = new RequestOptions({ headers: headers });
+    let headers = new HttpHeaders({ "Content-Type": "application/JSON;charset=utf-8" });
+    let options = { headers: headers };
 
-     return this.http.put(url, body, options).pipe(map(data => {
-      let resJson = data.json();
-      return resJson;
-      }));
+     return this.http.put(url, body, options);
   }
 
   public deleteGeofence(id) {
-    return this.http.delete("/user/geofence/" + id).pipe(map(data => {
-      let resJson = data.json();
-      return resJson;
-    }));
+    return this.http.delete("/user/geofence/" + id);
   }
 }

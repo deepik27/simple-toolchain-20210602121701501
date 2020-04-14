@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
-import { HttpClient } from './shared/http-client';
+import { AppHttpClient } from './shared/http-client';
 import { LocationService } from './shared/location.service';
 import { RealtimeDeviceDataProviderService } from './shared/realtime-device-manager.service';
 import { DriverBehaviorService } from './shared/iota-driver-behavior.service';
@@ -24,26 +24,30 @@ import { GeofenceService } from './shared/iota-geofence.service';
 import { POIService } from './shared/iota-poi.service';
 import { AssetService } from './shared/iota-asset.service';
 import { AlertService } from './shared/alert.service';
+import { SimulatorVehicleService } from './simulator/simulator-vehicle.service';
+
+import * as _ from 'underscore';
 
 @Component({
   selector: 'fmdash-app',
-  moduleId: module.id,
   templateUrl: 'app.component.html',
-  providers: [HttpClient, RealtimeDeviceDataProviderService, LocationService, EventService, GeofenceService, POIService, AssetService, DriverBehaviorService, AlertService]
+  providers: [AppHttpClient, RealtimeDeviceDataProviderService, LocationService, EventService, GeofenceService, POIService, AssetService, DriverBehaviorService, AlertService, SimulatorVehicleService]
 })
 export class AppComponent {
-  title = "IBM IoT Connected Vehicle Insights - Fleet Management Starter Application - Monitoring";
+  title = 'IBM IoT Connected Vehicle Insights - Fleet Management Starter Application';
+  
   sidebarItems = [
     { title: "Map", route: "map", icon: 'icon-location', active: false },
-    { title: "Car Status", route: "carStatus", icon: "icon-car", active: false },
-    { title: "Alert", route: "alert", icon: "icon-idea", active: false },
+    { title: "Car Status", route: "carStatus", icon: "icon-status", active: false },
+    { title: "Alert", route: "alert", icon: "icon-info", active: false },
     { title: "Vehicle", route: "vehicle", icon: 'icon-car', active: false },
-    { title: "Control", route: "tool", icon: 'icon-location', active: false },
+    { title: "Control", route: "control", icon: 'icon-location', active: false },
+    { title: "Simulator", route: "simulator", icon: "icon-car", active: false },
     { title: "Settings", route: "settings", icon: "icon-manage", active: false }
   ];
   menuOpened = false;
 
-  constructor() {
+  constructor(private http: AppHttpClient) {
   }
 
   ngOnInit() {
@@ -112,5 +116,33 @@ export class AppComponent {
         };
       }
     });
+
+    let npsdiv = document.getElementById("nps");
+    if (npsdiv) {
+      this.http.get("/admin/capability/nps")
+        .subscribe((response: any) => {
+          if (response.available) {
+            this.http.get("/admin/nps")
+              .subscribe((data: any) => {
+                window["IBM_Meta"] = _.extend(window["IBM_Meta"] || {}, data, getLanguage());
+                injectMedalliaScript();
+              });
+          }
+        });
+      function getLanguage() {
+        const locale = (window.navigator.languages && window.navigator.languages[0]) || window.navigator.language || window.navigator["userLanguage"] || window.navigator["browserLanguage"];
+        const lang = (locale || "en").split("-");
+        const language: any = { language: lang[0] };
+        if (lang.length === 2) {
+          language.country = lang[1];
+        }
+        return language;
+      }
+      function injectMedalliaScript() {
+        let npsscript = document.createElement("script");
+        npsscript.setAttribute("src", "https://nebula-cdn.kampyle.com/we/28600/onsite/embed.js");
+        npsdiv.appendChild(npsscript);
+      }
+    }
   }
 }

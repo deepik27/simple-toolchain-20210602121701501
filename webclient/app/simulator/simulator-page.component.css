@@ -1,0 +1,78 @@
+/**
+ * Copyright 2020 IBM Corp. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ .simulator_link_guide {
+    cursor: pointer;
+    position: absolute;
+    float: right;
+    color: #fff;
+    font-size: large;
+    background-color: rgb(243,118,54);
+    width: 320px;
+    top: 120px;
+    right: -480px;
+    padding: 15px;
+    border-radius: 5px;
+    z-index:1000;
+	  transition:2s;
+    transition-property: right;
+    transition-timing-function: ease;
+}
+.simulator_link_guide.active {
+    right: 80px;
+}
+.simulator_link_guide.active:before{
+    cursor: pointer;
+    content:'';
+    position:absolute;
+    width:0;
+    height:0;
+    top:-15px;
+    left:10%;
+    border:13px transparent solid;
+    border-right-width:0;
+    border-left-color:rgb(243,118,54);
+    transform:rotate(270deg);
+    -webkit-transform:rotate(270deg);
+    -o-transform:rotate(270deg);
+    z-index:1000;
+}
+  
+.error {
+    color: red;
+    margin-bottom: 10px;
+}
+
+/* ------ START Car Details ------ */
+.carSpecsList {
+    margin-top: 20px;
+}
+
+.carSpecsList ul {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.carSpecsList li {
+    margin-bottom: 12px;
+}
+
+.carSpecsList li.last {
+    margin-bottom: 0;
+}
+
+.carSpecsList li b.stars {
+    color: #f37536;
+}

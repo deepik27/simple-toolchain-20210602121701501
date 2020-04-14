@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 import { Injectable } from "@angular/core";
-import { HttpClient } from "./http-client";
-import { Headers, RequestOptions } from "@angular/http";
+import { AppHttpClient } from "./http-client";
+import { HttpHeaders } from "@angular/common/http";
 import { Observable } from 'rxjs'
 import { map } from 'rxjs/operators';
 
 @Injectable()
 export class EventService {
-  constructor(private http: HttpClient) {
+  constructor(private http: AppHttpClient) {
   }
 
   public getEventTypes() {
-    return this.http.get("/user/eventtype").pipe(map(data => {
-      let resJson = data.json();
-      return resJson.data;
+    return this.http.get("/user/eventtype").pipe(map((data: any) => {
+      return data.data;
     }));
   }
 
@@ -40,39 +39,27 @@ export class EventService {
     }
     console.log("query event: " + url);
 
-    return this.http.get(url).pipe(map(data => {
-      let resJson = data.json();
-      return resJson;
-    }));
+    return this.http.get(url);
   }
 
   public getEvent(event_id: string) {
     let url = "/user/event?event_id=" + event_id;
     console.log("get event: " + url);
 
-    return this.http.get(url).pipe(map(data => {
-      let resJson = data.json();
-      return resJson;
-    }));
+    return this.http.get(url);
   }
 
   public createEvent(event) {
     let url = "/user/event";
     let body = JSON.stringify(event);
-    let headers = new Headers({ "Content-Type": "application/JSON;charset=utf-8" });
-    let options = new RequestOptions({ headers: headers });
+    let headers = new HttpHeaders({ "Content-Type": "application/JSON;charset=utf-8" });
+    let options = { headers: headers };
 
-    return this.http.post(url, body, options).pipe(map(data => {
-      let resJson = data.json();
-      return resJson;
-    }));
+    return this.http.post(url, body, options);
   }
 
   public deleteEvent(event_id) {
-    return this.http.delete("/user/event?event_id=" + event_id).pipe(map(data => {
-      let resJson = data.json();
-      return resJson;
-    }));
+    return this.http.delete("/user/event?event_id=" + event_id);
   }
 
   public isActiveEvent(event) {

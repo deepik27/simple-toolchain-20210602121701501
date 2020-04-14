@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,33 +14,33 @@
  * limitations under the License.
  */
 import { Injectable } from "@angular/core";
-import { Http, Headers, RequestOptions } from '@angular/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Injectable()
-export class HttpClient {
-  constructor(private http: Http) {
+export class AppHttpClient {
+  constructor(private http: HttpClient) {
   }
 
-  public get(url: string, options: RequestOptions = undefined) {
+  public get(url: string, options = undefined) {
     // to prevent caching issue on IE
-    options = options || new RequestOptions();
+    options = options || {};
     if (options.headers) {
       options.headers.append("If-Modified-Since", (new Date(0)).toUTCString());
     } else {
-      options.headers = new Headers({ "If-Modified-Since": (new Date(0)).toUTCString() });
+      options.headers = new HttpHeaders({ "If-Modified-Since": (new Date(0)).toUTCString() });
     }
     return this.http.get(url, options);
   }
 
-  public post(url: string, body: any, options: RequestOptions = undefined) {
+  public post(url: string, body: any, options = undefined) {
     return this.http.post(url, body, options);
   }
 
-  public put(url: string, body: any, options: RequestOptions = undefined) {
+  public put(url: string, body: any, options = undefined) {
     return this.http.put(url, body, options);
   }
 
-  public delete(url: string, options: RequestOptions = undefined) {
+  public delete(url: string, options = undefined) {
     return this.http.delete(url, options);
   }
 }

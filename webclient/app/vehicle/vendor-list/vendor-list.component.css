@@ -13,39 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.controlPanel {
-  padding:10px 10px;
-  width: 100%;
-}
-
-.controlPanel #controlButtons {
-  float: right;
-}
-
-.vendorList {
-  min-width: 120px;
-}
-
-.row label, .row select, .row input {
-  margin: 5px;
-  padding: 0px;
-}
-
-.error {
-  color: red;
-  margin-bottom: 10px;
-  margin-left: 10px;
-  margin-right: 10px;
-}
-
-.fieldLabel {
-  text-align: right;
-}
-@media (max-width: 768px) {
-  .fieldLabel {
-	   text-align: left;
+ .controlPanel {
+    padding:10px 10px;
+    width: 100%;
   }
+  
+  .controlPanel #controlButtons {
+    float: right;
+  }
+  
   .vendorList {
-    height: 80px;
+    min-width: 120px;
   }
-}
+  
+  .row label, .row select, .row input {
+    margin: 5px;
+    padding: 0px;
+  }
+  
+  .error {
+    color: red;
+    margin-bottom: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+  
+  .fieldLabel {
+    text-align: right;
+  }
+  @media (max-width: 768px) {
+    .fieldLabel {
+         text-align: left;
+    }
+    .vendorList {
+      height: 80px;
+    }
+  }
+  

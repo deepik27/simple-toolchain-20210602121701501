@@ -95,6 +95,12 @@ table th
     padding-left: 50px !important;
 }
 
+.container-30
+{
+    padding-right: 30px !important;
+    padding-left: 30px !important;
+}
+
 .container-30-right
 {
     padding-right: 30px !important;
@@ -2958,6 +2964,29 @@ table th[class*='col-']
 }
 
 
+.simulatorMap .ol-zoom {
+    left: auto;
+    top: auto;
+    right: 25px;
+    bottom: 40px;
+}
+
+.simulatorMap .ol-zoom.zoom2fit {
+    left: auto;
+    top: auto;
+    right: 25px;
+    bottom: 96px;
+    z-index: 1;
+}
+
+.simulatorMap .ol-attribution {
+    right: 30px;
+    bottom: 20px;
+}
+
+.simulatorMap .ol-attribution.ol-uncollapsible {
+    height: 1.5em;
+}
 
 /* === 16. C3 Styles === */
 
@@ -3472,8 +3501,13 @@ table th[class*='col-']
 
 .loading
 {
+    display: block; 
     position: fixed;
     left: 50%;
+    background-image:url(../img/loading.gif); 
+    background-repeat:  no-repeat;           
+    width:100px;
+    height:100px;
 }
 
 .hidden
@@ -3534,6 +3568,10 @@ table th[class*='col-']
     border-top: 1px solid #ccc;
 }
 
+.close:hover
+{
+    cursor: pointer;
+}
 
 /* === 18. Alert Popover Styles === */
 
@@ -3651,4 +3689,13 @@ table th[class*='col-']
 .mapAlertPopover .table > thead > tr > th
 {
     padding: 1px 5px;
+}
+
+.clickablelink {
+    cursor: pointer;
+    color: #3e78bc;
+}
+
+.clickablelink:hover {
+    text-decoration: underline;
 }

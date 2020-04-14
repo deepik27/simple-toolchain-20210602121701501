@@ -4,9 +4,7 @@
 # Ignore derived files
 /app/**/*.js
 /app/**/*.map
-/typings/
 
 /.bin/
-/node_modules
 /npm-debug.log*
 /dist/

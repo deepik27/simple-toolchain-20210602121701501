@@ -39,12 +39,12 @@
 						<div>Driver Behavior</div>
 						<div>Occurrences</div>
 					</div>
-					<a href="javascript:void(0)" class="list-group-item behavior-list-item" *ngFor="let behavior of behaviors"
+					<span class="list-group-item behavior-list-item clickablelink" *ngFor="let behavior of behaviors"
 						(click)="setSelectedBehavior(behavior)"
 						[ngClass]="{active: behavior.name === (selectedBehavior && selectedBehavior.name)}">
 						<div>{{behavior.name}}</div>
 						<div>{{behavior.details.length}}</div>
-					</a>
+				</span>
 				</div>
 			</div>
 		</div>
@@ -57,12 +57,12 @@
 						<div>Alert</div>
 						<div>Type</div>
 					</div>
-					<a href="javascript:void(0)" class="list-group-item behavior-list-item" *ngFor="let alert of alerts"
+					<span class="list-group-item behavior-list-item clickablelink" *ngFor="let alert of alerts"
 						(click)="setSelectedBehavior(alert)"
 						[ngClass]="{active: alert.name === (selectedBehavior && selectedBehavior.name)}">
 						<div>{{alert.name}}</div>
 						<div>{{alert.type}}</div>
-					</a>
+				</span>
 				</div>
 			</div>
 		</div>

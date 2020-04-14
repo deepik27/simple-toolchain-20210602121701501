@@ -13,59 +13,59 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.controlPanel {
-  padding: 15px 0;
-  width: 100%;
-}
-
-.controlPanel #controlButtons {
-  float: right;
-}
-
-.error {
-  color: red;
-  margin-bottom: 10px;
-}
-
-.fieldLabel {
-  text-align: right;
-}
-@media (max-width: 768px) {
-  .fieldLabel {
-	   text-align: left;
+ .controlPanel {
+    padding: 15px 0;
+    width: 100%;
   }
-}
-
-.firstRow {
-  padding-left: 20px;
-}
-
-.actionTD {
-  padding: 0 20px;
-  text-align: right;
-  font-size: 18px;
-}
-
-.statusCircle {
-  cursor: pointer;
-}
-
-.statusColumn {
-  width: 90px;
-}
-
-.actionColumn {
-  width: 140px;
-}
-
-.dataTableCel {
-  vertical-align: middle;
-}
-
-.statusCel {
-  margin-left: 15px;
-}
-
-.showID {
-  margin-left: 50px;
-}
+  
+  .controlPanel #controlButtons {
+    float: right;
+  }
+  
+  .error {
+    color: red;
+    margin-bottom: 10px;
+  }
+  
+  .fieldLabel {
+    text-align: right;
+  }
+  @media (max-width: 768px) {
+    .fieldLabel {
+         text-align: left;
+    }
+  }
+  
+  .firstRow {
+    padding-left: 20px;
+  }
+  
+  .actionTD {
+    padding: 0 20px;
+    text-align: right;
+    font-size: 18px;
+  }
+  
+  .statusCircle {
+    cursor: pointer;
+  }
+  
+  .statusColumn {
+    width: 90px;
+  }
+  
+  .actionColumn {
+    width: 140px;
+  }
+  
+  .dataTableCel {
+    vertical-align: middle;
+  }
+  
+  .statusCel {
+    margin-left: 15px;
+  }
+  
+  .showID {
+    margin-left: 50px;
+  }

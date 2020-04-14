@@ -14,7 +14,7 @@
    limitations under the License.
 -------------------------------------------------------------------------------------------------->
 <div>
-	<span class="loading" [hidden]="!requestSending"><img src="/images/loading.gif"></span>
+	<div [ngClass]="requestSending?'loading':''"></div>
 	<div class="error" [hidden]="!errorMessage">{{errorMessage}}</div>
 	<div class="row">
 		<div class="alignCenter column-3-lg column-3-med column-3-sm">

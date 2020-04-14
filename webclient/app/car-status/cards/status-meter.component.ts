@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ import { Component, Input, OnInit, OnDestroy, AfterContentInit, ViewChild, OnCha
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
-var chartComponentNextId = 0;
-
 @Component({
-  moduleId: module.id,
   selector: 'status-meter',
   template: `
   <div class="row">
@@ -79,13 +76,13 @@ export class StatusMeterComponent implements OnInit, OnDestroy, AfterContentInit
   private barMinMaxAdjust = 2;
   private subject = new Subject<any>();
   private subscription;
-  private statusClassObj = {};
-  private speedometerDeg = -90;
-  private thermometerPercent = 10;
-  private thermometerTicks = [];
+  statusClassObj = {};
+  speedometerDeg = -90;
+  thermometerPercent = 10;
+  thermometerTicks = [];
 
-  @ViewChild('speedometerDiv') speedometerDiv;
-  @ViewChild('thermometerDiv') thermometerDiv;
+  @ViewChild('speedometerDiv', {static: false}) speedometerDiv;
+  @ViewChild('thermometerDiv', {static: false}) thermometerDiv;
 
   constructor() {
   }

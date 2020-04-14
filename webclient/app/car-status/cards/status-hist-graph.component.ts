@@ -19,7 +19,6 @@ import { interval } from 'rxjs';
 import { map, startWith, delay } from 'rxjs/operators';
 
 @Component({
-  moduleId: module.id,
   selector: 'status-hist-graph',
   template: `
   <div class="row noOffsetRow">
@@ -114,9 +113,9 @@ export class StatusHistoryGrahpComponent implements OnInit, OnDestroy {
   @Input() value: number;
   @Input() alertLevel: string; // either 'critical', 'troubled', or 'normal'
 
-  private items: BarItem[] = null;
-  private lastValue: any = '-';
-  private lastStatusClass = {};
+  items: BarItem[] = null;
+  lastValue: any = '-';
+  lastStatusClass = {};
 
   private subscription;
 

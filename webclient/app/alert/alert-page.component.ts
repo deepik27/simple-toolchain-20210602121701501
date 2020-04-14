@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { Http, Request, Response } from '@angular/http';
 import { ActivatedRoute, Params } from '@angular/router';
 
-import { AlertListComponent } from './alert-list/alert-list.component';
-
 @Component({
-  moduleId: module.id,
   selector: 'fmdash-fleet-alert',
   templateUrl: 'alert-page.component.html',
 })
 
 export class AlertPageComponent implements OnInit {
-  private extent: number[];
-  private filterProp = '';
-  private filterValue = '';
-  private includeClosed = true;
-  private showInput = true;
+  extent: number[];
+  showInput = true;
+  filterProp = '';
+  filterValue = '';
+  includeClosed = true;
 
   constructor(private route: ActivatedRoute) {
   }

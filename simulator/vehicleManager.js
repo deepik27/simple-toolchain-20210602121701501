@@ -32,7 +32,7 @@ const TCU_MODEL_NAME = "TCU";
 _.extend(simulatedVehicleManager, {
 	clients: {},
 
-	getSimulatedVehicles: function (clientId, numVehicles, excludes) {
+	getSimulatedVehicles: function (clientId, numVehicles, preferred, excludes) {
 		numVehicles = numVehicles || NUM_OF_SIMULATOR;
 
 		var deferred = Q.defer();
@@ -42,14 +42,22 @@ _.extend(simulatedVehicleManager, {
 				debug("There is vendor: " + VENDOR_NAME);
 
 				// Get Vehicles associated with the vendor for simulator
-				Q.when(this._getVehicleList('active', excludes, vendor), (vehicles) => {
+				Q.when(this._getVehicleList('active', excludes, (!preferred || preferred.length == 0)?vendor:null), (vehicles) => {
+					let preferredVehicles = _.filter(vehicles, vehicle => _.contains(preferred, vehicle.mo_id));
+					if (preferredVehicles.length > numVehicles) {
+						return deferred.resolve({ data: preferredVehicles });
+					}
+					vehicles = _.difference(vehicles, preferredVehicles);
+					numVehicles -= preferredVehicles.length;
 					if (vehicles.length < numVehicles) {
 						// create additional vehicles
 						deferred.resolve(this._getAvailableVehicles(numVehicles, vehicles, excludes, vendor));
 					} else if (vehicles.length > numVehicles) {
-						deferred.resolve({ data: vehicles.slice(0, numVehicles) });
+						preferredVehicles = _.union(preferredVehicles, vehicles.slice(0, numVehicles));
+						deferred.resolve({ data: preferredVehicles });
 					} else {
-						deferred.resolve({ data: vehicles });
+						preferredVehicles = _.union(preferredVehicles, vehicles);
+						deferred.resolve({ data: preferredVehicles });
 					}
 				}).catch((err) => {
 					var status = (err.response && (err.response.status || err.response.statusCode)) || 500;
@@ -83,6 +91,11 @@ _.extend(simulatedVehicleManager, {
 		return deferred.promise;
 	},
 
+	getAvailableVehicleList: function (num_rec_in_page, num_page) {
+//		return asset.getVehicleList({ "model": TCU_MODEL_NAME, status: "Active", excludeKeys: ['model'], num_rec_in_page: num_rec_in_page, num_page: num_page});
+		return asset.getVehicleList({ status: "Active", num_rec_in_page: num_rec_in_page, num_page: num_page});
+	},
+
 	_getSimulationVendor: function () {
 		return Q.when(asset.getVendorList({ name: VENDOR_NAME }), (response) => {
 			if (response && response.data && response.data.length > 0) {
@@ -92,7 +105,11 @@ _.extend(simulatedVehicleManager, {
 	},
 
 	_getVehicleList: function (status, excludes, vendor) {
-		return Q.when(asset.getVehicleList({ "vendor": vendor, "status": status }), (response) => {
+		let opts = {status: status};
+		if (vendor) {
+			opts["vendor"] = vendor;
+		}
+		return Q.when(asset.getVehicleList(opts), (response) => {
 			let vehicles = response && response.data || [];
 			vehicles = _.filter(vehicles, (vehicle) => { return !_.contains(excludes, vehicle.mo_id) && TCU_MODEL_NAME != vehicle.model; });
 			return vehicles;

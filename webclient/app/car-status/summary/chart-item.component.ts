@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, EventEmitter, AfterContentInit, Input, Output, ViewChild, ContentChild } from '@angular/core';
+import { Component, EventEmitter, AfterContentInit, Input, Output, ViewChild } from '@angular/core';
 
 import { CarStatusDataService } from './car-status-data.service';
 import { distinctUntilChanged } from 'rxjs/operators';
@@ -23,7 +23,6 @@ import * as d3 from 'd3';
 import * as _ from 'underscore';
 
 @Component({
-  moduleId: module.id,
   selector: 'fmdash-chart-item',
   templateUrl: 'chart-item.component.html',
 })
@@ -33,9 +32,9 @@ export class ChartItemComponent implements AfterContentInit {
   @Input() chartRotated: string;
   @Input() aggrKey: string;
   @Output() selectionChange = new EventEmitter<any>();
-  @ViewChild('chartDiv') chartDiv;
+  @ViewChild('chartDiv', {static: false}) chartDiv;
 
-  private chartId = 'chart_' + (Math.floor(Math.random() * 1000000000));
+  chartId = 'chart_' + (Math.floor(Math.random() * 1000000000));
 
   private chartSelector: string;
   private chart: c3.ChartAPI;
@@ -89,7 +88,8 @@ export class ChartItemComponent implements AfterContentInit {
       this.dataSubscription = this.carStatusData.getColumns(this.aggrKey)
         .pipe(distinctUntilChanged((x, y) => _.isEqual(x, y)))
         .subscribe(data => {
-          const array = data as Array<[string, ...c3.PrimitiveArray]>;
+//          const array = data as Array<[string, ...c3.PrimitiveArray]>;
+          const array = data as Array<[]>;
           this.chart.load({ columns: array });
         });
     }, 100);
@@ -102,27 +102,4 @@ export class ChartItemComponent implements AfterContentInit {
       this.dataSubscription = null;
     }
   }
-
-  private refresh(data) {
-    // update chart if the chart library is loaded
-    if (this.chart && this.chart.load) {
-      this.chart.load({
-        columns: data.columns,
-      });
-    }
-
-    // update title
-    if (this.chartType === 'donut') {
-      let sel = d3.select(this.chartSelector + ' .c3-chart-arcs-title');
-      (<any>sel.node()).innerHTML = 'Avg: ' + parseFloat(data.average).toFixed(1);
-      sel.attr('fill', '#3a6284');
-      sel.style('padding-top', '6px');
-      sel.style('font-size', '24px');
-      sel.style('font-weight', '500');
-    }
-  }
-
-
-
-
 }

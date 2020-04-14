@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,33 +14,29 @@
  * limitations under the License.
  */
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { HttpModule } from '@angular/http';
+import { HttpClientModule } from '@angular/common/http';
 
 import { UtilsModule } from '../utils/utils.module';
 
-import { AlertListComponent } from './alert-list/alert-list.component';
+import { AlertPageRoutingModule } from './alert-page-routing.module';
 import { AlertPageComponent } from './alert-page.component';
-import { routing } from './alert-page.routing';
+import { AlertListComponent } from './alert-list/alert-list.component';
+
 
 @NgModule({
+  declarations: [AlertPageComponent, AlertListComponent],
   imports: [
+    CommonModule,
     BrowserModule,
     FormsModule,
-    HttpModule,
     RouterModule,
-    UtilsModule,
-    routing
-  ],
-  declarations: [
-    AlertListComponent,
-    AlertPageComponent,
-  ],
-  exports: [
-    AlertPageComponent,
-  ],
-  providers: []
+    HttpClientModule,
+    AlertPageRoutingModule,
+    UtilsModule
+  ]
 })
 export class AlertPageModule { }
