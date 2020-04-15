@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, 2017 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class vehicleDataHub extends BaseApi {
 			}
 			if (process.env.AUTOMOTIVE_URL) {
 				return {
-					baseURL: process.env.AUTOMOTIVE_VDH_URL || (process.env.AUTOMOTIVE_URL + "vehicle"),
+					baseURL: process.env.AUTOMOTIVE_VDH_URL || (process.env.AUTOMOTIVE_URL + "/vehicle"),
 					tenant_id: process.env.AUTOMOTIVE_TENANTID,
 					username: process.env.AUTOMOTIVE_USERNAME,
 					password: process.env.AUTOMOTIVE_PASSWORD
@@ -55,8 +55,7 @@ class vehicleDataHub extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'POST',
 			url: node.baseURL + '/action',
-			body: action,
-			json: true
+			data: action
 		});
 		return this._request(options);
 	}
@@ -69,8 +68,7 @@ class vehicleDataHub extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: "GET",
 			url: node.baseURL + '/carProbe',
-			qs: params,
-			json: true
+			params: params
 		});
 
 		return this._request(options, function (error, response, result, resolve, reject) {
@@ -78,13 +76,14 @@ class vehicleDataHub extends BaseApi {
 				if (!result.contents) {
 					console.warning("getCarProbe: <contents> is missing in the result.");
 				}
-				return resolve(result && result.contents);
+				resolve(result && result.contents);
 			} else {
 				const statusCode = response ? response.statusCode : 500;
-				console.error("getCarProbe: " + JSON.stringify(options.qs));
+				console.error("getCarProbe: " + JSON.stringify(options.params));
 				console.error("getCarProbe error(" + (response ? response.statusCode : "no response") + "): " + error + ": " + JSON.stringify(result));
-				return reject({ error: "(getCarProbe): " + JSON.stringify(result), statusCode: statusCode });
+				reject({ error: "(getCarProbe): " + JSON.stringify(result), statusCode: statusCode });
 			}
+			return true;
 		});
 	}
 	/**
@@ -98,9 +97,8 @@ class vehicleDataHub extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'POST',
 			url: node.baseURL + '/carProbe',
-			qs: op === 'sync' ? { op: op } : {},
-			body: carProbeData,
-			json: true
+			params: op === 'sync' ? { op: op } : {},
+			data: carProbeData
 		});
 		if (SEND_PROBE_USER_AGENT) {
 			if (options.headers) {
@@ -111,14 +109,15 @@ class vehicleDataHub extends BaseApi {
 		}
 		return this._request(options, function (error, response, result, resolve, reject) {
 			if (!error && response && 200 <= response.statusCode && response.statusCode < 300) {
-				return resolve(result && result.contents);
+				resolve(result && result.contents);
 			} else {
 				const statusCode = response ? response.statusCode : 500;
 				const resultStr = JSON.stringify(result);
 				console.error('sendCarProbe error(' + (response ? response.statusCode : 'no response') + '): ' + error + ': ' + resultStr);
-				console.error("sendCarProbe:" + JSON.stringify(options.body));
-				return reject({ error: "(sendCarProbe): " + resultStr, statusCode: statusCode });
+				console.error("sendCarProbe:" + JSON.stringify(options.data));
+				reject({ error: "(sendCarProbe): " + resultStr, statusCode: statusCode });
 			}
+			return true;
 		});
 	}
 	/**
@@ -136,9 +135,8 @@ class vehicleDataHub extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'POST',
 			url: node.baseURL + '/carProbeList',
-			qs: op === 'sync' ? { op: op } : {},
-			body: probes,
-			json: true
+			params: op === 'sync' ? { op: op } : {},
+			data: probes
 		});
 		if (SEND_PROBE_USER_AGENT) {
 			if (options.headers) {
@@ -180,16 +178,16 @@ class vehicleDataHub extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/event',
-			json: true,
-			qs: params
+			params: params
 		});
 
 		return this._request(options, function (error, response, result, resolve, reject) {
 			if (!error && response && 200 <= response.statusCode && response.statusCode < 300) {
-				return resolve(result.contents);
+				resolve(result.contents);
 			} else {
-				return reject(error || response.toJSON());
+				reject(error || response.toJSON());
 			}
+			return true;
 		});
 	}
 
@@ -205,17 +203,17 @@ class vehicleDataHub extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'POST',
 			url: node.baseURL + '/event',
-			json: true,
-			qs: op === 'sync' ? { op: op } : {},
-			body: { event: event }
+			params: op === 'sync' ? { op: op } : {},
+			data: { event: event }
 		});
 
 		return this._request(options, function (error, response, result, resolve, reject) {
 			if (!error && response && 200 <= response.statusCode && response.statusCode < 300) {
-				return resolve(result);
+				resolve(result);
 			} else {
-				return reject(error || response.toJSON());
+				reject(error || response.toJSON());
 			}
+			return true;
 		});
 	}
 
@@ -228,8 +226,7 @@ class vehicleDataHub extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/vehicle',
-			json: true,
-			qs: params
+			params: params
 		});
 		return this._request(options);
 	}

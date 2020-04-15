@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 
 const os = require('os');
 const url = require('url');
-const request = require("request");
-// require('request').debug = true
+const axios = require("axios");
 const cfenv = require('cfenv');
 const sdk = require('bluemix-secure-gateway');
 
@@ -34,9 +33,9 @@ const requestEx = function (opts, callback) {
 		opts = { url: opts };
 	}
 	// ensure connection pool
-	if (typeof opts.pool === 'undefined') {
-		opts.pool = pool;
-	}
+	// if (typeof opts.pool === 'undefined') {
+	// 	opts.pool = pool;
+	// }
 	// ensure Host header
 	opts.headers = opts.headers || {};
 	const parsed = url.parse(opts.url || opts.uri);
@@ -45,7 +44,29 @@ const requestEx = function (opts, callback) {
 		opts.headers.Host = parsed.hostname + (parsed.port ? ':' + parsed.port : '');
 	}
 
-	return request(opts, callback);
+	let res;
+	let data;
+	let err;
+	axios(opts).then(response => {
+		res = response;
+		data = response.data;
+		
+		// Previously used request module had returned statusCode. Many clients expects it.
+		if (response.status && !response.statusCode) {
+			response.statusCode = response.status;
+		}
+	}).catch(error => {
+		err = error;
+		if (err.response) {
+			res = err.response;
+			if (res.status && !res.statusCode) {
+				res.statusCode = res.status;
+			}
+			data = res.data;
+		}
+	}).then(() => {
+		callback(err, res, data);
+	});
 };
 
 const GW_ID_ENV_KEY = 'SECURE_GW_IPTABLE_CFG_GW_ID';

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016,2019 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,17 @@ const Promise = require('bluebird');
 require('dotenv').config();
 const BaseApi = require('./BaseApi.js');
 
+function removeLastSlash(dir) {
+	if (!dir || dir.length == 0) {
+		return dir;
+	}
+	const lastSlash = dir.lastIndexOf('/');
+	if (lastSlash !== dir.length - 1) {
+		return dir;
+	}
+	return dir.substring(0, lastSlash);
+}
+
 class Asset extends BaseApi {
 	constructor() {
 		super();
@@ -33,7 +44,7 @@ class Asset extends BaseApi {
 				};
 				const assetCreds = iot4a_cred.maximo;
 				const maximoCreds = {
-					baseURL: assetCreds.api ? assetCreds.api : (iot4a_cred.api + "maximo"),
+					baseURL: assetCreds.api ? assetCreds.api : (iot4a_cred.api + "maxrest"),
 					restURL: iot4a_cred.api + "maxrest/oslc",
 					internalURL: assetCreds.internalURL,
 					orgid: assetCreds.orgid,
@@ -48,14 +59,14 @@ class Asset extends BaseApi {
 				return {
 					tenant_id: process.env.AUTOMOTIVE_TENANTID,
 					vdh: {
-						baseURL: process.env.AUTOMOTIVE_VDH_URL || (process.env.AUTOMOTIVE_URL + "vehicle"),
-						username: process.env.AUTOMOTIVE_USERNAME,
-						password: process.env.AUTOMOTIVE_PASSWORD
+					 	baseURL: process.env.AUTOMOTIVE_VDH_URL || (process.env.AUTOMOTIVE_URL + "/vehicle"),
+					 	username: process.env.AUTOMOTIVE_USERNAME,
+					 	password: process.env.AUTOMOTIVE_PASSWORD
 					},
 					maximo: {
-						baseURL: process.env.AUTOMOTIVE_MAX_URL || (process.env.AUTOMOTIVE_URL + "maximo"),
+						baseURL: process.env.AUTOMOTIVE_MAX_URL || (process.env.AUTOMOTIVE_URL + "/maxrest"),
 						internalURL: process.env.AUTOMOTIVE_MAX_INTERNAL_URL,
-						restURL: process.env.AUTOMOTIVE_URL + "maxrest/oslc",
+						restURL: process.env.AUTOMOTIVE_URL + "/maxrest/oslc",
 						orgid: process.env.AUTOMOTIVE_MAX_ORGID,
 						classificationid: process.env.AUTOMOTIVE_MAX_CLASSIFICATION_ID,
 						username: process.env.AUTOMOTIVE_MAX_USERNAME,
@@ -535,6 +546,7 @@ class Asset extends BaseApi {
 				const msg = 'asset: error(' + _.escape(url) + '): ' + result;
 				reject({ message: msg, error: error, response: response });
 			}
+			return true;
 		});
 	}
 
@@ -554,14 +566,15 @@ class Asset extends BaseApi {
 			}
 			if (callback) {
 				if (callback(error, response, result, resolve, reject)) {
-					return;
+					return true;
 				}
 			} else {
 				if (!error && response && 200 <= response.statusCode && response.statusCode < 300) {
-					return resolve(result);
+					resolve(result);
 				} else {
-					return reject(error || { statusCode: response.statusCode || 500, message: response.statusMessage || "Authorization failed." });
+					reject(error || { statusCode: response.statusCode || 500, message: response.message || response.statusText || "Authorization failed." });
 				}
+				return true;
 			}
 		});
 	}
@@ -571,8 +584,7 @@ class Asset extends BaseApi {
 			url: url,
 			headers: {
 				"Content-Type": "application/json"
-			},
-			json: true
+			}
 		};
 		if (Asset.cookie) {
 			options.headers.cookie = Asset.cookie;
@@ -580,14 +592,14 @@ class Asset extends BaseApi {
 		if (basicauth) {
 			options.rejectUnauthorized = false;
 			options.auth = {
-				user: basicauth.username,
-				pass: basicauth.password,
+				username: basicauth.username,
+				password: basicauth.password,
 				sendImmediately: true
 			};
 		} else {
 			const creds = this.assetConfig.maximo;
 			const maxauth = creds.username + ':' + creds.password;
-			options.headers.maxauth = new Buffer(maxauth).toString('base64');
+			options.headers.maxauth = new Buffer.from(maxauth).toString('base64');
 		}
 		if (method_override) {
 			if (method_override === 'MERGE') {
@@ -598,7 +610,7 @@ class Asset extends BaseApi {
 			}
 		}
 		if (body) {
-			options.body = body;
+			options.data = body;
 		}
 		return options;
 	}

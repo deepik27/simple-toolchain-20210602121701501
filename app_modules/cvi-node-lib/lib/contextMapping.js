@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, 2017 IBM Corp. All Rights Reserved.
+ * Copyright 2016,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class contextMapping extends BaseApi {
 			}
 			if (process.env.AUTOMOTIVE_URL) {
 				return {
-					baseURL: process.env.AUTOMOTIVE_MAP_URL || (process.env.AUTOMOTIVE_URL + "mapinsights"),
+					baseURL: process.env.AUTOMOTIVE_MAP_URL || (process.env.AUTOMOTIVE_URL + "/mapinsights"),
 					tenant_id: process.env.AUTOMOTIVE_TENANTID,
 					internal_tenant_id: process.env.AUTOMOTIVE_INTERNAL_TENANTID,
 					username: process.env.AUTOMOTIVE_USERNAME,
@@ -66,17 +66,18 @@ class contextMapping extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/mapservice/routesearch',
-			qs: params,
-			json: true
+			params: params
 		});
 
 		return this._request(options, function (error, response, result, resolve, reject) {
 			if (error) {
 				console.error("error on routesearch\n url: " + options.url + "\n error: " + error);
-				return reject(error);
+				reject(error);
+				return true;
 			} else if (response.statusCode > 299) {
 				console.error("error on routesearch\n url: " + options.url + "\n body: " + result);
-				return reject(response.toJSON());
+				reject(response.toJSON());
+				return true;
 			}
 
 			try {
@@ -85,6 +86,7 @@ class contextMapping extends BaseApi {
 				console.error("error on routesearch\n url: " + options.url + "\n bad_content: " + e);
 				reject(e);
 			}
+			return true;
 		});
 	}
 	findRoute(params) {
@@ -92,8 +94,7 @@ class contextMapping extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: "POST",
 			url: node.baseURL + "/mapservice/route",
-			body: params,
-			json: true
+			data: params
 		});
 
 		return this._request(options);
@@ -137,8 +138,7 @@ class contextMapping extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/mapservice/map/matching',
-			qs: params,
-			json: true,
+			params: params,
 			pool: this._matchMapPool,
 			agentOptions: this._matchMapAgentOptions,
 		});
@@ -148,10 +148,11 @@ class contextMapping extends BaseApi {
 				if (result.length === 0) {
 					console.error("no match found\n url: " + options.url + "\n body: " + result);
 				}
-				return resolve(result);
+				resolve(result);
 			} else {
-				return reject(error || { statusCode: response.statusCode, body: result });
+				reject(error || { statusCode: response.statusCode, body: result });
 			}
+			return true;
 		});
 	}
 	/**
@@ -237,8 +238,7 @@ class contextMapping extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/mapservice/link',
-			qs: { link_id: link_id },
-			json: true
+			params: { link_id: link_id }
 		});
 
 		const self = this;
@@ -251,14 +251,15 @@ class contextMapping extends BaseApi {
 							lastAccess: Date.now(),
 						};
 					}
-					return resolve(result.links[0]);
+					resolve(result.links[0]);
 				} else {
 					console.error("link information not found\n url: : " + options.url + "\n body: " + JSON.stringify(result));
-					return reject(responseJson);
+					reject(responseJson);
 				}
 			} else {
-				return reject(error);
+				reject(error);
 			}
+			return true;
 		});
 	}
 
@@ -272,9 +273,8 @@ class contextMapping extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: "POST",
 			url: node.baseURL + "/ctxservice/poi",
-			body: poi,
-			qs: params || {},
-			json: true
+			data: poi,
+			params: params || {}
 		})
 		return this._request(options);
 	}
@@ -287,8 +287,7 @@ class contextMapping extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: "GET",
 			url: node.baseURL + "/ctxservice/poi",
-			qs: params || {},
-			json: true
+			params: params || {}
 		});
 		return this._request(options);
 	}
@@ -302,9 +301,8 @@ class contextMapping extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: "POST",
 			url: node.baseURL + "/ctxservice/poi/query",
-			body: poi,
-			qs: params || {},
-			json: true
+			data: poi,
+			params: params || {},
 		});
 		return this._request(options);
 	}
@@ -317,8 +315,7 @@ class contextMapping extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: "DELETE",
 			url: node.baseURL + "/ctxservice/poi",
-			qs: params,
-			json: true
+			params: params
 		});
 		return this._request(options);
 	}
@@ -367,21 +364,21 @@ class contextMapping extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'POST',
 			url: node.baseURL + '/eventservice/event',
-			body: event,
-			json: true
+			data: event
 		});
 
 		return this._request(options, function (error, response, result, resolve, reject) {
 			if (response && response.statusCode < 300) {
 				try {
-					return resolve(result);
+					resolve(result);
 				} catch (e) {
 					console.error("error on parsing createEvent result\n url: " + options.url + "\n body: " + result);
-					return reject(e);
+					reject(e);
 				}
 			} else {
-				return reject(error || response.toJSON());
+				reject(error || response.toJSON());
 			}
+			return true;
 		});
 	}
 	/**
@@ -394,15 +391,16 @@ class contextMapping extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'DELETE',
 			url: node.baseURL + '/eventservice/events',
-			qs: { event_id: event_id }
+			params: { event_id: event_id }
 		});
 
 		return this._request(options, function (error, response, result, resolve, reject) {
 			if (response && response.statusCode < 300) {
-				return resolve(result);
+				resolve(result);
 			} else {
-				return reject(error || response.toJSON());
+				reject(error || response.toJSON());
 			}
+			return true;
 		});
 	}
 	/**
@@ -416,16 +414,16 @@ class contextMapping extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/eventservice/event/query',
-			qs: params,
-			json: true
+			params: params
 		});
 
 		return this._request(options, function (error, response, result, resolve, reject) {
 			if (response && response.statusCode < 300) {
-				return resolve(result);
+				resolve(result);
 			} else {
-				return reject(error || response.toJSON());
+				reject(error || response.toJSON());
 			}
+			return true;
 		});
 	}
 	/**
@@ -439,16 +437,16 @@ class contextMapping extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/eventservice/event',
-			qs: { event_id: event_id },
-			json: true
+			params: { event_id: event_id }
 		});
 
 		return this._request(options, function (error, response, result, resolve, reject) {
 			if (response && response.statusCode < 300) {
-				return resolve(result);
+				resolve(result);
 			} else {
-				return reject(error || response.toJSON());
+				reject(error || response.toJSON());
 			}
+			return true;
 		});
 	}
 	/**
@@ -486,16 +484,16 @@ class contextMapping extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/eventservice/event/allevents',
-			qs: params,
-			json: true
+			params: params
 		});
 
 		return this._request(options, function (error, response, result, resolve, reject) {
 			if (response && response.statusCode < 300) {
-				return resolve(result);
+				resolve(result);
 			} else {
-				return reject(error || response.toJSON());
+				reject(error || response.toJSON());
 			}
+			return true;
 		});
 	}
 };

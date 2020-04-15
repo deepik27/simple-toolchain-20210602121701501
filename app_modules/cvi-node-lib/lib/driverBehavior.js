@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 IBM Corp. All Rights Reserved.
+ * Copyright 2017,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class driverBehavior extends BaseApi {
 			}
 			if (process.env.AUTOMOTIVE_URL) {
 				return {
-					baseURL: process.env.AUTOMOTIVE_DRB_URL || (process.env.AUTOMOTIVE_URL + "driverinsights"),
+					baseURL: process.env.AUTOMOTIVE_DRB_URL || (process.env.AUTOMOTIVE_URL + "/driverinsights"),
 					tenant_id: process.env.AUTOMOTIVE_TENANTID || "public",
 					username: process.env.AUTOMOTIVE_USERNAME,
 					password: process.env.AUTOMOTIVE_PASSWORD
@@ -59,8 +59,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/datastore/carProbe',
-			qs: params,
-			json: true
+			params: params
 		}));
 	}
 
@@ -73,8 +72,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/datastore/carProbe/count',
-			qs: params,
-			json: true
+			params: params
 		}));
 	}
 
@@ -87,8 +85,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'POST',
 			url: node.baseURL + '/datastore/carProbe',
-			body: probe,
-			json: true
+			data: probe
 		}));
 	}
 
@@ -102,8 +99,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'DELETE',
 			url: node.baseURL + '/datastore/carProbe',
-			qs: params,
-			json: true
+			params: params
 		}));
 	}
 
@@ -114,8 +110,7 @@ class driverBehavior extends BaseApi {
 		const node = this.driverBehaviorConfig;
 		return this._request(this._makeRequestOptions(node, {
 			method: 'GET',
-			url: node.baseURL + '/datastore/carProbe/dateList',
-			json: true
+			url: node.baseURL + '/datastore/carProbe/dateList'
 		}));
 	}
 
@@ -128,8 +123,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/datastore/trip',
-			qs: params,
-			json: true
+			params: params
 		}));
 	}
 
@@ -142,8 +136,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/datastore/trip/carProbe',
-			qs: params,
-			json: true
+			params: params
 		}));
 	}
 
@@ -156,8 +149,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/datastore/trip/carProbe/count',
-			qs: params,
-			json: true
+			params: params
 		}));
 	}
 
@@ -166,8 +158,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'DELETE',
 			url: node.baseURL + '/datastore/trip',
-			qs: params,
-			json: true
+			params: params
 		}));
 	}
 
@@ -183,8 +174,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/jobcontrol/online/job/pertrip',
-			qs: params,
-			json: true
+			params: params
 		}));
 	}
 
@@ -197,8 +187,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'POST',
 			url: node.baseURL + '/jobcontrol/online/job/pertrip',
-			body: params,
-			json: true
+			data: params
 		}));
 	}
 
@@ -209,8 +198,7 @@ class driverBehavior extends BaseApi {
 		const node = this.driverBehaviorConfig;
 		return this._request(this._makeRequestOptions(node, {
 			method: 'GET',
-			url: node.baseURL + '/jobcontrol/jobList',
-			json: true
+			url: node.baseURL + '/jobcontrol/jobList'
 		}));
 	}
 
@@ -219,8 +207,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/jobcontrol/job',
-			qs: params,
-			json: true
+			params: params
 		}));
 	}
 
@@ -229,8 +216,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'POST',
 			url: node.baseURL + '/jobcontrol/job',
-			body: params,
-			json: true
+			data: params
 		}));
 	}
 
@@ -239,8 +225,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/drbresult/jobResult',
-			qs: params,
-			json: true
+			params: params
 		}));
 	}
 
@@ -249,8 +234,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/drbresult/trip',
-			qs: params,
-			json: true
+			params: params
 		}));
 	}
 
@@ -259,8 +243,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/drbresult/tripSummaryList',
-			qs: params,
-			json: true
+			params: params
 		}));
 	}
 
@@ -287,9 +270,8 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: "PUT",
 			url: node.baseURL + "/mppdp/model",
-			qs: params,
-			body: trips,
-			json: true
+			params: params,
+			data: trips
 		}));
 	}
 	/**
@@ -313,8 +295,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: "GET",
 			url: node.baseURL + "/mppdp/odpattern",
-			qs: params,
-			json: true
+			params: params
 		}));
 	}
 
@@ -341,8 +322,7 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: "GET",
 			url: node.baseURL + "/mppdp/stateless/prediction",
-			qs: params,
-			json: true
+			params: params
 		}));
 	}
 	/**
@@ -368,9 +348,8 @@ class driverBehavior extends BaseApi {
 		return this._request(this._makeRequestOptions(node, {
 			method: "POST",
 			url: node.baseURL + "/mppdp/stateless/prediction",
-			qs: params,
-			body: probes,
-			json: true
+			params: params,
+			data: probes
 		}));
 	}
 	/**
@@ -381,8 +360,7 @@ class driverBehavior extends BaseApi {
 		const node = this.driverBehaviorConfig;
 		return this._request(this._makeRequestOptions(node, {
 			method: "DELETE",
-			url: node.baseURL + "/mppdp/stateless/prediction/cache",
-			json: true
+			url: node.baseURL + "/mppdp/stateless/prediction/cache"
 		}));
 	}
 };

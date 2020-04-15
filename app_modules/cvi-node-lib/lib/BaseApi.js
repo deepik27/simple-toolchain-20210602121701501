@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 IBM Corp. All Rights Reserved.
+ * Copyright 2017,2020 IBM Corp. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,25 @@ const debug = require('debug')('BaseApi');
 debug.log = console.log.bind(console);
 
 class BaseApi {
+	constructor() {
+		if (process.env.AUTOMOTIVE_VDH_URL) process.env.AUTOMOTIVE_VDH_URL = this._removeLastSlash(process.env.AUTOMOTIVE_VDH_URL);
+		if (process.env.AUTOMOTIVE_MAP_URL) process.env.AUTOMOTIVE_MAP_URL = this._removeLastSlash(process.env.AUTOMOTIVE_MAP_URL);
+		if (process.env.AUTOMOTIVE_DRB_URL) process.env.AUTOMOTIVE_DRB_URL = this._removeLastSlash(process.env.AUTOMOTIVE_DRB_URL);
+		if (process.env.AUTOMOTIVE_MAX_URL) process.env.AUTOMOTIVE_MAX_URL = this._removeLastSlash(process.env.AUTOMOTIVE_MAX_URL);
+		if (process.env.AUTOMOTIVE_URL) process.env.AUTOMOTIVE_URL = this._removeLastSlash(process.env.AUTOMOTIVE_URL);
+	}
+
+	_removeLastSlash(dir) {
+		if (!dir || dir.length == 0) {
+			return dir;
+		}
+		const lastSlash = dir.lastIndexOf('/');
+		if (lastSlash !== dir.length - 1) {
+			return dir;
+		}
+		return dir.substring(0, lastSlash);
+	}
+
 	_getVCAPCredentials() {
 		if (process.env.VCAP_SERVICES || process.env.USER_PROVIDED_VCAP_SERVICES) {
 			const userVcapSvc = JSON.parse(process.env.USER_PROVIDED_VCAP_SERVICES || '{}');
@@ -27,17 +46,17 @@ class BaseApi {
 			}
 		}
 	}
-
+	
 	_makeRequestOptions(config, options, isText) {
 		// Add query parameters to options.url if tenant id exists
 		if (config.tenant_id) {
-			if (!options.qs) options.qs = {};
-			options.qs.tenant_id = config.tenant_id;
+			if (!options.params) options.params = {};
+			options.params.tenant_id = config.tenant_id;
 
 			// Workaround for DMM SaaS. DMM SaaS API needs internal_tenant_id
 			if (config.internal_tenant_id) {
-				if (!options.qs) options.qs = {};
-				options.qs.internal_tenant_id = config.internal_tenant_id;
+				if (!options.params) options.params = {};
+				options.params.internal_tenant_id = config.internal_tenant_id;
 			}
 		}
 		options.headers = Object.assign({ "Content-Type": "application/json; charset=UTF-8" }, options.headers || {});
@@ -47,8 +66,8 @@ class BaseApi {
 			options = Object.assign(options, {
 				rejectUnauthorized: false,
 				auth: {
-					user: config.username,
-					pass: config.password,
+					username: config.username,
+					password: config.password,
 					sendImmediately: true
 				}
 			});
@@ -66,7 +85,7 @@ class BaseApi {
 	 */
 	_request(options, callback) {
 		return new Promise((resolve, reject) => {
-			debug(`${options.method} "${options.url}", Params: ${JSON.stringify(options.qs)}, Body: ${JSON.stringify(options.body)}, Headers: ${JSON.stringify(options.headers)}`);
+			debug(`${options.method} "${options.url}", Params: ${JSON.stringify(options.params)}, Body: ${JSON.stringify(options.data)}, Headers: ${JSON.stringify(options.headers)}`);
 			request(options, (error, response, result) => {
 				if (callback) {
 					if (callback(error, response, result, resolve, reject)) {
@@ -76,7 +95,7 @@ class BaseApi {
 				if (!error && response && 200 <= response.statusCode && response.statusCode < 300) {
 					resolve(result);
 				} else {
-					reject(error || { statusCode: response.statusCode || 500, message: response.statusMessage || "Function is not supported or not available temporarily." });
+					reject(error || { statusCode: (response && response.statusCode) || 500, message: (response && (response.message || response.statusText)) || "Function is not supported or not available temporarily." });
 				}
 			});
 		});
