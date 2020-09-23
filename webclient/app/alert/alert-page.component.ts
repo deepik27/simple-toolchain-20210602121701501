@@ -16,6 +16,11 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 
+/**
+ * Alert Page shows alerts of vehicles in the selected area
+ * 100 alerts of all vehicles will be shown if no area is selected
+ * Area can not be selected when this page is opend from number-of-cars component
+ */
 @Component({
   selector: 'fmdash-fleet-alert',
   templateUrl: 'alert-page.component.html',
@@ -34,6 +39,7 @@ export class AlertPageComponent implements OnInit {
   ngOnInit(): void {
     var extent: any, status: any;
     this.route.params.forEach((params: Params) => {
+      // extent will be passed when Alert Page is opend from number-of-cars component.
       extent = extent || params['extent'];// extent is comma-separated list of min_lng, min_lat, max_lng, max_lat
       status = status || params['status'];
     });

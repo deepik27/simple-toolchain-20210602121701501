@@ -35,21 +35,10 @@ export class SimulatorVehicleService {
     private http: AppHttpClient, 
     private locationService: LocationService) {
       this.appConfig = appConfig;
-      if (window.navigator.cookieEnabled) {
-        let found = false;
-        if (document.cookie) {
-          let cookies = document.cookie.split("; ");
-          _.each(cookies, (cookie) => {
-            let c = cookie.split("=");
-            if (c.length > 1 && c[0] == "iota-simulator-uuid") {
-              this.clientId = c[1];
-            }
-          });
-        }
-        if (!this.clientId) {
-          this.clientId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-          document.cookie = "iota-simulator-uuid=" + encodeURIComponent(this.clientId);
-        }
+      this.clientId = localStorage["iota-simulator-uuid"];
+      if (!this.clientId) {
+        this.clientId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        localStorage["iota-simulator-uuid"] = encodeURIComponent(this.clientId);
       }
     }
 
@@ -163,7 +152,7 @@ export class SimulatorVehicleService {
           vehicleIds: vehicleIds,
           longitude: longitude,
           latitude: latitude,
-          timeoutInMinutes: 15,
+          timeoutInMinutes: 30,
           distance: 100,
           noErrorOnExist: true
         }
@@ -361,14 +350,14 @@ export class SimulatorVehicle {
     return this.state === 'driving';
   }
 
-  startDriving(mode = 'time') {
+  startDriving() {
     if (this.isDriving()) {
       return new Promise((resolve, reject) => {
         resolve(false);
       });
     }
     const url = '/user/simulator/vehicle/' + this.vehicleId + '?command=start';
-    const data = { parameters: { interval: 1000, mode: mode, successWhenAlready: true }};
+    const data = { parameters: { interval: 1000, mode: this.mode||'time', successWhenAlready: true }};
 
     return new Promise((resolve, reject) => {
       this.trajectoryData = [];
@@ -574,7 +563,7 @@ export class SimulatorVehicle {
     if (this.waypoints && waypoints && this.waypoints.length == waypoints.length) {
       let same = true;
       for (let i = 0; i < waypoints.length; i++) {
-        if (waypoints[0].latitude !== this.waypoints[0].latitude || waypoints[0].longitude !== this.waypoints[0].longitude) {
+        if (waypoints[i].latitude !== this.waypoints[i].latitude || waypoints[i].longitude !== this.waypoints[i].longitude) {
           same = false;
           break;
         }

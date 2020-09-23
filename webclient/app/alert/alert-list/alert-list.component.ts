@@ -100,7 +100,7 @@ export class AlertListComponent {
     this.ascendingOrder = (key === this.orderByKey) ? !this.ascendingOrder : true;
     this.orderByKey = key;
 
-    this.fleetalerts = this.fleetalerts ? this.fleetalerts.sort((a:any, b:any) => {
+    this.fleetalerts = this.fleetalerts ? this.fleetalerts.sort((a: any, b: any) => {
       if (typeof a[key] === 'string' || a[key] instanceof String)
         return b[key].localeCompare(a[key]);
       else
@@ -124,7 +124,7 @@ export class AlertListComponent {
     }
     var url = "/user/alert?" + prop + "=" + value + "&includeClosed=" + includeClosed + "&limit=100";
     if (area) {
-      url += Object.keys(area).map(function (key) { return "&" + key + "=" + area[key]; }).join();
+      url += Object.keys(area).map(function (key) { return "&" + key + "=" + area[key]; }).join("");
     }
     this.requestSending = true;
     this.http.get(url)

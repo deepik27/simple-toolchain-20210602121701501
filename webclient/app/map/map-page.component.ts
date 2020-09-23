@@ -111,19 +111,10 @@ export class MapPageComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/simulator']);
   }
   checkGuidance() {
-    if (window.navigator.cookieEnabled) {
-      let found = false;
-      let hide_guide_key = "iota-fleetmanagement-hide-guide";
-      if (document.cookie) {
-        let cookies = document.cookie.split("; ");
-        found = _.contains(_.map(cookies, function (cookie) {
-          return cookie.split("=")[0];
-        }), hide_guide_key);
-        this.showGuide = !found;
-      }
-      if (!found) {
-        document.cookie = hide_guide_key + "=" + encodeURIComponent("true");
-      }
+    this.showGuide = false;
+    if (!localStorage["iota-fleetmanagement-hide-guide"]) {
+      this.showGuide = true;
+      localStorage["iota-fleetmanagement-hide-guide"] = encodeURIComponent("true");
     }
   }
 }

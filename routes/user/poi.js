@@ -53,6 +53,10 @@ router.get("/capability/poi", authenticate, function(req, res) {
 
 router.post("/poi/query", authenticate, function(req, res){
 	let body = req.body;
+	if (isNaN(body.latitude) || isNaN(body.longitude) || -90 > body.latitude || body.latitude > 90 || -180 > body.longitude || body.longitude > 180) {
+		return res.status(400).send('Invalid longitude and latitude are specified.'); 
+	}
+
 	contextMapping.queryPoi(
 		contextMapping._generateFeature(null, "Point", 
 						[body.longitude, body.latitude], body.properties), 
@@ -79,6 +83,10 @@ router.get("/poi", authenticate, function(req, res){
 
 router.post("/poi", authenticate, function(req, res){
 	const body = req.body;
+	if (isNaN(body.latitude) || isNaN(body.longitude) || -90 > body.latitude || body.latitude > 90 || -180 > body.longitude || body.longitude > 180) {
+		return res.status(400).send('Invalid longitude and latitude are specified.'); 
+	}
+
 	const id = body.id || chance.guid();
 	const pois = contextMapping._generateFeatureCollection([
 		contextMapping._generateFeature(id, "Point", [body.longitude, body.latitude], body.properties)

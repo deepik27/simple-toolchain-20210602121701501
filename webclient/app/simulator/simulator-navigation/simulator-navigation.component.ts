@@ -628,8 +628,6 @@ export class SimulatorNavigationComponent implements OnInit {
 
 	// POI table handler
 	onLoadPOI() {
-		this.assignedPOIs = [];
-		this.mapPOILayer.getSource().clear();
 		this.mapItemHelpers["poi"].updateView();
 	}
 
@@ -659,8 +657,8 @@ export class SimulatorNavigationComponent implements OnInit {
 		}
 		let pois = [];
 		let targetPOI = null;
-		this.assignedPOIs.forEach(function (poi) {
-			if (this.selectedPOI === poi.id) {
+		this.assignedPOIs.forEach((poi) => {
+			if (this.selectedPOI === poi) {
 				targetPOI = poi;
 			} else if (targetPOI) {
 				pois.push(poi);
@@ -773,11 +771,17 @@ export class SimulatorNavigationComponent implements OnInit {
 			this.clearRoute();
 			this.showDrivingRoute();
 			this.showTrajectory();
+			this.routeFixed = true;
 		} else {
 			this.clearTrajectory();
-			this.showRouteCandidates();
+			if (this.simulatorVehicle.isDriving()) {
+				this.showDrivingRoute();
+				this.routeFixed = true;
+			} else {
+				this.showRouteCandidates();
+				this.routeFixed = this.availableRouteModes.length < 2;
+			}
 		}
-		this.routeFixed = this.availableRouteModes.length < 2;
 	}
 
 	// Update route option

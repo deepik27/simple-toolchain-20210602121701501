@@ -450,7 +450,7 @@ export class RealtimeMapComponent implements OnInit {
 							tr.appendChild(td);
 							td = document.createElement('td');
 							td.classList.add(_.escape(getSeverityColor(getSeverityVal(alert))));
-							td.appendChild(document.createTextNode(_.escape(alert.description)));
+							td.appendChild(document.createTextNode(_.escape(alert.severity)));
 							tr.appendChild(td);
 							tbody.appendChild(tr);
 						});

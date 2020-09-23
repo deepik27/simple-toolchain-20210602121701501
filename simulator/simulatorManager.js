@@ -43,7 +43,7 @@ _.extend(simulatorManager, {
 	 */
 	create: function (clientId, numVehicles, preferred, longitude, latitude, distance, timeoutInMinutes, noErrorOnExist) {
 
-		if (isNaN(longitude) || isNaN(latitude)) {
+		if (isNaN(longitude) || isNaN(latitude) || -180 > longitude || longitude > 180 || -90 > latitude || latitude > 90) {
 			return Q.reject({ statusCode: 400, message: 'Invalid longitude or latitude parameter' });
 		}
 		if (numVehicles > DEFAULT_MAX_VEHICLES || (preferred && preferred.length > DEFAULT_MAX_VEHICLES)) {
@@ -268,7 +268,7 @@ _.extend(simulatorManager, {
 							data.callbackOnClose = params[1] === 'true';
 					}
 				});
-				if (data.clientId && !this.messageQueue[data.clientId]) {
+				if (data.clientId) {
 					this.messageQueue[data.clientId] = {};
 				}
 			}
@@ -280,6 +280,9 @@ _.extend(simulatorManager, {
 			return data;
 		}, (data) => {
 			console.log("client is disconnected. id=" + data.clientId + ", vid=" + data.vehicleId);
+			if (data.clientId && 	this.messageQueue[data.clientId]) {
+				delete this.messageQueue[data.clientId];
+			}
 			watchMethod(data, false);
 		}, (message, data) => {
 			try {

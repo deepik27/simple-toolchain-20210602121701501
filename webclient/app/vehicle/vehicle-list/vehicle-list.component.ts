@@ -178,7 +178,7 @@ export class VehicleListComponent {
     let isRequestOwner = !this.requestSending;
     this.requestSending = true;
     this.errorMessage = null;
-    this.http.post("/user/device/sync", null, null)
+    this.http.post("/user/device/sync", {}, {})
       .subscribe((response: any) => {
         // Update vehicle list when succeeded
         this._updateVehicleList(1);

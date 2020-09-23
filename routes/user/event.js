@@ -33,6 +33,14 @@ debug.log = console.log.bind(console);
 //
 router.get("/event/query", authenticate, function (req, res) {
 	const q = req.query;
+
+	if ([q.min_latitude, q.min_longitude, q.max_latitude, q.max_longitude].some(function (v) { return isNaN(v); })) {
+		return res.status(400).send('One or more of the parameters are undefined or not a number');
+	} else if (-90 > q.min_latitude || q.min_latitude > 90 || -90 > q.max_latitude || q.max_latitude > 90 ||
+			-180 > q.min_longitude || q.min_longitude > 180 || -180 > q.max_longitude || q.max_longitude > 180) {
+		return res.status(400).send('Invalid longitude and latitude are specified.'); 
+	}
+
 	let regions = probeAggregator.createRegions(q.min_longitude, q.min_latitude, q.max_longitude, q.max_latitude);
 	if (regions && regions.type !== "single") {
 		return res.send([]);

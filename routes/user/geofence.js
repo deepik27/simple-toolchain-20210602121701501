@@ -43,6 +43,14 @@ router.get("/geofence", authenticate, function (req, res) {
 	var min_longitude = req.query.min_longitude;
 	var max_latitude = req.query.max_latitude;
 	var max_longitude = req.query.max_longitude;
+	
+	if ([min_latitude, min_longitude, max_latitude, max_longitude].some(function (v) { return isNaN(v); })) {
+		return res.status(400).send('One or more of the parameters are undefined or not a number');
+	} else if (-90 > min_latitude || min_latitude > 90 || -90 > max_latitude || max_latitude > 90 ||
+			-180 > min_longitude || min_longitude > 180 || -180 > max_longitude || max_longitude > 180) {
+		return res.status(400).send('Invalid longitude and latitude are specified.'); 
+	}
+
 	driverInsightsGeofence.queryGeofence(min_latitude, min_longitude, max_latitude, max_longitude)
 		.then(function (result) {
 			return res.send(result);

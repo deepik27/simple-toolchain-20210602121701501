@@ -18,17 +18,6 @@ const Promise = require('bluebird');
 require('dotenv').config();
 const BaseApi = require('./BaseApi.js');
 
-function removeLastSlash(dir) {
-	if (!dir || dir.length == 0) {
-		return dir;
-	}
-	const lastSlash = dir.lastIndexOf('/');
-	if (lastSlash !== dir.length - 1) {
-		return dir;
-	}
-	return dir.substring(0, lastSlash);
-}
-
 class Asset extends BaseApi {
 	constructor() {
 		super();
@@ -312,6 +301,9 @@ class Asset extends BaseApi {
 		const attributes = this._getResourceObjectAttributes(context);
 		const conditions = this._getSearchCondition(context, params);
 		params = params || {};
+		if ((params.num_rec_in_page && isNaN(params.num_rec_in_page)) || params.num_page && isNaN(params.num_page)) {
+			return Promise.reject({statusCode: 400, message: "Invalid page size or offset is specified."});
+		}
 		return this._query(context, attributes, conditions, /*id*/null, params.num_rec_in_page, params.num_page, properties)
 			.then(result => {
 				return { data: result };

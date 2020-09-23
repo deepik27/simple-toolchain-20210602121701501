@@ -21,7 +21,7 @@ var cfenv = require("cfenv");
 var moment = require("moment");
 var fs = require("fs-extra");
 const asset = app_module_require("cvi-node-lib").asset;
-const IOTF = app_module_require("iotfclient");
+const mqttClient = app_module_require("mqttclient").mqttClient;
 var alertManager = require("./alertManager.js");
 
 var debug = require('debug')('alert');
@@ -85,8 +85,8 @@ _.extend(driverInsightsAlert, {
 			});
 		});
 
-		if (!!IOTF.iotfAppClient) {
-			IOTF.on("+_alert", (payload, deviceType, deviceId) => {
+		if (mqttClient.isMQTTBrokerAvailable) {
+			mqttClient.on("alert", (payload, deviceType, deviceId) => {
 				let timestamp;
 				if (payload.affectedEvents && payload.affectedEvents.length > 0) {
 					timestamp = payload.affectedEvents[0].event_time;

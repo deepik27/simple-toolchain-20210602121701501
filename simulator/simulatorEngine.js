@@ -34,7 +34,7 @@ const SIMLATOR_STATUS_OPENING = 'opening';
 const SIMLATOR_STATUS_CLOSING = 'closing';
 const SIMLATOR_STATUS_CLOSE = 'close';
 
-const DATETIME_FORMAT = "YYYY-MM-DDTHH:mm:SS.SSS";
+const DATETIME_FORMAT = "YYYY-MM-DDTHH:mm:ss.SSS";
 const MODEL_MONTH = 6;
 
 /**
@@ -237,7 +237,17 @@ simulatorEngine.prototype.addVehicles = function (data, driver, longitude, latit
 		}
 		// Generate MPP/DP model for trajectory pattern-based route search
 		return Q(driverBehavior.deletePredictionCache()).done(() => {
-			driverBehavior.generateMPPDPModel({ mo_id: vehicle.siteid + ':' + vehicle.mo_id, from: fromtime, to: totime, time_zone: 'Z' });
+			driverBehavior.generateMPPDPModel({ mo_id: vehicle.siteid + ':' + vehicle.mo_id, from: fromtime, to: totime, time_zone: 'Z' }).catch(error => {
+				let message;
+				if (error && error.response) {
+					message = error.response.data || error.response.message;
+				} else {
+					message = error && error.message;
+				}
+				message = message || "unknown error occurred.";
+				message += ": mo_id=" + vehicle.siteid + ':' + vehicle.mo_id + ", from=" + fromtime + ", to=" + totime;
+				console.error(message);
+			});
 		});
 	});
 	return Q.all(promises).then(() => vehicles);

@@ -113,8 +113,12 @@ router.get('/carProbe', authenticate, function (req, res) {
 		// get extent
 		const extent = normalizeExtent(req.query);
 		if ([extent.max_lat, extent.max_lng, extent.min_lat, extent.min_lng].some(function (v) { return isNaN(v); })) {
-			return res.status(400).send('One or more of the parameters are undefined or not a number'); // FIXME response code
+			return res.status(400).send('One or more of the parameters are undefined or not a number');
+		} else if (-90 > extent.min_lat || extent.min_lat > 90 || -90 > extent.max_lat || extent.max_lat > 90 ||
+			-180 > extent.min_lng || extent.min_lng > 180 || -180 > extent.max_lng || extent.max_lng > 180) {
+			return res.status(400).send('Invalid longitude and latitude are specified.');
 		}
+
 		// query by extent
 		qs = {
 			min_longitude: extent.min_lng,
@@ -169,6 +173,11 @@ router.get("/alert", function (req, res) {
 			res.send(docs);
 		});
 	} else if (extentAsArray.every(function (v) { return !isNaN(v); })) {
+		if (-90 > extent.min_lat || extent.min_lat > 90 || -90 > extent.max_lat || extent.max_lat > 90 ||
+			-180 > extent.min_lng || extent.min_lng > 180 || -180 > extent.max_lng || extent.max_lng > 180) {
+			return res.status(400).send('Invalid longitude and latitude are specified.');
+		}
+
 		var qs = {
 			min_longitude: extent.min_lng,
 			min_latitude: extent.min_lat,
@@ -316,32 +325,32 @@ var initWebSocketServer = function (server, path) {
 	// Create WebSocket server
 	//
 	wsConnection.create(MONITOR_WSS_ID, server, path, (request) => {
-		 // assign extent obtained from the web sock request URL, to this client
+		// assign extent obtained from the web sock request URL, to this client
 		var data = {};
-	 	var url = request.url;
-	 	var qsIndex = url.lastIndexOf('?region=');
-	 	if (qsIndex >= 0) {
-	 		try {
-	 			var j = decodeURI(url.substr(qsIndex + 8)); // 8 is length of "?region="
-	 			var extent = JSON.parse(j);
-	 			data.extent = normalizeExtent(extent);
-	 		} catch (e) {
-	 			console.error('Error on parsing extent in wss URL', e);
-	 		}
-	 	} else {
-	 		qsIndex = url.lastIndexOf("?mo_id=");
-	 		if (qsIndex >= 0) {
-	 			const mo_id = decodeURI(url.substr(qsIndex + 7)); // 7 is length of "?mo_id="
-	 			data.mo_id = mo_id;
-	 		}
-		 }
-		 return data;
+		var url = request.url;
+		var qsIndex = url.lastIndexOf('?region=');
+		if (qsIndex >= 0) {
+			try {
+				var j = decodeURI(url.substr(qsIndex + 8)); // 8 is length of "?region="
+				var extent = JSON.parse(j);
+				data.extent = normalizeExtent(extent);
+			} catch (e) {
+				console.error('Error on parsing extent in wss URL', e);
+			}
+		} else {
+			qsIndex = url.lastIndexOf("?mo_id=");
+			if (qsIndex >= 0) {
+				const mo_id = decodeURI(url.substr(qsIndex + 7)); // 7 is length of "?mo_id="
+				data.mo_id = mo_id;
+			}
+		}
+		return data;
 	}, (data) => {
-			console.log("[Monitor] Close client");
-	 }, (message, data) => {
-	 	console.log("[Monitor] Received message: " + message);
+		console.log("[Monitor] Close client");
+	}, (message, data) => {
+		console.log("[Monitor] Received message: " + message);
 	}, (error, data) => {
- 		console.log("[Monitor] Error");
+		console.log("[Monitor] Error");
 	});
 }
 
@@ -441,17 +450,15 @@ function normalizeExtent(min_lat_or_extent, min_lng, max_lat, max_lng) {
 		min_lat = min_lat_or_extent;
 	}
 
+	if (isNaN(min_lat) || isNaN(min_lng) || isNaN(max_lat) || isNaN(max_lng)) {
+		return {};
+	}
+
 	// to float
 	min_lat = parseFloat(min_lat);
 	min_lng = parseFloat(min_lng);
 	max_lat = parseFloat(max_lat);
 	max_lng = parseFloat(max_lng);
 
-	// normalize
-	var whole_lng = ((max_lng - min_lng) > 359.9);
-	min_lng = whole_lng ? -180 : ((min_lng + 180) % 360) - 180;
-	max_lng = whole_lng ? 180 : ((max_lng + 180) % 360) - 180;
-	var extent = { min_lng: min_lng, min_lat: min_lat, max_lng: max_lng, max_lat: max_lat, whole_lng: whole_lng };
-
-	return extent;
+	return { min_lng: min_lng, min_lat: min_lat, max_lng: max_lng, max_lat: max_lat };
 }

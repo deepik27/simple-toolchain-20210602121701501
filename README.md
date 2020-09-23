@@ -1,5 +1,5 @@
 <!------------------------------------------------------------------------------------------------
-   Copyright 2016,2019 IBM Corp. All Rights Reserved.
+   Copyright 2016,2020 IBM Corp. All Rights Reserved.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ The Fleet Management Starter Application uses the following IBM Cloud services:
 
 ## Prerequisites
 To deploy and use the Fleet Management Starter Application, you need the following prerequisites.
-- An instance of IBM IoT Connected Vehicle Insights that is deployed and running on IBM SaaS.
+- An instance of IBM IoT Connected Vehicle Insights is deployed and running on IBM SaaS.
 - An application Admin user is created. For more information about how to create an application Admin user, see the topic [Creating an application admin user](https://www.ibm.com/support/knowledgecenter/SSNQ4V_bas/iot-automotive/managing/assets/maximo_create_app_admin_user.html) in the IBM Knowledge Center.
 - You must have an IBM Cloud account. To sign up and get your account, go to https://www.ibm.com/cloud/
 
@@ -149,7 +149,7 @@ To automatically deploy the Fleet Management Starter Application on IBM Cloud, c
 After the automated deployment, complete the following steps to configure the app to manually connect to your IBM IoT Connected Vehicle Insights SaaS service.
 
 1. Open the IBM Cloud dashboard in your browser.
-2. To stop the app, click **ACTIONS** > **Stop App**.
+1. To stop the app, click **ACTIONS** > **Stop App**.
 
 Next: Go to [Connecting to IBM IoT Connected Vehicle Insights service](#connect2cvi).
 
@@ -157,16 +157,16 @@ Next: Go to [Connecting to IBM IoT Connected Vehicle Insights service](#connect2
 
 To manually deploy the Fleet Management Starter Application on IBM Cloud, complete all of the following steps:
 1. Log in to IBM Cloud. If you do not have an existing IBM Cloud account, click [Register][ibmcloud_signup_url] and follow the instructions to create an account.
-2. Download and install the [IBM Cloud CLI][cloud_foundry_url] tool.
-3. Clone the Fleet Management Starter Application to your local environment by using the following console command:
+1. Download and install the [IBM Cloud CLI][cloud_foundry_url] tool.
+1. Clone the Fleet Management Starter Application to your local environment by using the following console command:
 
-  ```
-  git clone https://github.com/ibm-watson-iot/cvi-starter-server-fm.git
-  ```
-4. Change to the directory that you created.
-5. Edit the `manifest.yml` file and change the values of `<name>` to something unique.
+   ```bash
+   $ git clone https://github.com/ibm-watson-iot/cvi-starter-server-fm.git
+   ```
+1. Change to the directory that you created.
+1. Edit the `manifest.yml` file and change the values of `<name>` to something unique.
 
-    ```
+    ```yaml
     applications:
       - name: cvi-starter-server-fleetmanagement
         path: .
@@ -184,38 +184,39 @@ To manually deploy the Fleet Management Starter Application on IBM Cloud, comple
     ```
     Also, set appropriate values to environment variables under `<env>`. See the table in [this section](#connect2cvi) about the variables.  
 
-6. Install the NPM package by using the following command. The installer observes the dependencies that are specified in your `package.json` file.
-  ```
-  $ cd ./webclient
-  $ npm install
-  ```
-7. Convert TypeScript to JavaScript:
+1. Install the NPM package by using the following command. The installer observes the dependencies that are specified in your `package.json` file.
+   ```bash
+   $ cd ./webclient
+   $ npm install
+   ```
+1. Build Angular components
 
-  ```
-  $ npm run tsc
-  $ npm run gulp
-  $ cd ..
-  ```
+   ```bash
+   $ ng build
+   ```
+   If you have not installed the Angular CLI, install it before executing the `ng build`.
+   ```bash
+   $ npm install -g @angular/cli
+   ```
 
-8. By using the command line tool, connect to IBM Cloud and log in when prompted:
+1. By using the command line tool, connect to IBM Cloud and log in when prompted:
 
-  ```
-  $ ibmcloud api https://cloud.ibm.com
-  $ ibmcloud login
-  $ ibmcloud target --cf
-  ```
+   ```bash
+   $ ibmcloud api https://cloud.ibm.com
+   $ ibmcloud login
+   $ ibmcloud target --cf
+   ```
 
-9. Create an instance of the Cloudant NoSQL DB service in IBM Cloud:
+1. Create an instance of the Cloudant NoSQL DB service in IBM Cloud:
+   ```bash
+   $ ibmcloud cf create-service cloudantNoSQLDB Lite FleetCloudantDB
+   ```
 
-  ```
-  $ ibmcloud cf create-service cloudantNoSQLDB Lite FleetCloudantDB
-  ```
-
-11. Push the starter app to IBM Cloud by using the following command:
-  ```
-  $ ibmcloud cf push --no-start
-  ```
-  **Important:** When you run the `push` command, you must include the `--no-start` option as you must complete further steps manually before you start the app.
+1. Push the starter app to IBM Cloud by using the following command:
+   ```bash
+   $ ibmcloud cf push --no-start
+   ```
+   **Important:** When you run the `push` command, you must include the `--no-start` option as you must complete further steps manually before you start the app.
 
 **Result:** Your very own instance of the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application is now deployed on IBM Cloud.
 
@@ -310,7 +311,7 @@ To obtain the correct values, contact your system administrator.
 
 Key | Description of Value | Example
 ----- | ------------------------------------- | -----
-AUTOMOTIVE_URL | A URL to call the REST API for IBM IoT Connected Vehicle Insights, which must end with a forward slash character (/) | [https://xxxx.automotive.](https://xxxx.automotive.internetofthings.ibmcloud.com/) <br> [internetofthings.ibmcloud.com/](https://xxxx.automotive.internetofthings.ibmcloud.com/)
+AUTOMOTIVE_URL | A URL to call the REST API for IBM IoT Connected Vehicle Insights | [https://xxxx.automotive.](https://xxxx.automotive.internetofthings.ibmcloud.com) <br> [internetofthings.ibmcloud.com](https://xxxx.automotive.internetofthings.ibmcloud.com)
 AUTOMOTIVE_USERNAME | User name for accessing the Vehicle Data Hub (VDH) and other IBM IoT Connected Vehicle Insights endpoints | iotcvusr
 AUTOMOTIVE_PASSWORD | Password for accessing the VDH and other IBM IoT Connected Vehicle Insights endpoints | CVIPassword
 AUTOMOTIVE_MAX_ORGID | IBM IoT Connected Vehicle Insights Organization specified in IBM Maximo Asset Management | IOTFA
@@ -338,7 +339,7 @@ To start the Fleet Management Starter Application, complete one of the following
 - Open the [IBM Cloud dashboard][ibmcloud_dashboard_url] and start the app.
 - Start the app from the terminal, use the following `ibmcloud`commands.
     1. Get starter application name, enter `$ ibmcloud cf apps`.
-    2. Start application, enter `$ ibmcloud cf start $STARTER_APPLICATION_NAME`
+    1. Start application, enter `$ ibmcloud cf start $STARTER_APPLICATION_NAME`
 
 
 Congratulations! You are now ready to use your own instance of the IBM IoT Connected Vehicle Insights - Fleet Management Starter Application. To connect to the app, enter the following URL in your browser:
@@ -364,7 +365,7 @@ $ ibmcloud cf create-service iotf-service iotf-service-free FleetIoTPlatform
 $ ibmcloud cf bind-service <app_name> FleetIoTPlatform
 $ ibmcloud cf restage <app_name>
 ```
-2. Create IoT Platform API Key.
+1. Create IoT Platform API Key.
    a. From IBM Cloud Dashboard, start IoT Platform.
    b. From the sidebar, select Apps.
    c. Click 'Generate API Key'.
@@ -372,7 +373,7 @@ $ ibmcloud cf restage <app_name>
    e. Select 'Standar Application for Role'.
    f. Click 'Generate Key'.
    g. Copy API Key and Authentication Token.
-3. Enable MQTT Client on the CVI.
+1. Enable MQTT Client on the CVI.
    - Update the following VDH configuration files.
 
    | gateway.properties      |  pos_mapping_def.xml   |
