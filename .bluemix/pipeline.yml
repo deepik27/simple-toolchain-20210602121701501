@@ -30,17 +30,15 @@ stages:
 
       export NODE_VERSION=10.13.0
       export NPM_VERSION=6.11.3
-      export PREFIX=./
-      npm install -g n
-      
-      export N_PREFIX=$PWD/node
-      $HOME/.npm-global/bin/n $NODE_VERSION
-      export PATH=$N_PREFIX/n/versions/node/$NODE_VERSION/bin:$PATH
+
+      nvm install $NODE_VERSION
+      nvm alias default $NODE_VERSION
+
       npm install -g npm@$NPM_VERSION
 
       # build
       npm install
-      ng build
+      npm run build
 - name: Deploy Stage
   inputs:
   - type: job

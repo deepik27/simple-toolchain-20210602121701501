@@ -14,6 +14,6 @@
 #   limitations under the License.
 
 # Create required service
-cf create-service cloudantNoSQLDB Lite FleetCloudantDB
+cf create-service cloudantNoSQLDB lite FleetCloudantDB
 # Wait for the service provisioned. It would take more than 1 minute.
 sleep 120s
