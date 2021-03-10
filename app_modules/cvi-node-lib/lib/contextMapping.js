@@ -202,34 +202,43 @@ class contextMapping extends BaseApi {
 			});
 	}
 	/**
+	 * @param {number} map_id required from v3.1
 	 * @param {string} link_id
 	 * @param {boolean} ignoreCache
 	 * @return {Promise}
 	 */
-	getLinkInformation(link_id, ignoreCache) {
+	getLinkInformation(map_id, link_id, ignoreCache) {
 		// Cache the link information to reduce the number of Context Mapping API call
+		let linkInformationCache = undefined;
 		if (!ignoreCache) {
-			if (!this._linkInformationCache) {
-				this._linkInformationCache = {};
-				this._linkInformationCacheHit = 0;
-				this._linkInformationCacheMiss = 0;
+			if(!this._linkInformationCacheForMap){
+				this._linkInformationCacheForMap = {};
 			}
-			const cachedResult = this._linkInformationCache[link_id];
+			linkInformationCache = this._linkInformationCacheForMap[map_id];
+			if (!linkInformationCache) {
+				linkInformationCache = {
+					cache: {},
+					hit: 0,
+					miss: 0
+				}
+				this._linkInformationCacheForMap[map_id] = linkInformationCache;
+			}
+			const cachedResult = linkInformationCache.cache[link_id];
 			if (cachedResult) {
-				this._linkInformationCacheHit++;
+				linkInformationCache.hit++;
 				cachedResult.lastAccess = Date.now(); // update time
 				return Promise.resolve(cachedResult.data);
 			} else {
-				this._linkInformationCacheMiss++;
+				linkInformationCache.miss++;
 			}
 			// reduce cache size to half when it exceeds 200
-			const allKeys = Object.keys(this._linkInformationCache);
+			const allKeys = Object.keys(linkInformationCache.cache);
 			if (allKeys && allKeys.length > 1000) {
 				const sorted = _.sortBy(allKeys, (function (key) {
-					return this._linkInformationCache[key].lastAccess;
+					return linkInformationCache.cache[key].lastAccess;
 				}).bind(this));
 				for (let i = 0; i < sorted.length / 2; i++) {
-					delete this._linkInformationCache[sorted[i]];
+					delete linkInformationCache.cache[sorted[i]];
 				}
 			}
 		}
@@ -238,23 +247,28 @@ class contextMapping extends BaseApi {
 		const options = this._makeRequestOptions(node, {
 			method: 'GET',
 			url: node.baseURL + '/mapservice/link',
-			params: { link_id: link_id }
+			params: {
+				map_id: map_id,
+				link_id: link_id
+			}
 		});
 
 		const self = this;
 		return this._request(options, function (error, response, result, resolve, reject) {
 			if (!error) {
 				if (result.links && result.links.length > 0) {
-					if (!ignoreCache && self._linkInformationCache) {
-						self._linkInformationCache[link_id] = {
-							data: responseJson.links[0],
+					if (!ignoreCache && linkInformationCache.cache) {
+						linkInformationCache.cache[link_id] = {
+							data: result.links[0],
 							lastAccess: Date.now(),
-						};
+							hit: 0,
+							miss: 0
+						}
 					}
 					resolve(result.links[0]);
 				} else {
 					console.error("link information not found\n url: : " + options.url + "\n body: " + JSON.stringify(result));
-					reject(responseJson);
+					reject(result);
 				}
 			} else {
 				reject(error);
@@ -264,9 +278,31 @@ class contextMapping extends BaseApi {
 	}
 
 	/**
+	 * 
+	 * @param {*} params {"map_id": number}
+	 */
+	getMap(params){
+		const node = this.contextMappingConfig;
+		const options = this._makeRequestOptions(node, {
+			method: "GET",
+			url: node.baseURL + "/mapservice/map",
+			params: params || {}
+		})
+		return this._request(options);
+	}
+	getMapList(){
+		const node = this.contextMappingConfig;
+		const options = this._makeRequestOptions(node, {
+			method: "GET",
+			url: node.baseURL + "/mapservice/maplist"
+		})
+		return this._request(options);
+	}
+
+	/**
 	 *
 	 * @param {} poi
-	 * @param {*} options {"feature_source": "string", "feature_type": "string"}
+	 * @param {*} params {"feature_source": "string", "feature_type": "string"}
 	 */
 	createPoi(poi, params) {
 		const node = this.contextMappingConfig;

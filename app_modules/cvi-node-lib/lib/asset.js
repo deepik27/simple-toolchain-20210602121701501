@@ -15,6 +15,8 @@
  */
 const _ = require("underscore");
 const Promise = require('bluebird');
+const Chance = require('chance');
+const chance = new Chance();
 require('dotenv').config();
 const BaseApi = require('./BaseApi.js');
 
@@ -313,11 +315,11 @@ class Asset extends BaseApi {
 	/*
 	 * Get an asset
 	 */
-	_getAsset(context, id) {
+	async _getAsset(context, id) {
 		if (!id) {
 			return Promise.reject({ message: "id must be specified." });
 		}
-		id = this._extractId(context, id);
+		id = await this._extractId(context, id);
 		const self = this;
 		return this._query(context, null, null, id).then(result => {
 			return self._run(result.href + '?lean=1', 'GET').then(result => {
@@ -403,8 +405,8 @@ class Asset extends BaseApi {
 		}
 	}
 
-	_addOrUpdateAsset(context, id, asset, refresh) {
-		id = this._extractId(context, id);
+	async _addOrUpdateAsset(context, id, asset, refresh) {
+		id = await this._extractId(context, id);
 		const self = this;
 		const promise = id ? this._query(context, null, null, id) : Promise.resolve(true);
 		return promise.then(result => {
@@ -414,7 +416,6 @@ class Asset extends BaseApi {
 			return self._addAditionalInfo(context, asset, existing).then(asset => {
 				const maximoAsset = self._getMaximoObject(context, asset, !existing);
 				return self._run(url, 'POST', method_override, maximoAsset).then(result => {
-					result = result || asset;
 					if (refresh) {
 						return self._refreshAsset(context).then(refreshed => {
 							return result;
@@ -430,7 +431,6 @@ class Asset extends BaseApi {
 				return self._addAditionalInfo(context, asset, false).then(asset => {
 					const maximoAsset = self._getMaximoObject(context, asset, true);
 					return self._run(url, 'POST', null, maximoAsset).then(result => {
-						result = result || asset;
 						if (refresh) {
 							return self._refreshAsset(context).then(refreshed => {
 								return result;
@@ -446,11 +446,11 @@ class Asset extends BaseApi {
 	/*
 	 * Delete an asset
 	 */
-	_deleteAsset(context, id, refresh) {
+	async _deleteAsset(context, id, refresh) {
 		if (!id) {
 			return Promise.reject({ message: "id must be specified." });
 		}
-		id = this._extractId(context, id);
+		id = await this._extractId(context, id);
 		const self = this;
 		return this._query(context, null, null, id).then(result => {
 			return self._run(result.href + '?lean=1', 'POST', 'DELETE').then(result => {
@@ -471,12 +471,15 @@ class Asset extends BaseApi {
 		});
 	}
 
-	_extractId(context, id) {
+	async _extractId(context, id) {
 		// vehicle id might contain siteId. remove it.
 		if (id && context === "vehicle" && id.indexOf(":") > 0) {
 			const strs = id.split(":");
 			if (strs.length > 1) {
-				return strs[1];
+				const siteIds = (await this._getSites() || []).map(site => { return site.id; });
+				if(_.contains(siteIds, strs[0])){
+					return strs[1];
+				}
 			}
 		}
 		return id;
@@ -648,7 +651,7 @@ class Asset extends BaseApi {
 	_setAssetId(context, length, asset, resolve, reject) {
 		let id = "", i, random;
 		for (i = 0; i < length; i++) {
-			random = Math.random() * 16 | 0;
+			random = chance.floating({min: 0, max: 1}) * 16 | 0;
 			id += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random))
 				.toString(16);
 		}
@@ -668,26 +671,27 @@ class Asset extends BaseApi {
 		});
 	}
 
-	_setSiteId(lon, lat, asset) {
-		const self = this;
-		const promise = this.sites ? Promise.resolve(this.sites) : this._getAsset("organization", this.assetConfig.maximo.orgid);
-		return promise.then(result => {
-			if (!self.sites) {
-				self.sites = _.map(_.filter(result.site, function (s) { return s.active; }), function (s) {
-					return { id: s.siteid, slon: s.startlongitude, slat: s.startlatitude, elon: s.endlongitude, elat: s.endlatitude };
-				});
-			}
-			let siteid = null;
-			_.each(self.sites, function (s) {
-				if (!siteid || (lon && lat && s.slon <= lon && lon <= s.elon && s.slat <= lat && lat <= s.elat)) {
-					siteid = s.id;
-				}
+	async _getSites(){
+		if(!this.sites){
+			const org = await this._getAsset("organization", this.assetConfig.maximo.orgid);
+			this.sites = _.map(_.filter(org.site, function (s) { return s.active; }), function (s) {
+				return { id: s.siteid, slon: s.startlongitude, slat: s.startlatitude, elon: s.endlongitude, elat: s.endlatitude };
 			});
-			if (siteid) {
-				asset.siteid = siteid;
+		}
+		return this.sites;
+	}
+	async _setSiteId(lon, lat, asset) {
+		let siteid = null;
+		const sites = await this._getSites();
+		_.each(sites, function (s) {
+			if (!siteid || (lon && lat && s.slon <= lon && lon <= s.elon && s.slat <= lat && lat <= s.elat)) {
+				siteid = s.id;
 			}
-			return asset;
 		});
+		if (siteid) {
+			asset.siteid = siteid;
+		}
+		return asset;
 	}
 	_getUrl(context, islean) {
 		const cred = this.assetConfig.maximo;
@@ -757,10 +761,11 @@ class Asset extends BaseApi {
 				if (_.isObject(assetElement)) {
 					if (assetElement.name) {
 						asset[assetElement.name] =
-							_.isFunction(assetElement.value) ? assetElement.value(value) : assetElement.value;
+							_.isFunction(assetElement.value) ? assetElement.value(value) :
+							_.isString(assetElement.value) ? _.escape(assetElement.value) : assetElement.value;
 					}
 				} else {
-					asset[assetElement] = value;
+					asset[assetElement] = _.isString(value) ? _.escape(value) : value;
 				}
 			}
 		});
@@ -913,7 +918,11 @@ const attributesMap = {
 				}
 			},
 			"description": "description",
-			"rule": "rule"
+			"rule": {
+				"name": "rule",
+				"value": function(val) { return val }, // wrapping by function not to escape the rule xml
+				"rvalue": function(val) { return val }
+			}
 		}
 	},
 	"organization": {
