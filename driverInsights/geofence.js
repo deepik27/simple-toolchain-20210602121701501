@@ -18,6 +18,8 @@ var driverInsightsGeofence = module.exports = {};
 var _ = require("underscore");
 var Q = new require('q');
 var moment = require("moment");
+const Chance = require('chance');
+const chance = new Chance();
 
 var ruleGenerator = require('./ruleGenerator.js');
 var dbClient = app_module_require('utils/cloudantHelper.js');
@@ -145,7 +147,7 @@ _.extend(driverInsightsGeofence, {
 
 	_id: function () {
 		function s4() {
-			return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+			return Math.floor((1 + chance.floating({min: 0, max: 1})) * 0x10000).toString(16).substring(1);
 		}
 		return (s4() + s4()).toUpperCase();
 	},

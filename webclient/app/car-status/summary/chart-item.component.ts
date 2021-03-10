@@ -21,6 +21,8 @@ import { distinctUntilChanged } from 'rxjs/operators';
 import * as c3 from 'c3';
 import * as d3 from 'd3';
 import * as _ from 'underscore';
+import * as Chance from 'chance';
+import { ThrowStmt } from '@angular/compiler';
 
 @Component({
   selector: 'fmdash-chart-item',
@@ -34,7 +36,8 @@ export class ChartItemComponent implements AfterContentInit {
   @Output() selectionChange = new EventEmitter<any>();
   @ViewChild('chartDiv', {static: false}) chartDiv;
 
-  chartId = 'chart_' + (Math.floor(Math.random() * 1000000000));
+  private chance = new Chance();
+  chartId = 'chart_' + (Math.floor(this.chance.floating({min: 0, max: 1}) * 1000000000));
 
   private chartSelector: string;
   private chart: c3.ChartAPI;
@@ -84,13 +87,14 @@ export class ChartItemComponent implements AfterContentInit {
     }
     setTimeout(() => {
       this.chart = c3.generate(opts);
+      this.chart.loaddata = this.chart.load;
       // keep sending data
       this.dataSubscription = this.carStatusData.getColumns(this.aggrKey)
         .pipe(distinctUntilChanged((x, y) => _.isEqual(x, y)))
         .subscribe(data => {
 //          const array = data as Array<[string, ...c3.PrimitiveArray]>;
           const array = data as Array<[]>;
-          this.chart.load({ columns: array });
+          this.chart.loaddata({ columns: array });
         });
     }, 100);
 

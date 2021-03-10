@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import * as _ from 'underscore';
+import * as Chance from 'chance';
 import { Injectable, Inject, Output, EventEmitter } from '@angular/core';
 import { AppHttpClient } from "../shared/http-client";
 import { LocationService } from '../shared/location.service';
@@ -29,6 +30,7 @@ export class SimulatorVehicleService {
   private selectedVehilce: SimulatorVehicle;
   private appConfig;
   private clientId;
+  private chance = new Chance();
 
   constructor(
     @Inject(APP_CONFIG) appConfig: AppConfig, 
@@ -37,7 +39,7 @@ export class SimulatorVehicleService {
       this.appConfig = appConfig;
       this.clientId = localStorage["iota-simulator-uuid"];
       if (!this.clientId) {
-        this.clientId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        this.clientId = this.chance.floating({min: 0, max: 1}).toString(36).substring(2, 15) + this.chance.floating({min: 0, max: 1}).toString(36).substring(2, 15);
         localStorage["iota-simulator-uuid"] = encodeURIComponent(this.clientId);
       }
     }

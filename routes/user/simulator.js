@@ -196,7 +196,7 @@ router.get("/simulator/aveilableVehicles", authenticate, function (req, res) {
  */
 router.get("/simulator/vehicle/:vehicle_id", authenticate, function (req, res) {
 	const clientId = req.query.clientId || req.get("iota-simulator-uuid");
-	const properties = req.query.properties ? req.query.properties.split(',') : null;
+	const properties = typeof(req.query.properties) === 'string' ? req.query.properties.split(',') : null;
 	simulatorManager.getSimulator(clientId)
 		.then(function (simulator) {
 			const data = simulator.getVehicleInformation(req.params.vehicle_id, properties);

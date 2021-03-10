@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 var propSimulator = require('../props.js');
+const Chance = require('chance');
+const chance = new Chance();
 
 var engineTemp = function () {
 	this.setValueRange(0, 130, 80);
@@ -21,7 +23,7 @@ var engineTemp = function () {
 engineTemp.prototype = new propSimulator();
 
 engineTemp.prototype.doUpdateValue = function (currentValue) {
-	return Math.round((Number(currentValue) + (Math.random() * 0.5 - 0.15)) * 100) / 100;
+	return Math.round((Number(currentValue) + (chance.floating({min: 0, max: 1}) * 0.5 - 0.15)) * 100) / 100;
 };
 
 module.exports = engineTemp;

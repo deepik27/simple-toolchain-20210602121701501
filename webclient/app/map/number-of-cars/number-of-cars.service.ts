@@ -22,18 +22,20 @@ import { RealtimeDeviceDataProvider } from '../../shared/realtime-device';
 import { RealtimeDeviceDataProviderService } from '../../shared/realtime-device-manager.service';
 
 import * as _ from 'underscore';
+import * as Chance from 'chance';
 
 @Injectable()
 export class NumberOfCarsService {
   // user animatedDeviceManager as the data source
   private animatedDeviceManager: RealtimeDeviceDataProvider;
+  private chance = new Chance();
 
   constructor(animatedDeviceManagerService: RealtimeDeviceDataProviderService) {
     this.animatedDeviceManager = animatedDeviceManagerService.getProvider();
   }
 
   getNumberOfCars(region: any, nInterval: number = 3): Observable<Counts> {
-    var debugKey = Math.floor(Math.random() * 100);
+    var debugKey = Math.floor(this.chance.floating({min: 0, max: 1}) * 100);
     return interval(nInterval * 1000)
       .pipe(map(x => {
         let devices = this.animatedDeviceManager.getDevices();

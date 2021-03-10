@@ -17,6 +17,7 @@ import { Component } from '@angular/core';
 import { AppHttpClient } from '../../shared/http-client';
 import { HttpHeaders } from '@angular/common/http';
 import { map } from 'rxjs/operators';
+import * as Chance from 'chance';
 
 @Component({
   selector: 'vendor-list',
@@ -30,6 +31,7 @@ export class VendorListComponent {
   selectedVendor: Vendor;
   formVendor: Vendor;
   errorMessage: string;
+  private chance = new Chance();
 
   constructor(private http: AppHttpClient) {
 //    this.selectedVendor = new Vendor({});
@@ -206,19 +208,20 @@ export class VendorListComponent {
   }
 
   private _generateVendorId(){
+    let self = this;
     var newId = function() {
-      var mac = Math.floor(Math.random() * 16).toString(16) +
-      Math.floor(Math.random() * 16).toString(16) +
-      Math.floor(Math.random() * 16).toString(16) +
-      Math.floor(Math.random() * 16).toString(16) +
-      Math.floor(Math.random() * 16).toString(16) +
-      Math.floor(Math.random() * 16).toString(16) +
-      Math.floor(Math.random() * 16).toString(16) +
-      Math.floor(Math.random() * 16).toString(16) +
-      Math.floor(Math.random() * 16).toString(16) +
-      Math.floor(Math.random() * 16).toString(16) +
-      Math.floor(Math.random() * 16).toString(16) +
-      Math.floor(Math.random() * 16).toString(16);
+      var mac = Math.floor(self.chance.floating({min: 0, max: 1}) * 16).toString(16) +
+      Math.floor(self.chance.floating({min: 0, max: 1}) * 16).toString(16) +
+      Math.floor(self.chance.floating({min: 0, max: 1}) * 16).toString(16) +
+      Math.floor(self.chance.floating({min: 0, max: 1}) * 16).toString(16) +
+      Math.floor(self.chance.floating({min: 0, max: 1}) * 16).toString(16) +
+      Math.floor(self.chance.floating({min: 0, max: 1}) * 16).toString(16) +
+      Math.floor(self.chance.floating({min: 0, max: 1}) * 16).toString(16) +
+      Math.floor(self.chance.floating({min: 0, max: 1}) * 16).toString(16) +
+      Math.floor(self.chance.floating({min: 0, max: 1}) * 16).toString(16) +
+      Math.floor(self.chance.floating({min: 0, max: 1}) * 16).toString(16) +
+      Math.floor(self.chance.floating({min: 0, max: 1}) * 16).toString(16) +
+      Math.floor(self.chance.floating({min: 0, max: 1}) * 16).toString(16);
       var macStr = mac[0].toUpperCase() + mac[1].toUpperCase() + mac[2].toUpperCase() + mac[3].toUpperCase() +
       mac[4].toUpperCase() + mac[5].toUpperCase() + mac[6].toUpperCase() + mac[7].toUpperCase() +
       mac[8].toUpperCase() + mac[9].toUpperCase() + mac[10].toUpperCase() + mac[11].toUpperCase();

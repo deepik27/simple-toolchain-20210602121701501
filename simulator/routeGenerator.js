@@ -16,6 +16,8 @@
 const _ = require("underscore");
 const Q = new require('q');
 const EventEmitter = require('events').EventEmitter;
+const Chance = require('chance');
+const chance = new Chance();
 const contextMapping = app_module_require("cvi-node-lib").contextMapping;
 const version = app_module_require('utils/version.js');
 const debug = require('debug')('vehicleLocation');
@@ -146,8 +148,8 @@ routeGenerator.prototype.updateRoute = function (locs) {
 
 // find a random location in about 5km from the specified location
 routeGenerator.prototype._getRandomLoc = function (slat, slng) {
-	let ddist = (Math.random() / 2 + 0.8) * 0.1 / 2;
-	let dtheta = 2 * Math.PI * Math.random();
+	let ddist = (chance.floating({min: 0, max: 1}) / 2 + 0.8) * 0.1 / 2;
+	let dtheta = 2 * Math.PI * chance.floating({min: 0, max: 1});
 	let dlat = +slat + ddist * Math.sin(dtheta);
 	let dlng = +slng + ddist * Math.cos(dtheta);
 	return { lat: dlat, lon: dlng };
@@ -703,7 +705,7 @@ routeGenerator.prototype._calcSpeed = function (speed, prevLocSpeed, acceleratio
 		if (referenceSpeed === 0) {
 			console.log("Reference speed is zero!");
 		}
-		let rand_acceleration = Math.floor(Math.random() * 10 + 10);
+		let rand_acceleration = Math.floor(chance.floating({min: 0, max: 1}) * 10 + 10);
 		stopAtLoc = true;
 		while (speed > referenceSpeed || (speed - prevLocSpeed) > rand_acceleration) {
 			// too harsh acceleration, then insert intermediate point

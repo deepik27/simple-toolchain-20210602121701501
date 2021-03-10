@@ -17,6 +17,8 @@
 const Q = require('q');
 const _ = require('underscore');
 const moment = require("moment");
+const Chance = require('chance');
+const chance = new Chance();
 const vehicleManager = require('./vehicleManager.js');
 const simulatedVehicle = require('./simulatedVehicle.js');
 const asset = app_module_require("cvi-node-lib").asset;
@@ -228,9 +230,9 @@ simulatorEngine.prototype.addVehicles = function (data, driver, longitude, latit
 		});
 
 		// Calculate location and heading randomly and set them to each vehicle
-		let loc = this._calcPosition([longitude, latitude], distance * Math.random(), 360 * Math.random());
+		let loc = this._calcPosition([longitude, latitude], distance * chance.floating({min: 0, max: 1}), 360 * chance.floating({min: 0, max: 1}));
 		console.log("simulated vehicle=" + vehicle.mo_id + ", lon=" + loc[0] + ", lat=" + loc[1]);
-		v.setCurrentPosition(loc[0], loc[1], 360 * Math.random());
+		v.setCurrentPosition(loc[0], loc[1], 360 * chance.floating({min: 0, max: 1}));
 
 		if (!version.laterOrEqual("3.0")) {
 			return Q(vehicles);
@@ -345,9 +347,9 @@ simulatorEngine.prototype.updateBaseLocation = function (longitude, latitude, di
 
 	_.each(this.simulatedVehicles, (vehicle, id) => {
 		// Calculate location and heading randomly and set them to each vehicle
-		let loc = this._calcPosition([longitude, latitude], distance * Math.random(), 360 * Math.random());
+		let loc = this._calcPosition([longitude, latitude], distance * chance.floating({min: 0, max: 1}), 360 * chance.floating({min: 0, max: 1}));
 		console.log("simulated vehicle=" + id + ", lon=" + loc[0] + ", lat=" + loc[1]);
-		vehicle.setCurrentPosition(loc[0], loc[1], 360 * Math.random());
+		vehicle.setCurrentPosition(loc[0], loc[1], 360 * chance.floating({min: 0, max: 1}));
 	});
 	this.updateTime();
 };

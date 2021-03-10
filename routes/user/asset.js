@@ -108,7 +108,8 @@ router.get("/device/:tcuId", authenticate, async (req, res) => {
 
 router.put("/vehicle/:vehicleId", authenticate, function (req, res) {
 	const overwrite = !req.query.addition || req.query.addition.toLowerCase() !== 'true';
-	asset.updateVehicle(req.params.vehicleId, req.body, overwrite)
+	const vehicleId = typeof(req.params.vehicleId) === 'string' && req.params.vehicleId;
+	asset.updateVehicle(vehicleId, req.body, overwrite)
 		.then(function (result) {
 			return res.send(result);
 		}).catch(function (error) {

@@ -113,8 +113,8 @@ router.post("/poi/upload", upload.single('file'), function(req, res) {
 	var deleteIds = [];
 	var numEntries = 0;
 	var promises = [];
-	const mo_id = req.body.mo_id;
-	const serialnumber = req.body.serialnumber;
+	const mo_id = typeof(req.body.mo_id) === 'string' && req.body.mo_id;
+	const serialnumber = typeof(req.body.serialnumber) === 'string' && req.body.serialnumber;
 	const flushFeatures = function() {
 		if (features.length == 0) {
 			return;
@@ -204,6 +204,6 @@ router.post("/poi/upload", upload.single('file'), function(req, res) {
 			finished();
 		});
 	} catch (e) {
-		res.status(500).send();
+		res.status(400).send("Invalid POI file format.");
 	}
 });
