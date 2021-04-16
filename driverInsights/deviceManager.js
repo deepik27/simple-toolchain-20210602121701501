@@ -157,7 +157,7 @@ class DeviceManager {
 
 		vehicle.iotcvusealtid = true;
 		vehicle.iotcvaltmoid = (vehicle.iotcvaltmoid || vehicle.mo_id).toUpperCase(); // Alternate MO ID is case sensitive and MO_ID will be stored as uppercase.
-		const response = await cviAsset.addVehicle(vehicle, false);
+		await cviAsset.addVehicle(vehicle, false);
 
 		let device = {};
 		if (protocol === "mqtt") {
@@ -184,7 +184,7 @@ class DeviceManager {
 			device = await wiotpDeviceApi.registerDevice(DEVICE_TYPE, vehicle.mo_id, null, deviceInfo);
 		}
 
-		return this._extractAccessInfo(Object.assign(device, response));
+		return this._extractAccessInfo(Object.assign(device, vehicle));
 	}
 
 	/**
